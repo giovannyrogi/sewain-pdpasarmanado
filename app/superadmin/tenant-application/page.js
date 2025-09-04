@@ -10,13 +10,9 @@ import Notification from "../../components/Notification";
 import axios from "axios";
 import BreadcrumbPage from "@/app/components/breadcrumb/page";
 import menuSuperadmin from "@/app/components/menu/MenuItemSuperadmin";
-import AddRoom from "./AddRoom";
-import EditRoom from "./EditRoom";
-import DeleteRoom from "./DeleteRoom";
 
-const Rooms = () => {
-  const [dataRooms, setDataRooms] = useState([]);
-  const [dataLocations, setDataLocations] = useState([]);
+const Applications = () => {
+  const [dataApplications, setDataApplications] = useState([]);
   const { themeMode } = useThemeMode();
   const theme = useTheme();
   const [searchText, setSearchText] = useState("");
@@ -32,30 +28,13 @@ const Rooms = () => {
     severity: "success",
   });
 
-  const getRoomsData = async () => {
+  const getDataApplications = async () => {
     setLoading(true);
     try {
-      const response = await axios.get("/api/rooms");
-      console.log("rooms", response);
-      setDataRooms(response.data.data);
+      const response = await axios.get("/api/applications");
+      console.log("Applications", response);
+      setDataApplications(response.data.data);
       setTimeout(() => {
-        setLoading(false);
-      }, 1000);
-    } catch (error) {
-      console.log("error", error);
-      setTimeout(() => {
-        setLoading(false);
-      }, 1000);
-    }
-  };
-
-  const getLocationsData = async () => {
-    setLoading(true);
-    try {
-      const response = await axios.get("/api/locations");
-      console.log("locations", response);
-      setTimeout(() => {
-        setDataLocations(response.data.data);
         setLoading(false);
       }, 1000);
     } catch (error) {
@@ -67,11 +46,10 @@ const Rooms = () => {
   };
 
   useEffect(() => {
-    getRoomsData();
-    getLocationsData();
+    getDataApplications();
   }, []);
 
-  const filteredData = dataRooms.filter((item) => {
+  const filteredData = dataApplications.filter((item) => {
     // const isAvailableText =
     //   item.is_available === true
     //     ? "tersedia"
@@ -79,20 +57,20 @@ const Rooms = () => {
     //     ? "tidak tersedia"
     //     : "";
 
-    return (
-      item.room_number?.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.location_name?.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.floor?.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.room_length
-        ?.toString()
-        .toLowerCase()
-        .includes(searchText.toLowerCase()) ||
-      item.room_width
-        ?.toString()
-        .toLowerCase()
-        .includes(searchText.toLowerCase())
-      // isAvailableText.includes(searchText.toLowerCase())
-    );
+    // return (
+    //   item.room_number?.toLowerCase().includes(searchText.toLowerCase()) ||
+    //   item.location_name?.toLowerCase().includes(searchText.toLowerCase()) ||
+    //   item.floor?.toLowerCase().includes(searchText.toLowerCase()) ||
+    //   item.room_length
+    //     ?.toString()
+    //     .toLowerCase()
+    //     .includes(searchText.toLowerCase()) ||
+    //   item.room_width
+    //     ?.toString()
+    //     .toLowerCase()
+    //     .includes(searchText.toLowerCase())
+    //   // isAvailableText.includes(searchText.toLowerCase())
+    // );
   });
 
   const onChange = (pagination, filters, sorter, extra) => {
@@ -124,8 +102,8 @@ const Rooms = () => {
     return (value, record) => record[key] === value;
   }
 
-  const nameFilters = generateFilters(dataRooms, "location_name");
-  const floorFilter = generateFilters(dataRooms, "floor");
+  const nameFilters = generateFilters(dataApplications, "location_name");
+  const floorFilter = generateFilters(dataApplications, "floor");
   const statusFilters = [
     { text: "Tersedia", value: true },
     { text: "Tidak Tersedia", value: false },
@@ -278,7 +256,7 @@ const Rooms = () => {
           }}
         >
           Tambah
-          <Icon icon="cil:room" fontSize="20px" />
+          <Icon icon="fluent:document-queue-add-20-regular" fontSize="20px" />
         </Button>
       </Box>
       <ConfigProvider
@@ -330,7 +308,7 @@ const Rooms = () => {
           />
         </Paper>
       </ConfigProvider>
-      <AddRoom
+      {/* <AddRoom
         open={openAddModal}
         onClose={() => setOpenAddModal(false)}
         loadingTrue={() => setLoading(true)}
@@ -363,7 +341,7 @@ const Rooms = () => {
         getLocationsData={getLocationsData}
         onNotify={(notif) => setSnackbar(notif)}
         selectedData={selectedData}
-      />
+      /> */}
       <LoadingBackdrop message="Loading..." open={loading} />
       {/* Snackbar notification */}
       <Notification
@@ -376,4 +354,4 @@ const Rooms = () => {
   );
 };
 
-export default Rooms;
+export default Applications;

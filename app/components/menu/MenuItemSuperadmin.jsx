@@ -45,6 +45,50 @@ const menuSuperadmin = [
     ],
   },
   {
+    label: "Transactions",
+    value: "transactions",
+    icon: <Icon icon="healthicons:money-bag" fontSize={22} />,
+    submenu: [
+      {
+        label: "Tenant Application",
+        value: "tenant-application",
+        path: "/superadmin/tenant-application",
+        icon: <Icon icon="hugeicons:file-edit" fontSize="20px" />,
+        showIcon: true,
+      },
+      {
+        label: "Tenant Approval",
+        value: "tenant-approval",
+        path: "/superadmin/tenant-approval",
+        icon: <Icon icon="carbon:document-set" fontSize="20px" />,
+        showIcon: true,
+      },
+      {
+        label: "Documents",
+        value: "documents",
+        path: "/superadmin/documents",
+        icon: <Icon icon="f7:doc-on-doc" fontSize="20px" />,
+        showIcon: true,
+      },
+      {
+        label: "Payments",
+        value: "payments",
+        path: "/superadmin/payments",
+        icon: (
+          <Icon icon="streamline-freehand:money-atm-withdraw" fontSize="20px" />
+        ),
+        showIcon: true,
+      },
+      {
+        label: "Contracts",
+        value: "contracts",
+        path: "/superadmin/contracts",
+        icon: <Icon icon="clarity:contract-line" fontSize="20px" />,
+        showIcon: true,
+      },
+    ],
+  },
+  {
     label: "Report",
     value: "report",
     icon: <Icon icon="line-md:document-report-twotone" fontSize={23} />,
