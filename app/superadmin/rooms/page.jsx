@@ -73,9 +73,9 @@ const Rooms = () => {
 
   const filteredData = dataRooms.filter((item) => {
     // const isAvailableText =
-    //   item.is_available === true
+    //   item.is_available === false
     //     ? "tersedia"
-    //     : item.is_available === false
+    //     : item.is_available === true
     //     ? "tidak tersedia"
     //     : "";
 
@@ -127,8 +127,8 @@ const Rooms = () => {
   const nameFilters = generateFilters(dataRooms, "location_name");
   const floorFilter = generateFilters(dataRooms, "floor");
   const statusFilters = [
-    { text: "Tersedia", value: true },
-    { text: "Tidak Tersedia", value: false },
+    { text: "Tersedia", value: false },
+    { text: "Tidak Tersedia", value: true },
   ];
 
   const columns = [
@@ -174,6 +174,18 @@ const Rooms = () => {
       filterSearch: true,
       sorter: (a, b) => a.floor.localeCompare(b.floor),
       sortDirections: ["ascend", "descend"],
+      render: (text, record) => {
+        return (
+          <Tag
+            // warna random berdasarkan angka ganjil genap
+            color={themeMode === "dark" ? "orange" : "red"}
+            key={record.id}
+            style={{ fontWeight: "bold" }}
+          >
+            L{record.floor}
+          </Tag>
+        );
+      },
       width: 110,
     },
     {
@@ -207,11 +219,11 @@ const Rooms = () => {
         if (typeof record?.is_available !== "boolean") return null;
         return (
           <Tag
-            color={record.is_available ? "green" : "red"}
+            color={!record.is_available ? "green" : "red"}
             key={record.id}
             style={{ fontWeight: "bold" }}
           >
-            {record.is_available ? "Tersedia" : "Tidak Tersedia"}
+            {!record.is_available ? "Tersedia" : "Tidak Tersedia"}
           </Tag>
         );
       },
@@ -354,7 +366,7 @@ const Rooms = () => {
         selectedData={selectedData}
       />
       <DeleteRoom
-      open={openDeleteModal}
+        open={openDeleteModal}
         onClose={() => setOpenDeleteModal(false)}
         loadingTrue={() => setLoading(true)}
         loadingFalse={() => setLoading(false)}

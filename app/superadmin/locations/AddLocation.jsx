@@ -124,8 +124,8 @@ const AddLocation = ({
             mb: 2,
           }}
         >
-          <Typography variant="h6" component="h2">
-            Tambah Lokasi
+          <Typography variant="h6" component="h2" sx={{ fontWeight: "bold" }}>
+            Form Tambah Lokasi
           </Typography>
         </Box>
         <form onSubmit={handleSubmit}>
@@ -186,7 +186,7 @@ const AddLocation = ({
                   loading && <CircularProgress size={22} color="inherit" />
                 }
               >
-                {loading ? "Mengirim..." : "Buat Lokasi"}
+                {loading ? "Mengirim..." : "Submit Data"}
               </Button>
             </Grid>
           </Grid>

@@ -140,8 +140,8 @@ const AddRoom = ({
             mb: 2,
           }}
         >
-          <Typography variant="h6" component="h2">
-            Tambah Ruangan
+          <Typography variant="h6" component="h2" sx={{ fontWeight: "bold" }}>
+            Form Tambah Ruangan
           </Typography>
         </Box>
         <form onSubmit={handleSubmit}>
@@ -266,7 +266,7 @@ const AddRoom = ({
                   loading && <CircularProgress size={22} color="inherit" />
                 }
               >
-                {loading ? "Mengirim..." : "Buat Ruangan"}
+                {loading ? "Mengirim..." : "Submit Data"}
               </Button>
             </Grid>
           </Grid>

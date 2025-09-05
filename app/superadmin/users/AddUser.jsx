@@ -144,7 +144,7 @@ const AddUser = ({
           }}
         >
           <Typography variant="h6" component="h2" sx={{ fontWeight: "bold" }}>
-            Tambah User
+            Form Tambah User
           </Typography>
         </Box>
         <form onSubmit={handleSubmit}>
@@ -283,7 +283,7 @@ const AddUser = ({
                   loading && <CircularProgress size={22} color="inherit" />
                 }
               >
-                {loading ? "Mengirim..." : "Buat User"}
+                {loading ? "Mengirim..." : "Submit Data"}
               </Button>
             </Grid>
           </Grid>

@@ -65,7 +65,8 @@ const DeleteRoom = ({
         onNotify({
           open: true,
           message:
-            error.response.data.message || "Terjadi error saat menghapus ruangan.",
+            error.response.data.message ||
+            "Terjadi error saat menghapus ruangan.",
           severity: "error",
         });
     }
@@ -151,8 +152,7 @@ const DeleteRoom = ({
                 mb: 1,
               }}
             >
-              Tindakan ini tidak dapat di batalkan, Anda yakin ingin menghapus
-              Ruangan dengan nomor {" "}
+              Tindakan ini tidak dapat di batalkan, Anda yakin ingin menghapus{" "}
               <span
                 style={{
                   fontWeight: "bolder",
@@ -162,7 +162,7 @@ const DeleteRoom = ({
                   fontSize: 14,
                 }}
               >
-                {selectedData && selectedData.room_number
+                Ruangan Nomor {selectedData && selectedData.room_number
                   ? selectedData.room_number
                   : ""}
               </span>{" "}

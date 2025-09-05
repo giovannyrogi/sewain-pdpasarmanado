@@ -10,9 +10,13 @@ import Notification from "../../components/Notification";
 import axios from "axios";
 import BreadcrumbPage from "@/app/components/breadcrumb/page";
 import menuSuperadmin from "@/app/components/menu/MenuItemSuperadmin";
+import formatRupiah from "@/app/components/formatrupiah/page";
+import AddTenantApplication from "./AddTenantApplication";
 
 const Applications = () => {
-  const [dataApplications, setDataApplications] = useState([]);
+  const [dataTenantApplication, setDataTenantApplication] = useState([]);
+  const [dataLocations, setDataLocations] = useState([]);
+  const [dataAvailableRooms, setDataAvailableRooms] = useState([]);
   const { themeMode } = useThemeMode();
   const theme = useTheme();
   const [searchText, setSearchText] = useState("");
@@ -28,12 +32,12 @@ const Applications = () => {
     severity: "success",
   });
 
-  const getDataApplications = async () => {
+  const getDataTenantApplication = async () => {
     setLoading(true);
     try {
-      const response = await axios.get("/api/applications");
-      console.log("Applications", response);
-      setDataApplications(response.data.data);
+      const response = await axios.get("/api/tenant-application");
+      console.log("tenant application", response);
+      setDataTenantApplication(response.data.data);
       setTimeout(() => {
         setLoading(false);
       }, 1000);
@@ -45,11 +49,38 @@ const Applications = () => {
     }
   };
 
+  const getLocationsData = async () => {
+    setLoading(true);
+    try {
+      const response = await axios.get("/api/locations");
+      console.log("locations", response);
+      setDataLocations(response.data.data);
+      setLoading(false);
+    } catch (error) {
+      console.log("error", error);
+    }
+  };
+
+  const getRoomsData = async () => {
+    setLoading(true);
+    try {
+      const response = await axios.get("/api/rooms/available-rooms");
+      console.log("available rooms", response);
+      setDataAvailableRooms(response.data.data);
+      setLoading(false);
+    } catch (error) {
+      console.log("error", error);
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    getDataApplications();
+    getDataTenantApplication();
+    getLocationsData();
+    getRoomsData();
   }, []);
 
-  const filteredData = dataApplications.filter((item) => {
+  const filteredData = dataTenantApplication.filter((item) => {
     // const isAvailableText =
     //   item.is_available === true
     //     ? "tersedia"
@@ -57,20 +88,7 @@ const Applications = () => {
     //     ? "tidak tersedia"
     //     : "";
 
-    // return (
-    //   item.room_number?.toLowerCase().includes(searchText.toLowerCase()) ||
-    //   item.location_name?.toLowerCase().includes(searchText.toLowerCase()) ||
-    //   item.floor?.toLowerCase().includes(searchText.toLowerCase()) ||
-    //   item.room_length
-    //     ?.toString()
-    //     .toLowerCase()
-    //     .includes(searchText.toLowerCase()) ||
-    //   item.room_width
-    //     ?.toString()
-    //     .toLowerCase()
-    //     .includes(searchText.toLowerCase())
-    //   // isAvailableText.includes(searchText.toLowerCase())
-    // );
+    return item.tenant_name?.toLowerCase().includes(searchText.toLowerCase());
   });
 
   const onChange = (pagination, filters, sorter, extra) => {
@@ -102,8 +120,16 @@ const Applications = () => {
     return (value, record) => record[key] === value;
   }
 
-  const nameFilters = generateFilters(dataApplications, "location_name");
-  const floorFilter = generateFilters(dataApplications, "floor");
+  const tenant_name = generateFilters(dataTenantApplication, "tenant_name");
+  const floorFilter = generateFilters(dataTenantApplication, "floor");
+  const locationFilters = generateFilters(
+    dataTenantApplication,
+    "location_name"
+  );
+  const paymentTypeFilters = generateFilters(
+    dataTenantApplication,
+    "payment_type"
+  );
   const statusFilters = [
     { text: "Tersedia", value: true },
     { text: "Tidak Tersedia", value: false },
@@ -111,22 +137,43 @@ const Applications = () => {
 
   const columns = [
     {
-      title: "Nama Lokasi",
+      title: "Nama Penyewa",
+      dataIndex: "tenant_name",
+      filters: tenant_name,
+      onFilter: createOnFilter("tenant_name"),
+      filterSearch: true,
+      sorter: (a, b) => a.tenant_name.localeCompare(b.tenant_name),
+      sortDirections: ["ascend", "descend"],
+      render: (text, record) => (
+        <Typography
+          sx={{
+            fontWeight: "bold",
+            fontSize: "12px",
+            textTransform: "capitalize",
+            cursor: "pointer",
+            "&:hover": {
+              color: theme.palette.primary.main,
+              textDecoration: "underline",
+            },
+          }}
+        >
+          {record.tenant_name}
+        </Typography>
+      ),
+      width: 200,
+    },
+    {
+      title: "Lokasi",
       dataIndex: "location_name",
-      filters: nameFilters,
+      filters: locationFilters,
       onFilter: createOnFilter("location_name"),
       filterSearch: true,
       sorter: (a, b) => a.location_name.localeCompare(b.location_name),
       sortDirections: ["ascend", "descend"],
-      render: (text, record) => (
-        <Typography sx={{ fontWeight: "bold", fontSize: "12px" }}>
-          {record.location_name}
-        </Typography>
-      ),
       width: 150,
     },
     {
-      title: "Nomor",
+      title: "Ruangan",
       dataIndex: "room_number",
       sorter: (a, b) => a.room_number.localeCompare(b.room_number),
       sortDirections: ["ascend", "descend"],
@@ -142,7 +189,7 @@ const Applications = () => {
           </Tag>
         );
       },
-      width: 100,
+      width: 120,
     },
     {
       title: "Lantai",
@@ -152,6 +199,18 @@ const Applications = () => {
       filterSearch: true,
       sorter: (a, b) => a.floor.localeCompare(b.floor),
       sortDirections: ["ascend", "descend"],
+      render: (text, record) => {
+        return (
+          <Tag
+            // warna random berdasarkan angka ganjil genap
+            color={themeMode === "dark" ? "orange" : "red"}
+            key={record.id}
+            style={{ fontWeight: "bold" }}
+          >
+            L{record.floor}
+          </Tag>
+        );
+      },
       width: 110,
     },
     {
@@ -175,25 +234,59 @@ const Applications = () => {
       ),
     },
     {
-      title: "Status",
-      dataIndex: "is_available",
-      // sorter: (a, b) => Number(a.is_available) - Number(b.is_available),
+      title: "Tipe Pembayaran",
+      dataIndex: "payment_type",
+      filters: paymentTypeFilters,
+      onFilter: createOnFilter("payment_type"),
+      filterSearch: true,
+      // sorter: (a, b) => a.payment_type.localeCompare(b.payment_type),
       // sortDirections: ["ascend", "descend"],
-      filters: statusFilters,
-      onFilter: (value, record) => record.is_available === value,
       render: (text, record) => {
-        if (typeof record?.is_available !== "boolean") return null;
         return (
           <Tag
-            color={record.is_available ? "green" : "red"}
+            // warna random berdasarkan angka ganjil genap
+            color={record.payment_type === "cicilan" ? "blue" : "green"}
             key={record.id}
             style={{ fontWeight: "bold" }}
           >
-            {record.is_available ? "Tersedia" : "Tidak Tersedia"}
+            {record.payment_type === "cicilan" ? "Cicilan" : "Lunas"}
           </Tag>
         );
       },
-      width: 100,
+      width: 160,
+    },
+    {
+      title: "DP (40%)",
+      dataIndex: "down_payment",
+      filterSearch: true,
+      render: (text, record) => (
+        <Typography sx={{ fontWeight: "bold", fontSize: "12px" }}>
+          {formatRupiah(record.down_payment)}
+        </Typography>
+      ),
+      width: 110,
+    },
+    {
+      title: "Sisa Pembayaran",
+      dataIndex: "remaining_payment",
+      filterSearch: true,
+      render: (text, record) => (
+        <Typography sx={{ fontWeight: "bold", fontSize: "12px" }}>
+          {formatRupiah(record.remaining_payment)}
+        </Typography>
+      ),
+      width: 150,
+    },
+    {
+      title: "Total Pembayaran",
+      dataIndex: "total_payment",
+      filterSearch: true,
+      render: (text, record) => (
+        <Typography sx={{ fontWeight: "bold", fontSize: "12px" }}>
+          {formatRupiah(record.total_payment)}
+        </Typography>
+      ),
+      width: 150,
     },
     {
       title: "Actions",
@@ -308,40 +401,22 @@ const Applications = () => {
           />
         </Paper>
       </ConfigProvider>
-      {/* <AddRoom
+      <AddTenantApplication
         open={openAddModal}
         onClose={() => setOpenAddModal(false)}
         loadingTrue={() => setLoading(true)}
         loadingFalse={() => setLoading(false)}
         loading={loading}
-        getRoomsData={getRoomsData}
+        getDataTenantApplication={getDataTenantApplication}
         getLocationsData={getLocationsData}
+        getRoomsData={getRoomsData}
+        dataAvailableRooms={dataAvailableRooms}
+        dataTenantApplication={dataTenantApplication}
         dataLocations={dataLocations}
         onNotify={(notif) => setSnackbar(notif)}
+        theme={theme}
+        themeMode={themeMode}
       />
-      <EditRoom
-        open={openEditModal}
-        onClose={() => setOpenEditModal(false)}
-        loadingTrue={() => setLoading(true)}
-        loadingFalse={() => setLoading(false)}
-        loading={loading}
-        getRoomsData={getRoomsData}
-        getLocationsData={getLocationsData}
-        dataLocations={dataLocations}
-        onNotify={(notif) => setSnackbar(notif)}
-        selectedData={selectedData}
-      />
-      <DeleteRoom
-      open={openDeleteModal}
-        onClose={() => setOpenDeleteModal(false)}
-        loadingTrue={() => setLoading(true)}
-        loadingFalse={() => setLoading(false)}
-        loading={loading}
-        getRoomsData={getRoomsData}
-        getLocationsData={getLocationsData}
-        onNotify={(notif) => setSnackbar(notif)}
-        selectedData={selectedData}
-      /> */}
       <LoadingBackdrop message="Loading..." open={loading} />
       {/* Snackbar notification */}
       <Notification

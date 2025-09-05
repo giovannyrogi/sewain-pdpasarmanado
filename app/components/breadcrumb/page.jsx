@@ -69,8 +69,8 @@ function findMenuPath(menuList, pathParts) {
 }
 
 const BreadcrumbPage = ({ menuList }) => {
- const { themeMode, setThemeMode } = useThemeMode();
-   const theme = useTheme();
+  const { themeMode, setThemeMode } = useThemeMode();
+  const theme = useTheme();
   // Ambil path saat ini, misal: /admin/datamaster/locations
   const pathname = usePathname();
   // Slice 1 untuk menghilangkan slash awal contoh : "/admin/datamaster/locations" jadi "/datamaster/locations"
@@ -101,7 +101,12 @@ const BreadcrumbPage = ({ menuList }) => {
               underline="hover"
               color="inherit"
               href={item.path || "#"}
-              sx={{ display: "flex", alignItems: "center", gap: 1 }}
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
+                fontSize: "14px",
+              }}
             >
               {item.icon}
               {item.label}
@@ -116,6 +121,7 @@ const BreadcrumbPage = ({ menuList }) => {
                 gap: 1,
                 color: theme.palette.primary.main,
                 fontWeight: "bold",
+                fontSize: "14px",
               }}
             >
               {item.icon}

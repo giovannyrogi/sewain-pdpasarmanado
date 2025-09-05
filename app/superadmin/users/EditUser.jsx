@@ -147,7 +147,7 @@ const EditUser = ({
           }}
         >
           <Typography variant="h6" component="h2" sx={{ fontWeight: "bold" }}>
-            Edit Data User
+            Form Ubah Data User
           </Typography>
         </Box>
         <form onSubmit={handleSubmit}>
@@ -286,7 +286,7 @@ const EditUser = ({
                   loading && <CircularProgress size={22} color="inherit" />
                 }
               >
-                {loading ? "Mengirim..." : "Ubah Data"}
+                {loading ? "Mengirim..." : "Submit Data"}
               </Button>
             </Grid>
           </Grid>

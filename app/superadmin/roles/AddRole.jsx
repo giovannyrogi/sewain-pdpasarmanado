@@ -125,7 +125,7 @@ const AddRole = ({
           }}
         >
           <Typography variant="h6" component="h2" sx={{ fontWeight: "bold" }}>
-            Tambah Role
+            Form Tambah Role
           </Typography>
         </Box>
         <form onSubmit={handleSubmit}>
@@ -160,7 +160,7 @@ const AddRole = ({
                   loading && <CircularProgress size={22} color="inherit" />
                 }
               >
-                {loading ? "Mengirim..." : "Buat Role"}
+                {loading ? "Mengirim..." : "Submit Data"}
               </Button>
             </Grid>
           </Grid>

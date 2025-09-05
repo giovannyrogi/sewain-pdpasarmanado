@@ -145,8 +145,8 @@ const EditRoom = ({
             mb: 2,
           }}
         >
-          <Typography variant="h6" component="h2">
-            Tambah Ruangan
+          <Typography variant="h6" component="h2" sx={{ fontWeight: "bold" }}>
+            Form Edit Ruangan
           </Typography>
         </Box>
         <form onSubmit={handleSubmit}>
@@ -249,8 +249,8 @@ const EditRoom = ({
                     setIsAvailable(e.target.value);
                   }}
                 >
-                  <MenuItem value={true}>Tersedia</MenuItem>
-                  <MenuItem value={false}>Tidak Tersedia</MenuItem>
+                  <MenuItem value={true}>Tidak Tersedia</MenuItem>
+                  <MenuItem value={false}>Tersedia</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
@@ -271,7 +271,7 @@ const EditRoom = ({
                   loading && <CircularProgress size={22} color="inherit" />
                 }
               >
-                {loading ? "Mengirim..." : "Buat Ruangan"}
+                {loading ? "Mengirim..." : "Submit Data"}
               </Button>
             </Grid>
           </Grid>

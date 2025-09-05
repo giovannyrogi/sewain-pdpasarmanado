@@ -128,8 +128,8 @@ const EditLocation = ({
             mb: 2,
           }}
         >
-          <Typography variant="h6" component="h2">
-            Edit Lokasi
+          <Typography variant="h6" component="h2"  sx={{ fontWeight: "bold" }}>
+            Form Ubah Lokasi
           </Typography>
         </Box>
         <form onSubmit={handleSubmit}>
@@ -190,7 +190,7 @@ const EditLocation = ({
                   loading && <CircularProgress size={22} color="inherit" />
                 }
               >
-                {loading ? "Mengirim..." : "Buat Lokasi"}
+                {loading ? "Mengirim..." : "Submit Data"}
               </Button>
             </Grid>
           </Grid>
