@@ -10,6 +10,7 @@ import {
   Fade,
   Divider,
   Grid,
+  useTheme,
 } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import { Icon } from "@iconify/react";
@@ -20,7 +21,6 @@ const InformationPreviewModal = ({
   open,
   onClose,
   selectedData,
-  themeMode,
   title,
 }) => {
   const isMobile = useMediaQuery("(max-width:600px)");
