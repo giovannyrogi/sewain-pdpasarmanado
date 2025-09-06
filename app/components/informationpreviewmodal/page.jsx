@@ -20,7 +20,6 @@ const InformationPreviewModal = ({
   open,
   onClose,
   selectedData,
-  theme,
   themeMode,
   title,
 }) => {
@@ -29,6 +28,7 @@ const InformationPreviewModal = ({
   const [openPreview, setOpenPreview] = useState(false);
 
   //   console.log("selectedData", selectedData);
+  const theme = useTheme();
 
   const style = {
     position: "absolute",
@@ -103,7 +103,7 @@ const InformationPreviewModal = ({
                     whiteSpace: "normal", // <-- biar bisa turun baris
                     overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
                   }}
-                > 
+                >
                   {selectedData?.tenant_name ? selectedData.tenant_name : "-"}
                 </Typography>
               </Grid>
