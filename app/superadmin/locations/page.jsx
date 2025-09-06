@@ -37,10 +37,14 @@ const Locations = () => {
       const response = await axios.get("/api/locations");
       console.log("locations", response);
       setDataLocations(response.data.data);
+      setTimeout(() => {
+        setLoading(false);
+      }, 1000);
     } catch (error) {
       console.log("error", error);
-    } finally {
-      setLoading(false);
+      setTimeout(() => {
+        setLoading(false);
+      }, 1000);
     }
   };
 

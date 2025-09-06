@@ -31,15 +31,23 @@ const LoadingBackdrop = ({
         flexDirection={"column"}
         gap={2}
       >
-        <CircularProgress sx={{ color: theme.palette.primary.main }} />
+        <CircularProgress
+          sx={{
+            color:
+              themeMode === "dark"
+                ? theme.palette.primary.main
+                : '#fff',
+          }}
+        />
         {message && (
           <Typography
             sx={{
               ml: 2,
               fontWeight: "bold",
-              color: theme.palette.primary.main,
-              //shadow
-              textShadow: "1px 1px 2px rgba(0, 0, 0, 0.50)",
+              color:
+                themeMode === "dark"
+                  ? theme.palette.primary.main
+                  : '#fff',
             }}
           >
             {message}
