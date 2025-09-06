@@ -11,7 +11,7 @@ import { useThemeMode } from "../themeprovider/ThemeContext";
  * @param {string[]} pathParts - Array bagian path, misal: ["datamaster", "locations"]
  * @returns {Array} - Array urutan breadcrumbs
  */
-function findMenuPath(menuList, pathParts) {
+function findMenuPath(menuList = [], pathParts = []) {
   // Cek dari depan ke belakang, cari menu dan submenu yang match
   for (const menu of menuList) {
     // Cek submenu
@@ -68,7 +68,7 @@ function findMenuPath(menuList, pathParts) {
   ];
 }
 
-const BreadcrumbPage = ({ menuList }) => {
+const BreadcrumbPage = ({ menuList = [] }) => {
   const { themeMode, setThemeMode } = useThemeMode();
   const theme = useTheme();
   // Ambil path saat ini, misal: /admin/datamaster/locations
