@@ -39,11 +39,11 @@ const DeleteLocation = ({
       const response = await axios.delete(`/api/locations/${locationId}`);
       console.log("response delete", response);
 
-      if (response?.data.success) {
+      if (response?.data?.success) {
         onNotify &&
           onNotify({
             open: true,
-            message: response.data.message || "Lokasi berhasil dihapus!",
+            message: response.data?.message || "Lokasi berhasil dihapus!",
             severity: "success",
           });
         setTimeout(() => {
@@ -55,7 +55,7 @@ const DeleteLocation = ({
         onNotify &&
           onNotify({
             open: true,
-            message: response?.data.message || "Gagal menghapus lokasi.",
+            message: response?.data?.message || "Gagal menghapus lokasi.",
             severity: "error",
           });
         setTimeout(() => {
@@ -67,7 +67,7 @@ const DeleteLocation = ({
       onNotify &&
         onNotify({
           open: true,
-          message: error.message || "Terjadi error saat menghapus lokasi.",
+          message: error?.response?.data?.message || "Terjadi error saat menghapus lokasi.",
           severity: "error",
         });
       setTimeout(() => {
