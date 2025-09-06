@@ -12,6 +12,7 @@ import BreadcrumbPage from "@/app/components/breadcrumb/page";
 import menuSuperadmin from "@/app/components/menu/MenuItemSuperadmin";
 import formatRupiah from "@/app/components/formatrupiah/page";
 import AddTenantApplication from "./AddTenantApplication";
+import InformationPreviewModal from "@/app/components/informationpreviewmodal/page";
 
 const Applications = () => {
   const [dataTenantApplication, setDataTenantApplication] = useState([]);
@@ -31,6 +32,8 @@ const Applications = () => {
     message: "",
     severity: "success",
   });
+  const [loadingMessage, setLoadingMessage] = useState("Loading...");
+  const [openInformationModal, setOpenInformationModal] = useState(false);
 
   const getDataTenantApplication = async () => {
     setLoading(true);
@@ -61,23 +64,9 @@ const Applications = () => {
     }
   };
 
-  const getRoomsData = async () => {
-    setLoading(true);
-    try {
-      const response = await axios.get("/api/rooms/available-rooms");
-      console.log("available rooms", response);
-      setDataAvailableRooms(response.data.data);
-      setLoading(false);
-    } catch (error) {
-      console.log("error", error);
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
     getDataTenantApplication();
     getLocationsData();
-    getRoomsData();
   }, []);
 
   const filteredData = dataTenantApplication.filter((item) => {
@@ -88,7 +77,15 @@ const Applications = () => {
     //     ? "tidak tersedia"
     //     : "";
 
-    return item.tenant_name?.toLowerCase().includes(searchText.toLowerCase());
+    return (
+      item.tenant_name?.toLowerCase().includes(searchText.toLowerCase()) ||
+      item.location_name?.toLowerCase().includes(searchText.toLowerCase()) ||
+      item.payment_type?.toLowerCase().includes(searchText.toLowerCase()) ||
+      item.room_number?.toLowerCase().includes(searchText.toLowerCase()) ||
+      item.down_payment?.toLowerCase().includes(searchText.toLowerCase()) ||
+      item.total_payment?.toLowerCase().includes(searchText.toLowerCase()) ||
+      item.remaining_payment?.toLowerCase().includes(searchText.toLowerCase())
+    );
   });
 
   const onChange = (pagination, filters, sorter, extra) => {
@@ -107,6 +104,12 @@ const Applications = () => {
     // console.log("delete record", record);
     setSelectedData(record);
     setOpenDeleteModal(true);
+  };
+
+  const handleInformation = (record) => {
+    // console.log("delete record", record);
+    setSelectedData(record);
+    setOpenInformationModal(true);
   };
 
   // Utility untuk filter dinamis
@@ -130,10 +133,6 @@ const Applications = () => {
     dataTenantApplication,
     "payment_type"
   );
-  const statusFilters = [
-    { text: "Tersedia", value: true },
-    { text: "Tidak Tersedia", value: false },
-  ];
 
   const columns = [
     {
@@ -156,6 +155,7 @@ const Applications = () => {
               textDecoration: "underline",
             },
           }}
+          onClick={() => handleInformation(record)}
         >
           {record.tenant_name}
         </Typography>
@@ -170,7 +170,7 @@ const Applications = () => {
       filterSearch: true,
       sorter: (a, b) => a.location_name.localeCompare(b.location_name),
       sortDirections: ["ascend", "descend"],
-      width: 150,
+      width: 200,
     },
     {
       title: "Ruangan",
@@ -230,6 +230,26 @@ const Applications = () => {
       render: (text, record) => (
         <Typography sx={{ fontWeight: "bold", fontSize: "12px" }}>
           {record.room_width} M
+        </Typography>
+      ),
+    },
+    {
+      title: "Tanggal Mulai",
+      dataIndex: "start_date",
+      width: 150,
+      render: (text, record) => (
+        <Typography sx={{ fontWeight: "bold", fontSize: "12px" }}>
+          {moment(record.start_date).format("D MMMM YYYY")}
+        </Typography>
+      ),
+    },
+    {
+      title: "Tanggal Selesai",
+      dataIndex: "end_date",
+      width: 150,
+      render: (text, record) => (
+        <Typography sx={{ fontWeight: "bold", fontSize: "12px" }}>
+          {moment(record.end_date).format("D MMMM YYYY")}
         </Typography>
       ),
     },
@@ -409,15 +429,22 @@ const Applications = () => {
         loading={loading}
         getDataTenantApplication={getDataTenantApplication}
         getLocationsData={getLocationsData}
-        getRoomsData={getRoomsData}
-        dataAvailableRooms={dataAvailableRooms}
         dataTenantApplication={dataTenantApplication}
         dataLocations={dataLocations}
         onNotify={(notif) => setSnackbar(notif)}
         theme={theme}
         themeMode={themeMode}
+        setLoadingMessage={setLoadingMessage}
       />
-      <LoadingBackdrop message="Loading..." open={loading} />
+      <InformationPreviewModal
+        open={openInformationModal}
+        onClose={() => setOpenInformationModal(false)}
+        selectedData={selectedData}
+        theme={theme}
+        themeMode={themeMode}
+        title="Preview Informasi Pemohon"
+      />
+      <LoadingBackdrop message={loadingMessage} open={loading} />
       {/* Snackbar notification */}
       <Notification
         open={snackbar.open}

@@ -1,10 +1,39 @@
 import pool from "@/lib/dbConfig";
 import moment from "moment";
-
 export async function GET(req) {
   try {
-    const result = await pool.query(
-      `SELECT 
+    const { searchParams } = new URL(req.url);
+    const locationId = searchParams.get("location_id");
+
+    let result;
+    if (locationId) {
+      // Filter rooms hanya untuk lokasi tertentu
+      result = await pool.query(
+        `
+        SELECT 
+          rooms.id,
+          rooms.room_number,
+          rooms.floor,
+          rooms.room_length,
+          rooms.room_width,
+          rooms.is_available,
+          rooms.updated_at,
+          rooms.created_at,
+          rooms.location_id,
+          locations.location_name
+        FROM rooms
+        JOIN locations ON rooms.location_id = locations.id
+        WHERE rooms.is_available = false 
+          AND rooms.location_id = $1
+        ORDER BY rooms.created_at DESC
+        `,
+        [locationId]
+      );
+    } else {
+      // Jika tidak ada filter, tampilkan semua
+      result = await pool.query(
+        `
+        SELECT 
           rooms.id,
           rooms.room_number,
           rooms.floor,
@@ -18,8 +47,10 @@ export async function GET(req) {
         FROM rooms
         JOIN locations ON rooms.location_id = locations.id
         WHERE rooms.is_available = false
-        ORDER BY rooms.created_at DESC`
-    );
+        ORDER BY rooms.created_at DESC
+        `
+      );
+    }
 
     const rows = result.rows.map((row) => ({
       id: row.id,
@@ -41,7 +72,7 @@ export async function GET(req) {
     return new Response(
       JSON.stringify({
         success: true,
-        message: "Berhasil mengambil data rooms yang tidak tersedia",
+        message: "Berhasil mengambil data rooms",
         data: rows,
       }),
       { status: 200 }

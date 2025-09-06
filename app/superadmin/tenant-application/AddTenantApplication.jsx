@@ -19,10 +19,11 @@ import axios from "axios";
 import moment from "moment";
 import { Add } from "@mui/icons-material";
 import { Icon } from "@iconify/react";
-import ImagePreviewModal from "@/app/components/imageprevidemodal/page";
+import ImagePreviewModal from "@/app/components/imagepreviewmodal/page";
 import { DatePicker } from "@mui/x-date-pickers";
 import dayjs from "dayjs";
 import formatRupiah from "@/app/components/formatrupiah/page";
+import LoadingBackdrop from "@/app/components/loading/Backdrop";
 
 const AddTenantApplication = ({
   open,
@@ -31,14 +32,12 @@ const AddTenantApplication = ({
   loadingFalse,
   loading,
   getDataTenantApplication,
-  getRoomsData,
-  dataTenantApplication,
   getLocationsData,
-  dataAvailableRooms,
   dataLocations,
   onNotify,
   theme,
   themeMode,
+  setLoadingMessage,
 }) => {
   const isMobile = useMediaQuery("(max-width:600px)");
 
@@ -67,8 +66,38 @@ const AddTenantApplication = ({
   const [totalPayment, setTotalPayment] = useState("");
   const [downPayment, setDownPayment] = useState("");
   const [remainingPayment, setRemainingPayment] = useState("");
-  const [approvalStatus, setApprovalStatus] = useState("");
+  const [approvalStatus, setApprovalStatus] = useState("proses");
   const [openPreview, setOpenPreview] = useState(false);
+  const [dataAvailableRooms, setDataAvailableRooms] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const getRoomsData = async (locationId) => {
+    if (!locationId) {
+      setDataAvailableRooms([]);
+      return;
+    }
+
+    setLoadingMessage("Mengambil data ruangan...");
+
+    loadingTrue();
+
+    try {
+      const response = await axios.get(
+        `/api/rooms/available-rooms?location_id=${locationId}`
+      );
+      setDataAvailableRooms(response.data.data);
+      setTimeout(() => {
+        loadingFalse();
+        setLoadingMessage("");
+      }, 500);
+    } catch (error) {
+      console.log("error", error);
+      setTimeout(() => {
+        loadingFalse();
+        setLoadingMessage("");
+      }, 500);
+    }
+  };
 
   // Sinkronisasi DP & Sisa saat totalPayment atau paymentType berubah
   useEffect(() => {
@@ -94,23 +123,77 @@ const AddTenantApplication = ({
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    loadingTrue();
-    console.log("locationId", locationId);
-    console.log("roomId", roomId);
-    console.log("ktpFile", ktpFile);
-    console.log("ktpFilePath", ktpFilePath);
+
+    // Validasi KTP
+    if (!ktpFile) {
+      onNotify &&
+        onNotify({
+          open: true,
+          message: "Silakan upload gambar KTP terlebih dahulu.",
+          severity: "error",
+        });
+      loadingFalse && loadingFalse();
+      setIsSubmitting(false);
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    if (!totalPayment || totalPayment === 0) {
+      onNotify &&
+        onNotify({
+          open: true,
+          message: "Silakan isi total pembayaran terlebih dahulu.",
+          severity: "error",
+        });
+      loadingFalse && loadingFalse();
+      setIsSubmitting(false);
+      return;
+    }
 
     try {
-      const response = await axios.post("/api/tenant-applications", {
-        location_id: locationId,
-      });
+      const formData = new FormData();
+      formData.append("location_id", locationId);
+      formData.append("room_id", roomId);
+      formData.append("tenant_name", tenantName);
+      formData.append("tenant_nik", tenantNIK);
+      formData.append("tenant_phone", tenantPhone);
+      formData.append(
+        "start_date",
+        startDate ? moment(startDate).format("YYYY-MM-DD") : ""
+      );
+      formData.append(
+        "end_date",
+        endDate ? moment(endDate).format("YYYY-MM-DD") : ""
+      );
+      formData.append("payment_type", paymentType);
+      formData.append("total_payment", totalPayment);
+      formData.append("down_payment", downPayment);
+      formData.append("remaining_payment", remainingPayment);
+      formData.append("approval_status", approvalStatus);
+      // formData.append("ktp_file_path", ktpFilePath);
 
-      if (response.data.success) {
-        // Notifikasi sukses
+      if (ktpFile) {
+        formData.append("ktp_file", ktpFile);
+      }
+
+      // for (let pair of formData.entries()) {
+      //   console.log(pair[0], pair[1]);
+      // }
+
+      const response = await fetch("/api/tenant-application", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await response.json();
+
+      console.log("data", data);
+
+      if (data?.success) {
         onNotify &&
           onNotify({
             open: true,
-            message: response.data.message || "Ruangan berhasil ditambahkan!",
+            message: data?.message || "Form Permohonan berhasil dibuat!",
             severity: "success",
           });
         setTimeout(() => {
@@ -118,36 +201,51 @@ const AddTenantApplication = ({
           getLocationsData();
           getRoomsData();
           onClose();
-          loadingFalse();
+          setIsSubmitting(false);
           clearForm();
         }, 1000);
       } else {
-        // Notifikasi error
         onNotify &&
           onNotify({
             open: true,
-            message: response.data.message || "Gagal menambah Ruangan.",
+            message: data.message || "Gagal membuat form permohonan.",
             severity: "error",
           });
         setTimeout(() => {
-          loadingFalse();
+          setIsSubmitting(false);
         }, 1000);
       }
     } catch (error) {
+      console.log("error", error);
       onNotify &&
         onNotify({
           open: true,
-          message: error.message || "Terjadi error saat menambah Ruangan.",
+          message:
+            error.response?.data?.message ||
+            error.message ||
+            "Terjadi error saat membuat form permohonan.",
           severity: "error",
         });
       setTimeout(() => {
-        loadingFalse();
+        setIsSubmitting(false);
       }, 1000);
     }
   };
 
   const clearForm = () => {
     setLocationId("");
+    setRoomId("");
+    setTenantName("");
+    setTenantNIK("");
+    setTenantPhone("");
+    setStartDate(null);
+    setEndDate(null);
+    setPaymentType("");
+    setTotalPayment("");
+    setDownPayment("");
+    setRemainingPayment("");
+    setKtpFile(null);
+    setKtpFilePath(null);
   };
 
   const handleKtpChange = (e) => {
@@ -199,7 +297,7 @@ const AddTenantApplication = ({
             mb: 2,
           }}
         >
-          <Typography variant="h6" component="h2"  sx={{ fontWeight: "bold" }}>
+          <Typography variant="h6" component="h2" sx={{ fontWeight: "bold" }}>
             Form Permohonan
           </Typography>
         </Box>
@@ -341,7 +439,9 @@ const AddTenantApplication = ({
                     : null
                 }
                 onChange={(event, newValue) => {
-                  setLocationId(newValue ? newValue.id : "");
+                  const selectedLocationId = newValue ? newValue.id : "";
+                  setLocationId(selectedLocationId);
+                  getRoomsData(selectedLocationId); // <-- load rooms sesuai lokasi
                 }}
                 renderInput={(params) => (
                   <TextField
@@ -355,6 +455,7 @@ const AddTenantApplication = ({
             </Grid>
             <Grid size={isMobile ? 12 : 6}>
               <Autocomplete
+                disabled={!locationId}
                 options={dataAvailableRooms || []}
                 getOptionLabel={(option) =>
                   option.room_number
@@ -425,19 +526,6 @@ const AddTenantApplication = ({
               />
             </Grid>
             <Grid size={isMobile ? 12 : 6}>
-              <TextField
-                label="Total Pembayaran"
-                variant="filled"
-                fullWidth
-                value={formatRupiah(totalPayment)}
-                onChange={(e) => {
-                  setTotalPayment(e.target.value.replace(/[^0-9]/g, ""));
-                }}
-                required
-                color="primary"
-              />
-            </Grid>
-            <Grid size={isMobile ? 12 : 6}>
               <FormControl fullWidth variant="filled" required>
                 <InputLabel id="demo-simple-select-filled-label">
                   Tipe Pembayaran
@@ -453,6 +541,19 @@ const AddTenantApplication = ({
                   <MenuItem value={"lunas"}>Lunas</MenuItem>
                 </Select>
               </FormControl>
+            </Grid>
+            <Grid size={isMobile ? 12 : 6}>
+              <TextField
+                label="Total Pembayaran"
+                variant="filled"
+                fullWidth
+                value={formatRupiah(totalPayment)}
+                onChange={(e) => {
+                  setTotalPayment(e.target.value.replace(/[^0-9]/g, ""));
+                }}
+                required
+                color="primary"
+              />
             </Grid>
             {paymentType === "cicilan" && (
               <>
@@ -494,12 +595,12 @@ const AddTenantApplication = ({
                   fontSize: 16,
                   textTransform: "none",
                 }}
-                disabled={loading}
+                disabled={isSubmitting}
                 startIcon={
-                  loading && <CircularProgress size={22} color="inherit" />
+                  isSubmitting && <CircularProgress size={22} color="inherit" />
                 }
               >
-                {loading ? "Mengirim..." : "Submit Data"}
+                {isSubmitting ? "Mengirim..." : "Submit Data"}
               </Button>
             </Grid>
           </Grid>

@@ -1,33 +1,167 @@
+import fs from "fs";
+import path from "path";
 import pool from "@/lib/dbConfig";
 import moment from "moment";
 
-// CREATE Room
+// Pastikan upload directory ada
+const uploadDir = path.join(process.cwd(), "public/uploads/ktp");
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
 export async function POST(req) {
   try {
-    const body = await req.json();
-    const { location_id, room_number, floor, room_length, room_width, is_available } = body;
+    const formData = await req.formData();
 
-    const result = await pool.query(
-      `INSERT INTO rooms (location_id, room_number, floor, room_length, room_width, is_available)
-       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-      [location_id, room_number, floor, room_length, room_width, is_available]
+    // Ambil fields dari formData
+    const location_id = formData.get("location_id");
+    const room_id = formData.get("room_id");
+    const tenant_name = formData.get("tenant_name");
+    const tenant_nik = formData.get("tenant_nik");
+    const tenant_phone = formData.get("tenant_phone");
+    const start_date = formData.get("start_date");
+    const end_date = formData.get("end_date");
+    const payment_type = formData.get("payment_type");
+    const total_payment = formData.get("total_payment");
+    const down_payment = formData.get("down_payment");
+    const remaining_payment = formData.get("remaining_payment");
+    const approval_status = formData.get("approval_status");
+    const ktp_file = formData.get("ktp_file");
+
+    // Validasi wajib
+    if (
+      !location_id ||
+      !room_id ||
+      !tenant_name ||
+      !tenant_nik ||
+      !tenant_phone
+    ) {
+      return Response.json(
+        { success: false, message: "Data wajib tidak lengkap." },
+        { status: 400 }
+      );
+    }
+
+    // Validasi room + lokasi
+    const roomCheck = await pool.query(
+      "SELECT * FROM rooms WHERE id = $1 AND location_id = $2",
+      [room_id, location_id]
     );
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: "Berhasil menambah room baru",
-        data: result.rows[0],
-      }),
-      { status: 201 }
-    );
+    if (roomCheck.rowCount === 0) {
+      return Response.json(
+        {
+          success: false,
+          message: "Ruangan tidak ditemukan di lokasi yang dipilih.",
+        },
+        { status: 400 }
+      );
+    }
+
+    // Siapkan file (hanya di memory, belum ditulis)
+    let ktp_file_path = null;
+    let fileBuffer = null;
+    let filename = null;
+
+    if (ktp_file && typeof ktp_file === "object") {
+      const arrayBuffer = await ktp_file.arrayBuffer();
+      fileBuffer = Buffer.from(arrayBuffer);
+      const ext = path.extname(ktp_file.name) || ".jpg";
+      filename = `ktp_${tenant_name}_${moment(Date.now()).format(
+        "YYYY_MM_DD_HH_mm_ss"
+      )}${ext}`;
+      ktp_file_path = `/uploads/ktp/${filename}`;
+    }
+
+    // Normalisasi nilai numeric
+    const total_payment_num = total_payment ? Number(total_payment) : 0;
+    const down_payment_num = down_payment ? Number(down_payment) : 0;
+    const remaining_payment_num = remaining_payment
+      ? Number(remaining_payment)
+      : 0;
+
+    // Insert ke database
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+
+      const result = await client.query(
+        `
+        INSERT INTO tenant_application (
+          location_id,
+          room_id,
+          tenant_name,
+          tenant_nik,
+          tenant_phone,
+          start_date,
+          end_date,
+          payment_type,
+          total_payment,
+          down_payment,
+          remaining_payment,
+          approval_status,
+          ktp_file_path,
+          created_at,
+          updated_at
+        )
+        VALUES (
+          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW(), NOW()
+        )
+        RETURNING *
+        `,
+        [
+          location_id,
+          room_id,
+          tenant_name,
+          tenant_nik,
+          tenant_phone,
+          start_date,
+          end_date,
+          payment_type,
+          total_payment_num,
+          down_payment_num,
+          remaining_payment_num,
+          approval_status,
+          ktp_file_path,
+        ]
+      );
+
+      // Update rooms -> is_available = true
+      await client.query(
+        `UPDATE rooms SET is_available = true, updated_at = NOW() WHERE id = $1`,
+        [room_id]
+      );
+
+      // Jika semua sukses → commit
+      await client.query("COMMIT");
+
+      // Baru tulis file ke folder
+      if (fileBuffer && filename) {
+        const filepath = path.join(uploadDir, filename);
+        fs.writeFileSync(filepath, fileBuffer);
+      }
+
+      return Response.json(
+        {
+          success: true,
+          message: "Permohonan berhasil ditambahkan & ruangan diperbarui.",
+          data: result.rows[0],
+        },
+        { status: 201 }
+      );
+    } catch (dbErr) {
+      await client.query("ROLLBACK");
+      throw dbErr;
+    } finally {
+      client.release();
+    }
   } catch (err) {
-    return new Response(
-      JSON.stringify({ success: false, message: err.message }),
+    console.error("Error upload/insert:", err);
+    return Response.json(
+      { success: false, message: "Terjadi error: " + err.message },
       { status: 500 }
     );
   }
 }
-
 
 export async function GET(req) {
   try {
