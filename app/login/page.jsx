@@ -262,7 +262,7 @@ export default function LoginPage() {
             variant="contained"
             color="primary"
             fullWidth
-            sx={{ mt: 2, py: 1.5, fontWeight: "bold", fontSize: 16 }}
+            sx={{ mt: 2, fontWeight: "bold", fontSize: 16 }}
             disabled={loading || redirecting}
             startIcon={
               loading && <CircularProgress size={22} color="inherit" />
