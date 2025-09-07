@@ -15,6 +15,7 @@ import AddTenantApplication from "./AddTenantApplication";
 import InformationPreviewModal from "@/app/components/informationpreviewmodal/page";
 import EditTenantApplication from "./EditTenantApplication";
 import DeleteTenantApplication from "./DeleteTenantApplication";
+import ApprovalModal from "@/app/components/approvalmodal/page";
 
 const Applications = () => {
   const [dataTenantApplication, setDataTenantApplication] = useState([]);
@@ -36,6 +37,7 @@ const Applications = () => {
   });
   const [loadingMessage, setLoadingMessage] = useState("Loading...");
   const [openInformationModal, setOpenInformationModal] = useState(false);
+  const [openApprovalModal, setOpenApprovalModal] = useState(false);
 
   const getDataTenantApplication = async () => {
     setLoading(true);
@@ -112,6 +114,11 @@ const Applications = () => {
     // console.log("delete record", record);
     setSelectedData(record);
     setOpenInformationModal(true);
+  };
+
+  const handleApproval = (record) => {
+    setSelectedData(record);
+    setOpenApprovalModal(true);
   };
 
   // Utility untuk filter dinamis
@@ -309,6 +316,36 @@ const Applications = () => {
       width: 150,
     },
     {
+      title: "Status Persetujuan",
+      dataIndex: "approval_status",
+      filterSearch: true,
+      render: (text, record) => {
+        return (
+          <Tag
+            // warna random berdasarkan angka ganjil genap
+            color={
+              record.approval_status === "proses" && themeMode === "dark"
+                ? "yellow"
+                : record.approval_status === "proses" && themeMode === "light"
+                ? "orange"
+                : "green"
+            }
+            key={record.id}
+            style={{
+              fontWeight: "bold",
+              cursor: "pointer",
+            }}
+            onClick={() => handleApproval(record)}
+          >
+            {record.approval_status === "proses"
+              ? `Dalam Proses ${record.current_step}/5`
+              : "Disetujui"}
+          </Tag>
+        );
+      },
+      width: 150,
+    },
+    {
       title: "Actions",
       key: "action",
       align: "center",
@@ -464,9 +501,16 @@ const Applications = () => {
         open={openInformationModal}
         onClose={() => setOpenInformationModal(false)}
         selectedData={selectedData}
-        theme={theme}
-        themeMode={themeMode}
         title="Preview Informasi Pemohon"
+      />
+      <ApprovalModal
+        open={openApprovalModal}
+        onClose={() => setOpenApprovalModal(false)}
+        selectedData={selectedData}
+        loadingTrue={() => setLoading(true)}
+        loadingFalse={() => setLoading(false)}
+        loading={loading}
+        setLoadingMessage={setLoadingMessage}
       />
       <LoadingBackdrop message={loadingMessage} open={loading} />
       {/* Snackbar notification */}

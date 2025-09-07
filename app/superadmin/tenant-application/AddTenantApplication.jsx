@@ -3,6 +3,7 @@ import {
   Box,
   Button,
   CircularProgress,
+  Divider,
   FormControl,
   Grid,
   IconButton,
@@ -126,6 +127,13 @@ const AddTenantApplication = ({
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    let userId = "";
+    const loggedInUser = localStorage.getItem("loggedInUser");
+
+    if (loggedInUser) {
+      const { id } = JSON.parse(loggedInUser);
+      userId = id;
+    }
 
     // Validasi KTP
     if (!ktpFile) {
@@ -174,6 +182,8 @@ const AddTenantApplication = ({
       formData.append("down_payment", downPayment);
       formData.append("remaining_payment", remainingPayment);
       formData.append("approval_status", approvalStatus);
+      formData.append("user_id", userId);
+      formData.append("current_step", 1);
       // formData.append("ktp_file_path", ktpFilePath);
 
       if (ktpFile) {
@@ -196,7 +206,8 @@ const AddTenantApplication = ({
         onNotify &&
           onNotify({
             open: true,
-            message: response?.data?.message || "Form Permohonan berhasil dibuat!",
+            message:
+              response?.data?.message || "Form Permohonan berhasil dibuat!",
             severity: "success",
           });
         setTimeout(() => {
@@ -211,7 +222,8 @@ const AddTenantApplication = ({
         onNotify &&
           onNotify({
             open: true,
-            message: response?.data?.message || "Gagal membuat form permohonan.",
+            message:
+              response?.data?.message || "Gagal membuat form permohonan.",
             severity: "error",
           });
         setTimeout(() => {
@@ -235,11 +247,6 @@ const AddTenantApplication = ({
     }
   };
 
-  /*************  ✨ Windsurf Command ⭐  *************/
-  /**
-   * Clear all form values to empty/default values.
-   */
-  /*******  7ba45083-0aea-473c-8eb1-33805c8e2b1a  *******/
   const clearForm = () => {
     setLocationId("");
     setRoomId("");
@@ -302,13 +309,26 @@ const AddTenantApplication = ({
             flexDirection: "row",
             alignItems: "center",
             justifyContent: "center",
-            mb: 2,
           }}
         >
-          <Typography variant="h6" component="h2" sx={{ fontWeight: "bold" }}>
-            Form Permohonan
+          <Typography
+            sx={{
+              fontWeight: "bold",
+              fontSize: isMobile ? "18px" : "20px",
+            }}
+          >
+            Form Permohonan Sewa Ruangan
           </Typography>
         </Box>
+
+        <Divider
+          sx={{
+            mt: 0.5,
+            mb: 3,
+            borderColor: theme.palette.primary.main,
+          }}
+        />
+
         <form onSubmit={handleSubmit}>
           <Grid container spacing={isMobile ? 3 : 2}>
             <Grid size={12}>

@@ -29,6 +29,8 @@ export async function PUT(req, { params }) {
     const approval_status = formData.get("approval_status");
     const ktp_file = formData.get("ktp_file");
     const ktp_file_path_old = formData.get("ktp_file_path");
+    const current_step = formData.get("current_step");
+    const user_id = formData.get("user_id");
 
     // Validasi wajib
     if (
@@ -125,9 +127,10 @@ export async function PUT(req, { params }) {
           down_payment = $10,
           remaining_payment = $11,
           approval_status = $12,
-          ktp_file_path = $13,
-          updated_at = NOW()
-        WHERE id = $14
+          current_step = $13,
+          user_id = $14,
+          ktp_file_path = $15
+        WHERE id = $16
         RETURNING *
         `,
         [
@@ -143,6 +146,8 @@ export async function PUT(req, { params }) {
           down_payment_num,
           remaining_payment_num,
           approval_status,
+          current_step,
+          user_id,
           ktp_file_path,
           id,
         ]
@@ -217,6 +222,12 @@ export async function DELETE(request, context) {
     }
 
     const { room_id, ktp_file_path } = tenantRes.rows[0];
+
+    // Hapus tenant_approval terkait
+    await pool.query(
+      `DELETE FROM tenant_approval WHERE tenant_application_id=$1`,
+      [id]
+    );
 
     // Hapus tenant_application
     const result = await pool.query(

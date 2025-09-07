@@ -27,6 +27,8 @@ export async function POST(req) {
     const remaining_payment = formData.get("remaining_payment");
     const approval_status = formData.get("approval_status");
     const ktp_file = formData.get("ktp_file");
+    const user_id = formData.get("user_id");
+    const current_step = formData.get("current_step");
 
     // Validasi wajib
     if (
@@ -113,11 +115,25 @@ export async function POST(req) {
           remaining_payment,
           approval_status,
           ktp_file_path,
-          created_at,
-          updated_at
+          user_id,
+          current_step
         )
         VALUES (
-          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW(), NOW()
+          $1,
+          $2,
+          $3,
+          $4,
+          $5,
+          $6,
+          $7,
+          $8,
+          $9,
+          $10,
+          $11,
+          $12,
+          $13,
+          $14,
+          $15
         )
         RETURNING *
         `,
@@ -135,8 +151,35 @@ export async function POST(req) {
           remaining_payment_num,
           approval_status,
           ktp_file_path,
+          user_id,
+          current_step,
         ]
       );
+
+      // Ambil tenant_application_id hasil insert
+      const tenantApp = result.rows[0];
+      const tenantAppId = tenantApp.id;
+
+      // Insert ke tenant_approval sesuai urutan step role
+      const approvals = [
+        { role_id: 3, step_order: 1 }, // divkontrak
+        { role_id: 5, step_order: 2 }, // kasubdiv
+        { role_id: 6, step_order: 3 }, // kadiv
+        { role_id: 7, step_order: 4 }, // dirbis
+        { role_id: 8, step_order: 5 }, // dirut
+      ];
+
+      for (const a of approvals) {
+        await client.query(
+          `INSERT INTO tenant_approval (
+      tenant_application_id,
+      role_id,
+      step_order,
+      status
+    ) VALUES ($1, $2, $3, $4)`,
+          [tenantAppId, a.role_id, a.step_order, "pending"]
+        );
+      }
 
       // Update rooms -> is_available = true
       await client.query(
@@ -192,6 +235,8 @@ export async function GET(req) {
         ta.down_payment,
         ta.remaining_payment,
         ta.approval_status,
+        ta.current_step,
+        ta.user_id,
         ta.updated_at,
         ta.created_at,
         l.id AS location_id,
@@ -209,6 +254,7 @@ export async function GET(req) {
 
     const rows = result.rows.map((row) => ({
       id: row.id,
+      user_id: row.user_id,
       tenant_name: row.tenant_name,
       tenant_nik: row.tenant_nik,
       tenant_phone: row.tenant_phone,
@@ -227,6 +273,7 @@ export async function GET(req) {
       floor: row.floor,
       room_length: row.room_length,
       room_width: row.room_width,
+      current_step: row.current_step,
     }));
 
     return new Response(

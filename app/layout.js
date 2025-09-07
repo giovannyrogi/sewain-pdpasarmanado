@@ -1,17 +1,22 @@
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter, Poppins, Roboto } from "next/font/google";
 import "./globals.css";
 import "antd/dist/reset.css";
 import "@ant-design/v5-patch-for-react-19";
 import AppProviders from "./components/appprovider/AppProviders";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
+  weight: ["400", "500", "700"],
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const poppins = Poppins({
+  weight: ["400", "500", "700", "900"],
   subsets: ["latin"],
+});
+
+const roboto = Roboto({
+  weight: ["400", "700", "900"], // bisa 100, 300, 400, 500, 700, 900
+  subsets: ["latin"], // subsetting huruf
 });
 
 export const metadata = {
@@ -22,10 +27,8 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable}`}>
-        <AppProviders>
-          {children}
-        </AppProviders>
+      <body className={poppins.className}>
+        <AppProviders>{children}</AppProviders>
       </body>
     </html>
   );

@@ -162,7 +162,7 @@ const InformationPreviewModal = ({ open, onClose, selectedData, title }) => {
                     fontWeight: "bold",
                     fontSize: "15px",
                     color: theme.palette.primary.main,
-                    mb: 0.5,
+                    mb: isMobile ? 0.5 : -1,
                   }}
                 >
                   Foto KTP
@@ -203,7 +203,7 @@ const InformationPreviewModal = ({ open, onClose, selectedData, title }) => {
                     alignItems: "center",
                     justifyContent: "center",
                     flexDirection: "row",
-                    mt: isMobile ? 1 : 0,
+                    mt: isMobile ? 1 : -1,
                   }}
                 >
                   <Typography

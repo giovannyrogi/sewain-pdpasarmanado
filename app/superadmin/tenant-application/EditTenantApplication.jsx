@@ -3,6 +3,7 @@ import {
   Box,
   Button,
   CircularProgress,
+  Divider,
   FormControl,
   Grid,
   IconButton,
@@ -44,7 +45,7 @@ const EditTenantApplication = ({
   const theme = useTheme();
 
   const style = {
-    width: isMobile ? "90vw" : 400,
+    width: isMobile ? "90vw" : 600,
     maxWidth: "98vw",
     bgcolor: "background.paper",
     color: "text.primary",
@@ -171,6 +172,14 @@ const EditTenantApplication = ({
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    let userId = "";
+    const loggedInUser = localStorage.getItem("loggedInUser");
+
+    if (loggedInUser) {
+      const { id } = JSON.parse(loggedInUser);
+      userId = id;
+    }
+
     // Validasi KTP
     if (!ktpFile && !ktpFilePath) {
       onNotify &&
@@ -218,6 +227,8 @@ const EditTenantApplication = ({
       formData.append("down_payment", downPayment);
       formData.append("remaining_payment", remainingPayment);
       formData.append("approval_status", approvalStatus);
+      formData.append("user_id", userId);
+      formData.append("current_step", 1);
 
       // Cek file lama vs file baru
       if (ktpFile instanceof File) {
@@ -332,13 +343,23 @@ const EditTenantApplication = ({
             flexDirection: "row",
             alignItems: "center",
             justifyContent: "center",
-            mb: 2,
           }}
         >
-          <Typography variant="h6" component="h2" sx={{ fontWeight: "bold" }}>
-            Form Ubah Lokasi
+          <Typography
+            sx={{ fontWeight: "bold", fontSize: isMobile ? "18px" : "20px" }}
+          >
+            Form Ubah Permohonan Sewa Ruangan
           </Typography>
         </Box>
+
+        <Divider
+          sx={{
+            mt: 0.5,
+            mb: 3,
+            borderColor: theme.palette.primary.main,
+          }}
+        />
+
         <form onSubmit={handleSubmit}>
           <Grid container spacing={isMobile ? 3 : 2}>
             <Grid size={12}>
