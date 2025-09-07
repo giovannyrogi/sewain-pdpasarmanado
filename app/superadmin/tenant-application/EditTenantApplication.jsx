@@ -16,18 +16,16 @@ import {
   useTheme,
 } from "@mui/material";
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import moment from "moment";
-import { Add } from "@mui/icons-material";
-import { Icon } from "@iconify/react";
-import ImagePreviewModal from "@/app/components/imagepreviewmodal/page";
-import { DatePicker } from "@mui/x-date-pickers";
+import axios from "axios";
+import { useThemeMode } from "@/app/components/themeprovider/ThemeContext";
 import dayjs from "dayjs";
 import formatRupiah from "@/app/components/formatrupiah/page";
-import LoadingBackdrop from "@/app/components/loading/Backdrop";
-import { useThemeMode } from "@/app/components/themeprovider/ThemeContext";
+import { Icon } from "@iconify/react";
+import ImagePreviewModal from "@/app/components/imagepreviewmodal/page";
 
-const AddTenantApplication = ({
+const EditTenantApplication = ({
   open,
   onClose,
   loadingTrue,
@@ -38,11 +36,15 @@ const AddTenantApplication = ({
   dataLocations,
   onNotify,
   setLoadingMessage,
+  selectedData,
 }) => {
   const isMobile = useMediaQuery("(max-width:600px)");
 
+  const { themeMode } = useThemeMode();
+  const theme = useTheme();
+
   const style = {
-    width: isMobile ? "90vw" : 600,
+    width: isMobile ? "90vw" : 400,
     maxWidth: "98vw",
     bgcolor: "background.paper",
     color: "text.primary",
@@ -52,9 +54,6 @@ const AddTenantApplication = ({
     maxHeight: "90vh",
     overflowY: "auto",
   };
-
-  const { themeMode } = useThemeMode();
-  const theme = useTheme();
 
   const [ktpFilePath, setKtpFilePath] = useState("");
   const [ktpFile, setKtpFile] = useState(null);
@@ -81,14 +80,36 @@ const AddTenantApplication = ({
     }
 
     setLoadingMessage("Mengambil data ruangan...");
-
     loadingTrue();
 
     try {
       const response = await axios.get(
         `/api/rooms/available-rooms?location_id=${locationId}`
       );
-      setDataAvailableRooms(response.data.data);
+      let rooms = response.data.data || [];
+
+      // Tambahkan room lama dari selectedData kalau belum ada di list
+      if (selectedData?.room_id && selectedData?.location_id === locationId) {
+        const exists = rooms.some((r) => r.id === selectedData.room_id);
+        if (!exists) {
+          rooms = [
+            {
+              id: selectedData.room_id,
+              location_id: selectedData.location_id,
+              location_name: selectedData.location_name,
+              room_number: selectedData.room_number,
+              room_length: selectedData.room_length,
+              room_width: selectedData.room_width,
+              floor: selectedData.floor,
+              is_available: false,
+            },
+            ...rooms,
+          ];
+        }
+      }
+
+      setDataAvailableRooms(rooms);
+
       setTimeout(() => {
         loadingFalse();
         setLoadingMessage("");
@@ -101,6 +122,29 @@ const AddTenantApplication = ({
       }, 500);
     }
   };
+
+  // Setiap kali selectedData atau open berubah, update form
+  useEffect(() => {
+    if (open) {
+      setLocationId(selectedData.location_id || "");
+      setRoomId(selectedData.room_id || "");
+      setTenantName(selectedData.tenant_name || "");
+      setTenantNIK(selectedData.tenant_nik || "");
+      setTenantPhone(selectedData.tenant_phone || "");
+      setStartDate(
+        selectedData.start_date ? moment(selectedData.start_date) : null
+      );
+      setEndDate(selectedData.end_date ? moment(selectedData.end_date) : null);
+      setPaymentType(selectedData.payment_type || "");
+      setTotalPayment(selectedData.total_payment || "");
+      setDownPayment(selectedData.down_payment || "");
+      setRemainingPayment(selectedData.remaining_payment || "");
+      setApprovalStatus(selectedData.approval_status || "proses");
+      setKtpFilePath(selectedData.ktp_file_path || "");
+
+      getRoomsData(selectedData.location_id);
+    }
+  }, [open]);
 
   // Sinkronisasi DP & Sisa saat totalPayment atau paymentType berubah
   useEffect(() => {
@@ -128,7 +172,7 @@ const AddTenantApplication = ({
     e.preventDefault();
 
     // Validasi KTP
-    if (!ktpFile) {
+    if (!ktpFile && !ktpFilePath) {
       onNotify &&
         onNotify({
           open: true,
@@ -174,21 +218,27 @@ const AddTenantApplication = ({
       formData.append("down_payment", downPayment);
       formData.append("remaining_payment", remainingPayment);
       formData.append("approval_status", approvalStatus);
-      // formData.append("ktp_file_path", ktpFilePath);
 
-      if (ktpFile) {
+      // Cek file lama vs file baru
+      if (ktpFile instanceof File) {
+        // User upload file baru
         formData.append("ktp_file", ktpFile);
+      } else if (ktpFilePath) {
+        // Tidak ada file baru, gunakan file lama (URL/relative path)
+        formData.append("ktp_file_path", ktpFilePath);
       }
 
       // for (let pair of formData.entries()) {
       //   console.log(pair[0], pair[1]);
       // }
 
-      const response = await axios.post("/api/tenant-application", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
+      const response = await axios.put(
+        `/api/tenant-application/${selectedData.id}`,
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+        }
+      );
 
       console.log("response", response);
 
@@ -196,7 +246,8 @@ const AddTenantApplication = ({
         onNotify &&
           onNotify({
             open: true,
-            message: response?.data?.message || "Form Permohonan berhasil dibuat!",
+            message:
+              response?.data?.message || "Form Permohonan berhasil dibuat!",
             severity: "success",
           });
         setTimeout(() => {
@@ -205,13 +256,13 @@ const AddTenantApplication = ({
           getRoomsData();
           onClose();
           setIsSubmitting(false);
-          clearForm();
         }, 1000);
       } else {
         onNotify &&
           onNotify({
             open: true,
-            message: response?.data?.message || "Gagal membuat form permohonan.",
+            message:
+              response?.data?.message || "Gagal membuat form permohonan.",
             severity: "error",
           });
         setTimeout(() => {
@@ -233,27 +284,6 @@ const AddTenantApplication = ({
         setIsSubmitting(false);
       }, 1000);
     }
-  };
-
-  /*************  ✨ Windsurf Command ⭐  *************/
-  /**
-   * Clear all form values to empty/default values.
-   */
-  /*******  7ba45083-0aea-473c-8eb1-33805c8e2b1a  *******/
-  const clearForm = () => {
-    setLocationId("");
-    setRoomId("");
-    setTenantName("");
-    setTenantNIK("");
-    setTenantPhone("");
-    setStartDate(null);
-    setEndDate(null);
-    setPaymentType("");
-    setTotalPayment("");
-    setDownPayment("");
-    setRemainingPayment("");
-    setKtpFile(null);
-    setKtpFilePath(null);
   };
 
   const handleKtpChange = (e) => {
@@ -306,7 +336,7 @@ const AddTenantApplication = ({
           }}
         >
           <Typography variant="h6" component="h2" sx={{ fontWeight: "bold" }}>
-            Form Permohonan
+            Form Ubah Lokasi
           </Typography>
         </Box>
         <form onSubmit={handleSubmit}>
@@ -465,17 +495,9 @@ const AddTenantApplication = ({
               <Autocomplete
                 disabled={!locationId}
                 options={dataAvailableRooms || []}
-                getOptionLabel={(option) =>
-                  option.room_number
-                    ? option.room_number.charAt(0).toUpperCase() +
-                      option.room_number.slice(1)
-                    : ""
-                }
+                getOptionLabel={(option) => option.room_number || ""}
                 value={
-                  dataAvailableRooms
-                    ? dataAvailableRooms.find((item) => item.id === roomId) ||
-                      null
-                    : null
+                  dataAvailableRooms.find((item) => item.id === roomId) || null
                 }
                 onChange={(event, newValue) => {
                   setRoomId(newValue ? newValue.id : "");
@@ -625,4 +647,4 @@ const AddTenantApplication = ({
   );
 };
 
-export default AddTenantApplication;
+export default EditTenantApplication;

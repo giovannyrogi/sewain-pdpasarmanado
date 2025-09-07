@@ -13,6 +13,8 @@ import menuSuperadmin from "@/app/components/menu/MenuItemSuperadmin";
 import formatRupiah from "@/app/components/formatrupiah/page";
 import AddTenantApplication from "./AddTenantApplication";
 import InformationPreviewModal from "@/app/components/informationpreviewmodal/page";
+import EditTenantApplication from "./EditTenantApplication";
+import DeleteTenantApplication from "./DeleteTenantApplication";
 
 const Applications = () => {
   const [dataTenantApplication, setDataTenantApplication] = useState([]);
@@ -259,8 +261,6 @@ const Applications = () => {
       filters: paymentTypeFilters,
       onFilter: createOnFilter("payment_type"),
       filterSearch: true,
-      // sorter: (a, b) => a.payment_type.localeCompare(b.payment_type),
-      // sortDirections: ["ascend", "descend"],
       render: (text, record) => {
         return (
           <Tag
@@ -276,7 +276,7 @@ const Applications = () => {
       width: 160,
     },
     {
-      title: "DP (40%)",
+      title: "Uang Muka(DP)",
       dataIndex: "down_payment",
       filterSearch: true,
       render: (text, record) => (
@@ -284,7 +284,7 @@ const Applications = () => {
           {formatRupiah(record.down_payment)}
         </Typography>
       ),
-      width: 110,
+      width: 150,
     },
     {
       title: "Sisa Pembayaran",
@@ -432,9 +432,33 @@ const Applications = () => {
         dataTenantApplication={dataTenantApplication}
         dataLocations={dataLocations}
         onNotify={(notif) => setSnackbar(notif)}
-        theme={theme}
-        themeMode={themeMode}
         setLoadingMessage={setLoadingMessage}
+      />
+      <EditTenantApplication
+        open={openEditModal}
+        onClose={() => setOpenEditModal(false)}
+        loadingTrue={() => setLoading(true)}
+        loadingFalse={() => setLoading(false)}
+        loading={loading}
+        getDataTenantApplication={getDataTenantApplication}
+        getLocationsData={getLocationsData}
+        dataTenantApplication={dataTenantApplication}
+        dataLocations={dataLocations}
+        onNotify={(notif) => setSnackbar(notif)}
+        setLoadingMessage={setLoadingMessage}
+        selectedData={selectedData}
+      />
+      <DeleteTenantApplication
+        open={openDeleteModal}
+        onClose={() => setOpenDeleteModal(false)}
+        loadingTrue={() => setLoading(true)}
+        loadingFalse={() => setLoading(false)}
+        loading={loading}
+        getDataTenantApplication={getDataTenantApplication}
+        getLocationsData={getLocationsData}
+        onNotify={(notif) => setSnackbar(notif)}
+        setLoadingMessage={setLoadingMessage}
+        selectedData={selectedData}
       />
       <InformationPreviewModal
         open={openInformationModal}

@@ -17,12 +17,7 @@ import { Icon } from "@iconify/react";
 import axios from "axios";
 import ImagePreviewModal from "../imagepreviewmodal/page";
 
-const InformationPreviewModal = ({
-  open,
-  onClose,
-  selectedData,
-  title,
-}) => {
+const InformationPreviewModal = ({ open, onClose, selectedData, title }) => {
   const isMobile = useMediaQuery("(max-width:600px)");
 
   const [openPreview, setOpenPreview] = useState(false);
@@ -172,31 +167,43 @@ const InformationPreviewModal = ({
                 >
                   Foto KTP
                 </Typography>
-                <img
-                  src={
-                    selectedData?.ktp_file_path
-                      ? selectedData.ktp_file_path
-                      : ""
-                  }
-                  alt="ktp"
-                  style={{
-                    maxWidth: "80vw",
-                    maxHeight: "70vh",
-                    borderRadius: 8,
-                    // border: "1px solid #ddd",
-                    // borderStyle: "dashed",
-                    objectFit: "contain",
+
+                {/* Container dengan tinggi tetap */}
+                <Box
+                  sx={{
+                    width: "100%",
+                    height: 150, // tinggi konsisten
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    overflow: "hidden",
+                    borderRadius: 2,
+                    // bgcolor: "#f8f8f8",
                   }}
-                  onClick={() => setOpenPreview(true)}
-                />
+                >
+                  <img
+                    src={
+                      selectedData?.ktp_file_path
+                        ? selectedData.ktp_file_path
+                        : ""
+                    }
+                    alt="ktp"
+                    style={{
+                      maxWidth: "100%",
+                      maxHeight: "100%",
+                      objectFit: "contain", // biar tetap proporsional
+                    }}
+                    onClick={() => setOpenPreview(true)}
+                  />
+                </Box>
+
                 <Box
                   sx={{
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                     flexDirection: "row",
-                    gap: 1,
-                    mt: 1,
+                    mt: isMobile ? 1 : 0,
                   }}
                 >
                   <Typography
