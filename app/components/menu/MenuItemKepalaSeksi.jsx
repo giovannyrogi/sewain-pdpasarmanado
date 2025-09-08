@@ -2,7 +2,7 @@ import PeopleIcon from "@mui/icons-material/People";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import { Icon } from "@iconify/react";
 
-const menuSuperadmin = [
+const menuKepalaSeksi = [
   {
     label: "Dashboard",
     value: "dashboard",
@@ -77,4 +77,4 @@ const menuSuperadmin = [
   // Tambahkan menu lain jika perlu
 ];
 
-export default menuSuperadmin;
+export default menuKepalaSeksi;

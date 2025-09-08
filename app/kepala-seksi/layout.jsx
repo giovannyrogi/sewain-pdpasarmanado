@@ -1,7 +1,7 @@
 import MainLayout from "../components/mainlayout/MainLayout";
 
-const SuperadminLayout = ({ children }) => {
+const KepalaSeksiLayout = ({ children }) => {
   return <MainLayout>{children}</MainLayout>;
 };
 
-export default SuperadminLayout;
+export default KepalaSeksiLayout;

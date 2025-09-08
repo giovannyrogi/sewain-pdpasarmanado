@@ -35,14 +35,21 @@ export async function POST(req) {
     // 3. Hapus password sebelum dikirim ke frontend
     delete user.password;
 
+    const SESSION_DURATION_MINUTES = 60; // durasi session dalam menit
+    const expiresAt = Date.now() + SESSION_DURATION_MINUTES * 60 * 1000; // timestamp expired
+
     // 4. Simpan user ke cookie
     const response = NextResponse.json(user, { status: 200 });
-    response.cookies.set("loggedInUser", JSON.stringify(user), {
-      httpOnly: false, // kalau mau lebih aman bisa true
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      path: "/",
-    });
+    response.cookies.set(
+      "loggedInUser",
+      JSON.stringify({ ...user, expiresAt }),
+      {
+        httpOnly: false,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        path: "/",
+      }
+    );
 
     return response;
   } catch (err) {
