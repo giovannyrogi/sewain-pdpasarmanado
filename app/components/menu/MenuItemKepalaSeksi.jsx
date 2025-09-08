@@ -6,7 +6,7 @@ const menuKepalaSeksi = [
   {
     label: "Dashboard",
     value: "dashboard",
-    path: "/superadmin/dashboard",
+    path: "/kepala-seksi/dashboard",
     icon: <Icon icon="svg-spinners:blocks-scale" fontSize="20px" />,
   },
   {
@@ -17,28 +17,28 @@ const menuKepalaSeksi = [
       {
         label: "Tenant Application",
         value: "tenant-application",
-        path: "/superadmin/tenant-application",
+        path: "/kepala-seksi/tenant-application",
         icon: <Icon icon="hugeicons:file-edit" fontSize="20px" />,
         showIcon: true,
       },
       {
         label: "Tenant Approval",
         value: "tenant-approval",
-        path: "/superadmin/tenant-approval",
+        path: "/kepala-seksi/tenant-approval",
         icon: <Icon icon="carbon:document-set" fontSize="20px" />,
         showIcon: true,
       },
       {
         label: "Documents",
         value: "documents",
-        path: "/superadmin/documents",
+        path: "/kepala-seksi/documents",
         icon: <Icon icon="f7:doc-on-doc" fontSize="20px" />,
         showIcon: true,
       },
       {
         label: "Payments",
         value: "payments",
-        path: "/superadmin/payments",
+        path: "/kepala-seksi/payments",
         icon: (
           <Icon icon="streamline-freehand:money-atm-withdraw" fontSize="20px" />
         ),
@@ -47,7 +47,7 @@ const menuKepalaSeksi = [
       {
         label: "Contracts",
         value: "contracts",
-        path: "/superadmin/contracts",
+        path: "/kepala-seksi/contracts",
         icon: <Icon icon="clarity:contract-line" fontSize="20px" />,
         showIcon: true,
       },
@@ -61,14 +61,14 @@ const menuKepalaSeksi = [
       {
         label: "Laporan 1",
         value: "laporan1",
-        path: "/superadmin/laporan1",
+        path: "/kepala-seksi/laporan1",
         icon: <LocationOnIcon />,
         showIcon: false,
       },
       {
         label: "Laporan 2",
         value: "laporan2",
-        path: "/superadmin/laporan2",
+        path: "/kepala-seksi/laporan2",
         icon: <PeopleIcon />,
         showIcon: false,
       },
