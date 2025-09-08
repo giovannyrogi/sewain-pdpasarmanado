@@ -13,6 +13,7 @@ import {
 import React, { useEffect, useState } from "react";
 import { Icon } from "@iconify/react";
 import axios from "axios";
+import moment from "moment";
 
 const ApprovalModal = ({
   open,
@@ -29,18 +30,19 @@ const ApprovalModal = ({
   const [openPreview, setOpenPreview] = useState(false);
 
   const style = {
-    position: "absolute",
-    top: "50%",
-    left: "50%",
-    transform: "translate(-50%, -50%)",
     width: isMobile ? "90vw" : 500,
-    maxWidth: "95vw",
+    maxWidth: "98vw",
     bgcolor: "background.paper",
     color: "text.primary",
-    borderRadius: "16px",
+    borderRadius: "10px",
     boxShadow: 24,
-    p: isMobile ? 2 : "24px 32px",
-    outline: "none",
+    p: "18px 20px 18px 20px",
+    maxHeight: "90vh",
+    overflowY: "auto",
+    //hide scrollbar
+    "&::-webkit-scrollbar": {
+      display: "none",
+    },
   };
 
   // Fetch approval list
@@ -49,7 +51,7 @@ const ApprovalModal = ({
     loadingTrue();
     try {
       const res = await axios.get(`/api/tenant-approval/`, {
-        params: { id: selectedData.id },
+        params: { id: selectedData.tenant_application_id },
       });
       console.log("data approval", res);
 
@@ -82,7 +84,7 @@ const ApprovalModal = ({
   };
 
   useEffect(() => {
-    if (open && selectedData?.id) {
+    if (open && selectedData?.tenant_application_id) {
       getDataApprovals();
     }
   }, [open, selectedData]);
@@ -91,11 +93,17 @@ const ApprovalModal = ({
     <Modal
       open={open}
       onClose={onClose}
-      closeAfterTransition
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        p: 0, // hilangkan padding default
+      }}
       BackdropProps={{
         sx: {
           backgroundColor: "rgba(30,30,30,0.25)",
           backdropFilter: "blur(6px)",
+          WebkitBackdropFilter: "blur(6px)",
         },
       }}
     >
@@ -135,19 +143,25 @@ const ApprovalModal = ({
                     {/* Icon / Step Number */}
                     <Box
                       sx={{
-                        width: 40,
-                        height: 40,
+                        width: 45,
+                        height: 45,
                         borderRadius: "50%",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        bgcolor:
+                        border: "3px solid",
+                        borderColor:
                           item.status === "approved"
                             ? "success.main"
                             : item.status === "pending"
                             ? "warning.main"
                             : "error.main",
-                        color: "#fff",
+                        color:
+                          item.status === "approved"
+                            ? "success.main"
+                            : item.status === "pending"
+                            ? "warning.main"
+                            : "error.main",
                         fontWeight: "bold",
                       }}
                     >
@@ -155,23 +169,62 @@ const ApprovalModal = ({
                     </Box>
 
                     {/* Role and Approver */}
-                    <Box flex={1}>
+                    <Box
+                      flex={1}
+                      display="flex"
+                      flexDirection="column"
+                      gap={0.5}
+                    >
                       <Typography
                         sx={{
                           fontWeight: "bold",
-                          fontSize: 15,
-                          mb: 0.5,
+                          fontSize: isMobile ? 14 : 15,
                         }}
                       >
                         {item.role_name}
                       </Typography>
+
+                      {/* Status / Approver */}
                       <Typography
-                        sx={{ fontSize: 14, color: "text.secondary" }}
+                        sx={{ fontSize: isMobile ? 12 : 13, color: "text.secondary" }}
                       >
                         {item.status === "approved"
-                          ? `Disetujui oleh : ${item.full_name}`
+                          ? `Disetujui oleh: ${item.full_name}`
+                          : item.status === "rejected"
+                          ? `Ditolak oleh: ${item.full_name}`
                           : "Menunggu Persetujuan"}
                       </Typography>
+
+                      {/* Tanggal */}
+                      {(item.status === "approved" ||
+                        item.status === "rejected") && (
+                        <Typography
+                          sx={{ fontSize: isMobile ? 12 : 13, color: "text.secondary" }}
+                        >
+                          Tanggal:{" "}
+                          {moment(item.approved_at).format("DD/MM/YYYY HH:mm")}
+                        </Typography>
+                      )}
+
+                      {/* Catatan hanya untuk ditolak */}
+                      {item.status === "rejected" && item.notes && (
+                        <Box>
+                          <Typography
+                            sx={{
+                              fontSize: isMobile ? 12 : 13,
+                              fontWeight: "bold",
+                              color: "text.secondary",
+                            }}
+                          >
+                            Catatan:
+                          </Typography>
+                          <Typography
+                            sx={{ fontSize: isMobile ? 12 : 13, color: "text.secondary" }}
+                          >
+                            {item.notes}
+                          </Typography>
+                        </Box>
+                      )}
                     </Box>
 
                     {/* Status Icon */}

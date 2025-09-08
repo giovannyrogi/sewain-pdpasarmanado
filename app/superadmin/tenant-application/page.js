@@ -16,8 +16,10 @@ import InformationPreviewModal from "@/app/components/informationpreviewmodal/pa
 import EditTenantApplication from "./EditTenantApplication";
 import DeleteTenantApplication from "./DeleteTenantApplication";
 import ApprovalModal from "@/app/components/approvalmodal/page";
+import { useUser } from "@/app/utils/useUser";
 
 const Applications = () => {
+  const user = useUser();
   const [dataTenantApplication, setDataTenantApplication] = useState([]);
   const [dataLocations, setDataLocations] = useState([]);
   const [dataAvailableRooms, setDataAvailableRooms] = useState([]);
@@ -69,9 +71,11 @@ const Applications = () => {
   };
 
   useEffect(() => {
-    getDataTenantApplication();
-    getLocationsData();
-  }, []);
+    if (user) {
+      getDataTenantApplication();
+      getLocationsData();
+    }
+  }, [user]);
 
   const filteredData = dataTenantApplication.filter((item) => {
     // const isAvailableText =
@@ -191,7 +195,7 @@ const Applications = () => {
           <Tag
             // warna random berdasarkan angka ganjil genap
             color={record.id % 2 === 0 ? "pink" : "geekblue"}
-            key={record.id}
+            key={record.tenant_application_id}
             style={{ fontWeight: "bold" }}
           >
             {record.room_number}
@@ -213,7 +217,7 @@ const Applications = () => {
           <Tag
             // warna random berdasarkan angka ganjil genap
             color={themeMode === "dark" ? "orange" : "red"}
-            key={record.id}
+            key={record.tenant_application_id}
             style={{ fontWeight: "bold" }}
           >
             L{record.floor}
@@ -273,7 +277,7 @@ const Applications = () => {
           <Tag
             // warna random berdasarkan angka ganjil genap
             color={record.payment_type === "cicilan" ? "blue" : "green"}
-            key={record.id}
+            key={record.tenant_application_id}
             style={{ fontWeight: "bold" }}
           >
             {record.payment_type === "cicilan" ? "Cicilan" : "Lunas"}
@@ -330,7 +334,7 @@ const Applications = () => {
                 ? "orange"
                 : "green"
             }
-            key={record.id}
+            key={record.tenant_application_id}
             style={{
               fontWeight: "bold",
               cursor: "pointer",
@@ -442,7 +446,7 @@ const Applications = () => {
             style={{ width: 250, marginBottom: 20, marginTop: 10 }}
           />
           <Table
-            rowKey="id"
+            rowKey="tenant_application_id"
             columns={columns}
             dataSource={filteredData}
             onChange={onChange}
@@ -470,6 +474,7 @@ const Applications = () => {
         dataLocations={dataLocations}
         onNotify={(notif) => setSnackbar(notif)}
         setLoadingMessage={setLoadingMessage}
+        user={user}
       />
       <EditTenantApplication
         open={openEditModal}
@@ -484,6 +489,7 @@ const Applications = () => {
         onNotify={(notif) => setSnackbar(notif)}
         setLoadingMessage={setLoadingMessage}
         selectedData={selectedData}
+        user={user}
       />
       <DeleteTenantApplication
         open={openDeleteModal}

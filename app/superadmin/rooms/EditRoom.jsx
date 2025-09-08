@@ -44,6 +44,11 @@ const EditRoom = ({
     p: "18px 20px 18px 20px",
     maxHeight: "90vh",
     overflowY: "auto",
+    transition: "box-shadow 0.3s",
+    //hide scrollbar
+    "&::-webkit-scrollbar": {
+      display: "none",
+    },
   };
 
   const [locationId, setLocationId] = useState("");

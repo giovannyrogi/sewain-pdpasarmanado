@@ -89,6 +89,10 @@ const DeleteRoom = ({
     p: isMobile ? 2 : "24px 32px 24px 32px",
     outline: "none",
     transition: "box-shadow 0.3s",
+    //hide scrollbar
+    "&::-webkit-scrollbar": {
+      display: "none",
+    },
   };
 
   return (
@@ -162,7 +166,8 @@ const DeleteRoom = ({
                   fontSize: 14,
                 }}
               >
-                Ruangan Nomor {selectedData && selectedData.room_number
+                Ruangan Nomor{" "}
+                {selectedData && selectedData.room_number
                   ? selectedData.room_number
                   : ""}
               </span>{" "}

@@ -37,7 +37,6 @@ const DeleteRole = ({
     e.preventDefault();
     loadingTrue();
     try {
-
       const response = await axios.delete(`/api/roles/${roleId}`);
 
       if (response?.data.success) {
@@ -89,6 +88,10 @@ const DeleteRole = ({
     p: isMobile ? 2 : "24px 32px 24px 32px",
     outline: "none",
     transition: "box-shadow 0.3s",
+    //hide scrollbar
+    "&::-webkit-scrollbar": {
+      display: "none",
+    },
   };
 
   return (
@@ -163,7 +166,9 @@ const DeleteRole = ({
                   fontSize: 14,
                 }}
               >
-                {selectedData && selectedData.role_name ? selectedData.role_name : ""}
+                {selectedData && selectedData.role_name
+                  ? selectedData.role_name
+                  : ""}
               </span>{" "}
               ?
             </Typography>

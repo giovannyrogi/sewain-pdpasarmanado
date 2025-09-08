@@ -223,7 +223,7 @@ export async function GET(req) {
   try {
     const result = await pool.query(
       `SELECT
-        ta.id,
+        ta.id AS tenant_application_id,
         ta.tenant_name,
         ta.tenant_nik,
         ta.tenant_phone,
@@ -253,7 +253,7 @@ export async function GET(req) {
     );
 
     const rows = result.rows.map((row) => ({
-      id: row.id,
+      tenant_application_id: row.tenant_application_id,
       user_id: row.user_id,
       tenant_name: row.tenant_name,
       tenant_nik: row.tenant_nik,

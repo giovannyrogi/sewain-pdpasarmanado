@@ -6,10 +6,19 @@ import LeftNavBar from "../navbar/LeftNavBar";
 import { useUser } from "@/app/utils/useUser";
 import menuSuperadmin from "../menu/MenuItemSuperadmin";
 import menuKepalaSeksi from "../menu/MenuItemKepalaSeksi";
+import menuDevisiKontrak from "../menu/MenuItemDivisiKontrak";
+import menuKepalaSubdivisi from "../menu/MenuItemKepalaSubDivisi";
+import menuKepalaDivisi from "../menu/MenuItemKepalaDivisi";
 
+// mapping role_id → menu
 const roleMenus = {
   1: menuSuperadmin,
+  2: menuDevisiKontrak,
   3: menuKepalaSeksi,
+  4: menuKepalaSubdivisi,
+  5: menuKepalaDivisi,
+  // 6: menuDirekturBisnis,
+  // 7: menuDirekturUtama,
 };
 
 const NavbarWrapper = ({ isMobile, menus, user }) =>

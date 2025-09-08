@@ -17,7 +17,7 @@ const ExpiredSessionModal = ({ open, onClose, counter = 0 }) => {
   const theme = useTheme();
 
   const style = {
-    width: isMobile ? "90vw" : 400,
+    width: isMobile ? "90vw" : 450,
     maxWidth: "98vw",
     bgcolor: "background.paper",
     color: "text.primary",

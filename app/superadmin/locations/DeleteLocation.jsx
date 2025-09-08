@@ -67,7 +67,9 @@ const DeleteLocation = ({
       onNotify &&
         onNotify({
           open: true,
-          message: error?.response?.data?.message || "Terjadi error saat menghapus lokasi.",
+          message:
+            error?.response?.data?.message ||
+            "Terjadi error saat menghapus lokasi.",
           severity: "error",
         });
       setTimeout(() => {
@@ -90,6 +92,10 @@ const DeleteLocation = ({
     p: isMobile ? 2 : "24px 32px 24px 32px",
     outline: "none",
     transition: "box-shadow 0.3s",
+    //hide scrollbar
+    "&::-webkit-scrollbar": {
+      display: "none",
+    },
   };
 
   return (

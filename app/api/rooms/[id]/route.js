@@ -14,14 +14,6 @@ export async function PUT(request, { params }) {
       is_available,
     } = body;
 
-    console.log("location_id", location_id);
-    console.log("room_number", room_number);
-    console.log("floor", floor);
-    console.log("room_length", room_length);
-    console.log("room_width", room_width);
-    console.log("is_available", is_available);
-    console.log("id", id);
-
     // Lakukan update
     const result = await pool.query(
       `UPDATE rooms SET location_id=$1, room_number=$2, floor=$3, room_length=$4, room_width=$5, is_available=$6 WHERE id=$7 RETURNING *`,

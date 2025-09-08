@@ -38,6 +38,7 @@ const EditTenantApplication = ({
   onNotify,
   setLoadingMessage,
   selectedData,
+  user
 }) => {
   const isMobile = useMediaQuery("(max-width:600px)");
 
@@ -54,6 +55,11 @@ const EditTenantApplication = ({
     p: "18px 20px 18px 20px",
     maxHeight: "90vh",
     overflowY: "auto",
+    transition: "box-shadow 0.3s",
+    //hide scrollbar
+    "&::-webkit-scrollbar": {
+      display: "none",
+    },
   };
 
   const [ktpFilePath, setKtpFilePath] = useState("");
@@ -172,14 +178,6 @@ const EditTenantApplication = ({
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    let userId = "";
-    const loggedInUser = localStorage.getItem("loggedInUser");
-
-    if (loggedInUser) {
-      const { id } = JSON.parse(loggedInUser);
-      userId = id;
-    }
-
     // Validasi KTP
     if (!ktpFile && !ktpFilePath) {
       onNotify &&
@@ -227,7 +225,7 @@ const EditTenantApplication = ({
       formData.append("down_payment", downPayment);
       formData.append("remaining_payment", remainingPayment);
       formData.append("approval_status", approvalStatus);
-      formData.append("user_id", userId);
+      formData.append("user_id", user.id);
       formData.append("current_step", 1);
 
       // Cek file lama vs file baru
@@ -244,7 +242,7 @@ const EditTenantApplication = ({
       // }
 
       const response = await axios.put(
-        `/api/tenant-application/${selectedData.id}`,
+        `/api/tenant-application/${selectedData.tenant_application_id}`,
         formData,
         {
           headers: { "Content-Type": "multipart/form-data" },

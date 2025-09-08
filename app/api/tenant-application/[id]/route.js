@@ -168,6 +168,12 @@ export async function PUT(req, { params }) {
         [room_id]
       );
 
+      // update table tenant_approval agar mulai dari step pertama lagi, update kolom approval_id, approval_at, status = pending, notes = null
+      await client.query(
+        `UPDATE tenant_approval SET approver_id = null, approved_at = null, status = 'pending', notes = null WHERE tenant_application_id = $1`,
+        [id]
+      );
+
       await client.query("COMMIT");
 
       // Simpan file baru kalau ada
@@ -203,7 +209,7 @@ export async function PUT(req, { params }) {
 // DELETE Tenant Application
 export async function DELETE(request, context) {
   try {
-    const { id } = context.params;
+    const { id } = await context.params;
 
     // Ambil data tenant_application sebelum dihapus
     const tenantRes = await pool.query(

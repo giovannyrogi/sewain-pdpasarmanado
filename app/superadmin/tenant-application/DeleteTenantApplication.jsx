@@ -31,7 +31,7 @@ const DeleteTenantApplication = ({
     loadingTrue();
     try {
       const response = await axios.delete(
-        `/api/tenant-application/${selectedData.id}`
+        `/api/tenant-application/${selectedData.tenant_application_id}`
       );
 
       console.log("response", response.data);
@@ -90,6 +90,10 @@ const DeleteTenantApplication = ({
     p: isMobile ? 2 : "24px 32px 24px 32px",
     outline: "none",
     transition: "box-shadow 0.3s",
+    //hide scrollbar
+    "&::-webkit-scrollbar": {
+      display: "none",
+    },
   };
 
   return (

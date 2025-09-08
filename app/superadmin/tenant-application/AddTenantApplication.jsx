@@ -39,6 +39,7 @@ const AddTenantApplication = ({
   dataLocations,
   onNotify,
   setLoadingMessage,
+  user
 }) => {
   const isMobile = useMediaQuery("(max-width:600px)");
 
@@ -52,7 +53,13 @@ const AddTenantApplication = ({
     p: "18px 20px 18px 20px",
     maxHeight: "90vh",
     overflowY: "auto",
+    transition: "box-shadow 0.3s",
+    //hide scrollbar
+    "&::-webkit-scrollbar": {
+      display: "none",
+    },
   };
+
 
   const { themeMode } = useThemeMode();
   const theme = useTheme();
@@ -127,13 +134,7 @@ const AddTenantApplication = ({
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    let userId = "";
-    const loggedInUser = localStorage.getItem("loggedInUser");
-
-    if (loggedInUser) {
-      const { id } = JSON.parse(loggedInUser);
-      userId = id;
-    }
+    
 
     // Validasi KTP
     if (!ktpFile) {
@@ -182,7 +183,7 @@ const AddTenantApplication = ({
       formData.append("down_payment", downPayment);
       formData.append("remaining_payment", remainingPayment);
       formData.append("approval_status", approvalStatus);
-      formData.append("user_id", userId);
+      formData.append("user_id", user.id);
       formData.append("current_step", 1);
       // formData.append("ktp_file_path", ktpFilePath);
 

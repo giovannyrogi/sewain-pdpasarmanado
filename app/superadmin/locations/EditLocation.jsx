@@ -35,6 +35,11 @@ const EditLocation = ({
     p: "18px 20px 18px 20px",
     maxHeight: "90vh",
     overflowY: "auto",
+    transition: "box-shadow 0.3s",
+    //hide scrollbar
+    "&::-webkit-scrollbar": {
+      display: "none",
+    },
   };
 
   const [locatioName, setLocatioName] = useState("");
@@ -128,7 +133,7 @@ const EditLocation = ({
             mb: 2,
           }}
         >
-          <Typography variant="h6" component="h2"  sx={{ fontWeight: "bold" }}>
+          <Typography variant="h6" component="h2" sx={{ fontWeight: "bold" }}>
             Form Ubah Lokasi
           </Typography>
         </Box>
