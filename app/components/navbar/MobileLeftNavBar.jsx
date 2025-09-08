@@ -23,7 +23,8 @@ import { Icon } from "@iconify/react";
 import settingsMenu from "../menu/SettingsMenu";
 import LoadingBackdrop from "../loading/Backdrop";
 import Image from "next/image";
-import { usePathname, useRouter } from "next/navigation";
+import { redirect, usePathname, useRouter } from "next/navigation";
+import axios from "axios";
 
 const MobileLeftNavBar = ({ menus, activeMenu, onMenuClick, user }) => {
   const theme = useTheme();
@@ -57,13 +58,17 @@ const MobileLeftNavBar = ({ menus, activeMenu, onMenuClick, user }) => {
     [router, onMenuClick]
   );
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     setLoading(true);
-    if (typeof window !== "undefined") {
+    try {
+      await axios.post("/api/logout");
       setTimeout(() => {
-        localStorage.removeItem("loggedInUser");
-        window.location.href = "/";
+        // window.location.href = "/login"; // middleware akan handle redirect
+        redirect("/login");
       }, 1000);
+    } catch (err) {
+      console.log("error logout", err);
+      setLoading(false);
     }
   };
 

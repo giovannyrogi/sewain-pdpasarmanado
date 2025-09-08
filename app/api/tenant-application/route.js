@@ -162,11 +162,11 @@ export async function POST(req) {
 
       // Insert ke tenant_approval sesuai urutan step role
       const approvals = [
-        { role_id: 3, step_order: 1 }, // divkontrak
-        { role_id: 5, step_order: 2 }, // kasubdiv
-        { role_id: 6, step_order: 3 }, // kadiv
-        { role_id: 7, step_order: 4 }, // dirbis
-        { role_id: 8, step_order: 5 }, // dirut
+        { role_id: 3, step_order: 1 }, // kasie
+        { role_id: 4, step_order: 2 }, // kasubdiv
+        { role_id: 5, step_order: 3 }, // kadiv
+        { role_id: 6, step_order: 4 }, // dirbis
+        { role_id: 7, step_order: 5 }, // dirut
       ];
 
       for (const a of approvals) {

@@ -40,44 +40,23 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const response = await axios.post("/api/login", { username, password });
-      console.log("response", response);
       setSnackbar({
         open: true,
         message: "Login berhasil!",
         severity: "success",
       });
-      setLoading(false);
-      setRedirecting(true);
-      localStorage.setItem(
-        "loggedInUser",
-        JSON.stringify({
-          id: response.data.id,
-          full_name: response.data.full_name,
-          username: response.data.username,
-          role_name: response.data.role_name,
-          role_id: response.data.role_id,
-          phone: response.data.phone,
-          email: response.data.email,
-          nik: response.data.nik,
-        })
-      );
+
+      // middleware akan handle redirect berdasarkan role
       setTimeout(() => {
-        if (response.data.role_name === "superadmin")
-          router.push("/superadmin/dashboard");
-        else if (response.data.role_name === "divkontrak")
-          router.push("/divkontrak/dashboard");
-        else router.push("/cashier");
-      }, 800); // beri delay agar spinner terlihat
+        router.refresh(); // reload server component → middleware dijalankan
+      }, 1000);
     } catch (err) {
-      console.log("err", err);
+      setSnackbar({
+        open: true,
+        message: err.response?.data?.message || "Login gagal!",
+        severity: "error",
+      });
       setLoading(false);
-      if (err.response && err.response.data && err.response.data.message) {
-        setSnackbar({
-          open: true,
-          message: err.response.data.message,
-          severity: "error",
-        });
-      }
     }
   };
 

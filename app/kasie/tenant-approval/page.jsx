@@ -1,29 +1,33 @@
 "use client";
-import { Box, Button, Paper, useTheme } from "@mui/material";
+import {
+  Box,
+  Button,
+  Paper,
+  Typography,
+  useMediaQuery,
+  useTheme,
+} from "@mui/material";
 import React, { useEffect, useState } from "react";
-import { Table, ConfigProvider, theme as antdTheme, Input } from "antd";
+import { Table, ConfigProvider, theme as antdTheme, Input, Tag } from "antd";
 import { useThemeMode } from "../../components/themeprovider/ThemeContext";
 import moment from "moment";
 import { Icon } from "@iconify/react";
 import LoadingBackdrop from "../../components/loading/Backdrop";
 import Notification from "../../components/Notification";
-import AddUser from "./AddUser";
-import EditUser from "./EditUser";
-import DeleteUser from "./DeleteUser";
 import axios from "axios";
-import menuAdmin from "@/app/components/menu/MenuItemAdmin";
+import menuSuperadmin from "@/app/components/menu/MenuItemSuperadmin";
 import BreadcrumbPage from "@/app/components/breadcrumb/page";
 
-const Users = () => {
-  const [dataUsers, setDataUsers] = useState([]);
-  const [locationId, setLocationId] = useState("");
+const TenantApproval = () => {
+  const [approvalList, setApprovalList] = useState([]);
   const { themeMode } = useThemeMode();
   const theme = useTheme();
+  const isMobile = useMediaQuery("(max-width:1200px)");
   const [searchText, setSearchText] = useState("");
   const [loading, setLoading] = useState(false);
-  const [openAddUserModal, setOpenAddUserModal] = useState(false);
-  const [openEditUserModal, setOpenEditUserModal] = useState(false);
-  const [openDeleteUserModal, setOpenDeleteUserModal] = useState(false);
+  const [openAddModal, setOpenAddModal] = useState(false);
+  const [openEditModal, setOpenEditModal] = useState(false);
+  const [openDeleteModal, setOpenDeleteModal] = useState(false);
   const [selectedData, setSelectedData] = useState(null);
   const [pageSize, setPageSize] = useState(5);
   const [snackbar, setSnackbar] = useState({
@@ -32,71 +36,57 @@ const Users = () => {
     severity: "success",
   });
 
-  const getUsersData = async () => {
+  const getDataApprovals = async () => {
     setLoading(true);
     try {
-      const getCurrentUserData = localStorage.getItem("loggedInUser");
+      const loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
+      const roleId = loggedInUser?.role_id;
 
-      const { location_id } = JSON.parse(getCurrentUserData);
+      if (!roleId) {
+        console.log("Role ID not found");
+        setLoading(false);
+        return;
+      }
 
-      // Kirim location_id sebagai query parameter
-      const response = await axios.get(
-        `/api/users/searchuserbylocationid?location_id=${location_id}`
-      );
-      console.log("Users data", response);
-      setDataUsers(response.data.data || []);
-    } catch (error) {
-      console.log("error", error);
-    } finally {
+      const res = await axios.get(`/api/tenant-approval/by-role`, {
+        params: { role_id: roleId },
+      });
+
+      if (res.data.success) {
+        console.log("data approval", res.data);
+
+        setTimeout(() => {
+          setApprovalList(res.data.data);
+          setLoading(false);
+        }, 1000);
+      } else {
+        console.log("Error fetching tenant approval:", res.data.message);
+        setLoading(false);
+      }
+    } catch (err) {
+      console.log("Error fetch tenant approval:", err);
       setLoading(false);
-      
     }
   };
 
-  const getLocationsData = async () => {
-    const getCurrentUserData = localStorage.getItem("loggedInUser");
-    const { location_id } = JSON.parse(getCurrentUserData);
-
-    setLocationId(location_id || "");
-  };
-
   useEffect(() => {
-    getUsersData();
-    getLocationsData();
+    getDataApprovals();
   }, []);
 
-  // Generate unique filter options for Name and Address
-  const nameFilters = [...new Set(dataUsers.map((item) => item.name))].map(
-    (name) => ({ text: name, value: name })
-  );
-
-  const locationFilters = [
-    ...new Set(dataUsers.map((item) => item.location_name)),
-  ].map((location_name) => ({ text: location_name, value: location_name }));
-
-  const roleFilters = [...new Set(dataUsers.map((item) => item.role))].map(
-    (role) => ({ text: role, value: role })
-  );
-
-  const filteredData = dataUsers.filter(
-    (item) =>
-      item.name?.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.username?.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.email?.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.phone?.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.role?.toLowerCase().includes(searchText.toLowerCase())
+  const filteredData = approvalList.filter((item) =>
+    item.role_name?.toLowerCase().includes(searchText.toLowerCase())
   );
 
   const handleEdit = (record) => {
     // console.log("edit record", record);
     setSelectedData(record);
-    setOpenEditUserModal(true);
+    setOpenEditModal(true);
   };
 
   const handleDelete = (record) => {
-    console.log("delete record", record);
+    // console.log("delete record", record);
     setSelectedData(record);
-    setOpenDeleteUserModal(true);
+    setOpenDeleteModal(true);
   };
 
   const onChange = (pagination, filters, sorter, extra) => {
@@ -105,49 +95,64 @@ const Users = () => {
     }
   };
 
+  // Utility untuk filter dinamis
+  function generateFilters(data, key) {
+    return [...new Set(data.map((item) => item[key]))]
+      .filter((val) => val !== undefined && val !== null)
+      .map((val) => ({ text: val, value: val }));
+  }
+
+  function createOnFilter(key) {
+    return (value, record) => record[key] === value;
+  }
+
+  const tenantNameFilters = generateFilters(approvalList, "tenant_name");
+  const locationFilters = generateFilters(approvalList, "location_name");
+
   const columns = [
     {
-      title: "Nama User",
-      dataIndex: "name",
-      filters: nameFilters,
-      onFilter: (value, record) => record.name === value,
-      sorter: (a, b) => a.name.localeCompare(b.name),
+      title: "Nama Penyewa",
+      dataIndex: "tenant_name",
+      filters: tenantNameFilters,
+      onFilter: createOnFilter("tenant_name"),
+      sorter: (a, b) => a.tenant_name.localeCompare(b.tenant_name),
       sortDirections: ["ascend", "descend"],
-      width: 150,
-    },
-    {
-      title: "Username",
-      dataIndex: "username",
-      width: 100,
-    },
-    {
-      title: "Password",
-      dataIndex: "password",
-      render: (text) => (
-        // Tampilkan bintang sebanyak panjang password, atau minimal 6 bintang
-        <span>{"*".repeat(text?.length > 0 ? text.length : 6)}</span>
+      render: (text, record) => (
+        <Typography sx={{ fontWeight: "bold", fontSize: "12px" }}>
+          {record.tenant_name.charAt(0).toUpperCase() +
+            record.tenant_name.slice(1)}
+        </Typography>
       ),
-      width: 100,
+      width: isMobile ? 150 : 80,
     },
     {
-      title: "Role",
-      dataIndex: "role",
-      filters: roleFilters,
-      width: 80,
-      // onFilter: (value, record) => record.role === value,
-      // sorter: (a, b) => a.role.localeCompare(b.role),
-      // sortDirections: ["ascend", "descend"],
-      width: 80,
+      title: "Lokasi",
+      dataIndex: "location_name",
+      filters: locationFilters,
+      onFilter: createOnFilter("location_name"),
+      filterSearch: true,
+      sorter: (a, b) => a.location_name.localeCompare(b.location_name),
+      sortDirections: ["ascend", "descend"],
+      width: 200,
     },
     {
-      title: "Telepon",
-      dataIndex: "phone",
-      width: 100,
-    },
-    {
-      title: "Email",
-      dataIndex: "email",
-      width: 150,
+      title: "Ruangan",
+      dataIndex: "room_number",
+      sorter: (a, b) => a.room_number.localeCompare(b.room_number),
+      sortDirections: ["ascend", "descend"],
+      render: (text, record) => {
+        return (
+          <Tag
+            // warna random berdasarkan angka ganjil genap
+            color={record.id % 2 === 0 ? "pink" : "geekblue"}
+            key={record.id}
+            style={{ fontWeight: "bold" }}
+          >
+            {record.room_number}
+          </Tag>
+        );
+      },
+      width: 120,
     },
     {
       title: "Actions",
@@ -159,8 +164,8 @@ const Users = () => {
         <Box sx={{ display: "flex", gap: 1, justifyContent: "center" }}>
           <Button
             size="small"
-            variant="outlined"
-            color="primary"
+            variant={themeMode === "dark" ? "outlined" : "contained"}
+            color="info"
             onClick={() => handleEdit(record)}
             sx={{ minWidth: 0, px: 1 }}
           >
@@ -168,7 +173,7 @@ const Users = () => {
           </Button>
           <Button
             size="small"
-            variant="outlined"
+            variant={themeMode === "dark" ? "outlined" : "contained"}
             color="error"
             onClick={() => handleDelete(record)}
             sx={{ minWidth: 0, px: 1 }}
@@ -183,7 +188,7 @@ const Users = () => {
   return (
     <Box sx={{ width: "100%", height: "100%", minHeight: "100%", p: 2 }}>
       {/* Component Breadcrumbs disini */}
-      <BreadcrumbPage menuList={menuAdmin} />
+      <BreadcrumbPage menuList={menuSuperadmin} />
 
       <Box
         sx={{
@@ -193,12 +198,12 @@ const Users = () => {
           justifyContent: "flex-end",
           transition: "all 0.3s",
           mb: 2,
-          mt: 4,
+          mt: 3,
         }}
       >
         <Button
-          variant="outlined"
-          onClick={() => setOpenAddUserModal(true)}
+          variant={themeMode === "dark" ? "outlined" : "contained"}
+          onClick={() => setOpenAddModal(true)}
           sx={{
             textTransform: "none",
             display: "flex",
@@ -209,8 +214,8 @@ const Users = () => {
             fontWeight: "bold",
           }}
         >
-          User
-          <Icon icon="line-md:account-add" fontSize="20px" />
+          Tambah
+          <Icon icon="oui:app-users-roles" fontSize="20px" />
         </Button>
       </Box>
       <ConfigProvider
@@ -222,7 +227,6 @@ const Users = () => {
           token: {
             colorPrimary: theme.palette.primary.main, // warna utama (angka aktif, outline, dsb)
             // colorText: theme.palette.text.primary, // warna teks default
-            // colorBgContainer: theme.palette.background.default, // background tabel
           },
         }}
       >
@@ -262,37 +266,16 @@ const Users = () => {
           />
         </Paper>
       </ConfigProvider>
-      <AddUser
-        open={openAddUserModal}
-        onClose={() => setOpenAddUserModal(false)}
+      {/* <AddRole
+        open={openAddModal}
+        onClose={() => setOpenAddModal(false)}
         loadingTrue={() => setLoading(true)}
         loadingFalse={() => setLoading(false)}
         loading={loading}
-        getUsersData={getUsersData}
-        location_id={locationId}
+        getDataRoles={getDataRoles}
         onNotify={(notif) => setSnackbar(notif)}
-      />
-      <EditUser
-        open={openEditUserModal}
-        onClose={() => setOpenEditUserModal(false)}
-        loadingTrue={() => setLoading(true)}
-        loadingFalse={() => setLoading(false)}
-        loading={loading}
-        getUsersData={getUsersData}
-        location_id={locationId}
-        selectedData={selectedData}
-        onNotify={(notif) => setSnackbar(notif)}
-      />
-      <DeleteUser
-        open={openDeleteUserModal}
-        onClose={() => setOpenDeleteUserModal(false)}
-        loadingTrue={() => setLoading(true)}
-        loadingFalse={() => setLoading(false)}
-        loading={loading}
-        getUsersData={getUsersData}
-        onNotify={(notif) => setSnackbar(notif)}
-        selectedData={selectedData}
-      />
+        dataRoles={dataRoles}
+      /> */}
       <LoadingBackdrop message="Loading..." open={loading} />
       {/* Snackbar notification */}
       <Notification
@@ -305,4 +288,4 @@ const Users = () => {
   );
 };
 
-export default Users;
+export default TenantApproval;

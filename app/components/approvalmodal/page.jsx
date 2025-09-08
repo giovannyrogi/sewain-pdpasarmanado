@@ -9,12 +9,10 @@ import {
   Divider,
   Grid,
   useTheme,
-  Avatar,
 } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import { Icon } from "@iconify/react";
 import axios from "axios";
-import ImagePreviewModal from "../imagepreviewmodal/page";
 
 const ApprovalModal = ({
   open,
@@ -103,96 +101,108 @@ const ApprovalModal = ({
     >
       <Fade in={open}>
         <Box sx={style}>
-          <Typography sx={{ fontSize: 18, fontWeight: "bold", mb: 1 }}>
+          <Typography
+            sx={{
+              fontSize: isMobile ? 18 : 20,
+              fontWeight: "bold",
+              mb: isMobile ? 1 : 0.5,
+            }}
+          >
             Progress Approval
           </Typography>
 
           <Divider sx={{ mb: 2, borderColor: theme.palette.primary.main }} />
 
           <Grid container direction="column" spacing={2}>
-            {approvalList.map((item, index) => (
-              <Grid item key={item.approval_id}>
-                <Box
-                  display="flex"
-                  alignItems="center"
-                  gap={2}
-                  sx={{
-                    p: 1.5,
-                    borderRadius: 2,
-                    bgcolor:
-                      item.status === "approved"
-                        ? "rgba(76,175,80,0.1)"
-                        : "rgba(255,152,0,0.05)",
-                  }}
-                >
-                  {/* Icon / Step Number */}
+            {approvalList &&
+              approvalList.map((item, index) => (
+                <Grid item key={item.approval_id}>
                   <Box
+                    display="flex"
+                    alignItems="center"
+                    gap={2}
                     sx={{
-                      width: 40,
-                      height: 40,
-                      borderRadius: "50%",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
+                      p: 1.5,
+                      borderRadius: 2,
                       bgcolor:
                         item.status === "approved"
-                          ? "success.main"
-                          : "warning.main",
-                      color: "#fff",
-                      fontWeight: "bold",
+                          ? "rgba(76, 175, 80, 0.15)"
+                          : item.status === "pending"
+                          ? "rgba(255, 193, 7, 0.2)"
+                          : "rgba(244, 67, 54, 0.15)",
                     }}
                   >
-                    {index + 1}
-                  </Box>
-
-                  {/* Role and Approver */}
-                  <Box flex={1}>
-                    <Typography
+                    {/* Icon / Step Number */}
+                    <Box
                       sx={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: "50%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        bgcolor:
+                          item.status === "approved"
+                            ? "success.main"
+                            : item.status === "pending"
+                            ? "warning.main"
+                            : "error.main",
+                        color: "#fff",
                         fontWeight: "bold",
-                        fontSize: 15,
-                        mb: 0.5,
                       }}
                     >
-                      {item.role_name}
-                    </Typography>
-                    <Typography sx={{ fontSize: 14, color: "text.secondary" }}>
-                      {item.status === "approved"
-                        ? `Approved by: ${item.full_name}`
-                        : "Pending"}
-                    </Typography>
-                  </Box>
+                      {index + 1}
+                    </Box>
 
-                  {/* Status Icon */}
-                  <Box>
-                    {item.status === "approved" ? (
-                      <Icon
-                        icon="ph:seal-check-duotone"
-                        color={theme.palette.success.main}
-                        width={40}
-                        height={40}
-                      />
-                    ) : (
-                      <Icon
-                        icon="svg-spinners:6-dots-scale-middle"
-                        color={theme.palette.warning.main}
-                        width={40}
-                        height={40}
-                      />
-                    )}
+                    {/* Role and Approver */}
+                    <Box flex={1}>
+                      <Typography
+                        sx={{
+                          fontWeight: "bold",
+                          fontSize: 15,
+                          mb: 0.5,
+                        }}
+                      >
+                        {item.role_name}
+                      </Typography>
+                      <Typography
+                        sx={{ fontSize: 14, color: "text.secondary" }}
+                      >
+                        {item.status === "approved"
+                          ? `Disetujui oleh : ${item.full_name}`
+                          : "Menunggu Persetujuan"}
+                      </Typography>
+                    </Box>
+
+                    {/* Status Icon */}
+                    <Box>
+                      {item.status === "approved" ? (
+                        <Icon
+                          icon="ph:seal-check-duotone"
+                          color={theme.palette.success.main}
+                          width={40}
+                          height={40}
+                        />
+                      ) : item.status === "pending" ? (
+                        <Icon
+                          icon="svg-spinners:ring-resize"
+                          color={theme.palette.warning.main}
+                          width={40}
+                          height={40}
+                        />
+                      ) : (
+                        <Icon
+                          icon="line-md:close-circle-filled"
+                          color={theme.palette.error.main}
+                          width={40}
+                          height={40}
+                        />
+                      )}
+                    </Box>
                   </Box>
-                </Box>
-              </Grid>
-            ))}
+                </Grid>
+              ))}
           </Grid>
-
-          {/* Modal Preview Gambar */}
-          <ImagePreviewModal
-            open={openPreview}
-            onClose={() => setOpenPreview(false)}
-            imageUrl={selectedData?.ktp_file_path || ""}
-            alt="Preview KTP"
-          />
         </Box>
       </Fade>
     </Modal>

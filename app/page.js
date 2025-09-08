@@ -1,11 +1,7 @@
-import Image from "next/image";
-import { Box } from "@mui/material";
-import LoginPage from "./login/page";
+import { redirect } from "next/navigation";
 
 const Home = () => {
-  return (
-      <LoginPage />
-  );
+  redirect("/login");
 };
 
 export default Home;

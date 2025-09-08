@@ -1,24 +1,28 @@
 "use client";
-import { Box, Button, Paper, Typography, useTheme } from "@mui/material";
+import {
+  Box,
+  Button,
+  Paper,
+  Typography,
+  useMediaQuery,
+  useTheme,
+} from "@mui/material";
 import React, { useEffect, useState } from "react";
-import { Table, ConfigProvider, theme as antdTheme, Input } from "antd";
+import { Table, ConfigProvider, theme as antdTheme, Input, Tag } from "antd";
 import { useThemeMode } from "../../components/themeprovider/ThemeContext";
 import moment from "moment";
 import { Icon } from "@iconify/react";
 import LoadingBackdrop from "../../components/loading/Backdrop";
 import Notification from "../../components/Notification";
-import AddUser from "./AddUser";
-import EditUser from "./EditUser";
-import DeleteUser from "./DeleteUser";
 import axios from "axios";
 import menuSuperadmin from "@/app/components/menu/MenuItemSuperadmin";
 import BreadcrumbPage from "@/app/components/breadcrumb/page";
 
-const Users = () => {
-  const [dataUsers, setDataUsers] = useState([]);
-  const [dataRoles, setDataRoles] = useState([]);
+const TenantApproval = () => {
+  const [approvalList, setApprovalList] = useState([]);
   const { themeMode } = useThemeMode();
   const theme = useTheme();
+  const isMobile = useMediaQuery("(max-width:1200px)");
   const [searchText, setSearchText] = useState("");
   const [loading, setLoading] = useState(false);
   const [openAddModal, setOpenAddModal] = useState(false);
@@ -31,57 +35,46 @@ const Users = () => {
     message: "",
     severity: "success",
   });
-  const [currentRole, setCurrentRole] = useState("");
 
-  const getUsersData = async () => {
+  const getDataApprovals = async () => {
     setLoading(true);
     try {
-      const getDataLocalStorage = localStorage.getItem("loggedInUser");
+      const loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
+      const roleId = loggedInUser?.role_id;
 
-      const { role_name, role_id } = JSON.parse(getDataLocalStorage);
-      // console.log("role_name", role_name);
-      if (role_name) {
-        setCurrentRole(role_name);
+      if (!roleId) {
+        console.log("Role ID not found");
+        setLoading(false);
+        return;
       }
-      // Kirim role_name sebagai query parameter
-      const response = await axios.get(`/api/users?role_id=${role_id}`);
-      console.log("Users data", response);
-      setDataUsers(response.data.data);
-      setTimeout(() => {
-        setLoading(false);
-      }, 1000);
-    } catch (error) {
-      console.log("error", error);
-      setTimeout(() => {
-        setLoading(false);
-      }, 1000);
-    }
-  };
 
-  const getDataRoles = async () => {
-    setLoading(true);
+      const res = await axios.get(`/api/tenant-approval/by-role`, {
+        params: { role_id: roleId },
+      });
 
-    try {
-      const response = await axios.get("/api/roles");
-      console.log("data role", response.data);
-      setDataRoles(response.data.data);
-    } catch (error) {
-      console.log(error);
+      if (res.data.success) {
+        console.log("data approval", res.data);
+
+        setTimeout(() => {
+          setApprovalList(res.data.data);
+          setLoading(false);
+        }, 1000);
+      } else {
+        console.log("Error fetching tenant approval:", res.data.message);
+        setLoading(false);
+      }
+    } catch (err) {
+      console.log("Error fetch tenant approval:", err);
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    getUsersData();
-    getDataRoles();
+    getDataApprovals();
   }, []);
 
-  const filteredData = dataUsers.filter(
-    (item) =>
-      item.full_name?.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.username?.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.email?.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.phone?.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.role_name?.toLowerCase().includes(searchText.toLowerCase())
+  const filteredData = approvalList.filter((item) =>
+    item.role_name?.toLowerCase().includes(searchText.toLowerCase())
   );
 
   const handleEdit = (record) => {
@@ -113,55 +106,53 @@ const Users = () => {
     return (value, record) => record[key] === value;
   }
 
-  const nameFilters = generateFilters(dataUsers, "full_name");
-  const roleFilters = generateFilters(dataUsers, "role_name");
+  const tenantNameFilters = generateFilters(approvalList, "tenant_name");
+  const locationFilters = generateFilters(approvalList, "location_name");
 
   const columns = [
     {
-      title: "Nama User",
-      dataIndex: "full_name",
-      filters: nameFilters,
-      onFilter: createOnFilter("full_name"),
-      filterSearch: true,
-      sorter: (a, b) => a.full_name.localeCompare(b.full_name),
+      title: "Nama Penyewa",
+      dataIndex: "tenant_name",
+      filters: tenantNameFilters,
+      onFilter: createOnFilter("tenant_name"),
+      sorter: (a, b) => a.tenant_name.localeCompare(b.tenant_name),
       sortDirections: ["ascend", "descend"],
       render: (text, record) => (
         <Typography sx={{ fontWeight: "bold", fontSize: "12px" }}>
-          {record.full_name}
+          {record.tenant_name.charAt(0).toUpperCase() +
+            record.tenant_name.slice(1)}
         </Typography>
       ),
-      width: 150,
+      width: isMobile ? 150 : 80,
     },
     {
-      title: "Username",
-      dataIndex: "username",
-      width: 100,
-    },
-    {
-      title: "Password",
-      dataIndex: "password",
-      render: (text) => (
-        <span>{"*".repeat(text?.length > 0 ? text.length : 6)}</span>
-      ),
-      width: 100,
-    },
-    {
-      title: "Role",
-      dataIndex: "role_name",
-      filters: roleFilters,
-      onFilter: createOnFilter("role_name"),
+      title: "Lokasi",
+      dataIndex: "location_name",
+      filters: locationFilters,
+      onFilter: createOnFilter("location_name"),
       filterSearch: true,
-      width: 150,
+      sorter: (a, b) => a.location_name.localeCompare(b.location_name),
+      sortDirections: ["ascend", "descend"],
+      width: 200,
     },
     {
-      title: "Telepon",
-      dataIndex: "phone",
-      width: 100,
-    },
-    {
-      title: "Email",
-      dataIndex: "email",
-      width: 150,
+      title: "Ruangan",
+      dataIndex: "room_number",
+      sorter: (a, b) => a.room_number.localeCompare(b.room_number),
+      sortDirections: ["ascend", "descend"],
+      render: (text, record) => {
+        return (
+          <Tag
+            // warna random berdasarkan angka ganjil genap
+            color={record.id % 2 === 0 ? "pink" : "geekblue"}
+            key={record.id}
+            style={{ fontWeight: "bold" }}
+          >
+            {record.room_number}
+          </Tag>
+        );
+      },
+      width: 120,
     },
     {
       title: "Actions",
@@ -224,7 +215,7 @@ const Users = () => {
           }}
         >
           Tambah
-          <Icon icon="line-md:account-add" fontSize="20px" />
+          <Icon icon="oui:app-users-roles" fontSize="20px" />
         </Button>
       </Box>
       <ConfigProvider
@@ -275,42 +266,16 @@ const Users = () => {
           />
         </Paper>
       </ConfigProvider>
-      <AddUser
+      {/* <AddRole
         open={openAddModal}
         onClose={() => setOpenAddModal(false)}
         loadingTrue={() => setLoading(true)}
         loadingFalse={() => setLoading(false)}
         loading={loading}
-        getUsersData={getUsersData}
         getDataRoles={getDataRoles}
         onNotify={(notif) => setSnackbar(notif)}
-        currentRole={currentRole}
         dataRoles={dataRoles}
-      />
-      <EditUser
-        open={openEditModal}
-        onClose={() => setOpenEditModal(false)}
-        loadingTrue={() => setLoading(true)}
-        loadingFalse={() => setLoading(false)}
-        loading={loading}
-        getUsersData={getUsersData}
-        getDataRoles={getDataRoles}
-        selectedData={selectedData}
-        onNotify={(notif) => setSnackbar(notif)}
-        currentRole={currentRole}
-        dataRoles={dataRoles}
-      />
-      <DeleteUser
-        open={openDeleteModal}
-        onClose={() => setOpenDeleteModal(false)}
-        loadingTrue={() => setLoading(true)}
-        loadingFalse={() => setLoading(false)}
-        loading={loading}
-        getUsersData={getUsersData}
-        getDataRoles={getDataRoles}
-        onNotify={(notif) => setSnackbar(notif)}
-        selectedData={selectedData}
-      />
+      /> */}
       <LoadingBackdrop message="Loading..." open={loading} />
       {/* Snackbar notification */}
       <Notification
@@ -323,4 +288,4 @@ const Users = () => {
   );
 };
 
-export default Users;
+export default TenantApproval;

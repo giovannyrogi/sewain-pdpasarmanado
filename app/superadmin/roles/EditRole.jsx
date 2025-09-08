@@ -137,7 +137,7 @@ const EditRole = ({
                 variant="filled"
                 fullWidth
                 value={roleName}
-                onChange={(e) => setRoleName(e.target.value.replace(/\s/g, ""))}
+                onChange={(e) => setRoleName(e.target.value)}
                 autoFocus
                 required
                 disabled={loading}

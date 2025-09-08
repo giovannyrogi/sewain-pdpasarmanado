@@ -109,7 +109,7 @@ const Roles = () => {
       sortDirections: ["ascend", "descend"],
       render: (text, record) => (
         <Typography sx={{ fontWeight: "bold", fontSize: "12px" }}>
-          {record.role_name.charAt(0).toUpperCase() + record.role_name.slice(1)}
+          {record.role_name}
         </Typography>
       ),
       width: isMobile ? 150 : 80,

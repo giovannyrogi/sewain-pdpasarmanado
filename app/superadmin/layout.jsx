@@ -9,10 +9,24 @@ const SuperadminLayout = ({ children }) => {
   const isMobile = useMediaQuery("(max-width:1200px)");
   const [user, setUser] = useState(null);
 
+  // Helper untuk ambil cookie by name
+  const getCookie = (name) => {
+    const match = document.cookie.match(
+      new RegExp("(^| )" + name + "=([^;]+)")
+    );
+    return match ? decodeURIComponent(match[2]) : null;
+  };
+
   useEffect(() => {
-    const storedUser = localStorage.getItem("loggedInUser");
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
+    const loggedInUser = getCookie("loggedInUser");
+
+    if (loggedInUser) {
+      console.log("loggedInUser", loggedInUser);
+      try {
+        setUser(JSON.parse(loggedInUser));
+      } catch (err) {
+        console.error("Gagal parsing cookie loggedInUser:", err);
+      }
     }
   }, []);
 

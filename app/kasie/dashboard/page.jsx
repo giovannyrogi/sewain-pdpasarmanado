@@ -4,9 +4,9 @@ import { useThemeMode } from "@/app/components/themeprovider/ThemeContext";
 import { Icon } from "@iconify/react";
 import { Box, Paper, Typography, useTheme } from "@mui/material";
 
-const DashboardAdmin = () => {
-  const theme = useTheme();
+const Dashboard = () => {
   const { themeMode, setThemeMode } = useThemeMode();
+  const theme = useTheme();
   const [user, setUser] = useState(null);
 
   useEffect(() => {
@@ -59,7 +59,7 @@ const DashboardAdmin = () => {
             fontWeight: "bold",
           }}
         >
-          {user && user.location_name ? user.location_name : ""}
+          Main Office
         </Typography>
         <Icon
           icon="line-md:map-marker-twotone-loop"
@@ -77,10 +77,10 @@ const DashboardAdmin = () => {
           minHeight: "60vh",
         }}
       >
-        Dashboard Content Admin
+        Dashboard Content
       </Paper>
     </Box>
   );
 };
 
-export default DashboardAdmin;
+export default Dashboard;

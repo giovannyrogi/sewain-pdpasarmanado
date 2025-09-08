@@ -22,8 +22,9 @@ import ExpandMore from "@mui/icons-material/ExpandMore";
 import { Icon } from "@iconify/react";
 import settingsMenu from "../menu/SettingsMenu";
 import LoadingBackdrop from "../loading/Backdrop";
-import { usePathname, useRouter } from "next/navigation";
+import { redirect, usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
+import axios from "axios";
 
 const LeftNavBar = ({ menus, activeMenu, onMenuClick, user }) => {
   const theme = useTheme();
@@ -34,13 +35,17 @@ const LeftNavBar = ({ menus, activeMenu, onMenuClick, user }) => {
   const router = useRouter();
   const pathname = usePathname();
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     setLoading(true);
-    if (typeof window !== "undefined") {
+    try {
+      await axios.post("/api/logout");
       setTimeout(() => {
-        localStorage.removeItem("loggedInUser");
-        window.location.href = "/";
+        // window.location.href = "/login"; // middleware akan handle redirect
+        redirect("/login");
       }, 1000);
+    } catch (err) {
+      console.log("error logout", err);
+      setLoading(false);
     }
   };
 

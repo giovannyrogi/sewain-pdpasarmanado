@@ -12,32 +12,29 @@ import React, { useEffect, useState } from "react";
 import { Icon } from "@iconify/react";
 import axios from "axios";
 
-const DeleteCategory = ({
+const DeleteTenantApplication = ({
   open,
   onClose,
   loadingTrue,
   loadingFalse,
   loading,
-  getDataCategory,
   onNotify,
   selectedData,
+  getDataTenantApplication,
+  getLocationsData,
 }) => {
   const isMobile = useMediaQuery("(max-width:600px)");
   const theme = useTheme();
-  const [userId, setUserId] = useState(null);
-
-  useEffect(() => {
-    if (selectedData && open) {
-      console.log("selectedData.id", selectedData.id);
-      setUserId(selectedData.id || null);
-    }
-  }, [selectedData, open]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     loadingTrue();
     try {
-      const response = await axios.delete(`/api/category/${userId}`);
+      const response = await axios.delete(
+        `/api/tenant-application/${selectedData.id}`
+      );
+
+      console.log("response", response.data);
 
       if (response?.data.success) {
         onNotify &&
@@ -48,30 +45,32 @@ const DeleteCategory = ({
           });
 
         setTimeout(() => {
-          getDataCategory();
+          getDataTenantApplication();
+          getLocationsData();
           onClose();
           loadingFalse();
         }, 1000);
       } else {
+        onNotify &&
+          onNotify({
+            open: true,
+            message: response?.data.message || "Gagal menghapus user.",
+            severity: "error",
+          });
         setTimeout(() => {
-          onNotify &&
-            onNotify({
-              open: true,
-              message: response?.data.message || "Gagal menghapus user.",
-              severity: "error",
-            });
           loadingFalse();
         }, 1000);
       }
     } catch (error) {
-      console.log("error", error);
+      console.error("Error deleting user:", error);
+      onNotify &&
+        onNotify({
+          open: true,
+          message:
+            error.response.data.message || "Terjadi error saat menghapus user.",
+          severity: "error",
+        });
       setTimeout(() => {
-        onNotify &&
-          onNotify({
-            open: true,
-            message: error.message || "Terjadi error saat menghapus user.",
-            severity: "error",
-          });
         loadingFalse();
       }, 1000);
     }
@@ -144,7 +143,7 @@ const DeleteCategory = ({
                 letterSpacing: 0.5,
               }}
             >
-              Hapus User
+              Hapus Data
             </Typography>
             <Typography
               sx={{
@@ -155,7 +154,7 @@ const DeleteCategory = ({
               }}
             >
               Tindakan ini tidak dapat di batalkan, Anda yakin ingin menghapus
-              category{" "}
+              Data Penyewa atas nama{" "}
               <span
                 style={{
                   fontWeight: "bold",
@@ -165,7 +164,38 @@ const DeleteCategory = ({
                   fontSize: 14,
                 }}
               >
-                {selectedData && selectedData.name ? selectedData.name : ""}
+                {selectedData && selectedData.tenant_name
+                  ? selectedData.tenant_name
+                  : ""}
+              </span>
+              , Lokasi{" "}
+              <span
+                style={{
+                  fontWeight: "bold",
+                  color: theme.palette.primary.main,
+                  //   border: `1px solid ${theme.palette.primary.main}`,
+                  //   borderRadius: 4,
+                  fontSize: 14,
+                }}
+              >
+                {selectedData && selectedData.location_name
+                  ? selectedData.location_name
+                  : ""}
+              </span>{" "}
+              dan dari{" "}
+              <span
+                style={{
+                  fontWeight: "bold",
+                  color: theme.palette.primary.main,
+                  //   border: `1px solid ${theme.palette.primary.main}`,
+                  //   borderRadius: 4,
+                  fontSize: 14,
+                }}
+              >
+                Ruangan{" "}
+                {selectedData && selectedData.room_number
+                  ? selectedData.room_number
+                  : ""}
               </span>{" "}
               ?
             </Typography>
@@ -203,4 +233,4 @@ const DeleteCategory = ({
   );
 };
 
-export default DeleteCategory;
+export default DeleteTenantApplication;

@@ -10,41 +10,6 @@ const menuSuperadmin = [
     icon: <Icon icon="svg-spinners:blocks-scale" fontSize="20px" />,
   },
   {
-    label: "Data Master",
-    value: "dataMaster",
-    icon: <Icon icon="material-symbols:database" fontSize={20} />,
-    submenu: [
-      {
-        label: "Roles",
-        value: "roles",
-        path: "/superadmin/roles",
-        icon: <Icon icon="oui:app-users-roles" fontSize="20px" />,
-        showIcon: true,
-      },
-      {
-        label: "Users",
-        value: "users",
-        path: "/superadmin/users",
-        icon: <Icon icon="streamline-plump:user-pin" fontSize="20px" />,
-        showIcon: true,
-      },
-      {
-        label: "Locations",
-        value: "locations",
-        path: "/superadmin/locations",
-        icon: <Icon icon="mdi:location-radius-outline" fontSize="20px" />,
-        showIcon: true,
-      },
-      {
-        label: "Rooms",
-        value: "rooms",
-        path: "/superadmin/rooms",
-        icon: <Icon icon="cil:room" fontSize="20px" />,
-        showIcon: true,
-      },
-    ],
-  },
-  {
     label: "Transactions",
     value: "transactions",
     icon: <Icon icon="healthicons:money-bag" fontSize={22} />,
