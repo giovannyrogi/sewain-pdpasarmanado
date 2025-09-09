@@ -15,24 +15,10 @@ const menuKepalaSubdivisi = [
     icon: <Icon icon="healthicons:money-bag" fontSize={22} />,
     submenu: [
       {
-        label: "Tenant Application",
-        value: "tenant-application",
-        path: "/kepala-subdivisi/tenant-application",
-        icon: <Icon icon="hugeicons:file-edit" fontSize="20px" />,
-        showIcon: true,
-      },
-      {
         label: "Tenant Approval",
         value: "tenant-approval",
         path: "/kepala-subdivisi/tenant-approval",
         icon: <Icon icon="carbon:document-set" fontSize="20px" />,
-        showIcon: true,
-      },
-      {
-        label: "Documents",
-        value: "documents",
-        path: "/kepala-subdivisi/documents",
-        icon: <Icon icon="f7:doc-on-doc" fontSize="20px" />,
         showIcon: true,
       },
       {

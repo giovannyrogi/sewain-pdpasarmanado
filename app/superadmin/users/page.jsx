@@ -1,6 +1,6 @@
 "use client";
 import { Box, Button, Paper, Typography, useTheme } from "@mui/material";
-import React, { useEffect, useState } from "react";
+import React, { use, useEffect, useState } from "react";
 import { Table, ConfigProvider, theme as antdTheme, Input } from "antd";
 import { useThemeMode } from "../../components/themeprovider/ThemeContext";
 import moment from "moment";
@@ -13,6 +13,7 @@ import DeleteUser from "./DeleteUser";
 import axios from "axios";
 import menuSuperadmin from "@/app/components/menu/MenuItemSuperadmin";
 import BreadcrumbPage from "@/app/components/breadcrumb/page";
+import { useUser } from "@/app/utils/useUser";
 
 const Users = () => {
   const [dataUsers, setDataUsers] = useState([]);
@@ -32,19 +33,13 @@ const Users = () => {
     severity: "success",
   });
   const [currentRole, setCurrentRole] = useState("");
+  const user = useUser();
 
   const getUsersData = async () => {
     setLoading(true);
     try {
-      const getDataLocalStorage = localStorage.getItem("loggedInUser");
-
-      const { role_name, role_id } = JSON.parse(getDataLocalStorage);
-      // console.log("role_name", role_name);
-      if (role_name) {
-        setCurrentRole(role_name);
-      }
       // Kirim role_name sebagai query parameter
-      const response = await axios.get(`/api/users?role_id=${role_id}`);
+      const response = await axios.get(`/api/users?role_id=${user.role_id}`);
       console.log("Users data", response);
       setDataUsers(response.data.data);
       setTimeout(() => {
@@ -71,9 +66,11 @@ const Users = () => {
   };
 
   useEffect(() => {
-    getUsersData();
-    getDataRoles();
-  }, []);
+    if (user) {
+      getUsersData();
+      getDataRoles();
+    }
+  }, [user]);
 
   const filteredData = dataUsers.filter(
     (item) =>

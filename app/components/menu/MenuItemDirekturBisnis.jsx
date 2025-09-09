@@ -2,11 +2,11 @@ import PeopleIcon from "@mui/icons-material/People";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import { Icon } from "@iconify/react";
 
-const menuKepalaSeksi = [
+const menuDirekturBisnis = [
   {
     label: "Dashboard",
     value: "dashboard",
-    path: "/kepala-seksi/dashboard",
+    path: "/direktur-bisnis/dashboard",
     icon: <Icon icon="svg-spinners:blocks-scale" fontSize="20px" />,
   },
   {
@@ -17,14 +17,14 @@ const menuKepalaSeksi = [
       {
         label: "Tenant Approval",
         value: "tenant-approval",
-        path: "/kepala-seksi/tenant-approval",
+        path: "/direktur-bisnis/tenant-approval",
         icon: <Icon icon="carbon:document-set" fontSize="20px" />,
         showIcon: true,
       },
       {
         label: "Payments",
         value: "payments",
-        path: "/kepala-seksi/payments",
+        path: "/direktur-bisnis/payments",
         icon: (
           <Icon icon="streamline-freehand:money-atm-withdraw" fontSize="20px" />
         ),
@@ -33,7 +33,7 @@ const menuKepalaSeksi = [
       {
         label: "Contracts",
         value: "contracts",
-        path: "/kepala-seksi/contracts",
+        path: "/direktur-bisnis/contracts",
         icon: <Icon icon="clarity:contract-line" fontSize="20px" />,
         showIcon: true,
       },
@@ -47,14 +47,14 @@ const menuKepalaSeksi = [
       {
         label: "Laporan 1",
         value: "laporan1",
-        path: "/kepala-seksi/laporan1",
+        path: "/direktur-bisnis/laporan1",
         icon: <LocationOnIcon />,
         showIcon: false,
       },
       {
         label: "Laporan 2",
         value: "laporan2",
-        path: "/kepala-seksi/laporan2",
+        path: "/direktur-bisnis/laporan2",
         icon: <PeopleIcon />,
         showIcon: false,
       },
@@ -63,4 +63,4 @@ const menuKepalaSeksi = [
   // Tambahkan menu lain jika perlu
 ];
 
-export default menuKepalaSeksi;
+export default menuDirekturBisnis;

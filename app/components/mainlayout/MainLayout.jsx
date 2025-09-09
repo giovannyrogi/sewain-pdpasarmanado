@@ -7,8 +7,10 @@ import { useUser } from "@/app/utils/useUser";
 import menuSuperadmin from "../menu/MenuItemSuperadmin";
 import menuKepalaSeksi from "../menu/MenuItemKepalaSeksi";
 import menuDevisiKontrak from "../menu/MenuItemDivisiKontrak";
-import menuKepalaSubdivisi from "../menu/MenuItemKepalaSubDivisi";
 import menuKepalaDivisi from "../menu/MenuItemKepalaDivisi";
+import menuDirekturBisnis from "../menu/MenuItemDirekturBisnis";
+import menuItemDirekturUtama from "../menu/MenuItemDirekturUtama";
+import menuKepalaSubdivisi from "../menu/MenuItemKepalaSubdivisi";
 
 // mapping role_id → menu
 const roleMenus = {
@@ -17,8 +19,8 @@ const roleMenus = {
   3: menuKepalaSeksi,
   4: menuKepalaSubdivisi,
   5: menuKepalaDivisi,
-  // 6: menuDirekturBisnis,
-  // 7: menuDirekturUtama,
+  6: menuDirekturBisnis,
+  7: menuItemDirekturUtama,
 };
 
 const NavbarWrapper = ({ isMobile, menus, user }) =>

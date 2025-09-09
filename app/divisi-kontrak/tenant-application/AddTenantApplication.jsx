@@ -39,7 +39,7 @@ const AddTenantApplication = ({
   dataLocations,
   onNotify,
   setLoadingMessage,
-  user,
+  user
 }) => {
   const isMobile = useMediaQuery("(max-width:600px)");
 
@@ -53,11 +53,13 @@ const AddTenantApplication = ({
     p: "18px 20px 18px 20px",
     maxHeight: "90vh",
     overflowY: "auto",
+    transition: "box-shadow 0.3s",
     //hide scrollbar
     "&::-webkit-scrollbar": {
       display: "none",
     },
   };
+
 
   const { themeMode } = useThemeMode();
   const theme = useTheme();
@@ -132,6 +134,7 @@ const AddTenantApplication = ({
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
 
     // Validasi KTP
     if (!ktpFile) {
