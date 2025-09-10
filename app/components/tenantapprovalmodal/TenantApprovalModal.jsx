@@ -18,7 +18,7 @@ import axios from "axios";
 import ImagePreviewModal from "../../components/imagepreviewmodal/page";
 import formatRupiah from "../../components/formatrupiah/page";
 import moment from "moment";
-import ApprovedOverlay from "@/app/components/approvedoverlay/page";
+import ApprovedOverlay from "./ApprovedOverlay";
 
 const TenantApprovalModal = ({
   open,
@@ -27,7 +27,7 @@ const TenantApprovalModal = ({
   loadingTrue,
   loadingFalse,
   onNotify,
-  getDataApprovals,
+  getDataApprovals = () => {},
   user,
 }) => {
   const isMobile = useMediaQuery("(max-width:600px)");
@@ -352,6 +352,32 @@ const TenantApprovalModal = ({
                     color: theme.palette.primary.main,
                   }}
                 >
+                  Lantai
+                </Typography>
+                <Typography
+                  sx={{
+                    fontWeight: "bold",
+                    fontSize: "13px",
+                    wordBreak: "break-word", // <-- biar kata panjang pecah
+                    whiteSpace: "normal", // <-- biar bisa turun baris
+                    overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
+                  }}
+                >
+                  {selectedData?.floor ? selectedData.floor : "-"}
+                </Typography>
+              </Grid>
+
+              <Grid
+                size={isMobile ? 6 : 12}
+                sx={{ display: "flex", flexDirection: "column" }}
+              >
+                <Typography
+                  sx={{
+                    fontWeight: "bold",
+                    fontSize: "14px",
+                    color: theme.palette.primary.main,
+                  }}
+                >
                   Panjang (m)
                 </Typography>
                 <Typography
@@ -378,7 +404,7 @@ const TenantApprovalModal = ({
                     color: theme.palette.primary.main,
                   }}
                 >
-                  Tanggal Mulai
+                  Luas (m)
                 </Typography>
                 <Typography
                   sx={{
@@ -389,8 +415,38 @@ const TenantApprovalModal = ({
                     overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
                   }}
                 >
-                  {selectedData?.start_date
-                    ? moment(selectedData.start_date).format("D MMMM YYYY")
+                  {selectedData?.room_area
+                    ? selectedData.room_area + " M"
+                    : "-"}
+                </Typography>
+              </Grid>
+
+              <Grid
+                size={isMobile ? 6 : 12}
+                sx={{ display: "flex", flexDirection: "column" }}
+              >
+                <Typography
+                  sx={{
+                    fontWeight: "bold",
+                    fontSize: "14px",
+                    color: theme.palette.primary.main,
+                  }}
+                >
+                  Masa Berlaku
+                </Typography>
+                <Typography
+                  sx={{
+                    fontWeight: "bold",
+                    fontSize: "13px",
+                    wordBreak: "break-word", // <-- biar kata panjang pecah
+                    whiteSpace: "normal", // <-- biar bisa turun baris
+                    overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
+                  }}
+                >
+                  {selectedData?.start_date && selectedData?.end_date
+                    ? moment(selectedData.start_date).format("YYYY/MM/DD") +
+                      " s/d " +
+                      moment(selectedData.end_date).format("YYYY/MM/DD")
                     : "-"}
                 </Typography>
               </Grid>
@@ -435,6 +491,34 @@ const TenantApprovalModal = ({
                     color: theme.palette.primary.main,
                   }}
                 >
+                  Harga Lantai
+                </Typography>
+                <Typography
+                  sx={{
+                    fontWeight: "bold",
+                    fontSize: "13px",
+                    wordBreak: "break-word", // <-- biar kata panjang pecah
+                    whiteSpace: "normal", // <-- biar bisa turun baris
+                    overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
+                  }}
+                >
+                  {selectedData?.base_price
+                    ? formatRupiah(selectedData.base_price)
+                    : "-"}
+                </Typography>
+              </Grid>
+
+              <Grid
+                size={isMobile ? 6 : 12}
+                sx={{ display: "flex", flexDirection: "column" }}
+              >
+                <Typography
+                  sx={{
+                    fontWeight: "bold",
+                    fontSize: "14px",
+                    color: theme.palette.primary.main,
+                  }}
+                >
                   Lebar (m)
                 </Typography>
                 <Typography
@@ -461,7 +545,7 @@ const TenantApprovalModal = ({
                     color: theme.palette.primary.main,
                   }}
                 >
-                  Tanggal Berakhir
+                  Harga Ruangan (m)
                 </Typography>
                 <Typography
                   sx={{
@@ -472,8 +556,36 @@ const TenantApprovalModal = ({
                     overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
                   }}
                 >
-                  {selectedData?.end_date
-                    ? moment(selectedData.end_date).format("D MMMM YYYY")
+                  {selectedData?.price_per_m2
+                    ? formatRupiah(selectedData.price_per_m2)
+                    : "-"}
+                </Typography>
+              </Grid>
+
+              <Grid
+                size={isMobile ? 6 : 12}
+                sx={{ display: "flex", flexDirection: "column" }}
+              >
+                <Typography
+                  sx={{
+                    fontWeight: "bold",
+                    fontSize: "14px",
+                    color: theme.palette.primary.main,
+                  }}
+                >
+                  Tanggal Dibuat
+                </Typography>
+                <Typography
+                  sx={{
+                    fontWeight: "bold",
+                    fontSize: "13px",
+                    wordBreak: "break-word", // <-- biar kata panjang pecah
+                    whiteSpace: "normal", // <-- biar bisa turun baris
+                    overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
+                  }}
+                >
+                  {selectedData?.created_at
+                    ? moment(selectedData.created_at).format("YYYY/MM/DD")
                     : "-"}
                 </Typography>
               </Grid>
@@ -530,67 +642,71 @@ const TenantApprovalModal = ({
               </Typography>
             </Grid>
 
-            <Grid
-              size={12}
-              sx={{
-                display: "flex",
-                flexDirection: "row",
-                justifyContent: "space-between",
-              }}
-            >
-              <Typography
-                sx={{
-                  fontWeight: "bold",
-                  fontSize: "13px",
-                }}
-              >
-                Uang Muka (DP)
-              </Typography>
-              <Typography
-                sx={{
-                  fontWeight: "bold",
-                  fontSize: "13px",
-                  wordBreak: "break-word", // <-- biar kata panjang pecah
-                  whiteSpace: "normal", // <-- biar bisa turun baris
-                  overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
-                }}
-              >
-                {selectedData?.down_payment
-                  ? formatRupiah(selectedData.down_payment)
-                  : "-"}
-              </Typography>
-            </Grid>
+            {selectedData?.payment_type === "cicilan" && (
+              <Grid container size={12} spacing={0.2}>
+                <Grid
+                  size={12}
+                  sx={{
+                    display: "flex",
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <Typography
+                    sx={{
+                      fontWeight: "bold",
+                      fontSize: "13px",
+                    }}
+                  >
+                    Uang Muka (DP)
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontWeight: "bold",
+                      fontSize: "13px",
+                      wordBreak: "break-word", // <-- biar kata panjang pecah
+                      whiteSpace: "normal", // <-- biar bisa turun baris
+                      overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
+                    }}
+                  >
+                    {selectedData?.down_payment
+                      ? formatRupiah(selectedData.down_payment)
+                      : "-"}
+                  </Typography>
+                </Grid>
 
-            <Grid
-              size={12}
-              sx={{
-                display: "flex",
-                flexDirection: "row",
-                justifyContent: "space-between",
-              }}
-            >
-              <Typography
-                sx={{
-                  fontWeight: "bold",
-                  fontSize: "13px",
-                }}
-              >
-                Sisa Pembayaran
-              </Typography>
-              <Typography
-                sx={{
-                  fontWeight: "bold",
-                  fontSize: "13px",
-                  wordBreak: "break-word", // <-- biar kata panjang pecah
-                  whiteSpace: "normal", // <-- biar bisa turun baris
-                  overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
-                }}
-              >
-                {selectedData?.remaining_payment
-                  ? formatRupiah(selectedData.remaining_payment)
-                  : "-"}
-              </Typography>
-            </Grid>
+                <Grid
+                  size={12}
+                  sx={{
+                    display: "flex",
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <Typography
+                    sx={{
+                      fontWeight: "bold",
+                      fontSize: "13px",
+                    }}
+                  >
+                    Sisa Pembayaran
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontWeight: "bold",
+                      fontSize: "13px",
+                      wordBreak: "break-word", // <-- biar kata panjang pecah
+                      whiteSpace: "normal", // <-- biar bisa turun baris
+                      overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
+                    }}
+                  >
+                    {selectedData?.remaining_payment
+                      ? formatRupiah(selectedData.remaining_payment)
+                      : "-"}
+                  </Typography>
+                </Grid>
+              </Grid>
+            )}
 
             <Grid
               size={12}

@@ -5,13 +5,32 @@ import moment from "moment";
 export async function POST(req) {
   try {
     const body = await req.json();
-    const { location_id, room_number, floor, room_length, room_width, is_available } = body;
+    const {
+      location_id,
+      room_number,
+      floor_id,
+      room_length,
+      room_width,
+      is_available,
+      price_per_m2,
+    } = body;
 
     const result = await pool.query(
-      `INSERT INTO rooms (location_id, room_number, floor, room_length, room_width, is_available)
-       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-      [location_id, room_number, floor, room_length, room_width, is_available]
+      `INSERT INTO rooms 
+       (location_id, room_number, floor_id, room_length, room_width, price_per_m2, is_available)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       RETURNING *`,
+      [
+        location_id,
+        room_number,
+        floor_id,
+        room_length,
+        room_width,
+        price_per_m2 || 0,
+        is_available,
+      ]
     );
+
     return new Response(
       JSON.stringify({
         success: true,
@@ -21,6 +40,8 @@ export async function POST(req) {
       { status: 201 }
     );
   } catch (err) {
+    console.log(err, "err");
+
     return new Response(
       JSON.stringify({ success: false, message: err.message }),
       { status: 500 }
@@ -31,20 +52,28 @@ export async function POST(req) {
 export async function GET(req) {
   try {
     const result = await pool.query(
-      `SELECT 
-          rooms.id,
-          rooms.room_number,
-          rooms.floor,
-          rooms.room_length,
-          rooms.room_width,
-          rooms.is_available,
-          rooms.updated_at,
-          rooms.created_at,
-          rooms.location_id,
-          locations.location_name
-        FROM rooms
-        JOIN locations ON rooms.location_id = locations.id
-        ORDER BY rooms.created_at DESC`
+      `
+      SELECT 
+         r.id,
+         r.room_number,
+         r.room_length,
+         r.room_width,
+         r.room_area,
+         r.is_available,
+         r.updated_at,
+         r.created_at,
+         r.location_id,
+         r.price_per_m2,
+         l.location_name,
+         f.id AS floor_id,
+         f.floor AS room_floor,
+         f.base_price
+      FROM rooms r
+      JOIN locations l ON r.location_id = l.id
+      LEFT JOIN location_floor_prices f 
+        ON r.floor_id = f.id
+      ORDER BY r.created_at DESC
+      `
     );
 
     const rows = result.rows.map((row) => ({
@@ -54,7 +83,11 @@ export async function GET(req) {
       room_number: row.room_number,
       room_length: row.room_length,
       room_width: row.room_width,
-      floor: row.floor,
+      room_area: row.room_area,
+      price_per_m2: row.price_per_m2, 
+      floor_id: row.floor_id,
+      room_floor: row.room_floor,
+      base_price: row.base_price,
       is_available: row.is_available,
       updated_at: row.updated_at
         ? moment(row.updated_at).format("YYYY-MM-DD HH:mm:ss")
@@ -67,7 +100,7 @@ export async function GET(req) {
     return new Response(
       JSON.stringify({
         success: true,
-        message: "Berhasil mengambil data rooms",
+        message: "Berhasil mengambil data rooms dengan floor price",
         data: rows,
       }),
       { status: 200 }

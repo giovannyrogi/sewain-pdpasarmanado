@@ -12,58 +12,56 @@ import { useThemeMode } from "../themeprovider/ThemeContext";
  * @returns {Array} - Array urutan breadcrumbs
  */
 function findMenuPath(menuList = [], pathParts = []) {
-  // Cek dari depan ke belakang, cari menu dan submenu yang match
+  const normalizedPath = pathParts.join("/");
+
   for (const menu of menuList) {
-    // Cek submenu
+    // cek submenu
     if (menu.submenu) {
       for (const sub of menu.submenu) {
-        // Jika path submenu match
-        if (
-          sub.path &&
-          pathParts
-            .join("/")
-            .endsWith(sub.path.replace(/^\/(admin|cashier|superadmin)\//, ""))
-        ) {
-          return [
-            {
-              label: menu.label,
-              value: menu.value,
-              icon: menu.icon,
-              path: menu.path,
-            },
-            {
-              label: sub.label,
-              value: sub.value,
-              icon: sub.icon,
-              path: sub.path,
-            },
-          ];
+        if (sub.path) {
+          const subNormalized = sub.path.replace(/^\/[^/]+\//, "");
+          if (normalizedPath.endsWith(subNormalized)) {
+            return [
+              {
+                label: menu.label,
+                value: menu.value,
+                icon: menu.icon,
+                path: menu.path,
+              },
+              {
+                label: sub.label,
+                value: sub.value,
+                icon: sub.icon,
+                path: sub.path,
+              },
+            ];
+          }
         }
       }
     }
-    // Jika path menu utama match
-    if (
-      menu.path &&
-      pathParts
-        .join("/")
-        .endsWith(menu.path.replace(/^\/(admin|cashier|superadmin)\//, ""))
-    ) {
-      return [
-        {
-          label: menu.label,
-          value: menu.value,
-          icon: menu.icon,
-          path: menu.path,
-        },
-      ];
+
+    // cek menu utama
+    if (menu.path) {
+      const menuNormalized = menu.path.replace(/^\/[^/]+\//, "");
+      if (normalizedPath.endsWith(menuNormalized)) {
+        return [
+          {
+            label: menu.label,
+            value: menu.value,
+            icon: menu.icon,
+            path: menu.path,
+          },
+        ];
+      }
     }
   }
-  // Default: Dashboard
+
+  // fallback: Dashboard
   return [
     menuList.find((m) => m.value === "dashboard") || {
       label: "Dashboard",
       value: "dashboard",
-      path: "/admin/dashboard",
+      path: "/dashboard",
     },
   ];
 }

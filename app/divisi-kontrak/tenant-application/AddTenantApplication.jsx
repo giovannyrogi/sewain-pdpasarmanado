@@ -27,6 +27,7 @@ import dayjs from "dayjs";
 import formatRupiah from "@/app/components/formatrupiah/page";
 import LoadingBackdrop from "@/app/components/loading/Backdrop";
 import { useThemeMode } from "@/app/components/themeprovider/ThemeContext";
+import DetailRoomsModal from "@/app/components/detailroomsmodal/page";
 
 const AddTenantApplication = ({
   open,
@@ -39,7 +40,7 @@ const AddTenantApplication = ({
   dataLocations,
   onNotify,
   setLoadingMessage,
-  user
+  user,
 }) => {
   const isMobile = useMediaQuery("(max-width:600px)");
 
@@ -59,7 +60,6 @@ const AddTenantApplication = ({
       display: "none",
     },
   };
-
 
   const { themeMode } = useThemeMode();
   const theme = useTheme();
@@ -81,6 +81,8 @@ const AddTenantApplication = ({
   const [openPreview, setOpenPreview] = useState(false);
   const [dataAvailableRooms, setDataAvailableRooms] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [openViewDetailRoomModal, setOpenViewDetailRoomModal] = useState(false);
+  const [selectedDataRooms, setSelectedDataRooms] = useState({});
 
   const getRoomsData = async (locationId) => {
     if (!locationId) {
@@ -96,6 +98,9 @@ const AddTenantApplication = ({
       const response = await axios.get(
         `/api/rooms/available-rooms?location_id=${locationId}`
       );
+
+      console.log("response rooms", response.data);
+
       setDataAvailableRooms(response.data.data);
       setTimeout(() => {
         loadingFalse();
@@ -134,7 +139,6 @@ const AddTenantApplication = ({
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
 
     // Validasi KTP
     if (!ktpFile) {
@@ -170,14 +174,14 @@ const AddTenantApplication = ({
       formData.append("tenant_name", tenantName);
       formData.append("tenant_nik", tenantNIK);
       formData.append("tenant_phone", tenantPhone);
-      formData.append(
-        "start_date",
-        startDate ? moment(startDate).format("YYYY-MM-DD") : ""
-      );
-      formData.append(
-        "end_date",
-        endDate ? moment(endDate).format("YYYY-MM-DD") : ""
-      );
+      // formData.append(
+      //   "start_date",
+      //   startDate ? moment(startDate).format("YYYY-MM-DD") : ""
+      // );
+      // formData.append(
+      //   "end_date",
+      //   endDate ? moment(endDate).format("YYYY-MM-DD") : ""
+      // );
       formData.append("payment_type", paymentType);
       formData.append("total_payment", totalPayment);
       formData.append("down_payment", downPayment);
@@ -262,6 +266,11 @@ const AddTenantApplication = ({
     setRemainingPayment("");
     setKtpFile(null);
     setKtpFilePath(null);
+  };
+
+  const handleViewDetailRooms = (newValue) => {
+    console.log("newValue", newValue);
+    setSelectedDataRooms(newValue);
   };
 
   const handleKtpChange = (e) => {
@@ -469,6 +478,7 @@ const AddTenantApplication = ({
                 }
                 onChange={(event, newValue) => {
                   const selectedLocationId = newValue ? newValue.id : "";
+                  setRoomId("");
                   setLocationId(selectedLocationId);
                   getRoomsData(selectedLocationId); // <-- load rooms sesuai lokasi
                 }}
@@ -487,10 +497,7 @@ const AddTenantApplication = ({
                 disabled={!locationId}
                 options={dataAvailableRooms || []}
                 getOptionLabel={(option) =>
-                  option.room_number
-                    ? option.room_number.charAt(0).toUpperCase() +
-                      option.room_number.slice(1)
-                    : ""
+                  option.room_number ? option.room_number : ""
                 }
                 value={
                   dataAvailableRooms
@@ -500,6 +507,7 @@ const AddTenantApplication = ({
                 }
                 onChange={(event, newValue) => {
                   setRoomId(newValue ? newValue.id : "");
+                  handleViewDetailRooms(newValue);
                 }}
                 renderInput={(params) => (
                   <TextField
@@ -511,7 +519,36 @@ const AddTenantApplication = ({
                 )}
               />
             </Grid>
-            <Grid size={6}>
+
+            {roomId && (
+              <Grid container size={12}>
+                {!isMobile && <Grid size={6}></Grid>}
+                <Grid
+                  size={isMobile ? 12 : 6}
+                  sx={{
+                    mt: isMobile ? -1.5 : -1,
+                    mb: isMobile ? -2 : -1,
+                  }}
+                >
+                  <Typography
+                    sx={{
+                      fontWeight: "bold",
+                      fontSize: "12px",
+                      cursor: "pointer",
+                      color: theme.palette.primary.main,
+                      "&:hover": {
+                        textDecoration: "underline",
+                      },
+                    }}
+                    onClick={() => setOpenViewDetailRoomModal(true)}
+                  >
+                    Lihat Detail Ruangan
+                  </Typography>
+                </Grid>
+              </Grid>
+            )}
+
+            {/* <Grid size={6}>
               <DatePicker
                 label="Tanggal Mulai"
                 value={startDate}
@@ -553,7 +590,7 @@ const AddTenantApplication = ({
                   },
                 }}
               />
-            </Grid>
+            </Grid> */}
             <Grid size={isMobile ? 12 : 6}>
               <FormControl fullWidth variant="filled" required>
                 <InputLabel id="demo-simple-select-filled-label">
@@ -634,6 +671,15 @@ const AddTenantApplication = ({
             </Grid>
           </Grid>
         </form>
+        <DetailRoomsModal
+          open={openViewDetailRoomModal}
+          onClose={() => setOpenViewDetailRoomModal(false)}
+          loading={loading}
+          loadingFalse={loadingFalse}
+          loadingTrue={loadingTrue}
+          setLoadingMessage={setLoadingMessage}
+          selectedDataRooms={selectedDataRooms}
+        />
         {/* Modal Preview Gambar */}
         <ImagePreviewModal
           open={openPreview}

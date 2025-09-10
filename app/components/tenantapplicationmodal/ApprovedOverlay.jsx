@@ -18,7 +18,7 @@ const ApprovedOverlay = ({ selectedData }) => {
         px: 6,
         py: 2,
         border:
-          selectedData?.status === "approved"
+          selectedData?.approval_status === "approved"
             ? "5px solid rgba(40, 167, 69, 0.4)"
             : "5px solid rgba(255, 0, 0, 0.5)",
         borderRadius: "8px",
@@ -29,14 +29,17 @@ const ApprovedOverlay = ({ selectedData }) => {
         variant="h3"
         sx={{
           fontWeight: "bold",
-          color: selectedData?.status === "approved" ? "rgba(40, 167, 69, 0.5)" : "rgba(255, 0, 0, 0.7)",
+          color:
+            selectedData?.approval_status === "approved"
+              ? "rgba(40, 167, 69, 0.5)"
+              : "rgba(255, 0, 0, 0.7)",
           textTransform: "uppercase",
           letterSpacing: "6px",
           fontStyle: "italic",
           textShadow: "1px 1px 3px rgba(0,0,0,0.2)",
         }}
       >
-        {selectedData?.status === "approved" ? "Approved" : "Rejected"}
+        {selectedData?.approval_status === "approved" ? "Approved" : "Rejected"}
       </Typography>
     </Box>
   );

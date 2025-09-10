@@ -20,8 +20,8 @@ export async function PUT(req, { params }) {
     const tenant_name = formData.get("tenant_name");
     const tenant_nik = formData.get("tenant_nik");
     const tenant_phone = formData.get("tenant_phone");
-    const start_date = formData.get("start_date");
-    const end_date = formData.get("end_date");
+    // const start_date = formData.get("start_date");
+    // const end_date = formData.get("end_date");
     const payment_type = formData.get("payment_type");
     const total_payment = formData.get("total_payment");
     const down_payment = formData.get("down_payment");
@@ -29,7 +29,7 @@ export async function PUT(req, { params }) {
     const approval_status = formData.get("approval_status");
     const ktp_file = formData.get("ktp_file");
     const ktp_file_path_old = formData.get("ktp_file_path");
-    const current_step = formData.get("current_step");
+    // const current_step = formData.get("current_step");
     const user_id = formData.get("user_id");
 
     // Validasi wajib
@@ -59,6 +59,9 @@ export async function PUT(req, { params }) {
     }
     const oldData = oldDataRes.rows[0];
     const oldRoomId = oldData.room_id;
+
+    // Kalau current_step tidak dikirim, gunakan yang lama
+    const stepToUse = oldData.current_step;
 
     // Validasi room + lokasi
     const roomCheck = await pool.query(
@@ -115,22 +118,20 @@ export async function PUT(req, { params }) {
         `
         UPDATE tenant_application
         SET
-          location_id = $1,
-          room_id = $2,
-          tenant_name = $3,
-          tenant_nik = $4,
-          tenant_phone = $5,
-          start_date = $6,
-          end_date = $7,
-          payment_type = $8,
-          total_payment = $9,
-          down_payment = $10,
-          remaining_payment = $11,
-          approval_status = $12,
-          current_step = $13,
-          user_id = $14,
-          ktp_file_path = $15
-        WHERE id = $16
+        location_id = $1,
+        room_id = $2,
+        tenant_name = $3,
+        tenant_nik = $4,
+        tenant_phone = $5,
+        payment_type = $6,
+        total_payment = $7,
+        down_payment = $8,
+        remaining_payment = $9,
+        approval_status = $10,
+        current_step = $11,
+        user_id = $12,
+        ktp_file_path = $13
+        WHERE id = $14
         RETURNING *
         `,
         [
@@ -139,14 +140,12 @@ export async function PUT(req, { params }) {
           tenant_name,
           tenant_nik,
           tenant_phone,
-          start_date,
-          end_date,
           payment_type,
           total_payment_num,
           down_payment_num,
           remaining_payment_num,
           approval_status,
-          current_step,
+          stepToUse,
           user_id,
           ktp_file_path,
           id,
@@ -168,12 +167,19 @@ export async function PUT(req, { params }) {
         [room_id]
       );
 
-      // update table tenant_approval agar mulai dari step pertama lagi, update kolom approval_id, approval_at, status = pending, notes = null
+      // Update tenant_approval: reset hanya yang belum approve
       await client.query(
-        `UPDATE tenant_approval SET approver_id = null, approved_at = null, status = 'pending', notes = null WHERE tenant_application_id = $1`,
+        `
+  UPDATE tenant_approval
+  SET approver_id = NULL,
+      approved_at = NULL,
+      status = 'pending',
+      notes = NULL
+  WHERE tenant_application_id = $1
+    AND status <> 'approved'  -- ⬅️ hanya pending / rejected
+  `,
         [id]
       );
-
       await client.query("COMMIT");
 
       // Simpan file baru kalau ada

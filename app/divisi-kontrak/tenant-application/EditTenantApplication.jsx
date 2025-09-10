@@ -25,6 +25,7 @@ import dayjs from "dayjs";
 import formatRupiah from "@/app/components/formatrupiah/page";
 import { Icon } from "@iconify/react";
 import ImagePreviewModal from "@/app/components/imagepreviewmodal/page";
+import DetailRoomsModal from "@/app/components/detailroomsmodal/page";
 
 const EditTenantApplication = ({
   open,
@@ -38,7 +39,7 @@ const EditTenantApplication = ({
   onNotify,
   setLoadingMessage,
   selectedData,
-  user
+  user,
 }) => {
   const isMobile = useMediaQuery("(max-width:600px)");
 
@@ -79,6 +80,8 @@ const EditTenantApplication = ({
   const [openPreview, setOpenPreview] = useState(false);
   const [dataAvailableRooms, setDataAvailableRooms] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [openViewDetailRoomModal, setOpenViewDetailRoomModal] = useState(false);
+  const [selectedDataRooms, setSelectedDataRooms] = useState({});
 
   const getRoomsData = async (locationId) => {
     if (!locationId) {
@@ -93,6 +96,9 @@ const EditTenantApplication = ({
       const response = await axios.get(
         `/api/rooms/available-rooms?location_id=${locationId}`
       );
+      console.log("response rooms", response.data);
+      console.log("selectedData", selectedData);
+
       let rooms = response.data.data || [];
 
       // Tambahkan room lama dari selectedData kalau belum ada di list
@@ -107,13 +113,19 @@ const EditTenantApplication = ({
               room_number: selectedData.room_number,
               room_length: selectedData.room_length,
               room_width: selectedData.room_width,
+              room_area: selectedData.room_area,
+              price_per_m2: selectedData.price_per_m2,
+              floor_id: selectedData.floor_id,
               floor: selectedData.floor,
+              base_price: selectedData.base_price,
               is_available: false,
             },
             ...rooms,
           ];
         }
       }
+
+      console.log("rooms test", rooms);
 
       setDataAvailableRooms(rooms);
 
@@ -138,10 +150,10 @@ const EditTenantApplication = ({
       setTenantName(selectedData.tenant_name || "");
       setTenantNIK(selectedData.tenant_nik || "");
       setTenantPhone(selectedData.tenant_phone || "");
-      setStartDate(
-        selectedData.start_date ? moment(selectedData.start_date) : null
-      );
-      setEndDate(selectedData.end_date ? moment(selectedData.end_date) : null);
+      // setStartDate(
+      //   selectedData.start_date ? moment(selectedData.start_date) : null
+      // );
+      // setEndDate(selectedData.end_date ? moment(selectedData.end_date) : null);
       setPaymentType(selectedData.payment_type || "");
       setTotalPayment(selectedData.total_payment || "");
       setDownPayment(selectedData.down_payment || "");
@@ -150,6 +162,7 @@ const EditTenantApplication = ({
       setKtpFilePath(selectedData.ktp_file_path || "");
 
       getRoomsData(selectedData.location_id);
+      handleViewDetailRooms(selectedData);
     }
   }, [open]);
 
@@ -212,14 +225,14 @@ const EditTenantApplication = ({
       formData.append("tenant_name", tenantName);
       formData.append("tenant_nik", tenantNIK);
       formData.append("tenant_phone", tenantPhone);
-      formData.append(
-        "start_date",
-        startDate ? moment(startDate).format("YYYY-MM-DD") : ""
-      );
-      formData.append(
-        "end_date",
-        endDate ? moment(endDate).format("YYYY-MM-DD") : ""
-      );
+      // formData.append(
+      //   "start_date",
+      //   startDate ? moment(startDate).format("YYYY-MM-DD") : ""
+      // );
+      // formData.append(
+      //   "end_date",
+      //   endDate ? moment(endDate).format("YYYY-MM-DD") : ""
+      // );
       formData.append("payment_type", paymentType);
       formData.append("total_payment", totalPayment);
       formData.append("down_payment", downPayment);
@@ -293,6 +306,11 @@ const EditTenantApplication = ({
         setIsSubmitting(false);
       }, 1000);
     }
+  };
+
+  const handleViewDetailRooms = (newValue) => {
+    // console.log("newValue", newValue);
+    setSelectedDataRooms(newValue);
   };
 
   const handleKtpChange = (e) => {
@@ -497,6 +515,7 @@ const EditTenantApplication = ({
                 }
                 onChange={(event, newValue) => {
                   const selectedLocationId = newValue ? newValue.id : "";
+                  setRoomId("");
                   setLocationId(selectedLocationId);
                   getRoomsData(selectedLocationId); // <-- load rooms sesuai lokasi
                 }}
@@ -520,6 +539,7 @@ const EditTenantApplication = ({
                 }
                 onChange={(event, newValue) => {
                   setRoomId(newValue ? newValue.id : "");
+                  handleViewDetailRooms(newValue);
                 }}
                 renderInput={(params) => (
                   <TextField
@@ -531,7 +551,36 @@ const EditTenantApplication = ({
                 )}
               />
             </Grid>
-            <Grid size={6}>
+
+            {roomId && (
+              <Grid container size={12}>
+                {!isMobile && <Grid size={6}></Grid>}
+                <Grid
+                  size={isMobile ? 12 : 6}
+                  sx={{
+                    mt: isMobile ? -1.5 : -1,
+                    mb: isMobile ? -2 : -1,
+                  }}
+                >
+                  <Typography
+                    sx={{
+                      fontWeight: "bold",
+                      fontSize: "12px",
+                      cursor: "pointer",
+                      color: theme.palette.primary.main,
+                      "&:hover": {
+                        textDecoration: "underline",
+                      },
+                    }}
+                    onClick={() => setOpenViewDetailRoomModal(true)}
+                  >
+                    Lihat Detail Ruangan
+                  </Typography>
+                </Grid>
+              </Grid>
+            )}
+
+            {/* <Grid size={6}>
               <DatePicker
                 label="Tanggal Mulai"
                 value={startDate}
@@ -573,7 +622,8 @@ const EditTenantApplication = ({
                   },
                 }}
               />
-            </Grid>
+            </Grid> */}
+
             <Grid size={isMobile ? 12 : 6}>
               <FormControl fullWidth variant="filled" required>
                 <InputLabel id="demo-simple-select-filled-label">
@@ -654,6 +704,15 @@ const EditTenantApplication = ({
             </Grid>
           </Grid>
         </form>
+        <DetailRoomsModal
+          open={openViewDetailRoomModal}
+          onClose={() => setOpenViewDetailRoomModal(false)}
+          loading={loading}
+          loadingFalse={loadingFalse}
+          loadingTrue={loadingTrue}
+          setLoadingMessage={setLoadingMessage}
+          selectedDataRooms={selectedDataRooms}
+        />
         {/* Modal Preview Gambar */}
         <ImagePreviewModal
           open={openPreview}

@@ -1,5 +1,12 @@
 "use client";
-import { Box, Button, Paper, Typography, useTheme } from "@mui/material";
+import {
+  Box,
+  Button,
+  Paper,
+  Tooltip,
+  Typography,
+  useTheme,
+} from "@mui/material";
 import React, { useEffect, useState } from "react";
 import { Table, ConfigProvider, theme as antdTheme, Input, Tag } from "antd";
 import { useThemeMode } from "../../components/themeprovider/ThemeContext";
@@ -17,6 +24,10 @@ import EditTenantApplication from "./EditTenantApplication";
 import DeleteTenantApplication from "./DeleteTenantApplication";
 import ApprovalModal from "@/app/components/approvalmodal/page";
 import { useUser } from "@/app/utils/useUser";
+import PersetujuanSewaRuangan from "@/app/components/documents/PersetujuanSewaRuangan";
+import { useReactToPrint } from "react-to-print";
+import TenantApprovalModal from "@/app/components/tenantapprovalmodal/TenantApprovalModal";
+import DetailTenantApplicationModal from "@/app/components/tenantapplicationmodal/DetailTenantApplicationModal";
 
 const Applications = () => {
   const user = useUser();
@@ -41,6 +52,10 @@ const Applications = () => {
   const [loadingMessage, setLoadingMessage] = useState("Loading...");
   const [openInformationModal, setOpenInformationModal] = useState(false);
   const [openApprovalModal, setOpenApprovalModal] = useState(false);
+  const [
+    openTenantApprovalInformationModal,
+    setOpenTenantApprovalInformationModal,
+  ] = useState(false);
 
   const getDataTenantApplication = async () => {
     setLoading(true);
@@ -104,9 +119,50 @@ const Applications = () => {
   };
 
   const handlePrint = (record) => {
-    // console.log("edit record", record);
-    setSelectedData(record);
-    setOpenPrintModal(true);
+    // // console.log("edit record", record);
+    // setSelectedData(record);
+    // const handlePrint = (record) => {
+    //   setSelectedData(record);
+    //   setTimeout(() => {
+    //     handlePrintAction();
+    //   }, 100); // delay sedikit agar data sempat masuk
+    // };
+    // const handlePrintAction = useReactToPrint({
+    //   content: () => printRef.current,
+    // });
+    // const columns = [
+    //   // ...
+    //   {
+    //     title: "Actions",
+    //     key: "action",
+    //     align: "center",
+    //     width: 100,
+    //     fixed: "right",
+    //     render: (text, record) =>
+    //       record.approval_status === "approved" ? (
+    //         <Button
+    //           size="small"
+    //           variant="contained"
+    //           color="info"
+    //           onClick={() => handlePrint(record)}
+    //         >
+    //           Print
+    //         </Button>
+    //       ) : (
+    //         // tombol edit delete
+    //         <></>
+    //       ),
+    //   },
+    // ];
+    // return (
+    //   <Box>
+    //     {/* ... tabel & komponen lain */}
+    //     {/* Dokumen tersembunyi (untuk print) */}
+    //     <div style={{ display: "none" }}>
+    //       <PersetujuanSewaRuangan ref={printRef} data={selectedData} />
+    //     </div>
+    //   </Box>
+    // );
   };
 
   const handleEdit = (record) => {
@@ -130,6 +186,12 @@ const Applications = () => {
   const handleApproval = (record) => {
     setSelectedData(record);
     setOpenApprovalModal(true);
+  };
+
+  const handleTenantApprove = (record) => {
+    // console.log("handleTenantApprove record", record);
+    setSelectedData(record);
+    setOpenTenantApprovalInformationModal(true);
   };
 
   // Utility untuk filter dinamis
@@ -227,7 +289,7 @@ const Applications = () => {
             key={record.tenant_application_id}
             style={{ fontWeight: "bold" }}
           >
-            L{record.floor}
+            {record.floor}
           </Tag>
         );
       },
@@ -254,22 +316,12 @@ const Applications = () => {
       ),
     },
     {
-      title: "Tanggal Mulai",
-      dataIndex: "start_date",
-      width: 150,
+      title: "Luas (m)",
+      dataIndex: "room_area",
+      width: 110,
       render: (text, record) => (
         <Typography sx={{ fontWeight: "bold", fontSize: "12px" }}>
-          {moment(record.start_date).format("D MMMM YYYY")}
-        </Typography>
-      ),
-    },
-    {
-      title: "Tanggal Selesai",
-      dataIndex: "end_date",
-      width: 150,
-      render: (text, record) => (
-        <Typography sx={{ fontWeight: "bold", fontSize: "12px" }}>
-          {moment(record.end_date).format("D MMMM YYYY")}
+          {record.room_area} M
         </Typography>
       ),
     },
@@ -357,6 +409,16 @@ const Applications = () => {
       width: 150,
     },
     {
+      title: "Tanggal Dibuat",
+      dataIndex: "created_at",
+      width: 150,
+      render: (text, record) => (
+        <Typography sx={{ fontWeight: "bold", fontSize: "12px" }}>
+          {moment(record.created_at).format("D MMMM YYYY")}
+        </Typography>
+      ),
+    },
+    {
       title: "Actions",
       key: "action",
       align: "center",
@@ -368,12 +430,23 @@ const Applications = () => {
             <Button
               size="small"
               variant={themeMode === "dark" ? "outlined" : "contained"}
-              color="info"
+              color="primary"
               onClick={() => handlePrint(record)}
               sx={{ minWidth: 0, px: 1 }}
             >
               <Icon icon="streamline-ultimate:print-text" fontSize={18} />
             </Button>
+            <Tooltip title="Detail Data Pemohon">
+              <Button
+                size="small"
+                variant={themeMode === "dark" ? "outlined" : "contained"}
+                color="info"
+                onClick={() => handleTenantApprove(record)}
+                sx={{ minWidth: 0, px: 1 }}
+              >
+                <Icon icon="mdi:smart-card-outline" fontSize={18} />
+              </Button>
+            </Tooltip>
           </Box>
         ) : (
           <Box sx={{ display: "flex", gap: 1, justifyContent: "center" }}>
@@ -537,6 +610,18 @@ const Applications = () => {
         loadingFalse={() => setLoading(false)}
         loading={loading}
         setLoadingMessage={setLoadingMessage}
+      />
+      <DetailTenantApplicationModal
+        open={openTenantApprovalInformationModal}
+        onClose={() => setOpenTenantApprovalInformationModal(false)}
+        selectedData={selectedData}
+        loadingTrue={() => setLoading(true)}
+        loadingFalse={() => setLoading(false)}
+        loading={loading}
+        setLoadingMessage={setLoadingMessage}
+        // getDataApprovals={getDataApprovals}
+        user={user}
+        onNotify={(notif) => setSnackbar(notif)}
       />
       <LoadingBackdrop message={loadingMessage} open={loading} />
       {/* Snackbar notification */}

@@ -20,8 +20,9 @@ import menuSuperadmin from "@/app/components/menu/MenuItemSuperadmin";
 import BreadcrumbPage from "@/app/components/breadcrumb/page";
 import { useUser } from "@/app/utils/useUser";
 import ApprovalModal from "@/app/components/approvalmodal/page";
-import TenantApprovalModal from "./TenantApprovalModal";
-import TenantRejectModal from "./TenantRejectModal";
+import menuKepalaSeksi from "@/app/components/menu/MenuItemKepalaSeksi";
+import TenantRejectModal from "@/app/components/tenantapprovalmodal/TenantRejectModal";
+import TenantApprovalModal from "@/app/components/tenantapprovalmodal/TenantApprovalModal";
 
 const TenantApproval = () => {
   const user = useUser();
@@ -261,7 +262,7 @@ const TenantApproval = () => {
   return (
     <Box sx={{ width: "100%", height: "100%", minHeight: "100%", p: 2 }}>
       {/* Component Breadcrumbs disini */}
-      <BreadcrumbPage menuList={menuSuperadmin} />
+      <BreadcrumbPage menuList={menuKepalaSeksi} />
 
       {/* <Box
         sx={{

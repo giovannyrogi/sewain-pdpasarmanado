@@ -3,13 +3,13 @@ import pool from "@/lib/dbConfig";
 export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url);
-    const roleId = searchParams.get("role_id");
+    const tenantApplicationId = searchParams.get("tenant_application_id");
 
-    if (!roleId) {
+    if (!tenantApplicationId) {
       return new Response(
         JSON.stringify({
           success: false,
-          message: "Parameter role_id wajib diisi",
+          message: "Parameter tenant_application_id wajib diisi",
         }),
         { status: 400 }
       );
@@ -59,22 +59,23 @@ export async function GET(req) {
       JOIN rooms rm ON tapp.room_id = rm.id
       JOIN locations l ON tapp.location_id = l.id
       LEFT JOIN location_floor_prices lfp ON rm.floor_id = lfp.id
-      WHERE ta.role_id = $1
+      WHERE ta.tenant_application_id = $1
       ORDER BY ta.created_at DESC
       `,
-      [roleId]
+      [tenantApplicationId] // pakai tenant_application_id
     );
 
     return new Response(
       JSON.stringify({
         success: true,
-        message: "Berhasil mengambil data tenant approval berdasarkan role",
+        message:
+          "Berhasil mengambil data tenant approval berdasarkan tenant_application_id",
         data: result.rows,
       }),
       { status: 200 }
     );
   } catch (err) {
-    console.error("Error GET tenant-approval by role:", err);
+    console.error("Error GET tenant-approval by tenant_application_id:", err);
     return new Response(
       JSON.stringify({
         success: false,

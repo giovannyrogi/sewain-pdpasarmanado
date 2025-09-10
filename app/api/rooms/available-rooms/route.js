@@ -13,16 +13,21 @@ export async function GET(req) {
         SELECT 
           rooms.id,
           rooms.room_number,
-          rooms.floor,
+          rooms.floor_id,
           rooms.room_length,
           rooms.room_width,
+          rooms.room_area,
+          rooms.price_per_m2,
           rooms.is_available,
           rooms.updated_at,
           rooms.created_at,
           rooms.location_id,
-          locations.location_name
+          locations.location_name,
+          location_floor_prices.floor,           
+          location_floor_prices.base_price
         FROM rooms
         JOIN locations ON rooms.location_id = locations.id
+        LEFT JOIN location_floor_prices ON rooms.floor_id = location_floor_prices.id
         WHERE rooms.is_available = false 
           AND rooms.location_id = $1
         ORDER BY rooms.created_at DESC
@@ -36,16 +41,22 @@ export async function GET(req) {
         SELECT 
           rooms.id,
           rooms.room_number,
-          rooms.floor,
+          rooms.floor_id,
           rooms.room_length,
           rooms.room_width,
+          rooms.room_area,
+          rooms.price_per_m2,
           rooms.is_available,
           rooms.updated_at,
           rooms.created_at,
           rooms.location_id,
-          locations.location_name
+          locations.location_name,
+          location_floor_prices.floor,            
+          location_floor_prices.base_price        
         FROM rooms
         JOIN locations ON rooms.location_id = locations.id
+        LEFT JOIN location_floor_prices 
+          ON rooms.floor_id = location_floor_prices.id 
         WHERE rooms.is_available = false
         ORDER BY rooms.created_at DESC
         `
@@ -59,7 +70,11 @@ export async function GET(req) {
       room_number: row.room_number,
       room_length: row.room_length,
       room_width: row.room_width,
+      room_area: row.room_area,
+      price_per_m2: row.price_per_m2,
+      floor_id: row.floor_id,
       floor: row.floor,
+      base_price: row.base_price,
       is_available: row.is_available,
       updated_at: row.updated_at
         ? moment(row.updated_at).format("YYYY-MM-DD HH:mm:ss")

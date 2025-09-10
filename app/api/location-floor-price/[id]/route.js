@@ -5,47 +5,33 @@ export async function PUT(request, { params }) {
   try {
     const { id } = await params; // id dari URL
     const body = await request.json(); // data dari body
-    const {
-      location_id,
-      room_number,
-      floor_id,
-      room_length,
-      room_width,
-      is_available,
-      price_per_m2,
-    } = body;
+    const { location_id, floor, base_price } = body;
 
     // Lakukan update
     const result = await pool.query(
-      `UPDATE rooms SET location_id=$1, room_number=$2, floor_id=$3, room_length=$4, room_width=$5, is_available=$6, price_per_m2=$7 WHERE id=$8 RETURNING *`,
-      [
-        location_id,
-        room_number,
-        floor_id,
-        room_length,
-        room_width,
-        is_available,
-        price_per_m2,
-        id,
-      ]
+      `UPDATE location_floor_prices
+       SET location_id=$1, floor=$2, base_price=$3, updated_at=NOW()
+       WHERE id=$4
+       RETURNING *`,
+      [location_id, floor, base_price, id]
     );
 
     if (result.rows.length === 0) {
       return new Response(
-        JSON.stringify({ success: false, message: "Ruangan tidak ditemukan" }),
+        JSON.stringify({ success: false, message: "Data tidak ditemukan" }),
         { status: 404 }
       );
     }
     return new Response(
       JSON.stringify({
         success: true,
-        message: "Berhasil mengubah data Ruangan",
+        message: "Berhasil mengubah data Lantai",
         data: result.rows[0],
       }),
       { status: 200 }
     );
   } catch (err) {
-    console.log("Error update Ruangan", err);
+    console.log("Error update Data", err);
     return new Response(
       JSON.stringify({ success: false, message: err.message }),
       { status: 500 }
@@ -53,30 +39,38 @@ export async function PUT(request, { params }) {
   }
 }
 
-// DELETE Rooms
-export async function DELETE(request, context) {
+// DELETE Floor Price
+export async function DELETE(request, { params }) {
   try {
-    const { id } = await context.params;
+    const { id } = params;
 
     const result = await pool.query(
-      `DELETE FROM rooms WHERE id=$1 RETURNING *`,
+      `DELETE FROM location_floor_prices
+       WHERE id=$1
+       RETURNING *`,
       [id]
     );
+
     if (result.rows.length === 0) {
       return new Response(
         JSON.stringify({
           success: false,
-          message: "Ruangan tidak ditemukan atau gagal dihapus",
+          message: "Data Lantai tidak ditemukan atau gagal dihapus",
         }),
         { status: 404 }
       );
     }
+
     return new Response(
-      JSON.stringify({ success: true, message: "Berhasil menghapus ruangan" }),
+      JSON.stringify({
+        success: true,
+        message: "Berhasil menghapus data Lantai",
+        data: result.rows[0],
+      }),
       { status: 200 }
     );
   } catch (err) {
-    console.log("error delete ruangan", err);
+    console.log("Error delete Data", err);
     return new Response(
       JSON.stringify({ success: false, message: err.message }),
       { status: 500 }

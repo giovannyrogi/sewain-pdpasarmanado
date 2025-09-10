@@ -107,8 +107,6 @@ export async function POST(req) {
           tenant_name,
           tenant_nik,
           tenant_phone,
-          start_date,
-          end_date,
           payment_type,
           total_payment,
           down_payment,
@@ -131,9 +129,7 @@ export async function POST(req) {
           $10,
           $11,
           $12,
-          $13,
-          $14,
-          $15
+          $13
         )
         RETURNING *
         `,
@@ -143,8 +139,6 @@ export async function POST(req) {
           tenant_name,
           tenant_nik,
           tenant_phone,
-          start_date,
-          end_date,
           payment_type,
           total_payment_num,
           down_payment_num,
@@ -243,12 +237,17 @@ export async function GET(req) {
         l.location_name,
         r.id AS room_id,
         r.room_number,
-        r.floor,
+        r.floor_id,
         r.room_length,
-        r.room_width
+        r.room_width,
+        r.price_per_m2,
+        r.room_area,
+        f.base_price,
+        f.floor
       FROM tenant_application ta
       JOIN rooms r ON ta.room_id = r.id
       JOIN locations l ON ta.location_id = l.id
+      LEFT JOIN location_floor_prices f ON r.floor_id = f.id
       ORDER BY ta.created_at DESC`
     );
 
@@ -270,10 +269,15 @@ export async function GET(req) {
       location_name: row.location_name,
       room_id: row.room_id,
       room_number: row.room_number,
-      floor: row.floor,
+      floor_id: row.floor_id,
       room_length: row.room_length,
       room_width: row.room_width,
+      room_area: row.room_area,
+      price_per_m2: row.price_per_m2,
       current_step: row.current_step,
+      base_price: row.base_price,
+      floor: row.floor,
+      created_at: moment(row.created_at).format("D MMMM YYYY"),
     }));
 
     return new Response(
@@ -285,6 +289,8 @@ export async function GET(req) {
       { status: 200 }
     );
   } catch (err) {
+    console.log("error", err);
+
     return new Response(
       JSON.stringify({ success: false, message: err.message }),
       { status: 500 }
