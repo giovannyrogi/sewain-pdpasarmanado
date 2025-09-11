@@ -1,29 +1,828 @@
-// components/PersetujuanSewaRuangan.jsx
-import React from "react";
+"use client";
+import { Box, Divider, Grid, Typography } from "@mui/material";
+import moment from "moment";
+import React, { forwardRef } from "react";
+import formatRupiah from "../formatrupiah/page";
 
-const PersetujuanSewaRuangan = React.forwardRef(({ data }, ref) => {
+const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
   if (!data) return null;
 
+  const total_PPN = data.total_payment * 0.11;
+  const grantTotal = parseInt(data.total_payment) + total_PPN + 50000;
+
   return (
-    <div ref={ref} style={{ padding: "40px", fontFamily: "Times New Roman" }}>
-      <h2 style={{ textAlign: "center", marginBottom: "20px" }}>
-        PERUSAHAAN UMUM DAERAH PASAR MANADO
-      </h2>
-      <p style={{ margin: "5px 0" }}>Nomor: 666 / PPM / VIII / 2025</p>
-      <p style={{ margin: "5px 0" }}>Perihal: Persetujuan Sewa Ruangan</p>
-      <br />
-      <p>Kepada Yth. {data.tenant_name}</p>
-      <p>Lokasi: {data.location_name}</p>
-      <p>Ruangan: {data.room_number}</p>
-      <p>Durasi: {data.start_date} - {data.end_date}</p>
-      <br />
-      <p>Dengan ini permohonan Anda telah disetujui.</p>
-      <br /><br />
-      <p style={{ textAlign: "right" }}>Manado, {new Date().toLocaleDateString()}</p>
-      <p style={{ textAlign: "right", marginTop: "60px" }}>
-        <strong>Direktur</strong>
-      </p>
-    </div>
+    <Box ref={ref} sx={{ padding: "0px 40px 0px 40px" }}>
+      {/* Headers */}
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            ml: 1,
+          }}
+        >
+          LOGO
+        </Box>
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            alignItems: "center",
+            mt: 2,
+          }}
+        >
+          <Typography
+            sx={{
+              fontSize: "22px",
+              fontWeight: "bold",
+              letterSpacing: "1.5px",
+            }}
+          >
+            PERUSAHAAN UMUM DAERAH
+          </Typography>
+          <Typography
+            sx={{
+              fontSize: "22px",
+              fontWeight: "bold",
+              letterSpacing: "1.5px",
+            }}
+          >
+            PASAR MANADO
+          </Typography>
+          <Typography
+            sx={{
+              fontSize: "10px",
+              textAlign: "center",
+            }}
+          >
+            Kompleks Gedung Shoping Center Lt. II Manado, Jl. Walanda Maramis
+            No. 123, Kel. Pinaesaan, Kec. Wenang Kota Manado
+          </Typography>
+        </Box>
+
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            mr: 1,
+          }}
+        >
+          LOGO
+        </Box>
+      </Box>
+
+      {/* Garis Pembatas */}
+      <Divider
+        sx={{
+          borderColor: "black",
+          mb: "1px",
+        }}
+      />
+      <Divider
+        sx={{
+          borderWidth: "1px",
+          borderColor: "black",
+        }}
+      />
+
+      {/* Tanggal Dokumen */}
+      <Grid container spacing={2} mt={0.3}>
+        <Grid size={7.3} display={"flex"} flexDirection={"row"} gap={3}></Grid>
+        <Grid size={4.7}>
+          <Typography sx={{ fontSize: "13px" }}>
+            {`Manado, ${moment(new Date()).format("D MMMM YYYY")}`}
+          </Typography>
+        </Grid>
+      </Grid>
+
+      {/* Content */}
+      <Box
+        sx={{
+          width: "100%",
+          mt: "5px",
+        }}
+      >
+        {/* Nomor  */}
+        <Grid container spacing={2}>
+          <Grid size={7.3} display={"flex"} flexDirection={"row"} gap={5}>
+            <Typography
+              sx={{
+                fontSize: "13px",
+              }}
+            >
+              Nomor
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: "13px",
+              }}
+            >
+              : asdasdsad
+            </Typography>
+          </Grid>
+          <Grid size={4.7}>
+            <Typography sx={{ fontSize: "13px" }}>Kepada Yth.</Typography>
+          </Grid>
+        </Grid>
+
+        {/* Lampiran + Tenant Name */}
+        <Grid container spacing={2}>
+          <Grid size={7.3} display={"flex"} flexDirection={"row"} gap={2.9}>
+            <Typography
+              sx={{
+                fontSize: "13px",
+              }}
+            >
+              Lampiran
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: "13px",
+                marginLeft: "2px",
+              }}
+            >
+              : -
+            </Typography>
+          </Grid>
+          <Grid size={4.7}>
+            <Typography sx={{ fontSize: "13px", fontWeight: "bold" }}>
+              {data.tenant_name ? data.tenant_name : "-"}
+            </Typography>
+          </Grid>
+        </Grid>
+
+        {/* Titik */}
+        <Grid container spacing={2}>
+          <Grid size={7.3}></Grid>
+          <Grid size={4.7}>
+            <Typography sx={{ fontSize: "13px" }}>
+              .......................................................
+            </Typography>
+          </Grid>
+        </Grid>
+
+        {/* Perihal + Di tempat */}
+        <Grid container spacing={2}>
+          <Grid size={7.3} display={"flex"} flexDirection={"row"} gap={5}>
+            <Typography
+              sx={{
+                fontSize: "13px",
+              }}
+            >
+              Perihal
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: "13px",
+              }}
+            >
+              :{" "}
+              <span style={{ fontWeight: "bold" }}>
+                Persetujuan Sewa Ruangan
+              </span>
+            </Typography>
+          </Grid>
+          <Grid size={4.7}>
+            <Typography sx={{ fontSize: "13px" }}>di - tempat</Typography>
+          </Grid>
+        </Grid>
+
+        {/* Content */}
+        <Grid container mt={2}>
+          <Grid size={12}>
+            <Typography
+              sx={{
+                fontSize: "13px",
+              }}
+            >
+              Dengan hormat,
+            </Typography>
+          </Grid>
+          <Grid size={12}>
+            <Typography
+              sx={{
+                fontSize: "13px",
+                textAlign: "justify",
+              }}
+            >
+              Pertama-tama kami ucapakan terima kasih atas kepercayaan Bpk/Ibu
+              untuk menjalin kerjasama sebagai mitra Perumda Pasar Manado.
+              Berkenaan dengan permohonan Bpk/Ibu terkait sewa ruangan dengan
+              data sebagai berikut :
+            </Typography>
+          </Grid>
+
+          {/* Data Diri */}
+          {/* Nama Penyewa */}
+          <Grid size={12} display={"flex"} flexDirection={"row"} gap={6.1}>
+            <Typography
+              sx={{
+                fontSize: "13px",
+              }}
+            >
+              Nama Penyewa
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: "13px",
+                ml: "1px",
+              }}
+            >
+              :{" "}
+              <span style={{ fontWeight: "bold" }}>
+                {data.tenant_name ? data.tenant_name : "-"}
+              </span>
+            </Typography>
+          </Grid>
+          {/* No. Ruangan */}
+          <Grid size={12} display={"flex"} flexDirection={"row"} gap={8.2}>
+            <Typography
+              sx={{
+                fontSize: "13px",
+              }}
+            >
+              No. Ruangan
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: "13px",
+              }}
+            >
+              :{" "}
+              <span style={{ fontWeight: "bold" }}>
+                {data.room_number ? data.room_number : "-"}
+              </span>
+            </Typography>
+          </Grid>
+          {/* Ukuran Ruangan */}
+          <Grid size={12} display={"flex"} flexDirection={"row"} gap={4.7}>
+            <Typography
+              sx={{
+                fontSize: "13px",
+              }}
+            >
+              Ukurang Ruangan
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: "13px",
+              }}
+            >
+              :{" "}
+              <span style={{ fontWeight: "bold" }}>
+                {data.room_length && data.room_width
+                  ? `${data.room_length} M X ${data.room_width} M`
+                  : "-"}
+              </span>
+            </Typography>
+          </Grid>
+
+          {/* Lokasi */}
+          <Grid size={12} display={"flex"} flexDirection={"row"} gap={7.1}>
+            <Typography
+              sx={{
+                fontSize: "13px",
+              }}
+            >
+              Lokasi / Pasar
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: "13px",
+              }}
+            >
+              :{" "}
+              <span style={{ fontWeight: "bold" }}>
+                {data.location_name ? data.location_name : "-"}
+              </span>
+            </Typography>
+          </Grid>
+
+          {/* Jangka Waktu */}
+          <Grid size={12} display={"flex"} flexDirection={"row"} gap={7.3}>
+            <Typography
+              sx={{
+                fontSize: "13px",
+              }}
+            >
+              Jangka Waktu
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: "13px",
+              }}
+            >
+              :{" "}
+              <span style={{ fontWeight: "bold" }}>
+                {data.start_date && data.end_date
+                  ? `1 TAHUN (${moment(data.start_date).format(
+                      "D MMMM YYYY"
+                    )} S/D ${moment(data.end_date).format("D MMMM YYYY")})`
+                  : "-"}
+              </span>
+            </Typography>
+          </Grid>
+
+          {/* Detail Biaya */}
+          <Grid size={12}>
+            <Typography
+              sx={{
+                fontSize: "13px",
+                textAlign: "justify",
+              }}
+            >
+              Pada prinsipnya pembayaran dapat kami setujui, dengan membayar{" "}
+              <strong>menyicil</strong> sebagai berikut :
+            </Typography>
+          </Grid>
+
+          {/* Sewa Kontrak Ruangan */}
+          <Grid container size={12}>
+            <Grid size={3} display={"flex"} flexDirection={"row"} gap={3.2}>
+              <Typography
+                sx={{
+                  fontSize: "13px",
+                  textAlign: "justify",
+                }}
+              >
+                <span style={{ marginRight: "10px" }}>1.</span>Sewa Kontrak
+                Ruangan
+              </Typography>
+            </Grid>
+            <Grid
+              size={2}
+              display={"flex"}
+              flexDirection={"column"}
+              alignItems={"end"}
+            >
+              <Typography
+                sx={{
+                  fontSize: "13px",
+                  textAlign: "justify",
+                  fontWeight: "bold",
+                }}
+              >
+                {data.total_payment ? formatRupiah(data.total_payment) : "-"}, -
+              </Typography>
+            </Grid>
+          </Grid>
+
+          {/* Iuran Jasa Administrasi */}
+          <Grid container size={12}>
+            <Grid size={3} display={"flex"} flexDirection={"row"} gap={3.2}>
+              <Typography
+                sx={{
+                  fontSize: "13px",
+                  textAlign: "justify",
+                }}
+              >
+                <span style={{ marginRight: "20px" }}></span>Iuran Jasa
+                Administrasi
+              </Typography>
+            </Grid>
+            <Grid
+              size={2}
+              display={"flex"}
+              flexDirection={"column"}
+              alignItems={"end"}
+            >
+              <Typography
+                sx={{
+                  fontSize: "13px",
+                  textAlign: "justify",
+                  fontWeight: "bold",
+                }}
+              >
+                {formatRupiah(50000)}, -
+              </Typography>
+            </Grid>
+          </Grid>
+
+          {/* By. Asuransi objek kontrak */}
+          <Grid container size={12}>
+            <Grid size={3} display={"flex"} flexDirection={"row"} gap={3.2}>
+              <Typography
+                sx={{
+                  fontSize: "13px",
+                  textAlign: "justify",
+                }}
+              >
+                <span style={{ marginRight: "20px" }}></span>By. Asuransi objek
+                kontrak
+              </Typography>
+            </Grid>
+            <Grid
+              size={2}
+              display={"flex"}
+              flexDirection={"column"}
+              alignItems={"end"}
+            >
+              <Typography
+                sx={{
+                  fontSize: "13px",
+                  textAlign: "justify",
+                  fontWeight: "bold",
+                }}
+              >
+                -
+              </Typography>
+            </Grid>
+          </Grid>
+
+          {/* PPN */}
+          <Grid container size={12}>
+            <Grid size={2} display={"flex"} flexDirection={"row"} gap={3.2}>
+              <Typography
+                sx={{
+                  fontSize: "13px",
+                  textAlign: "justify",
+                }}
+              >
+                <span style={{ marginRight: "20px" }}></span>PPN
+              </Typography>
+            </Grid>
+            <Grid
+              size={3}
+              display={"flex"}
+              flexDirection={"column"}
+              alignItems={"end"}
+            >
+              <Typography
+                sx={{
+                  fontSize: "13px",
+                  textAlign: "justify",
+                  fontWeight: "bold",
+                }}
+              >
+                {total_PPN ? formatRupiah(total_PPN) : "-"}, -
+              </Typography>
+              <Divider
+                sx={{
+                  borderColor: "black",
+                  width: "100px",
+                }}
+              />
+            </Grid>
+          </Grid>
+
+          {/* Jumlah */}
+          <Grid container size={12}>
+            <Grid size={2} display={"flex"} flexDirection={"row"} gap={3.2}>
+              <Typography
+                sx={{
+                  fontSize: "13px",
+                  textAlign: "justify",
+                }}
+              >
+                <span style={{ marginRight: "20px" }}></span>Jumlah
+              </Typography>
+            </Grid>
+            <Grid
+              size={3}
+              display={"flex"}
+              flexDirection={"column"}
+              alignItems={"end"}
+            >
+              <Typography
+                sx={{
+                  fontSize: "13px",
+                  textAlign: "justify",
+                  fontWeight: "bold",
+                }}
+              >
+                {grantTotal ? formatRupiah(grantTotal) : "-"}, -
+              </Typography>
+            </Grid>
+          </Grid>
+
+          {/* Detail Menyicil */}
+          <Grid container size={12}>
+            <Grid size={2}>
+              <Typography
+                sx={{
+                  fontSize: "13px",
+                  textAlign: "justify",
+                  fontWeight: "bold",
+                }}
+              >
+                <span style={{ marginRight: "20px" }}></span>Menyicil 2x
+              </Typography>
+            </Grid>
+            <Grid size={12}>
+              <Typography
+                sx={{
+                  fontSize: "13px",
+                  textAlign: "justify",
+                  fontWeight: "bold",
+                }}
+              >
+                <span style={{ marginRight: "20px" }}></span>-
+              </Typography>
+            </Grid>
+            <Grid size={12}>
+              <Typography
+                sx={{
+                  fontSize: "13px",
+                  textAlign: "justify",
+                  fontWeight: "bold",
+                }}
+              >
+                <span style={{ marginRight: "20px" }}></span>-
+              </Typography>
+            </Grid>
+          </Grid>
+
+          {/* Informasi pembayaran ke Bank */}
+          <Grid size={12} mt={1}>
+            <Typography
+              sx={{
+                fontSize: "13px",
+                textAlign: "justify",
+              }}
+            >
+              <span style={{ marginRight: "10px" }}>2.</span>
+              Pembayaran sewa kontrak ruangan dapat dilakukan malalui transfer
+              ke rekening :
+            </Typography>
+          </Grid>
+
+          {/* Nama Bank */}
+          <Grid size={12} display={"flex"} flexDirection={"row"} gap={9.5}>
+            <Typography
+              sx={{
+                fontSize: "13px",
+              }}
+            >
+              <span style={{ marginRight: "20px" }}></span> Nama Bank
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: "13px",
+                ml: "1px",
+              }}
+            >
+              : <span style={{ fontWeight: "bold" }}>Bank SulutGo</span>
+            </Typography>
+          </Grid>
+
+          {/* Nomor Rekening */}
+          <Grid size={12} display={"flex"} flexDirection={"row"} gap={5.8}>
+            <Typography
+              sx={{
+                fontSize: "13px",
+              }}
+            >
+              <span style={{ marginRight: "20px" }}></span>Nomor Rekening
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: "13px",
+                ml: "1px",
+              }}
+            >
+              : <span style={{ fontWeight: "bold" }}>011.0123.0000019</span>
+            </Typography>
+          </Grid>
+
+          {/* Atas Nama */}
+          <Grid size={12} display={"flex"} flexDirection={"row"} gap={9.8}>
+            <Typography
+              sx={{
+                fontSize: "13px",
+              }}
+            >
+              <span style={{ marginRight: "20px" }}></span>Atas Nama
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: "13px",
+                ml: "1px",
+              }}
+            >
+              :{" "}
+              <span style={{ fontWeight: "bold" }}>PD. Pasar Kota Manado</span>
+            </Typography>
+          </Grid>
+
+          <Grid size={12} mt={1}>
+            <Typography
+              sx={{
+                fontSize: "13px",
+                textAlign: "justify",
+              }}
+            >
+              Iuran Retribusi yang dibayarkan setiap bulan selama jangka waktu
+              kontrak. Untuk iuran retribusi, pembayaran dapat dilakukan melalui
+              penagih iuran.
+            </Typography>
+          </Grid>
+
+          <Grid size={12} mt={1}>
+            <Typography
+              sx={{
+                fontSize: "13px",
+                textAlign: "justify",
+              }}
+            >
+              Setelah pembayaran dilakukan, copy bukti transfer dapat segera
+              diserahkan ke bagian sewa kontrak untuk diproses penandatanganan
+              kontrak ruangan.
+            </Typography>
+          </Grid>
+
+          <Grid size={12}>
+            <Typography
+              sx={{
+                fontSize: "13px",
+                textAlign: "justify",
+              }}
+            >
+              Demikian kami sampaikan, atas perhatian dan kerjasamanya kami
+              ucapkan terima kasih.
+            </Typography>
+          </Grid>
+
+          {/* TTD Direktur */}
+          <Grid container size={12} mt={1}>
+            <Grid size={6.5}></Grid>
+            <Grid size={5.5}>
+              <Typography
+                sx={{
+                  fontSize: "14px",
+                  fontWeight: "bold",
+                }}
+              >
+                Direktur Utama
+              </Typography>
+            </Grid>
+          </Grid>
+
+          <Grid container size={12} mt={8}>
+            <Grid size={6}></Grid>
+            <Grid size={6}>
+              <Typography
+                sx={{
+                  fontSize: "14px",
+                  fontWeight: "bold",
+                }}
+              >
+                LUCKY. A. SENDUK, S.Ked.
+              </Typography>
+            </Grid>
+          </Grid>
+
+          {/* Tembusan */}
+          <Grid size={12} mt={1} mb={1}>
+            <Typography
+              sx={{
+                fontSize: "12px",
+                fontWeight: "bold",
+                fontStyle: "italic",
+              }}
+            >
+              Tembusan Yth :
+            </Typography>
+          </Grid>
+
+          {/* List Tembusan */}
+          <Grid size={12} display={"flex"} flexDirection={"row"} gap={1}>
+            <Typography
+              sx={{
+                fontSize: "12px",
+              }}
+            >
+              <span style={{ marginRight: "20px" }}></span>1)
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: "12px",
+                ml: "1px",
+              }}
+            >
+              Dewan Pengawas Perumda Pasar Manado
+            </Typography>
+          </Grid>
+
+          <Grid size={12} display={"flex"} flexDirection={"row"} gap={1}>
+            <Typography
+              sx={{
+                fontSize: "12px",
+              }}
+            >
+              <span style={{ marginRight: "20px" }}></span>2)
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: "12px",
+                ml: "1px",
+              }}
+            >
+              Direktur Umum
+            </Typography>
+          </Grid>
+
+          <Grid size={12} display={"flex"} flexDirection={"row"} gap={1}>
+            <Typography
+              sx={{
+                fontSize: "12px",
+              }}
+            >
+              <span style={{ marginRight: "20px" }}></span>3)
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: "12px",
+                ml: "1px",
+              }}
+            >
+              Direktur Bisnis
+            </Typography>
+          </Grid>
+
+          <Grid size={12} display={"flex"} flexDirection={"row"} gap={1}>
+            <Typography
+              sx={{
+                fontSize: "12px",
+              }}
+            >
+              <span style={{ marginRight: "20px" }}></span>4)
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: "12px",
+                ml: "1px",
+              }}
+            >
+              Direktur Keuangan
+            </Typography>
+          </Grid>
+
+          <Grid size={12} display={"flex"} flexDirection={"row"} gap={1}>
+            <Typography
+              sx={{
+                fontSize: "12px",
+              }}
+            >
+              <span style={{ marginRight: "20px" }}></span>5)
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: "12px",
+                ml: "1px",
+              }}
+            >
+              Kepala Devisi Kerjasama Bisnis
+            </Typography>
+          </Grid>
+
+          <Grid size={12} display={"flex"} flexDirection={"row"} gap={1}>
+            <Typography
+              sx={{
+                fontSize: "12px",
+              }}
+            >
+              <span style={{ marginRight: "20px" }}></span>6)
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: "12px",
+                ml: "1px",
+              }}
+            >
+              Sekertaris
+            </Typography>
+          </Grid>
+
+          <Grid size={12} display={"flex"} flexDirection={"row"} gap={1}>
+            <Typography
+              sx={{
+                fontSize: "12px",
+              }}
+            >
+              <span style={{ marginRight: "20px" }}></span>7)
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: "12px",
+                ml: "1px",
+              }}
+            >
+              Arsip
+            </Typography>
+          </Grid>
+        </Grid>
+      </Box>
+    </Box>
   );
 });
 

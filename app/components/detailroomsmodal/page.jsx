@@ -187,7 +187,7 @@ const DetailRoomsModal = ({
                   color: theme.palette.primary.main,
                 }}
               >
-                Luas Ruangan (m2)
+                Luas Ruangan (m)
               </Typography>
               <Typography
                 sx={{
@@ -213,7 +213,32 @@ const DetailRoomsModal = ({
                   color: theme.palette.primary.main,
                 }}
               >
-                Harga Sewa /m
+                Harga Sewa Ruangan (m)
+              </Typography>
+              <Typography
+                sx={{
+                  fontWeight: "bold",
+                  fontSize: "13px",
+                  wordBreak: "break-word", // <-- biar kata panjang pecah
+                  whiteSpace: "normal", // <-- biar bisa turun baris
+                  overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
+                }}
+              >
+                {selectedDataRooms?.price_per_m2
+                  ? formatRupiah(selectedDataRooms.price_per_m2)
+                  : "-"}
+              </Typography>
+            </Grid>
+
+            <Grid size={6} sx={{ display: "flex", flexDirection: "column" }}>
+              <Typography
+                sx={{
+                  fontWeight: "bold",
+                  fontSize: "14px",
+                  color: theme.palette.primary.main,
+                }}
+              >
+                Harga Sewa Lantai
               </Typography>
               <Typography
                 sx={{

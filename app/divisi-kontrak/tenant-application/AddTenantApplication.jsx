@@ -128,6 +128,28 @@ const AddTenantApplication = ({
     }
   }, [totalPayment, paymentType]);
 
+  // Hitung total payment otomatis saat pilih ruangan
+  useEffect(() => {
+    if (
+      selectedDataRooms &&
+      selectedDataRooms.room_area &&
+      selectedDataRooms.price_per_m2
+    ) {
+      const total =
+        parseFloat(selectedDataRooms.room_area) * // luas dari room_length * room_width
+        parseInt(selectedDataRooms.price_per_m2); // harga dari price_per_m2
+
+      console.log(
+        "selectedDataRooms.price_per_m2",
+        selectedDataRooms.price_per_m2
+      );
+      console.log("selectedDataRooms.room_area", selectedDataRooms.room_area);
+      console.log("total", total);
+
+      setTotalPayment(total); // simpan ke state totalPayment
+    }
+  }, [selectedDataRooms]);
+
   // Sinkronisasi Sisa saat DP diubah manual
   useEffect(() => {
     if (paymentType === "cicilan") {

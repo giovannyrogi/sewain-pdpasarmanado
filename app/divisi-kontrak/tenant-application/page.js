@@ -7,7 +7,7 @@ import {
   Typography,
   useTheme,
 } from "@mui/material";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Table, ConfigProvider, theme as antdTheme, Input, Tag } from "antd";
 import { useThemeMode } from "../../components/themeprovider/ThemeContext";
 import moment from "moment";
@@ -30,6 +30,8 @@ import TenantApprovalModal from "@/app/components/tenantapprovalmodal/TenantAppr
 import DetailTenantApplicationModal from "@/app/components/tenantapplicationmodal/DetailTenantApplicationModal";
 
 const Applications = () => {
+  // Ref untuk dokumen print
+  const printRef = useRef();
   const user = useUser();
   const [dataTenantApplication, setDataTenantApplication] = useState([]);
   const [dataLocations, setDataLocations] = useState([]);
@@ -56,6 +58,8 @@ const Applications = () => {
     openTenantApprovalInformationModal,
     setOpenTenantApprovalInformationModal,
   ] = useState(false);
+
+  const [printData, setPrintData] = useState(null);
 
   const getDataTenantApplication = async () => {
     setLoading(true);
@@ -118,51 +122,33 @@ const Applications = () => {
     }
   };
 
+  // useReactToPrint di level atas
+  const handlePrintAction = useReactToPrint({
+    contentRef: printRef, // langsung ref
+    documentTitle: "Persetujuan Sewa Ruangan",
+    onAfterPrint: () => setTimeout(() => setPrintData(null), 200),
+  });
+
+  // panggil print setelah ref sudah render
+  useEffect(() => {
+    if (!printData) return;
+
+    // beri jeda supaya komponen PersetujuanSewaRuangan ter-render dulu
+    const timeout = setTimeout(() => {
+      if (printRef.current) {
+        handlePrintAction();
+      } else {
+        console.error("Belum ada ref untuk print");
+      }
+    }, 200); // jeda 200ms
+
+    return () => clearTimeout(timeout);
+  }, [printData]);
+
+  // handlers
   const handlePrint = (record) => {
-    // // console.log("edit record", record);
-    // setSelectedData(record);
-    // const handlePrint = (record) => {
-    //   setSelectedData(record);
-    //   setTimeout(() => {
-    //     handlePrintAction();
-    //   }, 100); // delay sedikit agar data sempat masuk
-    // };
-    // const handlePrintAction = useReactToPrint({
-    //   content: () => printRef.current,
-    // });
-    // const columns = [
-    //   // ...
-    //   {
-    //     title: "Actions",
-    //     key: "action",
-    //     align: "center",
-    //     width: 100,
-    //     fixed: "right",
-    //     render: (text, record) =>
-    //       record.approval_status === "approved" ? (
-    //         <Button
-    //           size="small"
-    //           variant="contained"
-    //           color="info"
-    //           onClick={() => handlePrint(record)}
-    //         >
-    //           Print
-    //         </Button>
-    //       ) : (
-    //         // tombol edit delete
-    //         <></>
-    //       ),
-    //   },
-    // ];
-    // return (
-    //   <Box>
-    //     {/* ... tabel & komponen lain */}
-    //     {/* Dokumen tersembunyi (untuk print) */}
-    //     <div style={{ display: "none" }}>
-    //       <PersetujuanSewaRuangan ref={printRef} data={selectedData} />
-    //     </div>
-    //   </Box>
-    // );
+    // cukup set selectedData — useEffect akan menangani memanggil printAction
+    setPrintData(record);
   };
 
   const handleEdit = (record) => {
@@ -350,7 +336,9 @@ const Applications = () => {
       dataIndex: "down_payment",
       filterSearch: true,
       render: (text, record) => (
-        <Typography sx={{ fontWeight: "bold", fontSize: "12px" }}>
+        <Typography
+          sx={{ fontWeight: "bold", fontSize: "12px", textAlign: "end" }}
+        >
           {formatRupiah(record.down_payment)}
         </Typography>
       ),
@@ -361,7 +349,9 @@ const Applications = () => {
       dataIndex: "remaining_payment",
       filterSearch: true,
       render: (text, record) => (
-        <Typography sx={{ fontWeight: "bold", fontSize: "12px" }}>
+        <Typography
+          sx={{ fontWeight: "bold", fontSize: "12px", textAlign: "end" }}
+        >
           {formatRupiah(record.remaining_payment)}
         </Typography>
       ),
@@ -372,7 +362,9 @@ const Applications = () => {
       dataIndex: "total_payment",
       filterSearch: true,
       render: (text, record) => (
-        <Typography sx={{ fontWeight: "bold", fontSize: "12px" }}>
+        <Typography
+          sx={{ fontWeight: "bold", fontSize: "12px", textAlign: "end" }}
+        >
           {formatRupiah(record.total_payment)}
         </Typography>
       ),
@@ -631,6 +623,12 @@ const Applications = () => {
         severity={snackbar.severity}
         onClose={() => setSnackbar({ ...snackbar, open: false })}
       />
+      {/* Dokumen tersembunyi (untuk print) */}
+      <div style={{ display: "none" }}>
+        {printData && (
+          <PersetujuanSewaRuangan ref={printRef} data={printData} />
+        )}
+      </div>
     </Box>
   );
 };

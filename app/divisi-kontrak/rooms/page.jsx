@@ -13,6 +13,7 @@ import menuSuperadmin from "@/app/components/menu/MenuItemSuperadmin";
 import AddRoom from "./AddRoom";
 import EditRoom from "./EditRoom";
 import DeleteRoom from "./DeleteRoom";
+import formatRupiah from "@/app/components/formatrupiah/page";
 
 const Rooms = () => {
   const [dataRooms, setDataRooms] = useState([]);
@@ -206,6 +207,18 @@ const Rooms = () => {
       render: (text, record) => (
         <Typography sx={{ fontWeight: "bold", fontSize: "12px" }}>
           {record.room_width} M
+        </Typography>
+      ),
+    },
+    {
+      title: "Harga Sewa Ruangan",
+      dataIndex: "price_per_m2_width",
+      width: 150,
+      render: (text, record) => (
+        <Typography
+          sx={{ fontWeight: "bold", fontSize: "12px", textAlign: "end" }}
+        >
+          {formatRupiah(record.price_per_m2)}
         </Typography>
       ),
     },
