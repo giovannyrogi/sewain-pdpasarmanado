@@ -58,10 +58,33 @@ export async function DELETE(request, context) {
   try {
     const { id } = await context.params;
 
-    const result = await pool.query(
-      `DELETE FROM rooms WHERE id=$1 RETURNING *`,
+    // ✅ Cek apakah ada tenant yang menggunakan room ini
+    const checkTenant = await pool.query(
+      `SELECT tenant_name 
+         FROM tenant_application 
+        WHERE room_id = $1`,
       [id]
     );
+
+    if (checkTenant.rows.length > 0) {
+      // Buat list tenant_name jadi string, contoh: "PT Maju Jaya, PT Sukses"
+      const tenantList = checkTenant.rows.map((t) => t.tenant_name).join(", ");
+
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: `Ruangan ini tidak bisa dihapus, karena masih dipakai oleh penyewa: ${tenantList}`,
+        }),
+        { status: 200 }
+      );
+    }
+
+    // ✅ Jika aman, hapus ruangan
+    const result = await pool.query(
+      `DELETE FROM rooms WHERE id = $1 RETURNING *`,
+      [id]
+    );
+
     if (result.rows.length === 0) {
       return new Response(
         JSON.stringify({
@@ -71,14 +94,21 @@ export async function DELETE(request, context) {
         { status: 404 }
       );
     }
+
     return new Response(
-      JSON.stringify({ success: true, message: "Berhasil menghapus ruangan" }),
+      JSON.stringify({
+        success: true,
+        message: "Berhasil menghapus ruangan",
+      }),
       { status: 200 }
     );
   } catch (err) {
-    console.log("error delete ruangan", err);
+    console.error("error delete ruangan", err);
     return new Response(
-      JSON.stringify({ success: false, message: err.message }),
+      JSON.stringify({
+        success: false,
+        message: err.message,
+      }),
       { status: 500 }
     );
   }

@@ -44,9 +44,31 @@ export async function DELETE(request, { params }) {
   try {
     const { id } = params;
 
+    // Cek apakah ada room yang terkait dengan floor_id ini
+    const checkRooms = await pool.query(
+      `SELECT room_number 
+         FROM rooms 
+        WHERE floor_id = $1`, // ganti location_id → floor_id
+      [id]
+    );
+
+    if (checkRooms.rows.length > 0) {
+      // Buat list room_number jadi string, contoh: "101, 102, 103"
+      const roomList = checkRooms.rows.map((r) => r.room_number).join(", ");
+
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: `Lantai ini tidak bisa dihapus, karena masih terdaftar dengan ruangan: ${roomList}`,
+        }),
+        { status: 200 }
+      );
+    }
+
+    // Jika aman, hapus data floor price
     const result = await pool.query(
       `DELETE FROM location_floor_prices
-       WHERE id=$1
+       WHERE id = $1
        RETURNING *`,
       [id]
     );
@@ -70,10 +92,11 @@ export async function DELETE(request, { params }) {
       { status: 200 }
     );
   } catch (err) {
-    console.log("Error delete Data", err);
+    console.error("Error delete Data", err);
     return new Response(
       JSON.stringify({ success: false, message: err.message }),
       { status: 500 }
     );
   }
 }
+

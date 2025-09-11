@@ -49,7 +49,7 @@ export async function DELETE(request, context) {
           success: false,
           message: `Lokasi tidak bisa dihapus, masih terdaftar dengan ruangan: ${roomList}`,
         }),
-        { status: 400 }
+        { status: 200 }
       );
     }
 
