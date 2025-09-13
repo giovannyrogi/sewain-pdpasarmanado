@@ -201,7 +201,7 @@ const EditFloorPrice = ({
             <Grid size={12}>
               <TextField
                 label="Lantai"
-                placeholder="Hanya isi angka"
+                // placeholder="Hanya isi angka"
                 variant="filled"
                 fullWidth
                 value={floor}

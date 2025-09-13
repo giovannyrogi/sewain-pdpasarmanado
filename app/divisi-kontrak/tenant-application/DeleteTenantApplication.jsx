@@ -40,7 +40,7 @@ const DeleteTenantApplication = ({
         onNotify &&
           onNotify({
             open: true,
-            message: response.data.message || "User berhasil dihapus!",
+            message: response.data.message || "Tenant berhasil dihapus!",
             severity: "success",
           });
 
@@ -54,7 +54,7 @@ const DeleteTenantApplication = ({
         onNotify &&
           onNotify({
             open: true,
-            message: response?.data.message || "Gagal menghapus user.",
+            message: response?.data.message || "Gagal menghapus Tenant.",
             severity: "error",
           });
         setTimeout(() => {
@@ -67,7 +67,7 @@ const DeleteTenantApplication = ({
         onNotify({
           open: true,
           message:
-            error.response.data.message || "Terjadi error saat menghapus user.",
+            error.response.data.message || "Gagal menghapus Tenant.",
           severity: "error",
         });
       setTimeout(() => {

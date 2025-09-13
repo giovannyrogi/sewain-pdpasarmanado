@@ -7,30 +7,38 @@ import formatRupiah from "../formatrupiah/page";
 const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
   if (!data) return null;
 
-  const total_PPN = data.total_payment * 0.11;
-  const grantTotal = parseInt(data.total_payment) + total_PPN + 50000;
+  const handleCalculateTotal = () => {
+    // Hitung PPN
+    const totalPPN =
+      data.payment_type === "lunas"
+        ? data.total_payment * 0.11
+        : data.total_payment * 1.11 * 0.11;
+
+    // Hitung total keseluruhan (tambahan biaya tetap 50.000)
+    const grandTotal = parseInt(data.total_payment) + totalPPN + 50000;
+
+    // Return object, bukan string
+    return {
+      totalPPN: totalPPN,
+      grandTotal: grandTotal,
+    };
+  };
+
+  const { totalPPN, grandTotal } = handleCalculateTotal() || {
+    totalPPN: 0,
+    grandTotal: 0,
+  };
 
   return (
-    <Box ref={ref} sx={{ padding: "0px 40px 0px 40px" }}>
+    <Box ref={ref} sx={{ padding: "10px 30px 0px 30px" }}>
       {/* Headers */}
       <Box
         sx={{
           display: "flex",
-          flexDirection: "row",
-          justifyContent: "space-between",
+          justifyContent: "center",
           alignItems: "center",
         }}
       >
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            ml: 1,
-          }}
-        >
-          LOGO
-        </Box>
         <Box
           sx={{
             display: "flex",
@@ -42,42 +50,33 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
         >
           <Typography
             sx={{
-              fontSize: "22px",
+              fontSize: "35px",
               fontWeight: "bold",
-              letterSpacing: "1.5px",
+              fontFamily: "Bernard MT Condensed bold",
             }}
           >
             PERUSAHAAN UMUM DAERAH
           </Typography>
           <Typography
             sx={{
-              fontSize: "22px",
+              fontSize: "35px",
               fontWeight: "bold",
-              letterSpacing: "1.5px",
+              fontFamily: "Bernard MT Condensed bold",
+              mt: -2,
             }}
           >
             PASAR MANADO
           </Typography>
           <Typography
             sx={{
-              fontSize: "10px",
+              fontSize: "9px",
               textAlign: "center",
+              fontFamily: "agency fb regular",
             }}
           >
             Kompleks Gedung Shoping Center Lt. II Manado, Jl. Walanda Maramis
             No. 123, Kel. Pinaesaan, Kec. Wenang Kota Manado
           </Typography>
-        </Box>
-
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            mr: 1,
-          }}
-        >
-          LOGO
         </Box>
       </Box>
 
@@ -99,7 +98,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
       <Grid container spacing={2} mt={0.3}>
         <Grid size={7.3} display={"flex"} flexDirection={"row"} gap={3}></Grid>
         <Grid size={4.7}>
-          <Typography sx={{ fontSize: "13px" }}>
+          <Typography sx={{ fontSize: "13px", fontFamily: "calibri" }}>
             {`Manado, ${moment(new Date()).format("D MMMM YYYY")}`}
           </Typography>
         </Grid>
@@ -118,6 +117,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
             <Typography
               sx={{
                 fontSize: "13px",
+                fontFamily: "calibri",
               }}
             >
               Nomor
@@ -125,13 +125,16 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
             <Typography
               sx={{
                 fontSize: "13px",
+                fontFamily: "calibri",
               }}
             >
               : asdasdsad
             </Typography>
           </Grid>
           <Grid size={4.7}>
-            <Typography sx={{ fontSize: "13px" }}>Kepada Yth.</Typography>
+            <Typography sx={{ fontSize: "13px", fontFamily: "calibri" }}>
+              Kepada Yth.
+            </Typography>
           </Grid>
         </Grid>
 
@@ -141,6 +144,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
             <Typography
               sx={{
                 fontSize: "13px",
+                fontFamily: "calibri",
               }}
             >
               Lampiran
@@ -149,13 +153,20 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
               sx={{
                 fontSize: "13px",
                 marginLeft: "2px",
+                fontFamily: "calibri",
               }}
             >
               : -
             </Typography>
           </Grid>
           <Grid size={4.7}>
-            <Typography sx={{ fontSize: "13px", fontWeight: "bold" }}>
+            <Typography
+              sx={{
+                fontSize: "13px",
+                fontWeight: "bold",
+                fontFamily: "calibri",
+              }}
+            >
               {data.tenant_name ? data.tenant_name : "-"}
             </Typography>
           </Grid>
@@ -177,6 +188,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
             <Typography
               sx={{
                 fontSize: "13px",
+                fontFamily: "calibri",
               }}
             >
               Perihal
@@ -184,16 +196,19 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
             <Typography
               sx={{
                 fontSize: "13px",
+                fontFamily: "calibri",
               }}
             >
               :{" "}
-              <span style={{ fontWeight: "bold" }}>
+              <span style={{ fontWeight: "bold", fontFamily: "calibri" }}>
                 Persetujuan Sewa Ruangan
               </span>
             </Typography>
           </Grid>
           <Grid size={4.7}>
-            <Typography sx={{ fontSize: "13px" }}>di - tempat</Typography>
+            <Typography sx={{ fontSize: "13px", fontFamily: "calibri" }}>
+              di - tempat
+            </Typography>
           </Grid>
         </Grid>
 
@@ -203,6 +218,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
             <Typography
               sx={{
                 fontSize: "13px",
+                fontFamily: "calibri",
               }}
             >
               Dengan hormat,
@@ -213,6 +229,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
               sx={{
                 fontSize: "13px",
                 textAlign: "justify",
+                fontFamily: "calibri",
               }}
             >
               Pertama-tama kami ucapakan terima kasih atas kepercayaan Bpk/Ibu
@@ -228,6 +245,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
             <Typography
               sx={{
                 fontSize: "13px",
+                fontFamily: "calibri",
               }}
             >
               Nama Penyewa
@@ -236,6 +254,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
               sx={{
                 fontSize: "13px",
                 ml: "1px",
+                fontFamily: "calibri",
               }}
             >
               :{" "}
@@ -249,6 +268,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
             <Typography
               sx={{
                 fontSize: "13px",
+                fontFamily: "calibri",
               }}
             >
               No. Ruangan
@@ -256,6 +276,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
             <Typography
               sx={{
                 fontSize: "13px",
+                fontFamily: "calibri",
               }}
             >
               :{" "}
@@ -269,6 +290,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
             <Typography
               sx={{
                 fontSize: "13px",
+                fontFamily: "calibri",
               }}
             >
               Ukurang Ruangan
@@ -279,7 +301,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
               }}
             >
               :{" "}
-              <span style={{ fontWeight: "bold" }}>
+              <span style={{ fontWeight: "bold", fontFamily: "calibri" }}>
                 {data.room_length && data.room_width
                   ? `${data.room_length} M X ${data.room_width} M`
                   : "-"}
@@ -292,6 +314,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
             <Typography
               sx={{
                 fontSize: "13px",
+                fontFamily: "calibri",
               }}
             >
               Lokasi / Pasar
@@ -299,6 +322,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
             <Typography
               sx={{
                 fontSize: "13px",
+                fontFamily: "calibri",
               }}
             >
               :{" "}
@@ -313,6 +337,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
             <Typography
               sx={{
                 fontSize: "13px",
+                fontFamily: "calibri",
               }}
             >
               Jangka Waktu
@@ -320,10 +345,11 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
             <Typography
               sx={{
                 fontSize: "13px",
+                fontFamily: "calibri",
               }}
             >
               :{" "}
-              <span style={{ fontWeight: "bold" }}>
+              <span style={{ fontWeight: "bold", fontFamily: "calibri" }}>
                 {data.start_date && data.end_date
                   ? `1 TAHUN (${moment(data.start_date).format(
                       "D MMMM YYYY"
@@ -339,6 +365,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
               sx={{
                 fontSize: "13px",
                 textAlign: "justify",
+                fontFamily: "calibri",
               }}
             >
               Pada prinsipnya pembayaran dapat kami setujui, dengan membayar{" "}
@@ -353,10 +380,13 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
                 sx={{
                   fontSize: "13px",
                   textAlign: "justify",
+                  fontFamily: "calibri",
                 }}
               >
-                <span style={{ marginRight: "10px" }}>1.</span>Sewa Kontrak
-                Ruangan
+                <span style={{ marginRight: "10px", fontFamily: "calibri" }}>
+                  1.
+                </span>
+                Sewa Kontrak Ruangan
               </Typography>
             </Grid>
             <Grid
@@ -370,6 +400,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
                   fontSize: "13px",
                   textAlign: "justify",
                   fontWeight: "bold",
+                  fontFamily: "calibri",
                 }}
               >
                 {data.total_payment ? formatRupiah(data.total_payment) : "-"}, -
@@ -384,10 +415,13 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
                 sx={{
                   fontSize: "13px",
                   textAlign: "justify",
+                  fontFamily: "calibri",
                 }}
               >
-                <span style={{ marginRight: "20px" }}></span>Iuran Jasa
-                Administrasi
+                <span
+                  style={{ marginRight: "20px", fontFamily: "calibri" }}
+                ></span>
+                Iuran Jasa Administrasi
               </Typography>
             </Grid>
             <Grid
@@ -401,6 +435,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
                   fontSize: "13px",
                   textAlign: "justify",
                   fontWeight: "bold",
+                  fontFamily: "calibri",
                 }}
               >
                 {formatRupiah(50000)}, -
@@ -415,6 +450,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
                 sx={{
                   fontSize: "13px",
                   textAlign: "justify",
+                  fontFamily: "calibri",
                 }}
               >
                 <span style={{ marginRight: "20px" }}></span>By. Asuransi objek
@@ -432,6 +468,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
                   fontSize: "13px",
                   textAlign: "justify",
                   fontWeight: "bold",
+                  fontFamily: "calibri",
                 }}
               >
                 -
@@ -446,9 +483,13 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
                 sx={{
                   fontSize: "13px",
                   textAlign: "justify",
+                  fontFamily: "calibri",
                 }}
               >
-                <span style={{ marginRight: "20px" }}></span>PPN
+                <span
+                  style={{ marginRight: "20px", fontFamily: "calibri" }}
+                ></span>
+                PPN
               </Typography>
             </Grid>
             <Grid
@@ -462,9 +503,10 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
                   fontSize: "13px",
                   textAlign: "justify",
                   fontWeight: "bold",
+                  fontFamily: "calibri",
                 }}
               >
-                {total_PPN ? formatRupiah(total_PPN) : "-"}, -
+                {totalPPN ? formatRupiah(totalPPN) : "-"}, -
               </Typography>
               <Divider
                 sx={{
@@ -482,6 +524,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
                 sx={{
                   fontSize: "13px",
                   textAlign: "justify",
+                  fontFamily: "calibri",
                 }}
               >
                 <span style={{ marginRight: "20px" }}></span>Jumlah
@@ -498,9 +541,10 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
                   fontSize: "13px",
                   textAlign: "justify",
                   fontWeight: "bold",
+                  fontFamily: "calibri",
                 }}
               >
-                {grantTotal ? formatRupiah(grantTotal) : "-"}, -
+                {grandTotal ? formatRupiah(grandTotal) : "-"}, -
               </Typography>
             </Grid>
           </Grid>
@@ -513,6 +557,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
                   fontSize: "13px",
                   textAlign: "justify",
                   fontWeight: "bold",
+                  fontFamily: "calibri",
                 }}
               >
                 <span style={{ marginRight: "20px" }}></span>Menyicil 2x
@@ -524,6 +569,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
                   fontSize: "13px",
                   textAlign: "justify",
                   fontWeight: "bold",
+                  fontFamily: "calibri",
                 }}
               >
                 <span style={{ marginRight: "20px" }}></span>-
@@ -535,6 +581,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
                   fontSize: "13px",
                   textAlign: "justify",
                   fontWeight: "bold",
+                  fontFamily: "calibri",
                 }}
               >
                 <span style={{ marginRight: "20px" }}></span>-
@@ -548,6 +595,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
               sx={{
                 fontSize: "13px",
                 textAlign: "justify",
+                fontFamily: "calibri",
               }}
             >
               <span style={{ marginRight: "10px" }}>2.</span>
@@ -557,10 +605,11 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
           </Grid>
 
           {/* Nama Bank */}
-          <Grid size={12} display={"flex"} flexDirection={"row"} gap={9.5}>
+          <Grid size={12} display={"flex"} flexDirection={"row"} gap={9.4}>
             <Typography
               sx={{
                 fontSize: "13px",
+                fontFamily: "calibri",
               }}
             >
               <span style={{ marginRight: "20px" }}></span> Nama Bank
@@ -569,6 +618,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
               sx={{
                 fontSize: "13px",
                 ml: "1px",
+                fontFamily: "calibri",
               }}
             >
               : <span style={{ fontWeight: "bold" }}>Bank SulutGo</span>
@@ -580,6 +630,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
             <Typography
               sx={{
                 fontSize: "13px",
+                fontFamily: "calibri",
               }}
             >
               <span style={{ marginRight: "20px" }}></span>Nomor Rekening
@@ -599,6 +650,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
             <Typography
               sx={{
                 fontSize: "13px",
+                fontFamily: "calibri",
               }}
             >
               <span style={{ marginRight: "20px" }}></span>Atas Nama
@@ -619,6 +671,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
               sx={{
                 fontSize: "13px",
                 textAlign: "justify",
+                fontFamily: "calibri",
               }}
             >
               Iuran Retribusi yang dibayarkan setiap bulan selama jangka waktu
@@ -632,6 +685,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
               sx={{
                 fontSize: "13px",
                 textAlign: "justify",
+                fontFamily: "calibri",
               }}
             >
               Setelah pembayaran dilakukan, copy bukti transfer dapat segera
@@ -645,6 +699,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
               sx={{
                 fontSize: "13px",
                 textAlign: "justify",
+                fontFamily: "calibri",
               }}
             >
               Demikian kami sampaikan, atas perhatian dan kerjasamanya kami
@@ -660,6 +715,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
                 sx={{
                   fontSize: "14px",
                   fontWeight: "bold",
+                  fontFamily: "calibri",
                 }}
               >
                 Direktur Utama
@@ -667,13 +723,14 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
             </Grid>
           </Grid>
 
-          <Grid container size={12} mt={8}>
+          <Grid container size={12} mt={9}>
             <Grid size={6}></Grid>
             <Grid size={6}>
               <Typography
                 sx={{
                   fontSize: "14px",
                   fontWeight: "bold",
+                  fontFamily: "calibri",
                 }}
               >
                 LUCKY. A. SENDUK, S.Ked.
@@ -688,6 +745,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
                 fontSize: "12px",
                 fontWeight: "bold",
                 fontStyle: "italic",
+                fontFamily: "calibri",
               }}
             >
               Tembusan Yth :
@@ -707,6 +765,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
               sx={{
                 fontSize: "12px",
                 ml: "1px",
+                fontFamily: "calibri",
               }}
             >
               Dewan Pengawas Perumda Pasar Manado
@@ -725,6 +784,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
               sx={{
                 fontSize: "12px",
                 ml: "1px",
+                fontFamily: "calibri",
               }}
             >
               Direktur Umum
@@ -735,6 +795,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
             <Typography
               sx={{
                 fontSize: "12px",
+                fontFamily: "calibri",
               }}
             >
               <span style={{ marginRight: "20px" }}></span>3)
@@ -743,6 +804,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
               sx={{
                 fontSize: "12px",
                 ml: "1px",
+                fontFamily: "calibri",
               }}
             >
               Direktur Bisnis
@@ -753,6 +815,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
             <Typography
               sx={{
                 fontSize: "12px",
+                fontFamily: "calibri",
               }}
             >
               <span style={{ marginRight: "20px" }}></span>4)
@@ -761,6 +824,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
               sx={{
                 fontSize: "12px",
                 ml: "1px",
+                fontFamily: "calibri",
               }}
             >
               Direktur Keuangan
@@ -771,6 +835,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
             <Typography
               sx={{
                 fontSize: "12px",
+                fontFamily: "calibri",
               }}
             >
               <span style={{ marginRight: "20px" }}></span>5)
@@ -779,6 +844,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
               sx={{
                 fontSize: "12px",
                 ml: "1px",
+                fontFamily: "calibri",
               }}
             >
               Kepala Devisi Kerjasama Bisnis
@@ -797,6 +863,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
               sx={{
                 fontSize: "12px",
                 ml: "1px",
+                fontFamily: "calibri",
               }}
             >
               Sekertaris
@@ -807,6 +874,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
             <Typography
               sx={{
                 fontSize: "12px",
+                fontFamily: "calibri",
               }}
             >
               <span style={{ marginRight: "20px" }}></span>7)
@@ -815,6 +883,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
               sx={{
                 fontSize: "12px",
                 ml: "1px",
+                fontFamily: "calibri",
               }}
             >
               Arsip
@@ -822,6 +891,30 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
           </Grid>
         </Grid>
       </Box>
+      {/* Logo Pemerintah Kota Manado */}
+      <img
+        src="/logo-pemerintah-kota-manado.png"
+        alt="logo-pemerintah-kota-manado"
+        style={{
+          width: "150px",
+          height: "100px",
+          position: "absolute",
+          top: 30,
+          left: 5,
+        }}
+      />
+      {/* Logo Perumda Pasar Manado */}
+      <img
+        src="/logo-perumda-pasar-manado.png"
+        alt="logo-perumda-pasar-manado"
+        style={{
+          width: "110px",
+          height: "100px",
+          position: "absolute",
+          top: 30,
+          left: 660,
+        }}
+      />
     </Box>
   );
 });

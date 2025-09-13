@@ -28,6 +28,7 @@ import PersetujuanSewaRuangan from "@/app/components/documents/PersetujuanSewaRu
 import { useReactToPrint } from "react-to-print";
 import TenantApprovalModal from "@/app/components/tenantapprovalmodal/TenantApprovalModal";
 import DetailTenantApplicationModal from "@/app/components/tenantapplicationmodal/DetailTenantApplicationModal";
+import menuDevisiKontrak from "@/app/components/menu/MenuItemDivisiKontrak";
 
 const Applications = () => {
   // Ref untuk dokumen print
@@ -43,6 +44,7 @@ const Applications = () => {
   const [openPrintModal, setOpenPrintModal] = useState(false);
   const [openAddModal, setOpenAddModal] = useState(false);
   const [openEditModal, setOpenEditModal] = useState(false);
+  const [openNonAktif, setOpenNonAktif] = useState(false);
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
   const [selectedData, setSelectedData] = useState(null);
   const [pageSize, setPageSize] = useState(5);
@@ -419,15 +421,6 @@ const Applications = () => {
       render: (text, record) =>
         record.approval_status === "approved" ? (
           <Box sx={{ display: "flex", gap: 1, justifyContent: "center" }}>
-            <Button
-              size="small"
-              variant={themeMode === "dark" ? "outlined" : "contained"}
-              color="primary"
-              onClick={() => handlePrint(record)}
-              sx={{ minWidth: 0, px: 1 }}
-            >
-              <Icon icon="streamline-ultimate:print-text" fontSize={18} />
-            </Button>
             <Tooltip title="Detail Data Pemohon">
               <Button
                 size="small"
@@ -439,27 +432,42 @@ const Applications = () => {
                 <Icon icon="mdi:smart-card-outline" fontSize={18} />
               </Button>
             </Tooltip>
+            <Tooltip title="Print Dokumen">
+              <Button
+                size="small"
+                variant={themeMode === "dark" ? "outlined" : "contained"}
+                color="primary"
+                onClick={() => handlePrint(record)}
+                sx={{ minWidth: 0, px: 1 }}
+              >
+                <Icon icon="streamline-ultimate:print-text" fontSize={18} />
+              </Button>
+            </Tooltip>
           </Box>
         ) : (
           <Box sx={{ display: "flex", gap: 1, justifyContent: "center" }}>
-            <Button
-              size="small"
-              variant={themeMode === "dark" ? "outlined" : "contained"}
-              color="info"
-              onClick={() => handleEdit(record)}
-              sx={{ minWidth: 0, px: 1 }}
-            >
-              <Icon icon="line-md:edit" fontSize={18} />
-            </Button>
-            <Button
-              size="small"
-              variant={themeMode === "dark" ? "outlined" : "contained"}
-              color="error"
-              onClick={() => handleDelete(record)}
-              sx={{ minWidth: 0, px: 1 }}
-            >
-              <Icon icon="line-md:close-circle" fontSize={18} />
-            </Button>
+            <Tooltip title="Edit Data">
+              <Button
+                size="small"
+                variant={themeMode === "dark" ? "outlined" : "contained"}
+                color="info"
+                onClick={() => handleEdit(record)}
+                sx={{ minWidth: 0, px: 1 }}
+              >
+                <Icon icon="line-md:edit" fontSize={18} />
+              </Button>
+            </Tooltip>
+            <Tooltip title="Hapus Data">
+              <Button
+                size="small"
+                variant={themeMode === "dark" ? "outlined" : "contained"}
+                color="error"
+                onClick={() => handleDelete(record)}
+                sx={{ minWidth: 0, px: 1 }}
+              >
+                <Icon icon="line-md:close-circle" fontSize={18} />
+              </Button>
+            </Tooltip>
           </Box>
         ),
     },
@@ -468,7 +476,7 @@ const Applications = () => {
   return (
     <Box sx={{ width: "100%", height: "100%", minHeight: "100%", p: 2 }}>
       {/* Component Breadcrumbs disini */}
-      <BreadcrumbPage menuList={menuSuperadmin} />
+      <BreadcrumbPage menuList={menuDevisiKontrak} />
 
       <Box
         sx={{

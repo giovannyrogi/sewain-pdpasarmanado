@@ -56,6 +56,31 @@ const TenantApprovalModal = ({
     position: "relative",
   };
 
+  const handleCalculateTotal = () => {
+    if (selectedData) {
+      // Hitung PPN
+      const totalPPN =
+        selectedData.payment_type === "lunas"
+          ? selectedData.total_payment * 0.11
+          : selectedData.total_payment * 1.11 * 0.11;
+
+      // Hitung total keseluruhan (tambahan biaya tetap 50.000)
+      const grandTotal =
+        parseInt(selectedData.total_payment) + totalPPN + 50000;
+
+      // Return object, bukan string
+      return {
+        totalPPN: totalPPN,
+        grandTotal: grandTotal,
+      };
+    }
+  };
+
+  const { totalPPN, grandTotal } = handleCalculateTotal() || {
+    totalPPN: 0,
+    grandTotal: 0,
+  };
+
   const handleSubmit = async () => {
     loadingTrue();
     setIsSubmitting(true);
@@ -796,10 +821,7 @@ const TenantApprovalModal = ({
                   overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
                 }}
               >
-                {/* {selectedData?.total_payment
-                ? formatRupiah(selectedData.total_payment)
-                : "-"} */}{" "}
-                {formatRupiah(0)}
+                {totalPPN ? formatRupiah(totalPPN) : "-"}
               </Typography>
             </Grid>
           </Grid>
@@ -839,10 +861,7 @@ const TenantApprovalModal = ({
                   overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
                 }}
               >
-                {/* {selectedData?.total_payment
-                ? formatRupiah(selectedData.total_payment)
-                : "-"} */}{" "}
-                {formatRupiah(0)}
+                {grandTotal ? formatRupiah(grandTotal) : "-"}
               </Typography>
             </Grid>
           </Grid>
@@ -857,7 +876,14 @@ const TenantApprovalModal = ({
               alignItems: "center",
             }}
           >
-            <Grid size={6}>
+            <Grid
+              size={
+                selectedData?.status === "approved" ||
+                selectedData?.status === "rejected"
+                  ? 12
+                  : 6
+              }
+            >
               <Button
                 type="submit"
                 variant="contained"
@@ -867,7 +893,11 @@ const TenantApprovalModal = ({
                   fontWeight: "bold",
                   fontSize: 16,
                   textTransform: "none",
-                  width: 150,
+                  width:
+                    selectedData?.status === "approved" ||
+                    selectedData?.status === "rejected"
+                      ? "100%"
+                      : 150,
                 }}
                 onClick={onClose}
                 disabled={isSubmitting}

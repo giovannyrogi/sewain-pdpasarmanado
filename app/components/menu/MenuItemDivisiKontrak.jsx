@@ -50,6 +50,13 @@ const menuDevisiKontrak = [
         showIcon: true,
       },
       {
+        label: "Tenant Terminations",
+        value: "tenant-terminations",
+        path: "/divisi-kontrak/tenant-terminations",
+        icon: <Icon icon="pepicons-pop:lock-closed-circle" fontSize="20px" />,
+        showIcon: true,
+      },
+      {
         label: "Payments",
         value: "payments",
         path: "/divisi-kontrak/payments",

@@ -14,13 +14,6 @@ const menuKepalaDivisi = [
     value: "transactions",
     icon: <Icon icon="healthicons:money-bag" fontSize={22} />,
     submenu: [
-      // {
-      //   label: "Tenant Application",
-      //   value: "tenant-application",
-      //   path: "/kepala-divisi/tenant-application",
-      //   icon: <Icon icon="hugeicons:file-edit" fontSize="20px" />,
-      //   showIcon: true,
-      // },
       {
         label: "Tenant Approval",
         value: "tenant-approval",
@@ -28,13 +21,13 @@ const menuKepalaDivisi = [
         icon: <Icon icon="carbon:document-set" fontSize="20px" />,
         showIcon: true,
       },
-      // {
-      //   label: "Documents",
-      //   value: "documents",
-      //   path: "/kepala-divisi/documents",
-      //   icon: <Icon icon="f7:doc-on-doc" fontSize="20px" />,
-      //   showIcon: true,
-      // },
+      {
+        label: "Tenant Terminations",
+        value: "tenant-terminations",
+        path: "/kepala-divisi/tenant-terminations",
+        icon: <Icon icon="pepicons-pop:lock-closed-circle" fontSize="20px" />,
+        showIcon: true,
+      },
       {
         label: "Payments",
         value: "payments",

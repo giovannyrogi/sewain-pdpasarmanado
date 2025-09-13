@@ -22,6 +22,13 @@ const menuDirekturBisnis = [
         showIcon: true,
       },
       {
+        label: "Tenant Terminations",
+        value: "tenant-terminations",
+        path: "/direktur-bisnis/tenant-terminations",
+        icon: <Icon icon="pepicons-pop:lock-closed-circle" fontSize="20px" />,
+        showIcon: true,
+      },
+      {
         label: "Payments",
         value: "payments",
         path: "/direktur-bisnis/payments",

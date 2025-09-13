@@ -5,9 +5,6 @@ export async function GET(req) {
     const { searchParams } = new URL(req.url);
     const tenantAppId = searchParams.get("id");
 
-    console.log('tenantAppId', tenantAppId);
-    
-
     if (!tenantAppId) {
       return new Response(
         JSON.stringify({

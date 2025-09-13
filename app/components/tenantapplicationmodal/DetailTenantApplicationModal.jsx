@@ -35,7 +35,6 @@ const DetailTenantApplicationModal = ({
   const [openPreview, setOpenPreview] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // console.log("selectedData", selectedData);
   const theme = useTheme();
 
   const style = {
@@ -56,53 +55,30 @@ const DetailTenantApplicationModal = ({
     position: "relative",
   };
 
-  const handleSubmit = async () => {
-    loadingTrue();
-    setIsSubmitting(true);
-    try {
-      const response = await axios.put(
-        `/api/tenant-approval/${selectedData.id}`,
-        {
-          tenant_application_id: selectedData.tenant_application_id,
-          status: "approved",
-          approver_id: user.id,
-        }
-      );
-      console.log("response", response.data);
 
-      if (response.data.success) {
-        onNotify?.({
-          open: true,
-          message: response.data.message || "Berhasil Menyetujui Sewa Ruangan!",
-          severity: "success",
-        });
-        getDataApprovals();
-        setTimeout(() => {
-          onClose();
-          loadingFalse();
-          setIsSubmitting(false);
-        }, 1000);
-      } else {
-        onNotify?.({
-          open: true,
-          message: response.data.message || "Gagal Menyetujui Sewa Ruangan.",
-          severity: "error",
-        });
-        loadingFalse();
-        setIsSubmitting(false);
-      }
-    } catch (error) {
-      console.log("error", error);
-      onNotify?.({
-        open: true,
-        message:
-          error.response.data.message ||
-          "Terjadi error saat menyetujui sewa ruangan.",
-        severity: "error",
-      });
-      loadingFalse();
-      setIsSubmitting(false);
+  const handleCalculateTotal = () => {
+    if (selectedData) {
+      // Hitung PPN
+      const totalPPN =
+        selectedData.payment_type === "lunas"
+          ? selectedData.total_payment * 0.11
+          : selectedData.total_payment * 1.11 * 0.11;
+
+      // Hitung total keseluruhan (tambahan biaya tetap 50.000)
+      const grandTotal =
+        parseInt(selectedData.total_payment) + totalPPN + 50000;
+
+      // Return object, bukan string
+      return {
+        totalPPN: totalPPN,
+        grandTotal: grandTotal,
+      };
     }
+  };
+
+  const { totalPPN, grandTotal } = handleCalculateTotal() || {
+    totalPPN: 0,
+    grandTotal: 0,
   };
 
   return (
@@ -799,7 +775,7 @@ const DetailTenantApplicationModal = ({
                 {/* {selectedData?.total_payment
                 ? formatRupiah(selectedData.total_payment)
                 : "-"} */}{" "}
-                {formatRupiah(0)}
+                {totalPPN ? formatRupiah(totalPPN) : "-"}
               </Typography>
             </Grid>
           </Grid>
@@ -842,7 +818,7 @@ const DetailTenantApplicationModal = ({
                 {/* {selectedData?.total_payment
                 ? formatRupiah(selectedData.total_payment)
                 : "-"} */}{" "}
-                {formatRupiah(0)}
+                {grandTotal ? formatRupiah(grandTotal) : "-"}
               </Typography>
             </Grid>
           </Grid>

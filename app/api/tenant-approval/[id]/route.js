@@ -52,40 +52,41 @@ export async function PUT(request, { params }) {
       );
     }
 
-    // Update tenant_approval
+    // Update tenant_approval hanya untuk 1 tenant_application_id
     const updateApproval = await pool.query(
       `UPDATE tenant_approval 
        SET status=$1, approver_id=$2, approved_at=$3
-       WHERE id=$4 RETURNING *`,
-      [status, approver_id, new Date(), id]
+       WHERE id=$4 AND tenant_application_id=$5 
+       RETURNING *`,
+      [status, approver_id, new Date(), id, tenant_application_id]
     );
+
+    // Hitung max_step hanya untuk tenant_application_id ini
+    const totalStepsResult = await pool.query(
+      `SELECT MAX(step_order) as max_step 
+       FROM tenant_approval 
+       WHERE tenant_application_id=$1`,
+      [tenant_application_id]
+    );
+    const maxStep = totalStepsResult.rows[0]?.max_step || 1;
 
     // Update tenant_application.current_step jika step valid & approved
     if (status === "approved" && stepOrder === currentStep) {
-      // Cari total step
-      const totalStepsResult = await pool.query(
-        `SELECT MAX(step_order) as max_step 
-         FROM tenant_approval 
-         WHERE tenant_application_id=$1`,
-        [tenant_application_id]
-      );
-      const maxStep = totalStepsResult.rows[0]?.max_step || 1;
-
       if (stepOrder === maxStep) {
         // Step terakhir → set approval_status = approved
         await pool.query(
           `UPDATE tenant_application 
-           SET current_step=$1, approval_status='approved'
+           SET current_step=$1, approval_status='approved', updated_at=$3
            WHERE id=$2`,
-          [stepOrder, tenant_application_id]
+          [stepOrder, tenant_application_id, new Date()]
         );
       } else {
         // Step berikutnya
         await pool.query(
           `UPDATE tenant_application 
-           SET current_step=$1
+           SET current_step=$1, updated_at=$3
            WHERE id=$2`,
-          [stepOrder + 1, tenant_application_id]
+          [stepOrder + 1, tenant_application_id, new Date()]
         );
       }
     }

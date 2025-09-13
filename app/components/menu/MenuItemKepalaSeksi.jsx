@@ -22,6 +22,13 @@ const menuKepalaSeksi = [
         showIcon: true,
       },
       {
+        label: "Tenant Terminations",
+        value: "tenant-terminations",
+        path: "/kepala-seksi/tenant-terminations",
+        icon: <Icon icon="pepicons-pop:lock-closed-circle" fontSize="20px" />,
+        showIcon: true,
+      },
+      {
         label: "Payments",
         value: "payments",
         path: "/kepala-seksi/payments",
