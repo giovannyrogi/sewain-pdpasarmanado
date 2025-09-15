@@ -29,6 +29,7 @@ import { useReactToPrint } from "react-to-print";
 import TenantApprovalModal from "@/app/components/tenantapprovalmodal/TenantApprovalModal";
 import DetailTenantApplicationModal from "@/app/components/tenantapplicationmodal/DetailTenantApplicationModal";
 import menuDevisiKontrak from "@/app/components/menu/MenuItemDivisiKontrak";
+import UpdateDocumentDate from "./UpdateDocumentDate";
 
 const Applications = () => {
   // Ref untuk dokumen print
@@ -60,6 +61,8 @@ const Applications = () => {
     openTenantApprovalInformationModal,
     setOpenTenantApprovalInformationModal,
   ] = useState(false);
+
+  const [openUpdateDateModal, setOpenUpdateDateModal] = useState(false);
 
   const [printData, setPrintData] = useState(null);
 
@@ -180,6 +183,12 @@ const Applications = () => {
     // console.log("handleTenantApprove record", record);
     setSelectedData(record);
     setOpenTenantApprovalInformationModal(true);
+  };
+
+  const handleUpdateDate = (record) => {
+    // console.log("handleTenantApprove record", record);
+    setSelectedData(record);
+    setOpenUpdateDateModal(true);
   };
 
   // Utility untuk filter dinamis
@@ -421,6 +430,31 @@ const Applications = () => {
       render: (text, record) =>
         record.approval_status === "approved" ? (
           <Box sx={{ display: "flex", gap: 1, justifyContent: "center" }}>
+            {!record.start_date && !record.end_date ? (
+              <Tooltip title="Update Masa Berlaku Dokumen">
+                <Button
+                  size="small"
+                  variant={themeMode === "dark" ? "outlined" : "contained"}
+                  color="success"
+                  onClick={() => handleUpdateDate(record)}
+                  sx={{ minWidth: 0, px: 1 }}
+                >
+                  <Icon icon="line-md:calendar" fontSize={18} />
+                </Button>
+              </Tooltip>
+            ) : (
+              <Tooltip title="Print Dokumen">
+                <Button
+                  size="small"
+                  variant={themeMode === "dark" ? "outlined" : "contained"}
+                  color="primary"
+                  onClick={() => handlePrint(record)}
+                  sx={{ minWidth: 0, px: 1 }}
+                >
+                  <Icon icon="streamline-ultimate:print-text" fontSize={18} />
+                </Button>
+              </Tooltip>
+            )}
             <Tooltip title="Detail Data Pemohon">
               <Button
                 size="small"
@@ -430,17 +464,6 @@ const Applications = () => {
                 sx={{ minWidth: 0, px: 1 }}
               >
                 <Icon icon="mdi:smart-card-outline" fontSize={18} />
-              </Button>
-            </Tooltip>
-            <Tooltip title="Print Dokumen">
-              <Button
-                size="small"
-                variant={themeMode === "dark" ? "outlined" : "contained"}
-                color="primary"
-                onClick={() => handlePrint(record)}
-                sx={{ minWidth: 0, px: 1 }}
-              >
-                <Icon icon="streamline-ultimate:print-text" fontSize={18} />
               </Button>
             </Tooltip>
           </Box>
@@ -595,6 +618,18 @@ const Applications = () => {
         onNotify={(notif) => setSnackbar(notif)}
         setLoadingMessage={setLoadingMessage}
         selectedData={selectedData}
+      />
+      <UpdateDocumentDate
+        open={openUpdateDateModal}
+        onClose={() => setOpenUpdateDateModal(false)}
+        loadingTrue={() => setLoading(true)}
+        loadingFalse={() => setLoading(false)}
+        loading={loading}
+        getDataTenantApplication={getDataTenantApplication}
+        getLocationsData={getLocationsData}
+        onNotify={(notif) => setSnackbar(notif)}
+        selectedData={selectedData}
+        user={user}
       />
       <InformationPreviewModal
         open={openInformationModal}

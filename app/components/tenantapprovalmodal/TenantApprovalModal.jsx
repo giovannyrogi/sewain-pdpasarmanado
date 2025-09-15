@@ -35,7 +35,7 @@ const TenantApprovalModal = ({
   const [openPreview, setOpenPreview] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  //   console.log("selectedData", selectedData);
+  // console.log("selectedData", selectedData);
   const theme = useTheme();
 
   const style = {
@@ -872,165 +872,169 @@ const TenantApprovalModal = ({
             </Grid>
           </Grid>
 
-          {/* Rencana Cicilan */}
-          <Grid container spacing={2} mt={2}>
-            <Typography
-              sx={{
-                fontSize: 15,
-                fontWeight: "bold",
-                // color: theme.palette.primary.main,
-              }}
-            >
-              Rencana Cicilan
-            </Typography>
-          </Grid>
+          {selectedData?.payment_type === "cicilan" && (
+            <>
+              {/* Rencana Cicilan */}
+              <Grid container spacing={2} mt={2}>
+                <Typography
+                  sx={{
+                    fontSize: 15,
+                    fontWeight: "bold",
+                    // color: theme.palette.primary.main,
+                  }}
+                >
+                  Rencana Cicilan
+                </Typography>
+              </Grid>
 
-          <Divider
-            sx={{
-              mb: 0.5,
-              borderColor: theme.palette.primary.main,
-            }}
-          />
+              <Divider
+                sx={{
+                  mb: 0.5,
+                  borderColor: theme.palette.primary.main,
+                }}
+              />
 
-          <Grid container>
-            <Grid
-              size={12}
-              sx={{
-                display: "flex",
-                flexDirection: "row",
-                justifyContent: "space-between",
-              }}
-            >
-              <Typography
-                sx={{
-                  fontWeight: "bold",
-                  fontSize: "13px",
-                }}
-              >
-                {`Cicilan 1 (${moment(
-                  selectedData?.estimated_installment_1_date
-                ).format("MMM YYYY")})`}
-              </Typography>
-              <Typography
-                sx={{
-                  fontWeight: "bold",
-                  fontSize: "13px",
-                  wordBreak: "break-word", // <-- biar kata panjang pecah
-                  whiteSpace: "normal", // <-- biar bisa turun baris
-                  overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
-                }}
-              >
-                {selectedData?.estimated_installment_1
-                  ? formatRupiah(selectedData.estimated_installment_1)
-                  : "-"}
-              </Typography>
-            </Grid>
+              <Grid container>
+                <Grid
+                  size={12}
+                  sx={{
+                    display: "flex",
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <Typography
+                    sx={{
+                      fontWeight: "bold",
+                      fontSize: "13px",
+                    }}
+                  >
+                    {`Cicilan 1 (${moment(
+                      selectedData?.estimated_installment_1_date
+                    ).format("MMM YYYY")})`}
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontWeight: "bold",
+                      fontSize: "13px",
+                      wordBreak: "break-word", // <-- biar kata panjang pecah
+                      whiteSpace: "normal", // <-- biar bisa turun baris
+                      overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
+                    }}
+                  >
+                    {selectedData?.estimated_installment_1
+                      ? formatRupiah(selectedData.estimated_installment_1)
+                      : "-"}
+                  </Typography>
+                </Grid>
 
-            <Grid
-              size={12}
-              sx={{
-                display: "flex",
-                flexDirection: "row",
-                justifyContent: "space-between",
-              }}
-            >
-              <Typography
-                sx={{
-                  fontWeight: "bold",
-                  fontSize: "13px",
-                }}
-              >
-                {`Cicilan 2 (${moment(
-                  selectedData?.estimated_installment_2_date
-                ).format("MMM YYYY")})`}
-              </Typography>
-              <Typography
-                sx={{
-                  fontWeight: "bold",
-                  fontSize: "13px",
-                  wordBreak: "break-word", // <-- biar kata panjang pecah
-                  whiteSpace: "normal", // <-- biar bisa turun baris
-                  overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
-                }}
-              >
-                {selectedData?.estimated_installment_2
-                  ? formatRupiah(selectedData.estimated_installment_2)
-                  : "-"}
-              </Typography>
-            </Grid>
+                <Grid
+                  size={12}
+                  sx={{
+                    display: "flex",
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <Typography
+                    sx={{
+                      fontWeight: "bold",
+                      fontSize: "13px",
+                    }}
+                  >
+                    {`Cicilan 2 (${moment(
+                      selectedData?.estimated_installment_2_date
+                    ).format("MMM YYYY")})`}
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontWeight: "bold",
+                      fontSize: "13px",
+                      wordBreak: "break-word", // <-- biar kata panjang pecah
+                      whiteSpace: "normal", // <-- biar bisa turun baris
+                      overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
+                    }}
+                  >
+                    {selectedData?.estimated_installment_2
+                      ? formatRupiah(selectedData.estimated_installment_2)
+                      : "-"}
+                  </Typography>
+                </Grid>
 
-            <Grid
-              size={12}
-              sx={{
-                display: "flex",
-                flexDirection: "row",
-                justifyContent: "space-between",
-              }}
-            >
-              <Typography
-                sx={{
-                  fontWeight: "bold",
-                  fontSize: "13px",
-                }}
-              >
-                {`Cicilan 3 (${moment(
-                  selectedData?.estimated_installment_3_date
-                ).format("MMM YYYY")})`}
-              </Typography>
-              <Typography
-                sx={{
-                  fontWeight: "bold",
-                  fontSize: "13px",
-                  wordBreak: "break-word", // <-- biar kata panjang pecah
-                  whiteSpace: "normal", // <-- biar bisa turun baris
-                  overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
-                }}
-              >
-                {selectedData?.estimated_installment_3
-                  ? formatRupiah(selectedData.estimated_installment_3)
-                  : "-"}
-              </Typography>
-            </Grid>
-          </Grid>
+                <Grid
+                  size={12}
+                  sx={{
+                    display: "flex",
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <Typography
+                    sx={{
+                      fontWeight: "bold",
+                      fontSize: "13px",
+                    }}
+                  >
+                    {`Cicilan 3 (${moment(
+                      selectedData?.estimated_installment_3_date
+                    ).format("MMM YYYY")})`}
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontWeight: "bold",
+                      fontSize: "13px",
+                      wordBreak: "break-word", // <-- biar kata panjang pecah
+                      whiteSpace: "normal", // <-- biar bisa turun baris
+                      overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
+                    }}
+                  >
+                    {selectedData?.estimated_installment_3
+                      ? formatRupiah(selectedData.estimated_installment_3)
+                      : "-"}
+                  </Typography>
+                </Grid>
+              </Grid>
 
-          <Divider
-            sx={{
-              mb: 0.5,
-              borderColor: theme.palette.primary.main,
-            }}
-          />
+              <Divider
+                sx={{
+                  mb: 0.5,
+                  borderColor: theme.palette.primary.main,
+                }}
+              />
 
-          {/* Total Cicilan */}
-          <Grid container spacing={1}>
-            <Grid
-              size={12}
-              sx={{
-                display: "flex",
-                flexDirection: "row",
-                justifyContent: "space-between",
-              }}
-            >
-              <Typography
-                sx={{
-                  fontWeight: "bold",
-                  fontSize: "13px",
-                }}
-              >
-                Total Cicilan
-              </Typography>
-              <Typography
-                sx={{
-                  fontWeight: "bold",
-                  fontSize: "13px",
-                  wordBreak: "break-word", // <-- biar kata panjang pecah
-                  whiteSpace: "normal", // <-- biar bisa turun baris
-                  overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
-                }}
-              >
-                {totalInstallment ? formatRupiah(totalInstallment) : "-"}
-              </Typography>
-            </Grid>
-          </Grid>
+              {/* Total Cicilan */}
+              <Grid container spacing={1}>
+                <Grid
+                  size={12}
+                  sx={{
+                    display: "flex",
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <Typography
+                    sx={{
+                      fontWeight: "bold",
+                      fontSize: "13px",
+                    }}
+                  >
+                    Total Cicilan
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontWeight: "bold",
+                      fontSize: "13px",
+                      wordBreak: "break-word", // <-- biar kata panjang pecah
+                      whiteSpace: "normal", // <-- biar bisa turun baris
+                      overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
+                    }}
+                  >
+                    {totalInstallment ? formatRupiah(totalInstallment) : "-"}
+                  </Typography>
+                </Grid>
+              </Grid>
+            </>
+          )}
 
           <Grid
             container

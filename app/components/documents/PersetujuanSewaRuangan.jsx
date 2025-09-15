@@ -128,7 +128,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
                 fontFamily: "calibri",
               }}
             >
-              : asdasdsad
+              : {data.document_number ? data.document_number : "-"}
             </Typography>
           </Grid>
           <Grid size={4.7}>

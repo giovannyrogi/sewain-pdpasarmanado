@@ -1,0 +1,256 @@
+import {
+  Autocomplete,
+  Box,
+  Button,
+  CircularProgress,
+  Divider,
+  FormControl,
+  Grid,
+  IconButton,
+  InputLabel,
+  MenuItem,
+  Modal,
+  Select,
+  TextField,
+  Typography,
+  useMediaQuery,
+  useTheme,
+} from "@mui/material";
+import React, { useEffect, useState } from "react";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import moment from "moment";
+import axios from "axios";
+import { useThemeMode } from "@/app/components/themeprovider/ThemeContext";
+import dayjs from "dayjs";
+
+const UpdateDocumentDate = ({
+  open,
+  onClose,
+  loadingTrue,
+  loadingFalse,
+  loading,
+  getDataTenantApplication,
+  getLocationsData,
+  onNotify,
+  setLoadingMessage,
+  selectedData,
+}) => {
+  const isMobile = useMediaQuery("(max-width:600px)");
+
+  const { themeMode } = useThemeMode();
+  const theme = useTheme();
+
+  const style = {
+    width: isMobile ? "90vw" : 400,
+    maxWidth: "98vw",
+    bgcolor: "background.paper",
+    color: "text.primary",
+    borderRadius: "10px",
+    boxShadow: 24,
+    p: "18px 20px 18px 20px",
+    maxHeight: "90vh",
+    overflowY: "auto",
+    transition: "box-shadow 0.3s",
+    //hide scrollbar
+    "&::-webkit-scrollbar": {
+      display: "none",
+    },
+  };
+
+  const [startDate, setStartDate] = useState(null);
+  const [endDate, setEndDate] = useState(null);
+  const [documentNumber, setDocumentNumber] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    loadingTrue();
+
+    try {
+      const response = await axios.put(
+        `/api/tenant-application/update-document/${selectedData.tenant_application_id}`,
+        {
+          start_date: startDate,
+          end_date: endDate,
+          document_number: documentNumber,
+        }
+      );
+      console.log("response", response);
+
+      if (response.data.success) {
+        getDataTenantApplication();
+        onNotify &&
+          onNotify({
+            open: true,
+            message: response.data.message || "Berhasil mengupdate document",
+            severity: "success",
+          });
+        setTimeout(() => {
+          clearForm();
+          onClose();
+          loadingFalse();
+          setIsSubmitting(false);
+        }, 1000);
+      }
+    } catch (error) {
+      console.error(error);
+      onNotify &&
+        onNotify({
+          open: true,
+          message: error.response.data.message || "Gagal mengupdate document",
+          severity: "error",
+        });
+      setTimeout(() => {
+        loadingFalse();
+        setIsSubmitting(false);
+      }, 1000);
+    }
+  };
+
+  const clearForm = () => {
+    setStartDate(null);
+    setEndDate(null);
+    setDocumentNumber("");
+  };
+
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        p: 0, // hilangkan padding default
+      }}
+      BackdropProps={{
+        sx: {
+          backgroundColor: "rgba(30,30,30,0.25)",
+          backdropFilter: "blur(6px)",
+          WebkitBackdropFilter: "blur(6px)",
+        },
+      }}
+    >
+      <Box sx={style}>
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <Typography
+            sx={{ fontWeight: "bold", fontSize: isMobile ? "18px" : "20px" }}
+          >
+            Update Data Dokumen
+          </Typography>
+        </Box>
+
+        <Divider
+          sx={{
+            mt: 0.5,
+            mb: 3,
+            borderColor: theme.palette.primary.main,
+          }}
+        />
+
+        <form onSubmit={handleSubmit}>
+          <Grid container spacing={isMobile ? 3 : 2}>
+            <Grid size={12}>
+              <TextField
+                label="Nomor Dokumen"
+                placeholder="Cth : 001/MP/VII/2025"
+                variant="filled"
+                fullWidth
+                value={documentNumber}
+                onChange={(e) =>
+                  setDocumentNumber(e.target.value.toUpperCase())
+                }
+                autoFocus
+                required
+                color="primary"
+              />
+            </Grid>
+            <Grid size={6}>
+              <DatePicker
+                label="Tanggal Mulai"
+                // value harus dayjs, bukan string
+                value={startDate}
+                onChange={(newValue) => {
+                  // langsung simpan dayjs object
+                  setStartDate(newValue);
+
+                  if (newValue) {
+                    // Tambahkan 365 hari ke tanggal mulai
+                    const end = moment(newValue).add(365, "days");
+
+                    setEndDate(end);
+                  } else {
+                    setEndDate(null);
+                  }
+                }}
+                minDate={moment().startOf("day")}
+                slotProps={{
+                  textField: {
+                    variant: "filled",
+                    fullWidth: true,
+                    required: true,
+                    disabled: loading,
+                    color: "primary",
+                  },
+                }}
+              />
+            </Grid>
+            <Grid size={6}>
+              <DatePicker
+                label="Tanggal Selesai"
+                // value harus dayjs, bukan string
+                value={endDate}
+                onChange={(newValue) => {
+                  // langsung simpan dayjs object
+                  setEndDate(newValue);
+                }}
+                minDate={moment().startOf("day")}
+                disabled
+                slotProps={{
+                  textField: {
+                    variant: "filled",
+                    fullWidth: true,
+                    required: true,
+                    color: "primary",
+                    disabled: true,
+                  },
+                }}
+              />
+            </Grid>
+            <Grid size={12}>
+              <Button
+                type="submit"
+                variant="contained"
+                color="primary"
+                fullWidth
+                size="small"
+                sx={{
+                  mt: 2,
+                  fontWeight: "bold",
+                  fontSize: 16,
+                  textTransform: "none",
+                }}
+                disabled={isSubmitting}
+                startIcon={
+                  isSubmitting && <CircularProgress size={22} color="inherit" />
+                }
+              >
+                {isSubmitting ? "Mengirim..." : "Submit Data"}
+              </Button>
+            </Grid>
+          </Grid>
+        </form>
+      </Box>
+    </Modal>
+  );
+};
+
+export default UpdateDocumentDate;

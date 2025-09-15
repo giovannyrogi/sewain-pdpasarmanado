@@ -3,7 +3,7 @@ import moment from "moment";
 
 export async function PUT(request, { params }) {
   try {
-    const { id } = params; // id dari URL (rooms.id)
+    const { id } = await params; // id dari URL (rooms.id)
     const body = await request.json();
     const {
       location_id,
