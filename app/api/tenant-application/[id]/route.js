@@ -31,6 +31,18 @@ export async function PUT(req, { params }) {
     const ktp_file_path_old = formData.get("ktp_file_path");
     // const current_step = formData.get("current_step");
     const user_id = formData.get("user_id");
+    const estimated_installment_1 = formData.get("estimated_installment_1");
+    const estimated_installment_2 = formData.get("estimated_installment_2");
+    const estimated_installment_3 = formData.get("estimated_installment_3");
+    const estimated_installment_1_date = formData.get(
+      "estimated_installment_date_1"
+    );
+    const estimated_installment_2_date = formData.get(
+      "estimated_installment_date_2"
+    );
+    const estimated_installment_3_date = formData.get(
+      "estimated_installment_date_3"
+    );
 
     // Validasi wajib
     if (
@@ -130,8 +142,14 @@ export async function PUT(req, { params }) {
         approval_status = $10,
         current_step = $11,
         user_id = $12,
-        ktp_file_path = $13
-        WHERE id = $14
+        ktp_file_path = $13,
+        estimated_installment_1 = $14,
+        estimated_installment_2 = $15,
+        estimated_installment_3 = $16,
+        estimated_installment_1_date = $17,
+        estimated_installment_2_date = $18,
+        estimated_installment_3_date = $19
+        WHERE id = $20
         RETURNING *
         `,
         [
@@ -148,6 +166,12 @@ export async function PUT(req, { params }) {
           stepToUse,
           user_id,
           ktp_file_path,
+          estimated_installment_1,
+          estimated_installment_2,
+          estimated_installment_3,
+          estimated_installment_1_date,
+          estimated_installment_2_date,
+          estimated_installment_3_date,
           id,
         ]
       );
@@ -234,7 +258,6 @@ export async function DELETE(request, context) {
     }
 
     const { room_id, ktp_file_path } = tenantRes.rows[0];
-    
 
     // Hapus tenant_approval terkait
     await pool.query(

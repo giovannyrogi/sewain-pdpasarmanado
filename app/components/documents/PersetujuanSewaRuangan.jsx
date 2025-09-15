@@ -264,7 +264,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
             </Typography>
           </Grid>
           {/* No. Ruangan */}
-          <Grid size={12} display={"flex"} flexDirection={"row"} gap={8.2}>
+          <Grid size={12} display={"flex"} flexDirection={"row"} gap={8}>
             <Typography
               sx={{
                 fontSize: "13px",
@@ -310,7 +310,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
           </Grid>
 
           {/* Lokasi */}
-          <Grid size={12} display={"flex"} flexDirection={"row"} gap={7.1}>
+          <Grid size={12} display={"flex"} flexDirection={"row"} gap={7.4}>
             <Typography
               sx={{
                 fontSize: "13px",
@@ -560,7 +560,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
                   fontFamily: "calibri",
                 }}
               >
-                <span style={{ marginRight: "20px" }}></span>Menyicil 2x
+                <span style={{ marginRight: "20px" }}></span>Menyicil 3x
               </Typography>
             </Grid>
             <Grid size={12}>
@@ -572,7 +572,9 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
                   fontFamily: "calibri",
                 }}
               >
-                <span style={{ marginRight: "20px" }}></span>-
+                <span style={{ marginRight: "20px" }}></span>-{" "}
+                {formatRupiah(data.estimated_installment_1)}, - (
+                {moment(data.estimated_installment_1_date).format("MMM YYYY")})
               </Typography>
             </Grid>
             <Grid size={12}>
@@ -584,7 +586,23 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
                   fontFamily: "calibri",
                 }}
               >
-                <span style={{ marginRight: "20px" }}></span>-
+                <span style={{ marginRight: "20px" }}></span>-{" "}
+                {formatRupiah(data.estimated_installment_2)}, - (
+                {moment(data.estimated_installment_2_date).format("MMM YYYY")})
+              </Typography>
+            </Grid>
+            <Grid size={12}>
+              <Typography
+                sx={{
+                  fontSize: "13px",
+                  textAlign: "justify",
+                  fontWeight: "bold",
+                  fontFamily: "calibri",
+                }}
+              >
+                <span style={{ marginRight: "20px" }}></span>-{" "}
+                {formatRupiah(data.estimated_installment_3)}, - (
+                {moment(data.estimated_installment_3_date).format("MMM YYYY")})
               </Typography>
             </Grid>
           </Grid>

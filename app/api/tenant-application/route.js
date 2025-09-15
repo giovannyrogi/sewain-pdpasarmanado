@@ -29,6 +29,18 @@ export async function POST(req) {
     const ktp_file = formData.get("ktp_file");
     const user_id = formData.get("user_id");
     const current_step = formData.get("current_step");
+    const estimated_installment_1 = formData.get("estimated_installment_1");
+    const estimated_installment_2 = formData.get("estimated_installment_2");
+    const estimated_installment_3 = formData.get("estimated_installment_3");
+    const estimated_installment_1_date = formData.get(
+      "estimated_installment_date_1"
+    );
+    const estimated_installment_2_date = formData.get(
+      "estimated_installment_date_2"
+    );
+    const estimated_installment_3_date = formData.get(
+      "estimated_installment_date_3"
+    );
 
     const total = Number(total_payment) || 0;
     const minDp = Math.round(total * 0.4);
@@ -68,17 +80,17 @@ export async function POST(req) {
     }
 
     // Sebelum insert, cek tenant_nik
-    const existingNik = await pool.query(
-      "SELECT id FROM tenant_application WHERE tenant_nik = $1",
-      [tenant_nik]
-    );
+    // const existingNik = await pool.query(
+    //   "SELECT id FROM tenant_application WHERE tenant_nik = $1",
+    //   [tenant_nik]
+    // );
 
-    if (existingNik.rowCount > 0) {
-      return Response.json(
-        { success: false, message: "NIK sudah terdaftar." },
-        { status: 400 }
-      );
-    }
+    // if (existingNik.rowCount > 0) {
+    //   return Response.json(
+    //     { success: false, message: "NIK sudah terdaftar." },
+    //     { status: 400 }
+    //   );
+    // }
 
     // Validasi room + lokasi
     const roomCheck = await pool.query(
@@ -137,22 +149,18 @@ export async function POST(req) {
           approval_status,
           ktp_file_path,
           user_id,
-          current_step
+          current_step,
+          estimated_installment_1,
+          estimated_installment_2,
+          estimated_installment_3,
+          estimated_installment_1_date,
+          estimated_installment_2_date,
+         estimated_installment_3_date
+          
         )
         VALUES (
-          $1,
-          $2,
-          $3,
-          $4,
-          $5,
-          $6,
-          $7,
-          $8,
-          $9,
-          $10,
-          $11,
-          $12,
-          $13
+          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13,
+          $14, $15, $16, $17, $18, $19
         )
         RETURNING *
         `,
@@ -170,6 +178,12 @@ export async function POST(req) {
           ktp_file_path,
           user_id,
           current_step,
+          estimated_installment_1,
+          estimated_installment_2,
+          estimated_installment_3,
+          estimated_installment_1_date,
+          estimated_installment_2_date,
+          estimated_installment_3_date,
         ]
       );
 
@@ -256,6 +270,12 @@ export async function GET(req) {
         ta.user_id,
         ta.updated_at,
         ta.created_at,
+        ta.estimated_installment_1,
+        ta.estimated_installment_2,
+        ta.estimated_installment_3,
+        ta.estimated_installment_1_date,
+        ta.estimated_installment_2_date,
+        ta.estimated_installment_3_date,
         l.id AS location_id,
         l.location_name,
         r.id AS room_id,
@@ -287,6 +307,12 @@ export async function GET(req) {
       ktp_file_path: row.ktp_file_path,
       start_date: row.start_date,
       end_date: row.end_date,
+      estimated_installment_1: row.estimated_installment_1,
+      estimated_installment_2: row.estimated_installment_2,
+      estimated_installment_3: row.estimated_installment_3,
+      estimated_installment_1_date: row.estimated_installment_1_date,
+      estimated_installment_2_date: row.estimated_installment_2_date,
+      estimated_installment_3_date: row.estimated_installment_3_date,
       payment_type: row.payment_type,
       total_payment: row.total_payment,
       down_payment: row.down_payment,
