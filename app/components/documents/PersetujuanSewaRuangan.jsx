@@ -140,7 +140,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
 
         {/* Lampiran + Tenant Name */}
         <Grid container spacing={2}>
-          <Grid size={7.3} display={"flex"} flexDirection={"row"} gap={2.9}>
+          <Grid size={7.3} display={"flex"} flexDirection={"row"} gap={3.2}>
             <Typography
               sx={{
                 fontSize: "13px",

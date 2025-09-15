@@ -83,6 +83,7 @@ const AddTenantApplication = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [openViewDetailRoomModal, setOpenViewDetailRoomModal] = useState(false);
   const [selectedDataRooms, setSelectedDataRooms] = useState({});
+  const [dpError, setDpError] = useState("");
 
   const getRoomsData = async (locationId) => {
     if (!locationId) {
@@ -139,12 +140,12 @@ const AddTenantApplication = ({
         parseFloat(selectedDataRooms.room_area) * // luas dari room_length * room_width
         parseInt(selectedDataRooms.price_per_m2); // harga dari price_per_m2
 
-      console.log(
-        "selectedDataRooms.price_per_m2",
-        selectedDataRooms.price_per_m2
-      );
-      console.log("selectedDataRooms.room_area", selectedDataRooms.room_area);
-      console.log("total", total);
+      // console.log(
+      //   "selectedDataRooms.price_per_m2",
+      //   selectedDataRooms.price_per_m2
+      // );
+      // console.log("selectedDataRooms.room_area", selectedDataRooms.room_area);
+      // console.log("total", total);
 
       setTotalPayment(total); // simpan ke state totalPayment
     }
@@ -162,6 +163,10 @@ const AddTenantApplication = ({
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    const total = Number(totalPayment) || 0;
+    const minDp = Math.round(total * 0.4);
+    const dp = Number(downPayment) || 0;
+
     // Validasi KTP
     if (!ktpFile) {
       onNotify &&
@@ -177,7 +182,30 @@ const AddTenantApplication = ({
 
     setIsSubmitting(true);
 
-    if (!totalPayment || totalPayment === 0) {
+    if (paymentType === "cicilan" && dp < minDp) {
+      onNotify &&
+        onNotify({
+          open: true,
+          message: "DP minimal 40% dari total pembayaran.",
+          severity: "error",
+        });
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (dp > total) {
+      onNotify &&
+        onNotify({
+          open: true,
+          message: "DP tidak boleh lebih besar dari total pembayaran.",
+          severity: "error",
+        });
+      loadingFalse && loadingFalse();
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (!total || total === 0) {
       onNotify &&
         onNotify({
           open: true,
@@ -291,7 +319,7 @@ const AddTenantApplication = ({
   };
 
   const handleViewDetailRooms = (newValue) => {
-    console.log("newValue", newValue);
+    // console.log("newValue", newValue);
     setSelectedDataRooms(newValue);
   };
 
@@ -569,50 +597,6 @@ const AddTenantApplication = ({
                 </Grid>
               </Grid>
             )}
-
-            {/* <Grid size={6}>
-              <DatePicker
-                label="Tanggal Mulai"
-                value={startDate}
-                onChange={(newValue) => {
-                  setStartDate(newValue);
-                  if (newValue) {
-                    // Tambahkan 365 hari ke tanggal mulai
-                    const end = moment(newValue).add(365, "days");
-
-                    setEndDate(end);
-                  } else {
-                    setEndDate(null);
-                  }
-                }}
-                minDate={dayjs()}
-                slotProps={{
-                  textField: {
-                    variant: "filled",
-                    fullWidth: true,
-                    required: true,
-                    disabled: loading,
-                    color: "primary",
-                  },
-                }}
-              />
-            </Grid>
-            <Grid size={6}>
-              <DatePicker
-                label="Tanggal Berakhir"
-                value={endDate}
-                disabled
-                slotProps={{
-                  textField: {
-                    variant: "filled",
-                    fullWidth: true,
-                    required: true,
-                    color: "primary",
-                    disabled: true,
-                  },
-                }}
-              />
-            </Grid> */}
             <Grid size={isMobile ? 12 : 6}>
               <FormControl fullWidth variant="filled" required>
                 <InputLabel id="demo-simple-select-filled-label">

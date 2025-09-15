@@ -234,6 +234,7 @@ export async function DELETE(request, context) {
     }
 
     const { room_id, ktp_file_path } = tenantRes.rows[0];
+    
 
     // Hapus tenant_approval terkait
     await pool.query(

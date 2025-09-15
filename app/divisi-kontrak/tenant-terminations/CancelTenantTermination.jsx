@@ -37,7 +37,7 @@ const CancelTenantTermination = ({
     loadingTrue();
     try {
       const response = await axios.delete(
-        `/api/tenant-terminations/${selectedData.termination_id}`
+        `/api/tenant-terminations/${selectedData.tenant_early_termination_id}`
       );
 
       if (response?.data.success) {

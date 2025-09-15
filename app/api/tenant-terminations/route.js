@@ -141,7 +141,7 @@ export async function GET(req) {
     const result = await pool.query(
       `
       SELECT
-        tet.id AS termination_id,
+        tet.id AS tenant_early_termination_id,
         tet.tenant_application_id,
         tet.reason,
         tet.statement_file_path,
@@ -189,7 +189,7 @@ export async function GET(req) {
     );
 
     const rows = result.rows.map((row) => ({
-      termination_id: row.termination_id,
+      tenant_early_termination_id: row.tenant_early_termination_id,
       tenant_application_id: row.tenant_application_id,
       reason: row.reason,
       statement_file_path: row.statement_file_path,

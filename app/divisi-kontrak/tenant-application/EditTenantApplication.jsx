@@ -97,7 +97,7 @@ const EditTenantApplication = ({
         `/api/rooms/available-rooms?location_id=${locationId}`
       );
       console.log("response rooms", response.data);
-      console.log("selectedData", selectedData);
+      // console.log("selectedData", selectedData);
 
       let rooms = response.data.data || [];
 
@@ -125,7 +125,7 @@ const EditTenantApplication = ({
         }
       }
 
-      console.log("rooms test", rooms);
+      // console.log("rooms test", rooms);
 
       setDataAvailableRooms(rooms);
 
@@ -191,6 +191,10 @@ const EditTenantApplication = ({
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    const total = Number(totalPayment) || 0;
+    const minDp = Math.round(total * 0.4);
+    const dp = Number(downPayment) || 0;
+
     // Validasi KTP
     if (!ktpFile && !ktpFilePath) {
       onNotify &&
@@ -206,7 +210,30 @@ const EditTenantApplication = ({
 
     setIsSubmitting(true);
 
-    if (!totalPayment || totalPayment === 0) {
+    if (paymentType === "cicilan" && dp < minDp) {
+      onNotify &&
+        onNotify({
+          open: true,
+          message: "DP minimal 40% dari total pembayaran.",
+          severity: "error",
+        });
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (dp > total) {
+      onNotify &&
+        onNotify({
+          open: true,
+          message: "DP tidak boleh lebih besar dari total pembayaran.",
+          severity: "error",
+        });
+      loadingFalse && loadingFalse();
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (!total || total === 0) {
       onNotify &&
         onNotify({
           open: true,

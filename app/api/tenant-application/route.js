@@ -30,6 +30,29 @@ export async function POST(req) {
     const user_id = formData.get("user_id");
     const current_step = formData.get("current_step");
 
+    const total = Number(total_payment) || 0;
+    const minDp = Math.round(total * 0.4);
+    const dp = Number(down_payment) || 0;
+
+    // Validasi DP minimal 40% dari total
+    if (payment_type === "cicilan" && dp < minDp) {
+      return Response.json(
+        { success: false, message: "DP minimal 40% dari total pembayaran." },
+        { status: 400 }
+      );
+    }
+
+    // Validasi DP tidak boleh lebih besar dari total
+    if (dp > total) {
+      return Response.json(
+        {
+          success: false,
+          message: "DP tidak boleh lebih besar dari total pembayaran.",
+        },
+        { status: 400 }
+      );
+    }
+
     // Validasi wajib
     if (
       !location_id ||
@@ -243,11 +266,15 @@ export async function GET(req) {
         r.price_per_m2,
         r.room_area,
         f.base_price,
-        f.floor
+        f.floor,
+        tet.is_terminated  
       FROM tenant_application ta
       JOIN rooms r ON ta.room_id = r.id
       JOIN locations l ON ta.location_id = l.id
       LEFT JOIN location_floor_prices f ON r.floor_id = f.id
+      LEFT JOIN tenant_early_terminations tet ON tet.tenant_application_id = ta.id 
+      WHERE tet.is_terminated = false
+      OR tet.is_terminated IS NULL
       ORDER BY ta.created_at DESC`
     );
 
@@ -277,6 +304,7 @@ export async function GET(req) {
       current_step: row.current_step,
       base_price: row.base_price,
       floor: row.floor,
+      is_terminated: row.is_terminated ?? false, // default false jika null
       created_at: moment(row.created_at).format("D MMMM YYYY"),
     }));
 

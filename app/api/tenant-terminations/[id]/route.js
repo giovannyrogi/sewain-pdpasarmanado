@@ -3,7 +3,10 @@ import fs from "fs";
 import path from "path";
 
 export async function DELETE(request, context) {
-  const { id } = context.params; // termination_id
+  const { id } = await context.params; // termination_id
+
+  console.log('id', id);
+  
 
   try {
     if (!id) {
