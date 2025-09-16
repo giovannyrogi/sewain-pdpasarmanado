@@ -550,62 +550,67 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
           </Grid>
 
           {/* Detail Menyicil */}
-          <Grid container size={12}>
-            <Grid size={2}>
-              <Typography
-                sx={{
-                  fontSize: "13px",
-                  textAlign: "justify",
-                  fontWeight: "bold",
-                  fontFamily: "calibri",
-                }}
-              >
-                <span style={{ marginRight: "20px" }}></span>Menyicil 3x
-              </Typography>
+          {data.payment_type === "cicilan" && (
+            <Grid container size={12}>
+              <Grid size={2}>
+                <Typography
+                  sx={{
+                    fontSize: "13px",
+                    textAlign: "justify",
+                    fontWeight: "bold",
+                    fontFamily: "calibri",
+                  }}
+                >
+                  <span style={{ marginRight: "20px" }}></span>Menyicil 3x
+                </Typography>
+              </Grid>
+              <Grid size={12}>
+                <Typography
+                  sx={{
+                    fontSize: "13px",
+                    textAlign: "justify",
+                    fontWeight: "bold",
+                    fontFamily: "calibri",
+                  }}
+                >
+                  <span style={{ marginRight: "20px" }}></span>-{" "}
+                  {formatRupiah(data.estimated_installment_1)}, - (
+                  {moment(data.estimated_installment_1_date).format("MMM YYYY")}
+                  )
+                </Typography>
+              </Grid>
+              <Grid size={12}>
+                <Typography
+                  sx={{
+                    fontSize: "13px",
+                    textAlign: "justify",
+                    fontWeight: "bold",
+                    fontFamily: "calibri",
+                  }}
+                >
+                  <span style={{ marginRight: "20px" }}></span>-{" "}
+                  {formatRupiah(data.estimated_installment_2)}, - (
+                  {moment(data.estimated_installment_2_date).format("MMM YYYY")}
+                  )
+                </Typography>
+              </Grid>
+              <Grid size={12}>
+                <Typography
+                  sx={{
+                    fontSize: "13px",
+                    textAlign: "justify",
+                    fontWeight: "bold",
+                    fontFamily: "calibri",
+                  }}
+                >
+                  <span style={{ marginRight: "20px" }}></span>-{" "}
+                  {formatRupiah(data.estimated_installment_3)}, - (
+                  {moment(data.estimated_installment_3_date).format("MMM YYYY")}
+                  )
+                </Typography>
+              </Grid>
             </Grid>
-            <Grid size={12}>
-              <Typography
-                sx={{
-                  fontSize: "13px",
-                  textAlign: "justify",
-                  fontWeight: "bold",
-                  fontFamily: "calibri",
-                }}
-              >
-                <span style={{ marginRight: "20px" }}></span>-{" "}
-                {formatRupiah(data.estimated_installment_1)}, - (
-                {moment(data.estimated_installment_1_date).format("MMM YYYY")})
-              </Typography>
-            </Grid>
-            <Grid size={12}>
-              <Typography
-                sx={{
-                  fontSize: "13px",
-                  textAlign: "justify",
-                  fontWeight: "bold",
-                  fontFamily: "calibri",
-                }}
-              >
-                <span style={{ marginRight: "20px" }}></span>-{" "}
-                {formatRupiah(data.estimated_installment_2)}, - (
-                {moment(data.estimated_installment_2_date).format("MMM YYYY")})
-              </Typography>
-            </Grid>
-            <Grid size={12}>
-              <Typography
-                sx={{
-                  fontSize: "13px",
-                  textAlign: "justify",
-                  fontWeight: "bold",
-                  fontFamily: "calibri",
-                }}
-              >
-                <span style={{ marginRight: "20px" }}></span>-{" "}
-                {formatRupiah(data.estimated_installment_3)}, - (
-                {moment(data.estimated_installment_3_date).format("MMM YYYY")})
-              </Typography>
-            </Grid>
-          </Grid>
+          )}
 
           {/* Informasi pembayaran ke Bank */}
           <Grid size={12} mt={1}>

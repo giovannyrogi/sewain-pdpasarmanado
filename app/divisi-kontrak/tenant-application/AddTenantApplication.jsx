@@ -92,6 +92,10 @@ const AddTenantApplication = ({
     useState(null);
   const [estimatedInstallmentDate3, setEstimatedInstallmentDate3] =
     useState(null);
+  const [tenantType, setTenantType] = useState("permohonan baru");
+  const [listDataTenantExtends, setListDataTenantExtends] = useState([]);
+  const [selectedDataTenantExtends, setSelectedDataTenantExtends] =
+    useState(null);
 
   const getRoomsData = async (locationId) => {
     if (!locationId) {
@@ -124,6 +128,31 @@ const AddTenantApplication = ({
     }
   };
 
+  const getListTenantExtends = async () => {
+    loadingTrue();
+    setLoadingMessage("Mengambil data tenant extends...");
+    try {
+      const response = await axios.get(
+        "/api/tenant-application/tenant-extends"
+      );
+      console.log("response tenant-extends", response);
+
+      if (response.data.success) {
+        setListDataTenantExtends(response.data.data);
+        setTimeout(() => {
+          loadingFalse();
+          setLoadingMessage("");
+        }, 1000);
+      }
+    } catch (error) {
+      console.log("error", error);
+      setTimeout(() => {
+        loadingFalse();
+        setLoadingMessage("");
+      }, 1000);
+    }
+  };
+
   // Sinkronisasi DP & Sisa saat totalPayment atau paymentType berubah
   useEffect(() => {
     if (paymentType === "cicilan") {
@@ -147,13 +176,6 @@ const AddTenantApplication = ({
       const total =
         parseFloat(selectedDataRooms.room_area) * // luas dari room_length * room_width
         parseInt(selectedDataRooms.price_per_m2); // harga dari price_per_m2
-
-      // console.log(
-      //   "selectedDataRooms.price_per_m2",
-      //   selectedDataRooms.price_per_m2
-      // );
-      // console.log("selectedDataRooms.room_area", selectedDataRooms.room_area);
-      // console.log("total", total);
 
       setTotalPayment(total); // simpan ke state totalPayment
     }
@@ -293,7 +315,7 @@ const AddTenantApplication = ({
       formData.append("user_id", user.id);
       formData.append("current_step", 1);
       // formData.append("ktp_file_path", ktpFilePath);
-      
+
       // hanya kirim data cicilan kalau paymentType === 'cicilan'
       if (paymentType === "cicilan") {
         formData.append("down_payment", downPayment);
@@ -325,6 +347,13 @@ const AddTenantApplication = ({
 
       if (ktpFile) {
         formData.append("ktp_file", ktpFile);
+      }
+
+      if (tenantType === "perpanjang tenant") {
+        formData.append(
+          "renewal_of",
+          selectedDataTenantExtends ? selectedDataTenantExtends.id : null
+        );
       }
 
       for (let pair of formData.entries()) {
@@ -404,6 +433,8 @@ const AddTenantApplication = ({
     setEstimatedInstallmentDate1(null);
     setEstimatedInstallmentDate2(null);
     setEstimatedInstallmentDate3(null);
+    setTenantType("permohonan baru");
+    setSelectedDataTenantExtends(null);
   };
 
   const handleViewDetailRooms = (newValue) => {
@@ -431,6 +462,12 @@ const AddTenantApplication = ({
       setKtpFilePath(URL.createObjectURL(file));
     }
   };
+
+  // Pilihan dropdown
+  const tenantOptions = [
+    { label: "Permohonan Baru", value: "permohonan baru" },
+    { label: "Perpanjang Tenant", value: "perpanjang tenant" },
+  ];
 
   return (
     <Modal
@@ -479,6 +516,60 @@ const AddTenantApplication = ({
 
         <form onSubmit={handleSubmit}>
           <Grid container spacing={isMobile ? 3 : 2}>
+            <Grid size={12}>
+              <Autocomplete
+                options={tenantOptions}
+                getOptionLabel={(option) => option.label}
+                value={
+                  tenantType
+                    ? tenantOptions.find((item) => item.value === tenantType)
+                    : null
+                }
+                onChange={(event, newValue) => {
+                  // simpan value ke state
+                  setTenantType(newValue ? newValue.value : null);
+                  if (newValue.value === "perpanjang tenant") {
+                    getListTenantExtends();
+                  } else {
+                    setListDataTenantExtends([]);
+                    setSelectedDataTenantExtends();
+                  }
+                }}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Pilih Jenis Permohonan"
+                    variant="filled"
+                    required
+                  />
+                )}
+              />
+            </Grid>
+            {tenantType === "perpanjang tenant" && (
+              <Grid size={12}>
+                <Autocomplete
+                  disabled={!tenantType || tenantType === "permohonan baru"}
+                  options={listDataTenantExtends || []}
+                  getOptionLabel={(option) =>
+                    option?.tenant_name ? option.tenant_name : ""
+                  }
+                  // value langsung object (atau null)
+                  value={selectedDataTenantExtends}
+                  onChange={(event, newValue) => {
+                    // console.log("newValue", newValue);
+                    setSelectedDataTenantExtends(newValue); // simpan object
+                  }}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Pilih Tenant Lama"
+                      variant="filled"
+                      required
+                    />
+                  )}
+                />
+              </Grid>
+            )}
             <Grid size={12}>
               <TextField
                 label="Nama Lengkap(sesuai KTP)"

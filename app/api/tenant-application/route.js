@@ -29,6 +29,7 @@ export async function POST(req) {
     const ktp_file = formData.get("ktp_file");
     const user_id = formData.get("user_id");
     const current_step = formData.get("current_step");
+    const renewal_of = formData.get("renewal_of");
     const estimated_installment_1 = formData.get("estimated_installment_1");
     const estimated_installment_2 = formData.get("estimated_installment_2");
     const estimated_installment_3 = formData.get("estimated_installment_3");
@@ -78,19 +79,6 @@ export async function POST(req) {
         { status: 400 }
       );
     }
-
-    // Sebelum insert, cek tenant_nik
-    // const existingNik = await pool.query(
-    //   "SELECT id FROM tenant_application WHERE tenant_nik = $1",
-    //   [tenant_nik]
-    // );
-
-    // if (existingNik.rowCount > 0) {
-    //   return Response.json(
-    //     { success: false, message: "NIK sudah terdaftar." },
-    //     { status: 400 }
-    //   );
-    // }
 
     // Validasi room + lokasi
     const roomCheck = await pool.query(
@@ -155,12 +143,12 @@ export async function POST(req) {
           estimated_installment_3,
           estimated_installment_1_date,
           estimated_installment_2_date,
-         estimated_installment_3_date
-          
+          estimated_installment_3_date,
+          renewal_of
         )
         VALUES (
           $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13,
-          $14, $15, $16, $17, $18, $19
+          $14, $15, $16, $17, $18, $19, $20
         )
         RETURNING *
         `,
@@ -184,6 +172,7 @@ export async function POST(req) {
           estimated_installment_1_date,
           estimated_installment_2_date,
           estimated_installment_3_date,
+          renewal_of,
         ]
       );
 
