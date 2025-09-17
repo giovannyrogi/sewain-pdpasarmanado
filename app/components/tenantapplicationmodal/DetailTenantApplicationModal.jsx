@@ -37,6 +37,8 @@ const DetailTenantApplicationModal = ({
 
   const theme = useTheme();
 
+  // console.log("selected data", selectedData);
+
   const style = {
     width: isMobile ? "90vw" : 500,
     maxWidth: "98vw",
