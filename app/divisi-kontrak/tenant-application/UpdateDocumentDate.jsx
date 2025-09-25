@@ -62,6 +62,13 @@ const UpdateDocumentDate = ({
   const [documentNumber, setDocumentNumber] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // useEffect(() => {
+  //   if (open && selectedData?.end_date) {
+      
+  //   }
+  // }, [open]);
+
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);

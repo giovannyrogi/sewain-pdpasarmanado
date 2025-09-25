@@ -12,6 +12,7 @@ export function middleware(req) {
     "/kepala-divisi",
     "/direktur-bisnis",
     "/direktur-utama",
+    "/divisi-keuangan"
   ];
 
   // --- Kalau belum login & akses protected page → redirect login
@@ -48,6 +49,9 @@ export function middleware(req) {
         case 7:
           redirectPath = "/direktur-utama/dashboard";
           break;
+        case 8:
+          redirectPath = "/divisi-keuangan/dashboard";
+          break;
       }
 
       return NextResponse.redirect(new URL(redirectPath, req.url));
@@ -62,6 +66,7 @@ export function middleware(req) {
       5: "/kepala-divisi",
       6: "/direktur-bisnis",
       7: "/direktur-utama",
+      8: "/divisi-keuangan",
     };
 
     // Jika path diawali dengan protected path tapi bukan sesuai role → redirect ke dashboard sendiri
@@ -87,5 +92,6 @@ export const config = {
     "/kepala-divisi/:path*",
     "/direktur-bisnis/:path*",
     "/direktur-utama/:path*",
+    "/divisi-keuangan/:path*",
   ],
 };

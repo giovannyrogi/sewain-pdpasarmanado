@@ -12,6 +12,7 @@ import {
   Modal,
   Select,
   TextField,
+  Tooltip,
   Typography,
   useMediaQuery,
   useTheme,
@@ -28,6 +29,7 @@ import formatRupiah from "@/app/components/formatrupiah/page";
 import LoadingBackdrop from "@/app/components/loading/Backdrop";
 import { useThemeMode } from "@/app/components/themeprovider/ThemeContext";
 import DetailRoomsModal from "@/app/components/detailroomsmodal/page";
+import ViewCalcPPNModal from "@/app/components/view-calc-ppn-modal/ViewCalcPPNModal";
 
 const AddTenantApplication = ({
   open,
@@ -73,8 +75,10 @@ const AddTenantApplication = ({
   const [roomId, setRoomId] = useState("");
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
-  const [paymentType, setPaymentType] = useState("");
+  const [paymentType, setPaymentType] = useState("lunas");
   const [totalPayment, setTotalPayment] = useState("");
+  const [totalSewaKontrakRuangan, setTotalSewaKontrakRuangan] = useState("");
+  const [totalPPN, setTotalPPN] = useState("");
   const [downPayment, setDownPayment] = useState("");
   const [remainingPayment, setRemainingPayment] = useState("");
   const [approvalStatus, setApprovalStatus] = useState("proses");
@@ -82,6 +86,8 @@ const AddTenantApplication = ({
   const [dataAvailableRooms, setDataAvailableRooms] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [openViewDetailRoomModal, setOpenViewDetailRoomModal] = useState(false);
+  const [openViewDetailCalculatePPNModal, setOpenViewDetailCalculatePPNModal] =
+    useState(false);
   const [selectedDataRooms, setSelectedDataRooms] = useState({});
   const [estimatedInstallment1, setEstimatedInstallment1] = useState("");
   const [estimatedInstallment2, setEstimatedInstallment2] = useState("");
@@ -96,6 +102,13 @@ const AddTenantApplication = ({
   const [listDataTenantExtends, setListDataTenantExtends] = useState([]);
   const [selectedDataTenantExtends, setSelectedDataTenantExtends] =
     useState(null);
+
+  const [biayaAdministrasi, setBiayaAdministrasi] = useState(50000);
+  const [totalPPNDownPayment, setTotalPPNDownPayment] = useState(0);
+  const [totalSewaKontrakDownPayment, setTotalSewaKontrakDownPayment] =
+    useState(0);
+  const [totalPaymentDownPayment, setTotalPaymentDownPayment] = useState(0);
+  const [totalInstallment, setTotalInstallment] = useState(0);
 
   const getRoomsData = async (locationId) => {
     if (!locationId) {
@@ -177,7 +190,12 @@ const AddTenantApplication = ({
         parseFloat(selectedDataRooms.room_area) * // luas dari room_length * room_width
         parseInt(selectedDataRooms.price_per_m2); // harga dari price_per_m2
 
-      setTotalPayment(total); // simpan ke state totalPayment
+      const totalPPN = total * 0.11; // tambahkan PPN 11%
+      const grandTotal = total + totalPPN + biayaAdministrasi;
+
+      setTotalSewaKontrakRuangan(total);
+      setTotalPPN(totalPPN);
+      setTotalPayment(grandTotal); // simpan ke state totalPayment
     }
   }, [selectedDataRooms]);
 
@@ -186,6 +204,13 @@ const AddTenantApplication = ({
     if (paymentType === "cicilan") {
       const total = Number(totalPayment) || 0;
       const dp = Number(downPayment) || 0;
+      const SewaKontrakRuangan = dp / 1.11;
+      const totalPPN = SewaKontrakRuangan * 0.11;
+      const grandTotal = SewaKontrakRuangan + totalPPN;
+
+      setTotalPaymentDownPayment(grandTotal);
+      setTotalPPNDownPayment(totalPPN);
+      setTotalSewaKontrakDownPayment(SewaKontrakRuangan);
       setRemainingPayment(total - dp);
     }
   }, [downPayment, paymentType, totalPayment]);
@@ -194,10 +219,20 @@ const AddTenantApplication = ({
   useEffect(() => {
     if (paymentType === "cicilan") {
       const sisa = Number(remainingPayment) || 0;
-      const perCicilan = Math.floor(sisa / 3); // dibagi rata 3 cicilan
+
+      // bagi rata, bulatkan ke rupiah terdekat
+      const perCicilan = Math.round(sisa / 3);
+
+      // hitung ulang cicilan terakhir agar pas
+      const cicilanTerakhir = sisa - perCicilan * 2;
+
+      // total cicilan
+      const totalCicilan = perCicilan * 2 + cicilanTerakhir;
+
+      setTotalInstallment(totalCicilan);
       setEstimatedInstallment1(perCicilan);
       setEstimatedInstallment2(perCicilan);
-      setEstimatedInstallment3(sisa - perCicilan * 2);
+      setEstimatedInstallment3(cicilanTerakhir);
     } else {
       setEstimatedInstallment1("");
       setEstimatedInstallment2("");
@@ -421,7 +456,7 @@ const AddTenantApplication = ({
     setTenantPhone("");
     setStartDate(null);
     setEndDate(null);
-    setPaymentType("");
+    setPaymentType("lunas");
     setTotalPayment("");
     setDownPayment("");
     setRemainingPayment("");
@@ -521,9 +556,8 @@ const AddTenantApplication = ({
                 options={tenantOptions}
                 getOptionLabel={(option) => option.label}
                 value={
-                  tenantType
-                    ? tenantOptions.find((item) => item.value === tenantType)
-                    : null
+                  tenantOptions.find((item) => item.value === tenantType) ||
+                  null
                 }
                 onChange={(event, newValue) => {
                   // simpan value ke state
@@ -532,7 +566,7 @@ const AddTenantApplication = ({
                     getListTenantExtends();
                   } else {
                     setListDataTenantExtends([]);
-                    setSelectedDataTenantExtends();
+                    setSelectedDataTenantExtends(null);
                   }
                 }}
                 renderInput={(params) => (
@@ -550,15 +584,11 @@ const AddTenantApplication = ({
                 <Autocomplete
                   disabled={!tenantType || tenantType === "permohonan baru"}
                   options={listDataTenantExtends || []}
-                  getOptionLabel={(option) =>
-                    option?.tenant_name ? option.tenant_name : ""
-                  }
-                  // value langsung object (atau null)
+                  getOptionLabel={(option) => option?.tenant_name || ""}
                   value={selectedDataTenantExtends}
-                  onChange={(event, newValue) => {
-                    // console.log("newValue", newValue);
-                    setSelectedDataTenantExtends(newValue); // simpan object
-                  }}
+                  onChange={(event, newValue) =>
+                    setSelectedDataTenantExtends(newValue ?? null)
+                  }
                   renderInput={(params) => (
                     <TextField
                       {...params}
@@ -735,6 +765,7 @@ const AddTenantApplication = ({
                     : null
                 }
                 onChange={(event, newValue) => {
+                  setPaymentType("lunas");
                   setRoomId(newValue ? newValue.id : "");
                   handleViewDetailRooms(newValue);
                 }}
@@ -777,7 +808,12 @@ const AddTenantApplication = ({
               </Grid>
             )}
             <Grid size={isMobile ? 12 : 6}>
-              <FormControl fullWidth variant="filled" required>
+              <FormControl
+                fullWidth
+                variant="filled"
+                required
+                disabled={!roomId}
+              >
                 <InputLabel id="demo-simple-select-filled-label">
                   Tipe Pembayaran
                 </InputLabel>
@@ -788,8 +824,8 @@ const AddTenantApplication = ({
                     setPaymentType(e.target.value);
                   }}
                 >
-                  <MenuItem value={"cicilan"}>Cicilan</MenuItem>
                   <MenuItem value={"lunas"}>Lunas</MenuItem>
+                  <MenuItem value={"cicilan"}>Cicilan</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
@@ -838,6 +874,7 @@ const AddTenantApplication = ({
                     label="Cicilan 1"
                     variant="filled"
                     fullWidth
+                    disabled
                     value={formatRupiah(estimatedInstallment1)}
                     onChange={(e) => {
                       setEstimatedInstallment1(
@@ -850,7 +887,7 @@ const AddTenantApplication = ({
                 </Grid>
                 <Grid size={6}>
                   <DatePicker
-                    label="Bulan Cicilan 1"
+                    label="Tanggal Cicilan 1"
                     // value harus dayjs, bukan string
                     value={estimatedInstallmentDate1}
                     onChange={(newValue) => {
@@ -858,7 +895,7 @@ const AddTenantApplication = ({
                       setEstimatedInstallmentDate1(newValue);
                     }}
                     views={["year", "month"]} // hanya bulan & tahun
-                    minDate={dayjs()} // bulan sekarang ke atas
+                    // minDate={dayjs()} // bulan sekarang ke atas
                     slotProps={{
                       textField: {
                         variant: "filled",
@@ -875,6 +912,7 @@ const AddTenantApplication = ({
                     label="Cicilan 2"
                     variant="filled"
                     fullWidth
+                    disabled
                     value={formatRupiah(estimatedInstallment2)}
                     onChange={(e) => {
                       setEstimatedInstallment2(
@@ -887,7 +925,7 @@ const AddTenantApplication = ({
                 </Grid>
                 <Grid size={6}>
                   <DatePicker
-                    label="Bulan Cicilan 2"
+                    label="Tanggal Cicilan 2"
                     // value harus dayjs, bukan string
                     value={estimatedInstallmentDate2}
                     onChange={(newValue) => {
@@ -895,7 +933,7 @@ const AddTenantApplication = ({
                       setEstimatedInstallmentDate2(newValue);
                     }}
                     views={["year", "month"]} // hanya bulan & tahun
-                    minDate={dayjs()} // bulan sekarang ke atas
+                    // minDate={dayjs()} // bulan sekarang ke atas
                     slotProps={{
                       textField: {
                         variant: "filled",
@@ -912,6 +950,7 @@ const AddTenantApplication = ({
                     label="Cicilan 3"
                     variant="filled"
                     fullWidth
+                    disabled
                     value={formatRupiah(estimatedInstallment3)}
                     onChange={(e) => {
                       setEstimatedInstallment3(
@@ -924,7 +963,7 @@ const AddTenantApplication = ({
                 </Grid>
                 <Grid size={6}>
                   <DatePicker
-                    label="Bulan Cicilan 3"
+                    label="Tanggal Cicilan 3"
                     // value harus dayjs, bukan string
                     value={estimatedInstallmentDate3}
                     onChange={(newValue) => {
@@ -932,7 +971,7 @@ const AddTenantApplication = ({
                       setEstimatedInstallmentDate3(newValue);
                     }}
                     views={["year", "month"]} // hanya bulan & tahun
-                    minDate={dayjs()} // bulan sekarang ke atas
+                    // minDate={dayjs()} // bulan sekarang ke atas
                     slotProps={{
                       textField: {
                         variant: "filled",
@@ -945,6 +984,30 @@ const AddTenantApplication = ({
                   />
                 </Grid>
               </>
+            )}
+            {totalPayment > 0 && (
+              <Grid
+                size={12}
+                sx={{
+                  mt: isMobile ? -1.5 : -1,
+                  mb: isMobile ? -2 : -1,
+                }}
+              >
+                <Typography
+                  sx={{
+                    fontWeight: "bold",
+                    fontSize: "12px",
+                    cursor: "pointer",
+                    color: theme.palette.primary.main,
+                    "&:hover": {
+                      textDecoration: "underline",
+                    },
+                  }}
+                  onClick={() => setOpenViewDetailCalculatePPNModal(true)}
+                >
+                  Lihat detail perhitungan biaya dan PPN
+                </Typography>
+              </Grid>
             )}
             <Grid size={12}>
               <Button
@@ -976,6 +1039,31 @@ const AddTenantApplication = ({
           loadingTrue={loadingTrue}
           setLoadingMessage={setLoadingMessage}
           selectedDataRooms={selectedDataRooms}
+        />
+        <ViewCalcPPNModal
+          open={openViewDetailCalculatePPNModal}
+          onClose={() => setOpenViewDetailCalculatePPNModal(false)}
+          loading={loading}
+          loadingFalse={loadingFalse}
+          loadingTrue={loadingTrue}
+          setLoadingMessage={setLoadingMessage}
+          totalPayment={totalPayment}
+          downPayment={downPayment}
+          estimatedInstallment1={estimatedInstallment1}
+          estimatedInstallment2={estimatedInstallment2}
+          estimatedInstallment3={estimatedInstallment3}
+          remainingPayment={remainingPayment}
+          paymentType={paymentType}
+          totalSewaKontrakRuangan={totalSewaKontrakRuangan}
+          totalPPN={totalPPN}
+          estimatedInstallmentDate1={estimatedInstallmentDate1}
+          estimatedInstallmentDate2={estimatedInstallmentDate2}
+          estimatedInstallmentDate3={estimatedInstallmentDate3}
+          biayaAdministrasi={biayaAdministrasi}
+          totalPPNDownPayment={totalPPNDownPayment}
+          totalSewaKontrakDownPayment={totalSewaKontrakDownPayment}
+          totalPaymentDownPayment={totalPaymentDownPayment}
+          totalInstallment={totalInstallment}
         />
         {/* Modal Preview Gambar */}
         <ImagePreviewModal

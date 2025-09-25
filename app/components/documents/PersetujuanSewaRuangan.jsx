@@ -8,25 +8,69 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
   if (!data) return null;
 
   const handleCalculateTotal = () => {
-    // Hitung PPN
-    const totalPPN =
-      data.payment_type === "lunas"
-        ? data.total_payment * 0.11
-        : data.total_payment * 1.11 * 0.11;
+    // Konversi nilai ke number
+    const totalPayment = Number(data?.total_payment || 0);
+    const downPayment = Number(data?.down_payment || 0);
+    const installment1 = Number(data?.estimated_installment_1 || 0);
+    const installment2 = Number(data?.estimated_installment_2 || 0);
+    const installment3 = Number(data?.estimated_installment_3 || 0);
+    const remainingPayment = Number(data?.remaining_payment || 0);
+    const roomPrice = Number(data?.price_per_m2 || 0);
+    const roomArea = Number(data?.room_area || 0);
 
-    // Hitung total keseluruhan (tambahan biaya tetap 50.000)
-    const grandTotal = parseInt(data.total_payment) + totalPPN + 50000;
+    const totalSewaKontrakRuangan = roomPrice * roomArea;
 
-    // Return object, bukan string
+    // Hitung Nilai Kontrak
+    const nilaiKontrak = downPayment / 1.11;
+
+    // Hitung PPN Down Payment
+    const PPNDownPayment = nilaiKontrak * 0.11;
+
+    // Hitung Total Uang Muka (DP)
+    const totalDownPayment = nilaiKontrak + PPNDownPayment;
+
+    // Hitung total PPN
+    const totalPPN = totalSewaKontrakRuangan * 0.11;
+
+    // Grand total (tambahan biaya administrasi 50.000)
+    const grandTotal = totalSewaKontrakRuangan + totalPPN + 50000;
+
+    // Total cicilan semua + PPN
+    const totalInstallment = installment1 + installment2 + installment3;
+
     return {
-      totalPPN: totalPPN,
-      grandTotal: grandTotal,
+      totalPayment,
+      totalSewaKontrakRuangan,
+      PPNDownPayment,
+      totalDownPayment,
+      nilaiKontrak,
+      totalPPN,
+      grandTotal,
+      totalInstallment,
+      remainingPayment,
     };
   };
 
-  const { totalPPN, grandTotal } = handleCalculateTotal() || {
+  const {
+    totalPayment,
+    totalSewaKontrakRuangan,
+    PPNDownPayment,
+    totalDownPayment,
+    nilaiKontrak,
+    totalPPN,
+    grandTotal,
+    totalInstallment,
+    remainingPayment,
+  } = handleCalculateTotal() || {
+    totalPayment: 0,
+    totalSewaKontrakRuangan: 0,
+    PPNDownPayment: 0,
+    totalDownPayment: 0,
+    nilaiKontrak: 0,
     totalPPN: 0,
     grandTotal: 0,
+    totalInstallment: 0,
+    remainingPayment: 0,
   };
 
   return (
@@ -403,7 +447,10 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
                   fontFamily: "calibri",
                 }}
               >
-                {data.total_payment ? formatRupiah(data.total_payment) : "-"}, -
+                {totalSewaKontrakRuangan
+                  ? formatRupiah(totalSewaKontrakRuangan)
+                  : "-"}
+                , -
               </Typography>
             </Grid>
           </Grid>
@@ -489,7 +536,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
                 <span
                   style={{ marginRight: "20px", fontFamily: "calibri" }}
                 ></span>
-                PPN
+                PPN 11%
               </Typography>
             </Grid>
             <Grid
@@ -561,7 +608,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
                     fontFamily: "calibri",
                   }}
                 >
-                  <span style={{ marginRight: "20px" }}></span>Menyicil 3x
+                  <span style={{ marginRight: "20px" }}></span>Menyicil 4x
                 </Typography>
               </Grid>
               <Grid size={12}>
@@ -574,7 +621,20 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
                   }}
                 >
                   <span style={{ marginRight: "20px" }}></span>-{" "}
-                  {formatRupiah(data.estimated_installment_1)}, - (
+                  {formatRupiah(data.down_payment)}, - (Uang Muka)
+                </Typography>
+              </Grid>
+              <Grid size={12}>
+                <Typography
+                  sx={{
+                    fontSize: "13px",
+                    textAlign: "justify",
+                    fontWeight: "bold",
+                    fontFamily: "calibri",
+                  }}
+                >
+                  <span style={{ marginRight: "20px" }}></span>-{" "}
+                  {formatRupiah(data?.estimated_installment_1)}, - (
                   {moment(data.estimated_installment_1_date).format("MMM YYYY")}
                   )
                 </Typography>
@@ -589,7 +649,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
                   }}
                 >
                   <span style={{ marginRight: "20px" }}></span>-{" "}
-                  {formatRupiah(data.estimated_installment_2)}, - (
+                  {formatRupiah(data?.estimated_installment_2)}, - (
                   {moment(data.estimated_installment_2_date).format("MMM YYYY")}
                   )
                 </Typography>
@@ -604,7 +664,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
                   }}
                 >
                   <span style={{ marginRight: "20px" }}></span>-{" "}
-                  {formatRupiah(data.estimated_installment_3)}, - (
+                  {formatRupiah(data?.estimated_installment_3)}, - (
                   {moment(data.estimated_installment_3_date).format("MMM YYYY")}
                   )
                 </Typography>

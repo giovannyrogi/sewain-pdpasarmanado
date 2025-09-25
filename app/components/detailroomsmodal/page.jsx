@@ -238,7 +238,7 @@ const DetailRoomsModal = ({
                   color: theme.palette.primary.main,
                 }}
               >
-                Harga Sewa Lantai
+                Total Harga Sewa
               </Typography>
               <Typography
                 sx={{
@@ -249,8 +249,10 @@ const DetailRoomsModal = ({
                   overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
                 }}
               >
-                {selectedDataRooms?.base_price
-                  ? formatRupiah(selectedDataRooms.base_price)
+                {selectedDataRooms?.price_per_m2
+                  ? formatRupiah(
+                      selectedDataRooms.price_per_m2 * selectedDataRooms.room_area
+                    )
                   : "-"}
               </Typography>
             </Grid>

@@ -30,7 +30,7 @@ const DeletePayment = ({
     loadingTrue();
     try {
       const response = await axios.delete(
-        `/api/payments/${selectedData.payment_id}`
+        `/api/payments/${selectedData.payments?.payment_id}`
       );
 
       console.log("response", response.data);
@@ -165,8 +165,8 @@ const DeletePayment = ({
                   fontSize: 14,
                 }}
               >
-                {selectedData && selectedData.tenant_name
-                  ? selectedData.tenant_name
+                {selectedData && selectedData?.tenant_application?.tenant_name
+                  ? selectedData?.tenant_application?.tenant_name
                   : ""}
               </span>
               ?

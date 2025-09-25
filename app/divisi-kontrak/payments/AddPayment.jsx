@@ -1,4 +1,5 @@
 import {
+  alpha,
   Autocomplete,
   Box,
   Button,
@@ -70,6 +71,8 @@ const AddPayment = ({
   const [paymentDate, setPaymentDate] = useState(null);
   const [openDetailTenant, setOpenDetailTenant] = useState(false);
   const [selectedData, setSelectedData] = useState("");
+  const [minPayment, setMinPayment] = useState(0);
+  const [remainingBalance, setRemainingBalance] = useState(0);
 
   const getDataTenantApplication = async () => {
     loadingTrue();
@@ -99,9 +102,54 @@ const AddPayment = ({
     }
   }, [open]);
 
+  useEffect(() => {
+    if (paymentNumber > 2) {
+      setMinPayment(remainingBalance);
+    } else {
+      const calcMinPayment = Number(remainingBalance) * 0.2;
+      setMinPayment(calcMinPayment);
+    }
+  }, [amount]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     loadingTrue();
+
+    const nilaiKontrak = amount / 1.11;
+    const PPNAmount = nilaiKontrak * 0.11;
+    const grandTotal = nilaiKontrak + PPNAmount;
+
+    const remainingBalanceAfterInstallment = remainingBalance - grandTotal;
+
+    // console.log("amount", amount);
+    // console.log("remainingBalance", remainingBalance);
+
+    // jika amount dibawah 20% dari total remainingBalance maka tampilkan pesan error
+    if (amount < remainingBalance * 0.2) {
+      onNotify &&
+        onNotify({
+          open: true,
+          message: `Jumlah pembayaran tidak boleh dibawah 20% dari sisa pembayaran ${formatRupiah(
+            remainingBalance
+          )}.`,
+          severity: "error",
+        });
+      loadingFalse();
+      return;
+    }
+
+    if (amount > remainingBalance) {
+      onNotify &&
+        onNotify({
+          open: true,
+          message: `Jumlah pembayaran tidak boleh melebihi sisa pembayaran ${formatRupiah(
+            remainingBalance
+          )}.`,
+          severity: "error",
+        });
+      loadingFalse();
+      return;
+    }
 
     if (!proofFile) {
       onNotify &&
@@ -116,16 +164,16 @@ const AddPayment = ({
 
     const formData = new FormData();
     formData.append("tenant_application_id", selectedTenantApplicationId);
-    formData.append("amount", amount);
+
     formData.append("proof_file", proofFile);
     formData.append("type_pembayaran", typePembayaran);
     formData.append("payment_date", paymentDate);
     formData.append("tenant_name", selectedData.tenant_name);
     formData.append("uploaded_by", user.id || null);
-
-    if (paymentNumber) {
-      formData.append("payment_number", paymentNumber);
-    }
+    formData.append("payment_number", paymentNumber);
+    formData.append("ppn_amount", Number(PPNAmount));
+    formData.append("amount", amount);
+    formData.append("remaining_balance", remainingBalanceAfterInstallment);
 
     // cek formdata
     // for (const pair of formData.entries()) {
@@ -194,6 +242,9 @@ const AddPayment = ({
     setProofFile(null);
     setTypePembayaran("lunas");
     setPaymentDate(null);
+    setMinPayment(0);
+    setRemainingBalance(0);
+    setSelectedData(null);
   };
 
   const handleBuktiBayarChange = (e) => {
@@ -273,7 +324,7 @@ const AddPayment = ({
                 }
                 onChange={(event, newValue) => {
                   setSelectedTenantApplicationId(
-                    newValue ? newValue.tenant_application_id : null
+                    newValue ? newValue?.tenant_application_id : null
                   );
 
                   if (newValue?.payment_type === "cicilan") {
@@ -282,44 +333,26 @@ const AddPayment = ({
                     setTypePembayaran("lunas");
                   }
 
-                  console.log("newvalue", newValue.payment_number);
+                  console.log("newvalue", newValue);
 
                   if (newValue?.payment_type === "lunas") {
-                    const total =
-                      Number(newValue?.total_payment) * 0.11 + 50000;
-                    const grandTotal = Number(newValue?.total_payment) + total;
-                    setAmount(grandTotal);
+                    setAmount(Number(newValue?.total_payment));
                   } else {
                     if (
                       newValue?.payment_number === undefined ||
                       newValue?.payment_number === null
                     ) {
-                      const total =
-                        (Number(newValue?.estimated_installment_1) / 1.11) *
-                          0.11 +
-                        50000;
-                      const grandTotal =
-                        Number(newValue?.estimated_installment_1) + total;
                       setPaymentNumber(1);
-                      setAmount(grandTotal);
+                      setAmount(Number(newValue?.estimated_installment_1));
+                      setRemainingBalance(Number(newValue?.remaining_payment));
                     } else if (newValue?.payment_number === 1) {
-                      const total =
-                        (Number(newValue?.estimated_installment_2) / 1.11) *
-                          0.11 +
-                        50000;
-                      const grandTotal =
-                        Number(newValue?.estimated_installment_2) + total;
                       setPaymentNumber(2);
-                      setAmount(grandTotal);
-                    } else {
-                      const total =
-                        (Number(newValue?.estimated_installment_3) / 1.11) *
-                          0.11 +
-                        50000;
-                      const grandTotal =
-                        Number(newValue?.estimated_installment_3) + total;
+                      setAmount(Number(newValue?.estimated_installment_2));
+                      setRemainingBalance(Number(newValue?.remaining_balance));
+                    } else if (newValue?.payment_number === 2) {
                       setPaymentNumber(3);
-                      setAmount(grandTotal);
+                      setAmount(Number(newValue?.remaining_balance));
+                      setRemainingBalance(Number(newValue?.remaining_balance));
                     }
                   }
 
@@ -413,6 +446,26 @@ const AddPayment = ({
               </Grid>
             )}
             <Grid size={12}>
+              <DatePicker
+                label="Tanggal Pembayaran"
+                // value harus dayjs, bukan string
+                value={paymentDate}
+                onChange={(newValue) => {
+                  // langsung simpan dayjs object
+                  setPaymentDate(newValue);
+                }}
+                // minDate={dayjs()} // bulan sekarang ke atas
+                slotProps={{
+                  textField: {
+                    variant: "filled",
+                    fullWidth: true,
+                    required: true,
+                    color: "primary",
+                  },
+                }}
+              />
+            </Grid>
+            <Grid size={12}>
               <TextField
                 label="Total Pembayaran"
                 // placeholder=""
@@ -425,49 +478,55 @@ const AddPayment = ({
                 }}
                 autoFocus
                 required
-                disabled
+                disabled={selectedData?.payment_number === 2}
                 color="primary"
               />
             </Grid>
             {selectedData && (
               <Grid
+                container
                 size={12}
                 sx={{
-                  mt: isMobile ? -2 : -0.5,
-                  mb: isMobile ? -2 : -0.5,
+                  p: 1,
+                  bgcolor:
+                    themeMode === "dark"
+                      ? alpha(theme.palette.primary.main, 0.12)
+                      : alpha(theme.palette.primary.main, 0.12),
+                  borderRadius: 1,
+                  // mt: -1,
+                  mb: -1,
                 }}
               >
-                <Typography
-                  sx={{
-                    fontSize: "12px",
-                    fontWeight: "bold",
-                    color: "primary.main",
-                  }}
-                >
-                  Biaya sudah termasuk PPN dan Iuran Administrasi
-                </Typography>
+                {selectedData?.payment_number === 2 ? (
+                  <Grid size={12}>
+                    <Typography
+                      sx={{
+                        fontSize: "12px",
+                        fontWeight: "bold",
+                        color: "primary.main",
+                      }}
+                    >
+                      Pembayaran Terakhir sebesar {formatRupiah(minPayment)}
+                    </Typography>
+                  </Grid>
+                ) : (
+                  <Grid size={12}>
+                    <Typography
+                      sx={{
+                        fontSize: "12px",
+                        fontWeight: "bold",
+                        color: "primary.main",
+                        textAlign: "justify",
+                      }}
+                    >
+                      Minimal melakukan pembayaran sebesar{" "}
+                      {formatRupiah(minPayment)} (20%) dari sisa pembayaran{" "}
+                      {formatRupiah(remainingBalance)}
+                    </Typography>
+                  </Grid>
+                )}
               </Grid>
             )}
-            <Grid size={12}>
-              <DatePicker
-                label="Tanggal Pembayaran"
-                // value harus dayjs, bukan string
-                value={paymentDate}
-                onChange={(newValue) => {
-                  // langsung simpan dayjs object
-                  setPaymentDate(newValue);
-                }}
-                minDate={dayjs()} // bulan sekarang ke atas
-                slotProps={{
-                  textField: {
-                    variant: "filled",
-                    fullWidth: true,
-                    required: true,
-                    color: "primary",
-                  },
-                }}
-              />
-            </Grid>
             <Grid
               size={12}
               sx={{

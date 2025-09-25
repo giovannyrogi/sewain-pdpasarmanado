@@ -58,33 +58,68 @@ const DetailTenantApplicationModal = ({
   };
 
   const handleCalculateTotal = () => {
-    if (selectedData) {
-      // Hitung PPN
-      const totalPPN =
-        selectedData.payment_type === "lunas"
-          ? Number(selectedData.total_payment) * 0.11
-          : (Number(selectedData.total_payment) / 1.11) * 0.11;
+    // Konversi nilai ke number
+    const totalPayment = Number(selectedData?.total_payment || 0);
+    const downPayment = Number(selectedData?.down_payment || 0);
+    const installment1 = Number(selectedData?.estimated_installment_1 || 0);
+    const installment2 = Number(selectedData?.estimated_installment_2 || 0);
+    const installment3 = Number(selectedData?.estimated_installment_3 || 0);
+    const remainingPayment = Number(selectedData?.remaining_payment || 0);
 
-      // Hitung total keseluruhan (tambahan biaya tetap 50.000)
-      const grandTotal = Number(selectedData.total_payment) + totalPPN + 50000;
+    const totalSewaKontrakRuangan =
+      selectedData?.price_per_m2 * selectedData?.room_area;
 
-      const totalInstallment =
-        Number(selectedData.estimated_installment_1) +
-        Number(selectedData.estimated_installment_2) +
-        Number(selectedData.estimated_installment_3);
+    // Hitung Nilai Kontrak
+    const nilaiKontrak = downPayment / 1.11;
 
-      // Return object, bukan string
-      return {
-        totalPPN: totalPPN,
-        grandTotal: grandTotal,
-        totalInstallment: totalInstallment,
-      };
-    }
+    // Hitung PPN Down Payment
+    const PPNDownPayment = nilaiKontrak * 0.11;
+
+    // Hitung Total Uang Muka (DP)
+    const totalDownPayment = nilaiKontrak + PPNDownPayment;
+
+    // Hitung total PPN
+    const totalPPN = totalSewaKontrakRuangan * 0.11;
+
+    // Grand total (tambahan biaya administrasi 50.000)
+    const grandTotal = totalSewaKontrakRuangan + totalPPN + 50000;
+
+    // Total cicilan semua + PPN
+    const totalInstallment = installment1 + installment2 + installment3;
+
+    return {
+      totalPayment,
+      totalSewaKontrakRuangan,
+      PPNDownPayment,
+      totalDownPayment,
+      nilaiKontrak,
+      totalPPN,
+      grandTotal,
+      totalInstallment,
+      remainingPayment,
+    };
   };
 
-  const { totalPPN, grandTotal, totalInstallment } = handleCalculateTotal() || {
+  const {
+    totalPayment,
+    totalSewaKontrakRuangan,
+    PPNDownPayment,
+    totalDownPayment,
+    nilaiKontrak,
+    totalPPN,
+    grandTotal,
+    totalInstallment,
+    remainingPayment,
+  } = handleCalculateTotal() || {
+    totalPayment: 0,
+    totalSewaKontrakRuangan: 0,
+    PPNDownPayment: 0,
+    totalDownPayment: 0,
+    nilaiKontrak: 0,
     totalPPN: 0,
     grandTotal: 0,
+    totalInstallment: 0,
+    remainingPayment: 0,
   };
 
   return (
@@ -594,102 +629,36 @@ const DetailTenantApplicationModal = ({
             }}
           />
 
-          <Grid container spacing={0.2}>
-            <Grid
-              size={12}
+          <Grid
+            size={12}
+            sx={{
+              display: "flex",
+              flexDirection: "row",
+              justifyContent: "space-between",
+            }}
+          >
+            <Typography
               sx={{
-                display: "flex",
-                flexDirection: "row",
-                justifyContent: "space-between",
+                fontWeight: "bold",
+                fontSize: "13px",
               }}
             >
-              <Typography
-                sx={{
-                  fontWeight: "bold",
-                  fontSize: "13px",
-                }}
-              >
-                Tipe Pembayaran
-              </Typography>
-              <Typography
-                sx={{
-                  fontWeight: "bold",
-                  fontSize: "13px",
-                  wordBreak: "break-word", // <-- biar kata panjang pecah
-                  whiteSpace: "normal", // <-- biar bisa turun baris
-                  overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
-                }}
-              >
-                {selectedData?.payment_type === "cicilan" ? "Cicilan" : "Lunas"}
-              </Typography>
-            </Grid>
+              Tipe Pembayaran
+            </Typography>
+            <Typography
+              sx={{
+                fontWeight: "bold",
+                fontSize: "13px",
+                wordBreak: "break-word", // <-- biar kata panjang pecah
+                whiteSpace: "normal", // <-- biar bisa turun baris
+                overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
+              }}
+            >
+              {selectedData?.payment_type === "cicilan" ? "Cicilan" : "Lunas"}
+            </Typography>
+          </Grid>
 
-            {selectedData?.payment_type === "cicilan" && (
-              <Grid container size={12} spacing={0.2}>
-                <Grid
-                  size={12}
-                  sx={{
-                    display: "flex",
-                    flexDirection: "row",
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <Typography
-                    sx={{
-                      fontWeight: "bold",
-                      fontSize: "13px",
-                    }}
-                  >
-                    Uang Muka (DP)
-                  </Typography>
-                  <Typography
-                    sx={{
-                      fontWeight: "bold",
-                      fontSize: "13px",
-                      wordBreak: "break-word", // <-- biar kata panjang pecah
-                      whiteSpace: "normal", // <-- biar bisa turun baris
-                      overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
-                    }}
-                  >
-                    {selectedData?.down_payment
-                      ? formatRupiah(selectedData.down_payment)
-                      : "-"}
-                  </Typography>
-                </Grid>
-
-                <Grid
-                  size={12}
-                  sx={{
-                    display: "flex",
-                    flexDirection: "row",
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <Typography
-                    sx={{
-                      fontWeight: "bold",
-                      fontSize: "13px",
-                    }}
-                  >
-                    Sisa Pembayaran
-                  </Typography>
-                  <Typography
-                    sx={{
-                      fontWeight: "bold",
-                      fontSize: "13px",
-                      wordBreak: "break-word", // <-- biar kata panjang pecah
-                      whiteSpace: "normal", // <-- biar bisa turun baris
-                      overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
-                    }}
-                  >
-                    {selectedData?.remaining_payment
-                      ? formatRupiah(selectedData.remaining_payment)
-                      : "-"}
-                  </Typography>
-                </Grid>
-              </Grid>
-            )}
-
+          <Grid container spacing={0.2}>
             <Grid
               size={12}
               sx={{
@@ -767,7 +736,7 @@ const DetailTenantApplicationModal = ({
                   fontSize: "13px",
                 }}
               >
-                Biaya PPN
+                PPN 11%
               </Typography>
               <Typography
                 sx={{
@@ -778,10 +747,7 @@ const DetailTenantApplicationModal = ({
                   overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
                 }}
               >
-                {/* {selectedData?.total_payment
-                ? formatRupiah(selectedData.total_payment)
-                : "-"} */}{" "}
-                {totalPPN ? formatRupiah(totalPPN) : "-"}
+                {formatRupiah(totalPPN)}
               </Typography>
             </Grid>
           </Grid>
@@ -795,7 +761,7 @@ const DetailTenantApplicationModal = ({
           />
 
           {/* Total Pembayaran */}
-          <Grid container spacing={1}>
+          <Grid container>
             <Grid
               size={12}
               sx={{
@@ -829,8 +795,202 @@ const DetailTenantApplicationModal = ({
             </Grid>
           </Grid>
 
+          <Divider
+            sx={{
+              mb: 2,
+              mt: 0.5,
+              borderColor: theme.palette.primary.main,
+            }}
+          />
+
           {selectedData?.payment_type === "cicilan" && (
             <>
+              <Grid size={12}>
+                <Typography
+                  sx={{
+                    fontSize: 16,
+                    fontWeight: "bold",
+                    mb: isMobile ? 0.5 : undefined,
+                  }}
+                >
+                  Pembayaran Pertama
+                </Typography>
+              </Grid>
+
+              <Divider
+                sx={{
+                  mb: 0.5,
+                  borderColor: theme.palette.primary.main,
+                  width: "100%",
+                }}
+              />
+
+              <Grid
+                size={12}
+                sx={{
+                  display: "flex",
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                }}
+              >
+                <Typography
+                  sx={{
+                    fontWeight: "bold",
+                    fontSize: "13px",
+                  }}
+                >
+                  Uang Muka (DP)
+                </Typography>
+                <Typography
+                  sx={{
+                    fontWeight: "bold",
+                    fontSize: "13px",
+                    wordBreak: "break-word", // <-- biar kata panjang pecah
+                    whiteSpace: "normal", // <-- biar bisa turun baris
+                    overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
+                  }}
+                >
+                  {selectedData?.down_payment
+                    ? formatRupiah(selectedData?.down_payment)
+                    : "-"}
+                </Typography>
+              </Grid>
+
+              <Grid
+                size={12}
+                sx={{
+                  display: "flex",
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                }}
+              >
+                <Typography
+                  sx={{
+                    fontWeight: "bold",
+                    fontSize: "13px",
+                  }}
+                >
+                  Nilai Kontrak
+                </Typography>
+                <Typography
+                  sx={{
+                    fontWeight: "bold",
+                    fontSize: "13px",
+                    wordBreak: "break-word", // <-- biar kata panjang pecah
+                    whiteSpace: "normal", // <-- biar bisa turun baris
+                    overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
+                  }}
+                >
+                  {nilaiKontrak ? formatRupiah(nilaiKontrak) : "-"}
+                </Typography>
+              </Grid>
+
+              <Grid
+                size={12}
+                sx={{
+                  display: "flex",
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                }}
+              >
+                <Typography
+                  sx={{
+                    fontWeight: "bold",
+                    fontSize: "13px",
+                  }}
+                >
+                  PPN 11%
+                </Typography>
+                <Typography
+                  sx={{
+                    fontWeight: "bold",
+                    fontSize: "13px",
+                    wordBreak: "break-word", // <-- biar kata panjang pecah
+                    whiteSpace: "normal", // <-- biar bisa turun baris
+                    overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
+                  }}
+                >
+                  {PPNDownPayment ? formatRupiah(PPNDownPayment) : "-"}
+                </Typography>
+              </Grid>
+
+              <Divider
+                sx={{
+                  borderColor: theme.palette.primary.main,
+                  width: "100%",
+                  mb: 0.5,
+                  mt: 0.5,
+                }}
+              />
+
+              <Grid
+                size={12}
+                sx={{
+                  display: "flex",
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                }}
+              >
+                <Typography
+                  sx={{
+                    fontWeight: "bold",
+                    fontSize: "13px",
+                  }}
+                >
+                  Total Pembayaran
+                </Typography>
+                <Typography
+                  sx={{
+                    fontWeight: "bold",
+                    fontSize: "13px",
+                    wordBreak: "break-word", // <-- biar kata panjang pecah
+                    whiteSpace: "normal", // <-- biar bisa turun baris
+                    overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
+                  }}
+                >
+                  {totalDownPayment ? formatRupiah(totalDownPayment) : "-"}
+                </Typography>
+              </Grid>
+
+              <Divider
+                sx={{
+                  borderColor: theme.palette.primary.main,
+                  width: "100%",
+                  mb: 0.5,
+                  mt: 0.5,
+                }}
+              />
+
+              <Grid
+                size={12}
+                sx={{
+                  display: "flex",
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  mb: 2,
+                }}
+              >
+                <Typography
+                  sx={{
+                    fontWeight: "bold",
+                    fontSize: "13px",
+                  }}
+                >
+                  Sisa Pembayaran
+                </Typography>
+                <Typography
+                  sx={{
+                    fontWeight: "bold",
+                    fontSize: "13px",
+                    wordBreak: "break-word", // <-- biar kata panjang pecah
+                    whiteSpace: "normal", // <-- biar bisa turun baris
+                    overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
+                  }}
+                >
+                  {remainingPayment ? formatRupiah(remainingPayment) : "-"}
+                </Typography>
+              </Grid>
+
               {/* Rencana Cicilan */}
               <Grid container spacing={2} mt={2}>
                 <Typography
@@ -880,7 +1040,7 @@ const DetailTenantApplicationModal = ({
                     }}
                   >
                     {selectedData?.estimated_installment_1
-                      ? formatRupiah(selectedData.estimated_installment_1)
+                      ? formatRupiah(selectedData?.estimated_installment_1)
                       : "-"}
                   </Typography>
                 </Grid>
@@ -913,7 +1073,7 @@ const DetailTenantApplicationModal = ({
                     }}
                   >
                     {selectedData?.estimated_installment_2
-                      ? formatRupiah(selectedData.estimated_installment_2)
+                      ? formatRupiah(selectedData?.estimated_installment_2)
                       : "-"}
                   </Typography>
                 </Grid>
@@ -946,7 +1106,7 @@ const DetailTenantApplicationModal = ({
                     }}
                   >
                     {selectedData?.estimated_installment_3
-                      ? formatRupiah(selectedData.estimated_installment_3)
+                      ? formatRupiah(selectedData?.estimated_installment_3)
                       : "-"}
                   </Typography>
                 </Grid>

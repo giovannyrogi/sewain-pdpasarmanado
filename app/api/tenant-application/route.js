@@ -266,6 +266,8 @@ export async function GET(req) {
         ta.estimated_installment_2_date,
         ta.estimated_installment_3_date,
         ta.document_number,
+        ta.renewal_of,
+
         l.id AS location_id,
         l.location_name,
         r.id AS room_id,
@@ -277,14 +279,23 @@ export async function GET(req) {
         r.room_area,
         f.base_price,
         f.floor,
-        tet.is_terminated  
+        tet.is_terminated,
+
+        -- data tenant sebelumnya (hanya 1 level)
+        prev.id AS old_tenant_id,
+        prev.tenant_name AS old_tenant_name,
+        prev.end_date AS old_end_date,
+        prev.start_date AS old_start_date,
+        prev.document_number AS old_document_number
+
       FROM tenant_application ta
       JOIN rooms r ON ta.room_id = r.id
       JOIN locations l ON ta.location_id = l.id
       LEFT JOIN location_floor_prices f ON r.floor_id = f.id
-      LEFT JOIN tenant_early_terminations tet ON tet.tenant_application_id = ta.id 
+      LEFT JOIN tenant_early_terminations tet ON tet.tenant_application_id = ta.id
+      LEFT JOIN tenant_application prev ON ta.renewal_of = prev.id
       WHERE tet.is_terminated = false
-      OR tet.is_terminated IS NULL
+         OR tet.is_terminated IS NULL
       ORDER BY ta.created_at DESC`
     );
 
@@ -321,8 +332,17 @@ export async function GET(req) {
       current_step: row.current_step,
       base_price: row.base_price,
       floor: row.floor,
-      is_terminated: row.is_terminated ?? false, // default false jika null
+      is_terminated: row.is_terminated ?? false,
       created_at: moment(row.created_at).format("D MMMM YYYY"),
+      old_tenant: row.old_tenant_id
+        ? {
+            tenant_application_id: row.old_tenant_id,
+            tenant_name: row.old_tenant_name,
+            start_date: row.old_start_date,
+            end_date: row.old_end_date,
+            document_number: row.old_document_number,
+          }
+        : null,
     }));
 
     return new Response(

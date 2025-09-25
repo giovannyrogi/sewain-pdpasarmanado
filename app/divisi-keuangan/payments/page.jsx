@@ -17,16 +17,14 @@ import Notification from "../../components/Notification";
 import axios from "axios";
 import BreadcrumbPage from "@/app/components/breadcrumb/page";
 import formatRupiah from "@/app/components/formatrupiah/page";
-import menuDevisiKontrak from "@/app/components/menu/MenuItemDivisiKontrak";
-import AddPayment from "./AddPayment";
 import { useUser } from "@/app/utils/useUser";
 import ImagePreviewModal from "@/app/components/imagepreviewmodal/page";
+import menuDivisiKeuangan from "@/app/components/menu/MenuItemDivisiKeuangan";
+import ApprovalModal from "./ApprovalModal";
 import PaymentApprovalModal from "@/app/components/payment-approval-modal/PaymentApprovalModa";
-import EditPayment from "./EditPayment";
-import DeletePayment from "./DeletePayment";
-import ApprovalModal from "@/app/divisi-keuangan/payments/ApprovalModal";
-import { useReactToPrint } from "react-to-print";
+import RejectedModal from "./RejectedModal";
 import BuktiPembayaran from "@/app/components/documents/BuktiPembayaran";
+import { useReactToPrint } from "react-to-print";
 
 const Payments = () => {
   // Ref untuk dokumen print
@@ -50,14 +48,15 @@ const Payments = () => {
   const [loadingMessage, setLoadingMessage] = useState("Loading...");
   const [openBuktiPembayaranModal, setOpenBuktiPembayaranModal] =
     useState(false);
-  const [openVerificationModal, setOpenVerificationModal] = useState(false);
   const [openApprovalModal, setOpenApprovalModal] = useState(false);
+  const [openVerificationModal, setOpenVerificationModal] = useState(false);
+  const [openRejectedModal, setOpenRejectedModal] = useState(false);
   const [printData, setPrintData] = useState(null);
 
   const getDataPayments = async () => {
     setLoading(true);
     try {
-      const response = await axios.get("/api/payments");
+      const response = await axios.get(`/api/payments?role_id=${user.role_id}`);
       console.log("data payments", response);
       if (response.data.success) {
         setDataPayments(response.data.data);
@@ -85,28 +84,22 @@ const Payments = () => {
     }
   };
 
-  const handleEdit = (record) => {
+  const handleApprove = (record) => {
     // console.log("edit record", record);
     setSelectedData(record);
-    setOpenEditModal(true);
+    setOpenApprovalModal(true);
   };
 
-  const handleDelete = (record) => {
+  const handleReject = (record) => {
     // console.log("delete record", record);
     setSelectedData(record);
-    setOpenDeleteModal(true);
+    setOpenRejectedModal(true);
   };
 
   const handleVerification = (record) => {
     // console.log("verification record", record);
     setSelectedData(record);
     setOpenVerificationModal(true);
-  };
-
-  const handleApprove = (record) => {
-    // console.log("edit record", record);
-    setSelectedData(record);
-    setOpenApprovalModal(true);
   };
 
   // useReactToPrint di level atas
@@ -138,7 +131,6 @@ const Payments = () => {
     setPrintData(record);
   };
 
-  // Utility untuk filter dinamis
   const filteredData = dataPayments.filter((item) => {
     if (!searchText) return true;
     const search = searchText.toLowerCase();
@@ -292,13 +284,7 @@ const Payments = () => {
         return record.tenant_application.payment_type === "cicilan" ? (
           <Tag
             // warna random berdasarkan angka ganjil genap
-            color={
-              record.payments?.payment_number === 1
-                ? "volcano"
-                : record.payments?.payment_number === 2
-                ? "lime"
-                : "orange"
-            }
+            color="lime"
             key={record.payments?.payment_id}
             style={{ fontWeight: "bold" }}
           >
@@ -385,7 +371,7 @@ const Payments = () => {
       fixed: "right",
       render: (text, record) => (
         <Box sx={{ display: "flex", gap: 1, justifyContent: "center" }}>
-          <Tooltip title="Detail Pembayaran">
+          <Tooltip title="Verifikasi Pembayaran">
             <Button
               size="small"
               variant={themeMode === "dark" ? "outlined" : "contained"}
@@ -413,20 +399,19 @@ const Payments = () => {
               </Button>
             </Tooltip>
           )}
-          {record.payments?.approval_status === "approved" ||
-            (record.payments?.approval_status === "proses" && (
-              <Tooltip title="Tolak Pembayaran">
-                <Button
-                  size="small"
-                  variant={themeMode === "dark" ? "outlined" : "contained"}
-                  color="error"
-                  onClick={() => handleDelete(record)}
-                  sx={{ minWidth: 0, px: 1 }}
-                >
-                  <Icon icon="line-md:close-circle" fontSize={18} />
-                </Button>
-              </Tooltip>
-            ))}
+          {record.payments?.approval_status === "proses" && (
+            <Tooltip title="Tolak Pembayaran">
+              <Button
+                size="small"
+                variant={themeMode === "dark" ? "outlined" : "contained"}
+                color="error"
+                onClick={() => handleReject(record)}
+                sx={{ minWidth: 0, px: 1 }}
+              >
+                <Icon icon="line-md:close-circle" fontSize={18} />
+              </Button>
+            </Tooltip>
+          )}
         </Box>
       ),
     },
@@ -435,36 +420,7 @@ const Payments = () => {
   return (
     <Box sx={{ width: "100%", height: "100%", minHeight: "100%", p: 2 }}>
       {/* Component Breadcrumbs disini */}
-      <BreadcrumbPage menuList={menuDevisiKontrak} />
-
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "flex-end",
-          transition: "all 0.3s",
-          mb: 2,
-          mt: 4,
-        }}
-      >
-        <Button
-          variant={themeMode === "dark" ? "outlined" : "contained"}
-          onClick={() => setOpenAddModal(true)}
-          sx={{
-            textTransform: "none",
-            display: "flex",
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 1,
-            fontWeight: "bold",
-          }}
-        >
-          Tambah
-          <Icon icon="streamline:payment-10-remix" fontSize="20px" />
-        </Button>
-      </Box>
+      <BreadcrumbPage menuList={menuDivisiKeuangan} />
       <ConfigProvider
         theme={{
           algorithm:
@@ -488,6 +444,7 @@ const Payments = () => {
             width: "100%",
             bgcolor: "background.default",
             overflowX: "auto",
+            mt: 6,
           }}
         >
           <Input.Search
@@ -498,7 +455,7 @@ const Payments = () => {
             style={{ width: 250, marginBottom: 20, marginTop: 10 }}
           />
           <Table
-            rowKey={(record) => record.payments?.payment_id}
+            rowKey={(record) => record.payments.payment_id}
             columns={columns}
             dataSource={filteredData}
             onChange={onChange}
@@ -514,39 +471,21 @@ const Payments = () => {
           />
         </Paper>
       </ConfigProvider>
-      <AddPayment
-        open={openAddModal}
-        onClose={() => setOpenAddModal(false)}
-        getDataPayments={getDataPayments}
-        onNotify={(notify) => setSnackbar(notify)}
-        loadingTrue={() => setLoading(true)}
-        loadingFalse={() => setLoading(false)}
-        setLoadingMessage={setLoadingMessage}
-        user={user}
-      />
-      {/* <EditPayment
-        open={openEditModal}
-        onClose={() => setOpenEditModal(false)}
-        selectedData={selectedData}
-        getDataPayments={getDataPayments}
-        onNotify={(notify) => setSnackbar(notify)}
-        loadingTrue={() => setLoading(true)}
-        loadingFalse={() => setLoading(false)}
-        setLoadingMessage={setLoadingMessage}
-        user={user}
-      /> */}
-      <DeletePayment
-        open={openDeleteModal}
-        onClose={() => setOpenDeleteModal(false)}
-        selectedData={selectedData}
-        getDataPayments={getDataPayments}
-        onNotify={(notify) => setSnackbar(notify)}
-        loadingTrue={() => setLoading(true)}
-        loadingFalse={() => setLoading(false)}
-      />
       <ApprovalModal
         open={openApprovalModal}
         onClose={() => setOpenApprovalModal(false)}
+        selectedData={selectedData}
+        loading={loading}
+        loadingTrue={() => setLoading(true)}
+        loadingFalse={() => setLoading(false)}
+        setLoadingMessage={setLoadingMessage}
+        user={user}
+        getDataPayments={getDataPayments}
+        onNotify={(notify) => setSnackbar(notify)}
+      />
+      <RejectedModal
+        open={openRejectedModal}
+        onClose={() => setOpenRejectedModal(false)}
         selectedData={selectedData}
         loading={loading}
         loadingTrue={() => setLoading(true)}
@@ -568,7 +507,7 @@ const Payments = () => {
       <ImagePreviewModal
         open={openBuktiPembayaranModal}
         onClose={() => setOpenBuktiPembayaranModal(false)}
-        imageUrl={selectedData?.payments?.proof_file_path}
+        imageUrl={selectedData?.proof_file_path}
       />
       <LoadingBackdrop message={loadingMessage} open={loading} />
       {/* Snackbar notification */}

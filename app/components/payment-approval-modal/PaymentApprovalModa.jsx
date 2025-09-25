@@ -51,7 +51,7 @@ const PaymentApprovalModal = ({
     loadingTrue();
     try {
       const res = await axios.get(`/api/payment-approval/`, {
-        params: { id: selectedData?.payment_id }, // pakai tenant_early_termination_id
+        params: { id: selectedData?.payments?.payment_id }, // pakai tenant_early_termination_id
       });
       console.log("data payment approval", res);
 
@@ -143,8 +143,8 @@ const PaymentApprovalModal = ({
                     {/* Icon / Step Number */}
                     <Box
                       sx={{
-                        width: 45,
-                        height: 45,
+                        width: 50,
+                        height: 50,
                         borderRadius: "50%",
                         display: "flex",
                         alignItems: "center",
@@ -165,7 +165,16 @@ const PaymentApprovalModal = ({
                         fontWeight: "bold",
                       }}
                     >
-                      {index + 1}
+                      <Icon
+                        icon={
+                          item.status === "approved"
+                            ? "mdi:receipt-text-check-outline"
+                            : item.status === "pending"
+                            ? "mdi:receipt-text-clock-outline"
+                            : "mdi:receipt-text-remove"
+                        }
+                        fontSize="30px"
+                      />
                     </Box>
 
                     {/* Role and Approver */}

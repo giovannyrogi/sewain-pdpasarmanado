@@ -256,18 +256,18 @@ const Applications = () => {
       dataIndex: "room_number",
       sorter: (a, b) => a.room_number.localeCompare(b.room_number),
       sortDirections: ["ascend", "descend"],
-      render: (text, record) => {
-        return (
-          <Tag
-            // warna random berdasarkan angka ganjil genap
-            color={record.id % 2 === 0 ? "pink" : "geekblue"}
-            key={record.tenant_application_id}
-            style={{ fontWeight: "bold" }}
-          >
-            {record.room_number}
-          </Tag>
-        );
-      },
+      // render: (text, record) => {
+      //   return (
+      //     <Tag
+      //       // warna random berdasarkan angka ganjil genap
+      //       color={record.id % 2 === 0 ? "pink" : "geekblue"}
+      //       key={record.tenant_application_id}
+      //       style={{ fontWeight: "bold" }}
+      //     >
+      //       {record.room_number}
+      //     </Tag>
+      //   );
+      // },
       width: 120,
     },
     {
@@ -293,36 +293,6 @@ const Applications = () => {
       width: 110,
     },
     {
-      title: "Panjang (m)",
-      dataIndex: "room_length",
-      render: (text, record) => (
-        <Typography sx={{ fontWeight: "bold", fontSize: "12px" }}>
-          {record.room_length} M
-        </Typography>
-      ),
-      width: 110,
-    },
-    {
-      title: "Lebar (m)",
-      dataIndex: "room_width",
-      width: 110,
-      render: (text, record) => (
-        <Typography sx={{ fontWeight: "bold", fontSize: "12px" }}>
-          {record.room_width} M
-        </Typography>
-      ),
-    },
-    {
-      title: "Luas (m)",
-      dataIndex: "room_area",
-      width: 110,
-      render: (text, record) => (
-        <Typography sx={{ fontWeight: "bold", fontSize: "12px" }}>
-          {record.room_area} M
-        </Typography>
-      ),
-    },
-    {
       title: "Tipe Pembayaran",
       dataIndex: "payment_type",
       filters: paymentTypeFilters,
@@ -341,6 +311,36 @@ const Applications = () => {
         );
       },
       width: 160,
+    },
+    {
+      title: "Status Persetujuan",
+      dataIndex: "approval_status",
+      filterSearch: true,
+      render: (text, record) => {
+        return (
+          <Tag
+            // warna random berdasarkan angka ganjil genap
+            color={
+              record.approval_status === "proses" && themeMode === "dark"
+                ? "yellow"
+                : record.approval_status === "proses" && themeMode === "light"
+                ? "orange"
+                : "green"
+            }
+            key={record.tenant_application_id}
+            style={{
+              fontWeight: "bold",
+              cursor: "pointer",
+            }}
+            onClick={() => handleApproval(record)}
+          >
+            {record.approval_status === "proses"
+              ? `Dalam Proses ${record.current_step}/5`
+              : "Disetujui"}
+          </Tag>
+        );
+      },
+      width: 150,
     },
     {
       title: "Uang Muka(DP)",
@@ -382,36 +382,6 @@ const Applications = () => {
       width: 150,
     },
     {
-      title: "Status Persetujuan",
-      dataIndex: "approval_status",
-      filterSearch: true,
-      render: (text, record) => {
-        return (
-          <Tag
-            // warna random berdasarkan angka ganjil genap
-            color={
-              record.approval_status === "proses" && themeMode === "dark"
-                ? "yellow"
-                : record.approval_status === "proses" && themeMode === "light"
-                ? "orange"
-                : "green"
-            }
-            key={record.tenant_application_id}
-            style={{
-              fontWeight: "bold",
-              cursor: "pointer",
-            }}
-            onClick={() => handleApproval(record)}
-          >
-            {record.approval_status === "proses"
-              ? `Dalam Proses ${record.current_step}/5`
-              : "Disetujui"}
-          </Tag>
-        );
-      },
-      width: 150,
-    },
-    {
       title: "Tanggal Dibuat",
       dataIndex: "created_at",
       width: 150,
@@ -439,7 +409,7 @@ const Applications = () => {
                   onClick={() => handleUpdateDate(record)}
                   sx={{ minWidth: 0, px: 1 }}
                 >
-                  <Icon icon="line-md:calendar" fontSize={18} />
+                  <Icon icon="line-md:calendar" fontSize={18} style={{color: themeMode === "dark" ? "green" : "white"}} />
                 </Button>
               </Tooltip>
             ) : (

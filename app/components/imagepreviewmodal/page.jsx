@@ -57,8 +57,8 @@ const ImagePreviewModal = ({
             src={imageUrl}
             alt={alt}
             style={{
-              maxWidth: "80vw",
-              maxHeight: "70vh",
+              maxWidth: "90vw",
+              maxHeight: "80vh",
               borderRadius: 8,
               border: "1px solid #ddd",
               objectFit: "contain",

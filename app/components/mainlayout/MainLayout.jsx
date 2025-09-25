@@ -11,6 +11,7 @@ import menuKepalaDivisi from "../menu/MenuItemKepalaDivisi";
 import menuDirekturBisnis from "../menu/MenuItemDirekturBisnis";
 import menuItemDirekturUtama from "../menu/MenuItemDirekturUtama";
 import menuKepalaSubdivisi from "../menu/MenuItemKepalaSubdivisi";
+import menuDivisiKeuangan from "../menu/MenuItemDivisiKeuangan";
 
 // mapping role_id → menu
 const roleMenus = {
@@ -21,6 +22,7 @@ const roleMenus = {
   5: menuKepalaDivisi,
   6: menuDirekturBisnis,
   7: menuItemDirekturUtama,
+  8: menuDivisiKeuangan,
 };
 
 const NavbarWrapper = ({ isMobile, menus, user }) =>
