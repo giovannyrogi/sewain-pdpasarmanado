@@ -249,7 +249,6 @@ const DetailTenantApplicationModal = ({
                     fontWeight: "bold",
                     fontSize: "14px",
                     color: theme.palette.primary.main,
-                    mb: isMobile ? 0.5 : -1,
                   }}
                 >
                   Foto KTP
@@ -290,7 +289,6 @@ const DetailTenantApplicationModal = ({
                     alignItems: "center",
                     justifyContent: "center",
                     flexDirection: "row",
-                    mt: isMobile ? 1 : -1,
                   }}
                 >
                   <Typography
@@ -464,7 +462,7 @@ const DetailTenantApplicationModal = ({
                     ? moment(selectedData.start_date).format("YYYY/MM/DD") +
                       " s/d " +
                       moment(selectedData.end_date).format("YYYY/MM/DD")
-                    : "-"}
+                    : "Pendaftaran Baru"}
                 </Typography>
               </Grid>
             </Grid>

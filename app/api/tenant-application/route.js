@@ -42,6 +42,7 @@ export async function POST(req) {
     const estimated_installment_3_date = formData.get(
       "estimated_installment_date_3"
     );
+    const tenant_type = formData.get("tenant_type");
 
     const total = Number(total_payment) || 0;
     const minDp = Math.round(total * 0.4);
@@ -95,19 +96,42 @@ export async function POST(req) {
       );
     }
 
-    // Siapkan file (hanya di memory, belum ditulis)
     let ktp_file_path = null;
     let fileBuffer = null;
     let filename = null;
 
-    if (ktp_file && typeof ktp_file === "object") {
-      const arrayBuffer = await ktp_file.arrayBuffer();
-      fileBuffer = Buffer.from(arrayBuffer);
-      const ext = path.extname(ktp_file.name) || ".jpg";
-      filename = `ktp_${tenant_name}_${moment(Date.now()).format(
-        "YYYY_MM_DD_HH_mm_ss"
-      )}${ext}`;
-      ktp_file_path = `/uploads/ktp/${filename}`;
+    if (tenant_type === "permohonan baru") {
+      if (ktp_file && typeof ktp_file === "object") {
+        const arrayBuffer = await ktp_file.arrayBuffer();
+        fileBuffer = Buffer.from(arrayBuffer);
+
+        const ext = path.extname(ktp_file.name).toLowerCase() || ".jpg";
+        if (![".jpg", ".jpeg", ".png", ".pdf"].includes(ext)) {
+          return Response.json(
+            { success: false, message: "Format file KTP tidak valid." },
+            { status: 400 }
+          );
+        }
+
+        filename = `ktp_${tenant_name}_${moment().format(
+          "YYYY_MM_DD_HH_mm_ss"
+        )}${ext}`;
+        ktp_file_path = `/uploads/ktp/${filename}`;
+      }
+    } else if (tenant_type === "perpanjang tenant" && renewal_of) {
+      const prevApp = await pool.query(
+        "SELECT ktp_file_path FROM tenant_application WHERE id = $1",
+        [renewal_of]
+      );
+      if (prevApp.rowCount > 0) {
+        ktp_file_path = prevApp.rows[0].ktp_file_path;
+      }
+    }
+
+    // setelah DB commit
+    if (fileBuffer && filename) {
+      const filepath = path.join(uploadDir, filename);
+      await fs.promises.writeFile(filepath, fileBuffer);
     }
 
     // Normalisasi nilai numeric
@@ -144,11 +168,13 @@ export async function POST(req) {
           estimated_installment_1_date,
           estimated_installment_2_date,
           estimated_installment_3_date,
-          renewal_of
+          renewal_of,
+          start_date,
+          end_date
         )
         VALUES (
           $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13,
-          $14, $15, $16, $17, $18, $19, $20
+          $14, $15, $16, $17, $18, $19, $20, $21, $22
         )
         RETURNING *
         `,
@@ -173,6 +199,8 @@ export async function POST(req) {
           estimated_installment_2_date,
           estimated_installment_3_date,
           renewal_of,
+          start_date,
+          end_date,
         ]
       );
 
@@ -267,6 +295,7 @@ export async function GET(req) {
         ta.estimated_installment_3_date,
         ta.document_number,
         ta.renewal_of,
+        ta.is_fully_paid,
 
         l.id AS location_id,
         l.location_name,
@@ -279,7 +308,6 @@ export async function GET(req) {
         r.room_area,
         f.base_price,
         f.floor,
-        tet.is_terminated,
 
         -- data tenant sebelumnya (hanya 1 level)
         prev.id AS old_tenant_id,
@@ -332,7 +360,7 @@ export async function GET(req) {
       current_step: row.current_step,
       base_price: row.base_price,
       floor: row.floor,
-      is_terminated: row.is_terminated ?? false,
+      is_fully_paid: row.is_fully_paid ?? false,
       created_at: moment(row.created_at).format("D MMMM YYYY"),
       old_tenant: row.old_tenant_id
         ? {

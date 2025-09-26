@@ -173,7 +173,6 @@ const PreviewTenantInformationModal = ({ open, onClose, selectedData }) => {
                     fontWeight: "bold",
                     fontSize: "14px",
                     color: theme.palette.primary.main,
-                    mb: isMobile ? 0.5 : -1,
                   }}
                 >
                   Foto KTP
@@ -214,7 +213,6 @@ const PreviewTenantInformationModal = ({ open, onClose, selectedData }) => {
                     alignItems: "center",
                     justifyContent: "center",
                     flexDirection: "row",
-                    mt: isMobile ? 1 : -1,
                   }}
                 >
                   <Typography
@@ -486,8 +484,8 @@ const PreviewTenantInformationModal = ({ open, onClose, selectedData }) => {
                   overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
                 }}
               >
-                {selectedData?.created_at
-                  ? moment(selectedData.created_at).format("YYYY/MM/DD")
+                {selectedData?.termination_created_at
+                  ? moment(selectedData?.termination_created_at).format("YYYY/MM/DD")
                   : "-"}
               </Typography>
             </Grid>

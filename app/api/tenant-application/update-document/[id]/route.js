@@ -7,10 +7,6 @@ export async function PUT(request, { params }) {
     const body = await request.json();
     const { start_date, end_date, document_number } = body;
 
-    console.log("start_date", start_date);
-    console.log("end_date", end_date);
-    console.log("document_number", document_number);
-
     //check document number
     const checkDocumentNumber = await pool.query(
       "SELECT 1 FROM tenant_application WHERE document_number = $1 AND id != $2",

@@ -233,7 +233,6 @@ const TenantTerminationApprovalModal = ({
                     fontWeight: "bold",
                     fontSize: "14px",
                     color: theme.palette.primary.main,
-                    mb: isMobile ? 0.5 : -1,
                   }}
                 >
                   Foto KTP
@@ -274,7 +273,6 @@ const TenantTerminationApprovalModal = ({
                     alignItems: "center",
                     justifyContent: "center",
                     flexDirection: "row",
-                    mt: isMobile ? 1 : -1,
                   }}
                 >
                   <Typography
@@ -546,8 +544,8 @@ const TenantTerminationApprovalModal = ({
                   overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
                 }}
               >
-                {selectedData?.created_at
-                  ? moment(selectedData.created_at).format("YYYY/MM/DD")
+                {selectedData?.termination_created_at
+                  ? moment(selectedData?.termination_created_at).format("YYYY/MM/DD")
                   : "-"}
               </Typography>
             </Grid>

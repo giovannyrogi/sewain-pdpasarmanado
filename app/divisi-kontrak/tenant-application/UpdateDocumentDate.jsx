@@ -7,6 +7,7 @@ import {
   FormControl,
   Grid,
   IconButton,
+  InputAdornment,
   InputLabel,
   MenuItem,
   Modal,
@@ -62,17 +63,26 @@ const UpdateDocumentDate = ({
   const [documentNumber, setDocumentNumber] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // useEffect(() => {
-  //   if (open && selectedData?.end_date) {
-      
-  //   }
-  // }, [open]);
+  // console.log("selectedData", selectedData);
 
+  useEffect(() => {
+    if (open && selectedData?.start_date && selectedData?.end_date) {
+      setStartDate(moment(selectedData?.start_date));
+      setEndDate(moment(selectedData?.end_date));
+    }
+  }, [open]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
     loadingTrue();
+
+    // gabungkan nomor + prefix
+    const now = new Date();
+    const monthRoman = toRoman(now.getMonth() + 1);
+    const year = now.getFullYear();
+    const prefix = `/PM/${monthRoman}/${year}`;
+    const finalDocNumber = `${documentNumber}${prefix}`;
 
     try {
       const response = await axios.put(
@@ -80,7 +90,7 @@ const UpdateDocumentDate = ({
         {
           start_date: startDate,
           end_date: endDate,
-          document_number: documentNumber,
+          document_number: finalDocNumber,
         }
       );
       console.log("response", response);
@@ -96,6 +106,17 @@ const UpdateDocumentDate = ({
         setTimeout(() => {
           clearForm();
           onClose();
+          loadingFalse();
+          setIsSubmitting(false);
+        }, 1000);
+      } else {
+        onNotify &&
+          onNotify({
+            open: true,
+            message: response.data.message || "Gagal mengupdate document",
+            severity: "error",
+          });
+        setTimeout(() => {
           loadingFalse();
           setIsSubmitting(false);
         }, 1000);
@@ -119,6 +140,49 @@ const UpdateDocumentDate = ({
     setStartDate(null);
     setEndDate(null);
     setDocumentNumber("");
+  };
+
+  const toRoman = (num) => {
+    const roman = [
+      "",
+      "I",
+      "II",
+      "III",
+      "IV",
+      "V",
+      "VI",
+      "VII",
+      "VIII",
+      "IX",
+      "X",
+      "XI",
+      "XII",
+    ];
+    return roman[num] || "";
+  };
+
+  const getPrefix = () => {
+    const now = new Date();
+    const monthRoman = toRoman(now.getMonth() + 1);
+    const year = now.getFullYear();
+    return (
+      <InputAdornment
+        position="end"
+        sx={{
+          whiteSpace: "nowrap",
+          color: theme.palette.primary.main,
+        }}
+      >
+        <Typography
+          sx={{
+            whiteSpace: "nowrap",
+            fontWeight: "bold",
+            fontSize: "14px",
+            letterSpacing: "1px",
+          }}
+        >{`/PM/${monthRoman}/${year}`}</Typography>
+      </InputAdornment>
+    );
   };
 
   return (
@@ -168,70 +232,77 @@ const UpdateDocumentDate = ({
             <Grid size={12}>
               <TextField
                 label="Nomor Dokumen"
-                placeholder="Cth : 001/MP/VII/2025"
+                // placeholder="Cth: 001"
                 variant="filled"
                 fullWidth
                 value={documentNumber}
-                onChange={(e) =>
-                  setDocumentNumber(e.target.value.toUpperCase())
-                }
-                autoFocus
+                onChange={(e) => {
+                  // document number hanya boleh angka
+                  setDocumentNumber(e.target.value.replace(/[^0-9]/g, ""));
+                }}
+                InputProps={{
+                  endAdornment: getPrefix(),
+                }}
                 required
                 color="primary"
               />
             </Grid>
-            <Grid size={6}>
-              <DatePicker
-                label="Tanggal Mulai"
-                // value harus dayjs, bukan string
-                value={startDate}
-                onChange={(newValue) => {
-                  // langsung simpan dayjs object
-                  setStartDate(newValue);
+            {!selectedData?.start_date && !selectedData?.end_date && (
+              <>
+                <Grid size={6}>
+                  <DatePicker
+                    label="Tanggal Mulai"
+                    // value harus dayjs, bukan string
+                    value={startDate}
+                    onChange={(newValue) => {
+                      // langsung simpan dayjs object
+                      setStartDate(newValue);
 
-                  if (newValue) {
-                    // Tambahkan 365 hari ke tanggal mulai
-                    const end = moment(newValue).add(365, "days");
+                      if (newValue) {
+                        // Tambahkan 365 hari ke tanggal mulai
+                        const end = moment(newValue).add(365, "days");
 
-                    setEndDate(end);
-                  } else {
-                    setEndDate(null);
-                  }
-                }}
-                minDate={moment().startOf("day")}
-                slotProps={{
-                  textField: {
-                    variant: "filled",
-                    fullWidth: true,
-                    required: true,
-                    disabled: loading,
-                    color: "primary",
-                  },
-                }}
-              />
-            </Grid>
-            <Grid size={6}>
-              <DatePicker
-                label="Tanggal Selesai"
-                // value harus dayjs, bukan string
-                value={endDate}
-                onChange={(newValue) => {
-                  // langsung simpan dayjs object
-                  setEndDate(newValue);
-                }}
-                minDate={moment().startOf("day")}
-                disabled
-                slotProps={{
-                  textField: {
-                    variant: "filled",
-                    fullWidth: true,
-                    required: true,
-                    color: "primary",
-                    disabled: true,
-                  },
-                }}
-              />
-            </Grid>
+                        setEndDate(end);
+                      } else {
+                        setEndDate(null);
+                      }
+                    }}
+                    // minDate={moment().startOf("day")}
+                    slotProps={{
+                      textField: {
+                        variant: "filled",
+                        fullWidth: true,
+                        required: true,
+                        disabled: loading,
+                        color: "primary",
+                      },
+                    }}
+                  />
+                </Grid>
+                <Grid size={6}>
+                  <DatePicker
+                    label="Tanggal Selesai"
+                    // value harus dayjs, bukan string
+                    value={endDate}
+                    onChange={(newValue) => {
+                      // langsung simpan dayjs object
+                      setEndDate(newValue);
+                    }}
+                    // minDate={moment().startOf("day")}
+                    disabled
+                    slotProps={{
+                      textField: {
+                        variant: "filled",
+                        fullWidth: true,
+                        required: true,
+                        color: "primary",
+                        disabled: true,
+                      },
+                    }}
+                  />
+                </Grid>
+              </>
+            )}
             <Grid size={12}>
               <Button
                 type="submit"

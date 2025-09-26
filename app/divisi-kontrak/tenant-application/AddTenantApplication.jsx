@@ -143,15 +143,53 @@ const AddTenantApplication = ({
 
   const getListTenantExtends = async () => {
     loadingTrue();
-    setLoadingMessage("Mengambil data tenant extends...");
+    setLoadingMessage("Mengambil data sebelumnya...");
     try {
       const response = await axios.get(
         "/api/tenant-application/tenant-extends"
       );
       console.log("response tenant-extends", response);
 
+      setStartDate(response?.data?.data?.[0]?.start_date);
+      setEndDate(response?.data?.data?.[0]?.end_date);
+
       if (response.data.success) {
         setListDataTenantExtends(response.data.data);
+        setTimeout(() => {
+          loadingFalse();
+          setLoadingMessage("");
+        }, 1000);
+      }
+    } catch (error) {
+      console.log("error", error);
+      setTimeout(() => {
+        loadingFalse();
+        setLoadingMessage("");
+      }, 1000);
+    }
+  };
+
+  const getCurrentExtendTenant = async (id) => {
+    loadingTrue();
+    setLoadingMessage("Mengambil data sebelumnya...");
+    try {
+      const response = await axios.get(
+        `/api/tenant-application/tenant-extends/${id}`
+      );
+      console.log("response previous data", response);
+      setTenantName(response.data?.data?.tenant_application?.tenant_name);
+      setTenantNIK(response.data?.data?.tenant_application?.tenant_nik);
+      setTenantPhone(response.data?.data?.tenant_application?.tenant_phone);
+      setKtpFilePath(response.data?.data?.tenant_application?.ktp_file_path);
+      setLocationId(response.data?.data?.locations?.id);
+
+      await getRoomsData(response.data?.data?.locations?.id);
+
+      setSelectedDataRooms(response.data?.data?.rooms);
+      setPaymentType(response.data?.data?.tenant_application?.payment_type);
+      setRoomId(response.data?.data?.rooms?.id);
+
+      if (response.data.success) {
         setTimeout(() => {
           loadingFalse();
           setLoadingMessage("");
@@ -248,7 +286,7 @@ const AddTenantApplication = ({
     const dp = Number(downPayment) || 0;
 
     // Validasi KTP
-    if (!ktpFile) {
+    if (!ktpFile && tenantType === "permohonan baru") {
       onNotify &&
         onNotify({
           open: true,
@@ -334,14 +372,6 @@ const AddTenantApplication = ({
       formData.append("tenant_name", tenantName);
       formData.append("tenant_nik", tenantNIK);
       formData.append("tenant_phone", tenantPhone);
-      // formData.append(
-      //   "start_date",
-      //   startDate ? moment(startDate).format("YYYY-MM-DD") : ""
-      // );
-      // formData.append(
-      //   "end_date",
-      //   endDate ? moment(endDate).format("YYYY-MM-DD") : ""
-      // );
       formData.append("payment_type", paymentType);
       formData.append("total_payment", totalPayment);
       formData.append("down_payment", downPayment);
@@ -349,7 +379,21 @@ const AddTenantApplication = ({
       formData.append("approval_status", approvalStatus);
       formData.append("user_id", user.id);
       formData.append("current_step", 1);
-      // formData.append("ktp_file_path", ktpFilePath);
+      formData.append("tenant_type", tenantType);
+
+      if (tenantType === "perpanjang tenant" && endDate) {
+        // tenant lama endDate dijadikan start_date tenant baru
+        const newStartDate = moment(endDate).format("YYYY-MM-DD");
+        // endDate tenant baru = endDate lama + 1 tahun
+        const newEndDate = moment(endDate).add(1, "year").format("YYYY-MM-DD");
+
+        formData.append("start_date", newStartDate);
+        formData.append("end_date", newEndDate);
+      }
+
+      if (ktpFilePath) {
+        formData.append("ktp_file_path", ktpFilePath);
+      }
 
       // hanya kirim data cicilan kalau paymentType === 'cicilan'
       if (paymentType === "cicilan") {
@@ -472,11 +516,6 @@ const AddTenantApplication = ({
     setSelectedDataTenantExtends(null);
   };
 
-  const handleViewDetailRooms = (newValue) => {
-    // console.log("newValue", newValue);
-    setSelectedDataRooms(newValue);
-  };
-
   const handleKtpChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -562,9 +601,10 @@ const AddTenantApplication = ({
                 onChange={(event, newValue) => {
                   // simpan value ke state
                   setTenantType(newValue ? newValue.value : null);
-                  if (newValue.value === "perpanjang tenant") {
+                  if (newValue?.value === "perpanjang tenant") {
                     getListTenantExtends();
                   } else {
+                    clearForm();
                     setListDataTenantExtends([]);
                     setSelectedDataTenantExtends(null);
                   }
@@ -586,9 +626,16 @@ const AddTenantApplication = ({
                   options={listDataTenantExtends || []}
                   getOptionLabel={(option) => option?.tenant_name || ""}
                   value={selectedDataTenantExtends}
-                  onChange={(event, newValue) =>
-                    setSelectedDataTenantExtends(newValue ?? null)
-                  }
+                  onChange={(event, newValue) => {
+                    setSelectedDataTenantExtends(newValue ?? null);
+
+                    // clear form setelah menghapus data tenant lama
+                    if (!newValue) {
+                      clearForm();
+                    } else {
+                      getCurrentExtendTenant(newValue?.id);
+                    }
+                  }}
                   renderInput={(params) => (
                     <TextField
                       {...params}
@@ -753,21 +800,16 @@ const AddTenantApplication = ({
             </Grid>
             <Grid size={isMobile ? 12 : 6}>
               <Autocomplete
-                disabled={!locationId}
-                options={dataAvailableRooms || []}
-                getOptionLabel={(option) =>
-                  option.room_number ? option.room_number : ""
-                }
+                options={dataAvailableRooms}
+                getOptionLabel={(option) => option?.room_number || ""}
                 value={
-                  dataAvailableRooms
-                    ? dataAvailableRooms.find((item) => item.id === roomId) ||
-                      null
-                    : null
+                  dataAvailableRooms.find((room) => room.id === roomId) || null
                 }
                 onChange={(event, newValue) => {
-                  setPaymentType("lunas");
+                  // console.log("newValue.id", newValue.id);
+
                   setRoomId(newValue ? newValue.id : "");
-                  handleViewDetailRooms(newValue);
+                  setSelectedDataRooms(newValue || {});
                 }}
                 renderInput={(params) => (
                   <TextField

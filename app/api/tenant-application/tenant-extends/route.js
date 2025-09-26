@@ -4,20 +4,32 @@ import moment from "moment";
 export async function GET(req) {
   try {
     const today = moment().format("YYYY-MM-DD");
+
     const result = await pool.query(
-      `SELECT * FROM tenant_application
-        WHERE approval_status = 'approved'
-        AND start_date IS NOT NULL
-        AND end_date IS NOT NULL
-        AND end_date <= $1`,
+      `
+      SELECT ta.*
+      FROM tenant_application ta
+      WHERE ta.approval_status = 'approved'
+        AND ta.start_date IS NOT NULL
+        AND ta.end_date IS NOT NULL
+        AND ta.end_date <= $1
+        -- hanya pilih tenant_application yang merupakan leaf (tidak punya renewal/child)
+        AND NOT EXISTS (
+          SELECT 1
+          FROM tenant_application child
+          WHERE child.renewal_of = ta.id
+        )
+      ORDER BY ta.end_date ASC
+      `,
       [today]
     );
 
-    // mapping sesuai kebutuhan
     const rows = result.rows.map((row) => ({
       id: row.id,
-      start_date: moment(row.start_date).format("YYYY-MM-DD"),
-      end_date: moment(row.end_date).format("YYYY-MM-DD"),
+      start_date: row.start_date
+        ? moment(row.start_date).format("YYYY-MM-DD")
+        : null,
+      end_date: row.end_date ? moment(row.end_date).format("YYYY-MM-DD") : null,
       approval_status: row.approval_status,
       tenant_name: row.tenant_name,
     }));

@@ -30,6 +30,7 @@ import TenantApprovalModal from "@/app/components/tenantapprovalmodal/TenantAppr
 import DetailTenantApplicationModal from "@/app/components/tenantapplicationmodal/DetailTenantApplicationModal";
 import menuDevisiKontrak from "@/app/components/menu/MenuItemDivisiKontrak";
 import UpdateDocumentDate from "./UpdateDocumentDate";
+import styles from "./page.module.css";
 
 const Applications = () => {
   // Ref untuk dokumen print
@@ -213,6 +214,12 @@ const Applications = () => {
     "payment_type"
   );
 
+  const approvalStatusFilters = [
+    { text: "Dalam Proses", value: "proses" },
+    { text: "Ditolak", value: "rejected" },
+    { text: "Disetujui", value: "approved" },
+  ];
+
   const columns = [
     {
       title: "Nama Penyewa",
@@ -278,18 +285,18 @@ const Applications = () => {
       filterSearch: true,
       sorter: (a, b) => a.floor.localeCompare(b.floor),
       sortDirections: ["ascend", "descend"],
-      render: (text, record) => {
-        return (
-          <Tag
-            // warna random berdasarkan angka ganjil genap
-            color={themeMode === "dark" ? "orange" : "red"}
-            key={record.tenant_application_id}
-            style={{ fontWeight: "bold" }}
-          >
-            {record.floor}
-          </Tag>
-        );
-      },
+      // render: (text, record) => {
+      //   return (
+      //     <Tag
+      //       // warna random berdasarkan angka ganjil genap
+      //       color={themeMode === "dark" ? "orange" : "red"}
+      //       key={record.tenant_application_id}
+      //       style={{ fontWeight: "bold" }}
+      //     >
+      //       {record.floor}
+      //     </Tag>
+      //   );
+      // },
       width: 110,
     },
     {
@@ -315,6 +322,8 @@ const Applications = () => {
     {
       title: "Status Persetujuan",
       dataIndex: "approval_status",
+      filters: approvalStatusFilters,
+      onFilter: createOnFilter("approval_status"),
       filterSearch: true,
       render: (text, record) => {
         return (
@@ -340,7 +349,7 @@ const Applications = () => {
           </Tag>
         );
       },
-      width: 150,
+      width: 170,
     },
     {
       title: "Uang Muka(DP)",
@@ -382,16 +391,6 @@ const Applications = () => {
       width: 150,
     },
     {
-      title: "Tanggal Dibuat",
-      dataIndex: "created_at",
-      width: 150,
-      render: (text, record) => (
-        <Typography sx={{ fontWeight: "bold", fontSize: "12px" }}>
-          {moment(record.created_at).format("D MMMM YYYY")}
-        </Typography>
-      ),
-    },
-    {
       title: "Actions",
       key: "action",
       align: "center",
@@ -400,7 +399,7 @@ const Applications = () => {
       render: (text, record) =>
         record.approval_status === "approved" ? (
           <Box sx={{ display: "flex", gap: 1, justifyContent: "center" }}>
-            {!record.start_date && !record.end_date ? (
+            {!record?.document_number ? (
               <Tooltip title="Update Masa Berlaku Dokumen">
                 <Button
                   size="small"
@@ -409,7 +408,11 @@ const Applications = () => {
                   onClick={() => handleUpdateDate(record)}
                   sx={{ minWidth: 0, px: 1 }}
                 >
-                  <Icon icon="line-md:calendar" fontSize={18} style={{color: themeMode === "dark" ? "green" : "white"}} />
+                  <Icon
+                    icon="line-md:calendar"
+                    fontSize={18}
+                    style={{ color: themeMode === "dark" ? "green" : "white" }}
+                  />
                 </Button>
               </Tooltip>
             ) : (
@@ -429,11 +432,15 @@ const Applications = () => {
               <Button
                 size="small"
                 variant={themeMode === "dark" ? "outlined" : "contained"}
-                color="info"
+                color={themeMode === "dark" ? "inherit" : "success"}
                 onClick={() => handleTenantApprove(record)}
                 sx={{ minWidth: 0, px: 1 }}
               >
-                <Icon icon="mdi:smart-card-outline" fontSize={18} />
+                <Icon
+                  icon="mdi:smart-card-outline"
+                  color={themeMode === "dark" ? "inherit" : "white"}
+                  fontSize={18}
+                />
               </Button>
             </Tooltip>
           </Box>
@@ -448,6 +455,21 @@ const Applications = () => {
                 sx={{ minWidth: 0, px: 1 }}
               >
                 <Icon icon="line-md:edit" fontSize={18} />
+              </Button>
+            </Tooltip>
+            <Tooltip title="Detail Data Pemohon">
+              <Button
+                size="small"
+                variant={themeMode === "dark" ? "outlined" : "contained"}
+                color={themeMode === "dark" ? "inherit" : "success"}
+                onClick={() => handleTenantApprove(record)}
+                sx={{ minWidth: 0, px: 1 }}
+              >
+                <Icon
+                  icon="mdi:smart-card-outline"
+                  color={themeMode === "dark" ? "inherit" : "white"}
+                  fontSize={18}
+                />
               </Button>
             </Tooltip>
             <Tooltip title="Hapus Data">
@@ -544,6 +566,15 @@ const Applications = () => {
               pageSizeOptions: [5, 10, 20, 50],
               showTotal: (total, range) =>
                 `${range[0]}-${range[1]} dari ${total} data`,
+            }}
+            // rowClassName={(record) => {
+            //   if (record.is_tenant_application_terminated) return styles.rowTerminated;
+            //   if (record.is_fully_paid) return styles.rowFullyPaid;
+            //   return "";
+            // }}
+            rowClassName={(record) => {
+              if (record.is_fully_paid) return styles.rowFullyPaid;
+              return "";
             }}
           />
         </Paper>

@@ -282,22 +282,37 @@ export async function DELETE(request, context) {
     }
 
     // Update room agar kembali available
-    await pool.query(`UPDATE rooms SET is_available = false WHERE id = $1`, [
-      room_id,
-    ]);
+    await pool.query(
+      `UPDATE rooms SET is_available = false, updated_at = NOW() WHERE id = $1`,
+      [room_id]
+    );
 
-    // Hapus file KTP jika ada
+    // Cek apakah file KTP masih dipakai tenant lain
     if (ktp_file_path) {
-      const filePath = path.join(
-        process.cwd(),
-        "public",
-        "uploads/ktp",
-        path.basename(ktp_file_path)
+      const fileCheck = await pool.query(
+        `SELECT COUNT(*) FROM tenant_application 
+         WHERE ktp_file_path = $1 AND id <> $2`,
+        [ktp_file_path, id]
       );
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
+
+      if (Number(fileCheck.rows[0].count) === 0) {
+        // Aman dihapus karena tidak dipakai tenant lain
+        const filePath = path.join(
+          process.cwd(),
+          "public",
+          "uploads/ktp",
+          path.basename(ktp_file_path)
+        );
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+          console.log("File KTP dihapus:", filePath);
+        } else {
+          console.log("File KTP tidak ditemukan:", filePath);
+        }
       } else {
-        console.log("File KTP tidak ditemukan:", filePath);
+        console.log(
+          `File KTP masih dipakai ${fileCheck.rows[0].count} tenant lain, tidak dihapus`
+        );
       }
     }
 

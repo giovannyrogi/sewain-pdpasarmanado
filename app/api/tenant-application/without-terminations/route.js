@@ -46,7 +46,15 @@ export async function GET(req) {
       LEFT JOIN tenant_early_terminations tet 
           ON ta.id = tet.tenant_application_id
       WHERE tet.tenant_application_id IS NULL
-      AND ta.approval_status = 'approved'
+        AND ta.approval_status = 'approved'
+        AND ta.start_date IS NOT NULL
+        AND ta.end_date IS NOT NULL
+        -- pastikan hanya ambil data terakhir (hide renewal lama meskipun status proses)
+        AND NOT EXISTS (
+          SELECT 1
+          FROM tenant_application r
+          WHERE r.renewal_of = ta.id
+        )
       ORDER BY ta.created_at DESC
       `
     );

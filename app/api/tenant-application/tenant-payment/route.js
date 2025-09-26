@@ -51,6 +51,10 @@ export async function GET() {
     LEFT JOIN locations loc ON loc.id = ta.location_id
     LEFT JOIN location_floor_prices lfp ON lfp.id = rm.floor_id
 
+    -- join early termination
+    LEFT JOIN tenant_early_terminations tet 
+      ON tet.tenant_application_id = ta.id
+
     -- Ambil hanya pembayaran terakhir yang APPROVED
     LEFT JOIN LATERAL (
         SELECT pp.*
@@ -73,8 +77,19 @@ export async function GET() {
       AND ta.start_date IS NOT NULL
       AND ta.end_date IS NOT NULL
       AND ta.is_fully_paid = false
+      
+      -- exclude kalau terminated
+      AND (tet.id IS NULL OR tet.is_terminated = false)
 
-      -- jangan tampil kalau ada payment 'proses' atau 'rejected'
+      -- exclude kalau ada renewal yang sudah approved
+      AND NOT EXISTS (
+        SELECT 1
+        FROM tenant_application r
+        WHERE r.renewal_of = ta.id
+          AND r.approval_status = 'approved'
+      )
+
+      -- exclude kalau ada payment proses / rejected
       AND NOT EXISTS (
         SELECT 1
         FROM payments px
@@ -82,6 +97,7 @@ export async function GET() {
           AND px.approval_status IN ('proses','rejected')
       )
 
+      -- logika pembayaran
       AND (
           (ta.payment_type = 'lunas' AND p.id IS NULL)
           OR (ta.payment_type = 'cicilan' AND (pm.max_payment_number < 3 OR pm.max_payment_number IS NULL))
