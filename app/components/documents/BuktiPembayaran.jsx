@@ -119,6 +119,24 @@ const BuktiPembayaran = forwardRef(({ data }, ref) => {
         }}
       />
 
+      <Grid container spacing={2} mb={0.3}>
+        <Grid
+          size={12}
+          display={"flex"}
+          flexDirection={"row"}
+          justifyContent={"end"}
+        >
+          <Typography
+            sx={{ fontSize: "13px", fontFamily: "calibri", fontWeight: "bold" }}
+          >
+            Masa berlaku{" "}
+            {moment(data?.tenant_application?.start_date).format("D MMMM YYYY")}{" "}
+            S/D{" "}
+            {moment(data?.tenant_application?.end_date).format("D MMMM YYYY")}
+          </Typography>
+        </Grid>
+      </Grid>
+
       <table
         style={{
           borderCollapse: "collapse",
@@ -426,7 +444,7 @@ const BuktiPembayaran = forwardRef(({ data }, ref) => {
             Foto Kartu Tanda Penduduk (KTP)
           </Typography>
         </Grid>
-        
+
         <Grid size={12}>
           <img
             src={data?.tenant_application?.ktp_file_path}
@@ -434,6 +452,22 @@ const BuktiPembayaran = forwardRef(({ data }, ref) => {
             width="450px"
             height="250px"
           />
+        </Grid>
+      </Grid>
+
+      <Grid container mt={4} spacing={2}>
+        <Grid size={12} textAlign={"right"}>
+          <Typography
+            sx={{
+              fontSize: "11px",
+              fontFamily: "calibri",
+              color: "gray",
+              fontWeight: "bold",
+            }}
+          >
+            Dicetak Tanggal : {""}
+            {`${moment(new Date()).format("YYYY/MM/DD HH:mm:ss")}`}
+          </Typography>
         </Grid>
       </Grid>
 
