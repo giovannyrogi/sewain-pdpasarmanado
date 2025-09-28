@@ -138,7 +138,7 @@ const AddPayment = ({
       return;
     }
 
-    if (amount > remainingBalance) {
+    if (amount > remainingBalance && typePembayaran === "cicilan") {
       onNotify &&
         onNotify({
           open: true,
@@ -478,11 +478,11 @@ const AddPayment = ({
                 }}
                 autoFocus
                 required
-                disabled={selectedData?.payment_number === 2}
+                disabled={selectedData?.payment_number === 2 || selectedData?.payment_type === "lunas"}
                 color="primary"
               />
             </Grid>
-            {selectedData && (
+            {selectedData && selectedData?.payment_type === "cicilan" && (
               <Grid
                 container
                 size={12}
