@@ -26,7 +26,13 @@ export async function POST(req) {
     const proofFile = formData.get("proof_file");
     const uploadedBy = formData.get("uploaded_by");
     const ppnAmount = formData.get("ppn_amount");
-    const remainingBalance = formData.get("remaining_balance");
+    const payment_type = formData.get("payment_type");
+
+    // Kondisi untuk remaining balance
+    let remainingBalance = 0;
+    if (payment_type === "cicilan") {
+      remainingBalance = formData.get("remaining_balance") || 0;
+    }
 
     if (!proofFile || typeof proofFile !== "object") {
       return new Response(
@@ -59,6 +65,7 @@ export async function POST(req) {
       VALUES ($1, $2, $3, $4, $5, $6, 'proses', $7, $8)
       RETURNING id;
     `;
+
     const paymentValues = [
       tenantApplicationId,
       paymentNumber,
@@ -69,6 +76,7 @@ export async function POST(req) {
       ppnAmount,
       remainingBalance,
     ];
+
     const paymentResult = await client.query(insertPaymentQuery, paymentValues);
     const paymentId = paymentResult.rows[0].id;
 
@@ -123,10 +131,6 @@ export async function GET() {
 
         -- tenant_application
         ta.id AS tenant_application_id,
-        ta.tenant_name,
-        ta.tenant_nik,
-        ta.tenant_phone,
-        ta.ktp_file_path,
         ta.start_date,
         ta.end_date,
         ta.payment_type,
@@ -145,6 +149,12 @@ export async function GET() {
         ta.estimated_installment_2_date,
         ta.estimated_installment_3_date,   
         ta.current_payment_step,   
+
+        -- tenant_identities 
+        ti.full_name AS tenant_name,
+        ti.nik AS tenant_nik,
+        ti.phone AS tenant_phone,
+        ti.ktp_file_path,
 
         -- rooms
         rm.id AS room_id,
@@ -177,6 +187,7 @@ export async function GET() {
 
       FROM payments p
       LEFT JOIN tenant_application ta ON ta.id = p.tenant_application_id
+      LEFT JOIN tenant_identities ti ON ta.tenant_identity_id = ti.id
       LEFT JOIN rooms rm ON rm.id = ta.room_id
       LEFT JOIN locations loc ON loc.id = ta.location_id
       LEFT JOIN location_floor_prices lfp ON lfp.id = rm.floor_id

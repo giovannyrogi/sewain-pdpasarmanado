@@ -29,16 +29,20 @@ export async function GET(req) {
         r.role_name,
         u.id AS user_id,
         u.full_name AS user_full_name,
-        tapp.tenant_name,
-        tapp.tenant_nik,
-        tapp.tenant_phone,
+
+        -- data identitas tenant dari tenant_identities
+        ti.full_name AS tenant_name,
+        ti.nik AS tenant_nik,
+        ti.phone AS tenant_phone,
+        ti.ktp_file_path,
+
+        -- data kontrak/application
         tapp.start_date,
         tapp.end_date,
         tapp.payment_type,
         tapp.total_payment,
         tapp.down_payment,
         tapp.remaining_payment,
-        tapp.ktp_file_path,
         tapp.approval_status,
         tapp.created_at,
         tapp.updated_at,
@@ -49,6 +53,8 @@ export async function GET(req) {
         tapp.estimated_installment_1_date,
         tapp.estimated_installment_2_date,
         tapp.estimated_installment_3_date,
+
+        -- lokasi & ruangan
         l.location_name,
         rm.room_number,
         rm.floor_id,
@@ -62,6 +68,7 @@ export async function GET(req) {
       JOIN roles r ON ta.role_id = r.id
       LEFT JOIN users u ON ta.approver_id = u.id
       JOIN tenant_application tapp ON ta.tenant_application_id = tapp.id
+      JOIN tenant_identities ti ON tapp.tenant_identity_id = ti.id
       JOIN rooms rm ON tapp.room_id = rm.id
       JOIN locations l ON tapp.location_id = l.id
       LEFT JOIN location_floor_prices lfp ON rm.floor_id = lfp.id

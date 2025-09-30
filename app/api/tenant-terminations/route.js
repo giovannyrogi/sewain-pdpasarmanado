@@ -25,11 +25,17 @@ export async function POST(req) {
       );
     }
 
-    // cek tenant_application valid + ambil tenant_name
+    // cek tenant_application valid + ambil tenant_name dari tenant_identities
     const tenantApp = await client.query(
-      `SELECT tenant_name FROM tenant_application WHERE id=$1`,
+      `
+        SELECT ti.full_name AS tenant_name
+        FROM tenant_application ta
+        JOIN tenant_identities ti ON ta.tenant_identity_id = ti.id
+        WHERE ta.id = $1
+      `,
       [tenant_application_id]
     );
+
     if (tenantApp.rowCount === 0) {
       return new Response(
         JSON.stringify({
@@ -152,10 +158,13 @@ export async function GET(req) {
         tet.is_terminated,
         tet.created_at AS termination_created_at,
 
-        ta.tenant_name,
-        ta.tenant_nik,
-        ta.tenant_phone,
-        ta.ktp_file_path,
+        -- ambil identitas dari tenant_identities
+        ti.full_name AS tenant_name,
+        ti.nik AS tenant_nik,
+        ti.phone AS tenant_phone,
+        ti.ktp_file_path,
+
+        -- data application
         ta.start_date,
         ta.end_date,
         ta.payment_type,
@@ -167,6 +176,7 @@ export async function GET(req) {
         ta.user_id,
         ta.updated_at AS tenant_updated_at,
 
+        -- lokasi & ruangan
         l.id AS location_id,
         l.location_name,
         r.id AS room_id,
@@ -180,6 +190,7 @@ export async function GET(req) {
         f.floor
       FROM tenant_early_terminations tet
       JOIN tenant_application ta ON tet.tenant_application_id = ta.id
+      JOIN tenant_identities ti ON ta.tenant_identity_id = ti.id
       JOIN rooms r ON ta.room_id = r.id
       JOIN locations l ON ta.location_id = l.id
       LEFT JOIN location_floor_prices f ON r.floor_id = f.id
@@ -203,10 +214,13 @@ export async function GET(req) {
         "D MMMM YYYY"
       ),
 
+      // identitas tenant
       tenant_name: row.tenant_name,
       tenant_nik: row.tenant_nik,
       tenant_phone: row.tenant_phone,
       ktp_file_path: row.ktp_file_path,
+
+      // data application
       start_date: row.start_date,
       end_date: row.end_date,
       payment_type: row.payment_type,
@@ -217,6 +231,7 @@ export async function GET(req) {
       tenant_current_step: row.tenant_current_step,
       user_id: row.user_id,
 
+      // lokasi & ruangan
       location_id: row.location_id,
       location_name: row.location_name,
       room_id: row.room_id,

@@ -51,7 +51,6 @@ const EditUser = ({
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [roleId, setRoleId] = useState("");
-  const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [showPass, setShowPass] = useState(false);
 
@@ -61,7 +60,6 @@ const EditUser = ({
       setUsername(selectedData.username);
       setPassword(selectedData.password);
       setRoleId(selectedData.role_id);
-      setPhone(selectedData.phone);
       setEmail(selectedData.email);
     }
   }, [open, selectedData]);
@@ -76,7 +74,6 @@ const EditUser = ({
         username,
         password,
         roleId,
-        phone,
         email,
       });
       if (response.data.success) {
@@ -87,9 +84,9 @@ const EditUser = ({
             message: response.data.message || "User berhasil diubah!",
             severity: "success",
           });
+        getUsersData();
+        getDataRoles();
         setTimeout(() => {
-          getUsersData();
-          getDataRoles();
           loadingFalse();
           onClose();
         }, 1000);
@@ -165,7 +162,7 @@ const EditUser = ({
                 color="primary"
               />
             </Grid>
-            <Grid size={6}>
+            <Grid size={12}>
               <TextField
                 label="Username"
                 variant="filled"
@@ -178,7 +175,7 @@ const EditUser = ({
                 color="primary"
               />
             </Grid>
-            <Grid size={6}>
+            <Grid size={12}>
               <TextField
                 label="Password"
                 variant="filled"
@@ -239,24 +236,7 @@ const EditUser = ({
                 </Select>
               </FormControl>
             </Grid>
-            <Grid size={6}>
-              <TextField
-                label="No Telpon"
-                variant="filled"
-                fullWidth
-                value={phone}
-                onChange={(e) => {
-                  // Hanya izinkan angka
-                  const onlyNums = e.target.value.replace(/[^0-9]/g, "");
-                  setPhone(onlyNums);
-                }}
-                autoFocus
-                required
-                disabled={loading}
-                color="primary"
-              />
-            </Grid>
-            <Grid size={6}>
+            <Grid size={12}>
               <TextField
                 label="Email"
                 variant="filled"

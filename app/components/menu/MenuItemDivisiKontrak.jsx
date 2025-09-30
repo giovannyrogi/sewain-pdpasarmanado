@@ -35,6 +35,13 @@ const menuDevisiKontrak = [
         icon: <Icon icon="cil:room" fontSize="20px" />,
         showIcon: true,
       },
+      {
+        label: "Identity Lists",
+        value: "identity-lists",
+        path: "/divisi-kontrak/identity-lists",
+        icon: <Icon icon="qlementine-icons:id-card-16" fontSize="20px" />,
+        showIcon: true,
+      },
     ],
   },
   {

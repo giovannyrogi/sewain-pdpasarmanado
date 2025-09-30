@@ -7,10 +7,6 @@ export async function GET(req) {
       `
       SELECT
         ta.id AS tenant_application_id,
-        ta.tenant_name,
-        ta.tenant_nik,
-        ta.tenant_phone,
-        ta.ktp_file_path,
         ta.start_date,
         ta.end_date,
         ta.payment_type,
@@ -28,6 +24,14 @@ export async function GET(req) {
         ta.estimated_installment_1_date,
         ta.estimated_installment_2_date,
         ta.estimated_installment_3_date,
+
+        -- ambil identitas dari tenant_identities
+        ti.full_name AS tenant_name,
+        ti.nik AS tenant_nik,
+        ti.phone AS tenant_phone,
+        ti.ktp_file_path,
+
+        -- lokasi & ruangan
         l.id AS location_id,
         l.location_name,
         r.id AS room_id,
@@ -40,6 +44,7 @@ export async function GET(req) {
         f.base_price,
         f.floor
       FROM tenant_application ta
+      JOIN tenant_identities ti ON ta.tenant_identity_id = ti.id
       JOIN rooms r ON ta.room_id = r.id
       JOIN locations l ON ta.location_id = l.id
       LEFT JOIN location_floor_prices f ON r.floor_id = f.id
@@ -62,10 +67,14 @@ export async function GET(req) {
     const rows = result.rows.map((row) => ({
       tenant_application_id: row.tenant_application_id,
       user_id: row.user_id,
+
+      // identitas tenant
       tenant_name: row.tenant_name,
       tenant_nik: row.tenant_nik,
       tenant_phone: row.tenant_phone,
       ktp_file_path: row.ktp_file_path,
+
+      // data aplikasi
       start_date: row.start_date,
       end_date: row.end_date,
       payment_type: row.payment_type,
@@ -79,6 +88,8 @@ export async function GET(req) {
       estimated_installment_1_date: row.estimated_installment_1_date,
       estimated_installment_2_date: row.estimated_installment_2_date,
       estimated_installment_3_date: row.estimated_installment_3_date,
+
+      // lokasi & ruangan
       location_id: row.location_id,
       location_name: row.location_name,
       room_id: row.room_id,
@@ -91,6 +102,7 @@ export async function GET(req) {
       current_step: row.current_step,
       base_price: row.base_price,
       floor: row.floor,
+
       created_at: moment(row.created_at).format("D MMMM YYYY"),
     }));
 

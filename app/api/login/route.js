@@ -10,7 +10,7 @@ export async function POST(req) {
     // 1. Cek user di database
     const userResult = await pool.query(
       `SELECT 
-         u.id, u.full_name, u.username, u.nik, u.phone, u.email, u.password, u.role_id, 
+         u.id, u.full_name, u.username, u.email, u.password, u.role_id, 
          r.role_name
        FROM users u
        JOIN roles r ON u.role_id = r.id

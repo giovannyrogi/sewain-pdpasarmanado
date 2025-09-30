@@ -3,8 +3,7 @@ import moment from "moment";
 
 export async function GET(req, { params }) {
   try {
-    // Jangan await params — params sudah object
-    const { id } = params;
+    const { id } = await params;
 
     // validasi id
     if (!id) {
@@ -28,19 +27,35 @@ export async function GET(req, { params }) {
       );
     }
 
-    // Ambil data tenant_application
+    // Ambil data tenant_application + tenant_name dari tenant_identities
     const tenantSql = `
       SELECT 
-        id, renewal_of, user_id, tenant_name, tenant_nik, tenant_phone,
-        document_number, ktp_file_path, location_id, room_id,
-        start_date, end_date, payment_type, total_payment, down_payment,
-        remaining_payment, estimated_installment_1, estimated_installment_1_date,
-        estimated_installment_2, estimated_installment_2_date,
-        estimated_installment_3, estimated_installment_3_date,
-        approval_status, current_step, current_payment_step,
-        is_fully_paid
-      FROM tenant_application
-      WHERE id = $1
+        ta.id,
+        ta.renewal_of,
+        ta.user_id,
+        ti.full_name AS tenant_name, -- ambil dari tenant_identities
+        ta.document_number,
+        ta.location_id,
+        ta.room_id,
+        ta.start_date,
+        ta.end_date,
+        ta.payment_type,
+        ta.total_payment,
+        ta.down_payment,
+        ta.remaining_payment,
+        ta.estimated_installment_1,
+        ta.estimated_installment_1_date,
+        ta.estimated_installment_2,
+        ta.estimated_installment_2_date,
+        ta.estimated_installment_3,
+        ta.estimated_installment_3_date,
+        ta.approval_status,
+        ta.current_step,
+        ta.current_payment_step,
+        ta.is_fully_paid
+      FROM tenant_application ta
+      LEFT JOIN tenant_identities ti ON ta.tenant_identity_id = ti.id
+      WHERE ta.id = $1
       LIMIT 1
     `;
     const tenantResult = await pool.query(tenantSql, [tenantId]);
@@ -85,16 +100,15 @@ export async function GET(req, { params }) {
       floorData = floorResult.rows[0] || null;
     }
 
-    // Gabungkan floor ke rooms (tanpa reassign const)
     const room = rawRoom
       ? {
           ...rawRoom,
           ...(floorData
             ? {
-                floor_id: floorData.id, // ubah nama id → floor_id agar tidak duplikat
+                floor_id: floorData.id,
                 floor: floorData.floor,
                 base_price: floorData.base_price,
-                floor_location_id: floorData.location_id, // kalau mau simpan juga
+                floor_location_id: floorData.location_id,
               }
             : {}),
         }
@@ -116,7 +130,7 @@ export async function GET(req, { params }) {
       location = locationResult.rows[0] || null;
     }
 
-    // Format tanggal yang perlu diformat
+    // Format tanggal
     const formattedTenant = {
       ...tenant,
       start_date: tenant.start_date

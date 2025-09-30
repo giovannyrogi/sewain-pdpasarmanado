@@ -4,10 +4,10 @@ import pool from "@/lib/dbConfig";
 export async function POST(req) {
   try {
     const body = await req.json();
-    const { username, password, email, fullName, roleId, phone } = body;
+    const { username, password, email, fullName, roleId } = body;
 
     // Validasi field wajib
-    if (!username || !password || !email || !fullName || !roleId || !phone) {
+    if (!username || !password || !email || !fullName || !roleId) {
       return new Response(
         JSON.stringify({ success: false, message: "Semua field wajib diisi!" }),
         { status: 400 }
@@ -31,9 +31,9 @@ export async function POST(req) {
 
     // Insert user
     const result = await pool.query(
-      `INSERT INTO users (username, password, email, full_name, role_id, phone)
-       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-      [username, password, email, fullName, roleId, phone]
+      `INSERT INTO users (username, password, email, full_name, role_id)
+       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+      [username, password, email, fullName, roleId]
     );
 
     return new Response(
@@ -90,8 +90,6 @@ export async function GET(req) {
         u.full_name,
         u.username,
         u.password,
-        u.nik,
-        u.phone,
         u.email,
         u.role_id,
         r.role_name,
@@ -109,8 +107,6 @@ export async function GET(req) {
       full_name: user.full_name,
       username: user.username,
       password: user.password,
-      nik: user.nik,
-      phone: user.phone,
       email: user.email,
       role_id: user.role_id,
       role_name: user.role_name,

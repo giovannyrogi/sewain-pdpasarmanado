@@ -72,6 +72,7 @@ const ApprovalModal = ({
           role_id: user.role_id,
           tenant_application_id:
             selectedData?.tenant_application?.tenant_application_id,
+          payment_type: selectedData?.tenant_application?.payment_type,
         }
       );
       console.log("response", response.data);

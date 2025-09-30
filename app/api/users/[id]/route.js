@@ -5,7 +5,7 @@ export async function PUT(request, { params }) {
   try {
     const { id } = params; // id dari URL
     const body = await request.json(); // data dari body
-    const { username, password, email, fullName, roleId, phone } = body;
+    const { username, password, email, fullName, roleId } = body;
 
     // Cek duplikasi username (kecuali user ini sendiri)
     const checkUsername = await pool.query(
@@ -38,9 +38,9 @@ export async function PUT(request, { params }) {
 
     // Lakukan update
     const result = await pool.query(
-      `UPDATE users SET username=$1, password=$2, email=$3, full_name=$4, role_id=$5, phone=$6
-       WHERE id=$7 RETURNING *`,
-      [username, password, email, fullName, roleId, phone, id]
+      `UPDATE users SET username=$1, password=$2, email=$3, full_name=$4, role_id=$5
+       WHERE id=$6 RETURNING *`,
+      [username, password, email, fullName, roleId, id]
     );
 
     if (result.rows.length === 0) {

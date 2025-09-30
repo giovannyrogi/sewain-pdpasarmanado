@@ -4,7 +4,7 @@ export async function PUT(request, { params }) {
   try {
     const { id } = await params; // id payment_approval
     const body = await request.json();
-    const { payment_id, status, approver_id, role_id, tenant_application_id } =
+    const { payment_id, status, approver_id, role_id, tenant_application_id, payment_type } =
       body;
 
     // Validasi input status
@@ -76,7 +76,7 @@ export async function PUT(request, { params }) {
     );
 
     // Jika payment_number == 3, set tenant_application.is_fully_paid = true
-    if (paymentData.payment_number === 3) {
+    if (paymentData.payment_number === 3 || payment_type === "lunas") {
       await pool.query(
         `UPDATE tenant_application 
          SET is_fully_paid = true

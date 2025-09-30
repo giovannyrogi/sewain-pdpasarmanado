@@ -3,12 +3,6 @@ import path from "path";
 import pool from "@/lib/dbConfig";
 import moment from "moment";
 
-// Pastikan upload directory ada
-const uploadDir = path.join(process.cwd(), "public/uploads/ktp");
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
-
 export async function POST(req) {
   try {
     const formData = await req.formData();
@@ -16,9 +10,7 @@ export async function POST(req) {
     // Ambil fields dari formData
     const location_id = formData.get("location_id");
     const room_id = formData.get("room_id");
-    const tenant_name = formData.get("tenant_name");
-    const tenant_nik = formData.get("tenant_nik");
-    const tenant_phone = formData.get("tenant_phone");
+    const tenant_identity_id = formData.get("tenant_identity_id");
     const start_date = formData.get("start_date");
     const end_date = formData.get("end_date");
     const payment_type = formData.get("payment_type");
@@ -26,7 +18,6 @@ export async function POST(req) {
     const down_payment = formData.get("down_payment");
     const remaining_payment = formData.get("remaining_payment");
     const approval_status = formData.get("approval_status");
-    const ktp_file = formData.get("ktp_file");
     const user_id = formData.get("user_id");
     const current_step = formData.get("current_step");
     const renewal_of = formData.get("renewal_of");
@@ -68,18 +59,35 @@ export async function POST(req) {
     }
 
     // Validasi wajib
-    if (
-      !location_id ||
-      !room_id ||
-      !tenant_name ||
-      !tenant_nik ||
-      !tenant_phone
-    ) {
+    if (!location_id) {
       return Response.json(
-        { success: false, message: "Data wajib tidak lengkap." },
+        { success: false, message: "Lokasi wajib diisi." },
         { status: 400 }
       );
     }
+
+    if (!room_id) {
+      return Response.json(
+        { success: false, message: "Ruangan wajib diisi." },
+        { status: 400 }
+      );
+    }
+
+    if (!tenant_identity_id) {
+      return Response.json(
+        { success: false, message: "Identitas wajib diisi." },
+        { status: 400 }
+      );
+    }
+
+    if (!total_payment) {
+      return Response.json(
+        { success: false, message: "Total pembayaran wajib diisi." },
+        { status: 400 }
+      );
+    }
+
+
 
     // Validasi room + lokasi
     const roomCheck = await pool.query(
@@ -94,44 +102,6 @@ export async function POST(req) {
         },
         { status: 400 }
       );
-    }
-
-    let ktp_file_path = null;
-    let fileBuffer = null;
-    let filename = null;
-
-    if (tenant_type === "permohonan baru") {
-      if (ktp_file && typeof ktp_file === "object") {
-        const arrayBuffer = await ktp_file.arrayBuffer();
-        fileBuffer = Buffer.from(arrayBuffer);
-
-        const ext = path.extname(ktp_file.name).toLowerCase() || ".jpg";
-        if (![".jpg", ".jpeg", ".png", ".pdf"].includes(ext)) {
-          return Response.json(
-            { success: false, message: "Format file KTP tidak valid." },
-            { status: 400 }
-          );
-        }
-
-        filename = `ktp_${tenant_name}_${moment().format(
-          "YYYY_MM_DD_HH_mm_ss"
-        )}${ext}`;
-        ktp_file_path = `/uploads/ktp/${filename}`;
-      }
-    } else if (tenant_type === "perpanjang tenant" && renewal_of) {
-      const prevApp = await pool.query(
-        "SELECT ktp_file_path FROM tenant_application WHERE id = $1",
-        [renewal_of]
-      );
-      if (prevApp.rowCount > 0) {
-        ktp_file_path = prevApp.rows[0].ktp_file_path;
-      }
-    }
-
-    // setelah DB commit
-    if (fileBuffer && filename) {
-      const filepath = path.join(uploadDir, filename);
-      await fs.promises.writeFile(filepath, fileBuffer);
     }
 
     // Normalisasi nilai numeric
@@ -151,15 +121,12 @@ export async function POST(req) {
         INSERT INTO tenant_application (
           location_id,
           room_id,
-          tenant_name,
-          tenant_nik,
-          tenant_phone,
+          tenant_identity_id,
           payment_type,
           total_payment,
           down_payment,
           remaining_payment,
           approval_status,
-          ktp_file_path,
           user_id,
           current_step,
           estimated_installment_1,
@@ -174,22 +141,19 @@ export async function POST(req) {
         )
         VALUES (
           $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13,
-          $14, $15, $16, $17, $18, $19, $20, $21, $22
+          $14, $15, $16, $17, $18, $19
         )
         RETURNING *
         `,
         [
           location_id,
           room_id,
-          tenant_name,
-          tenant_nik,
-          tenant_phone,
+          tenant_identity_id,
           payment_type,
           total_payment_num,
           down_payment_num,
           remaining_payment_num,
           approval_status,
-          ktp_file_path,
           user_id,
           current_step,
           estimated_installment_1,
@@ -238,16 +202,10 @@ export async function POST(req) {
       // Jika semua sukses → commit
       await client.query("COMMIT");
 
-      // Baru tulis file ke folder
-      if (fileBuffer && filename) {
-        const filepath = path.join(uploadDir, filename);
-        fs.writeFileSync(filepath, fileBuffer);
-      }
-
       return Response.json(
         {
           success: true,
-          message: "Permohonan berhasil ditambahkan & ruangan diperbarui.",
+          message: "Permohonan berhasil ditambahkan.",
           data: result.rows[0],
         },
         { status: 201 }
@@ -272,10 +230,7 @@ export async function GET(req) {
     const result = await pool.query(
       `SELECT
         ta.id AS tenant_application_id,
-        ta.tenant_name,
-        ta.tenant_nik,
-        ta.tenant_phone,
-        ta.ktp_file_path,
+        ta.tenant_identity_id,
         ta.start_date,
         ta.end_date,
         ta.payment_type,
@@ -297,6 +252,13 @@ export async function GET(req) {
         ta.renewal_of,
         ta.is_fully_paid,
 
+        -- identitas penyewa saat ini
+        ti.full_name AS tenant_name,
+        ti.nik AS tenant_nik,
+        ti.phone AS tenant_phone,
+        ti.ktp_file_path AS ktp_file_path,
+
+        -- lokasi & ruangan
         l.id AS location_id,
         l.location_name,
         r.id AS room_id,
@@ -309,19 +271,24 @@ export async function GET(req) {
         f.base_price,
         f.floor,
 
-        -- data tenant sebelumnya (hanya 1 level)
+        -- data tenant sebelumnya (1 level back)
         prev.id AS old_tenant_id,
-        prev.tenant_name AS old_tenant_name,
-        prev.end_date AS old_end_date,
+        prev.document_number AS old_document_number,
         prev.start_date AS old_start_date,
-        prev.document_number AS old_document_number
+        prev.end_date AS old_end_date,
+        pti.full_name AS old_tenant_name,
+        pti.nik AS old_tenant_nik,
+        pti.phone AS old_tenant_phone,
+        pti.ktp_file_path AS old_ktp_file_path
 
       FROM tenant_application ta
+      JOIN tenant_identities ti ON ta.tenant_identity_id = ti.id
       JOIN rooms r ON ta.room_id = r.id
       JOIN locations l ON ta.location_id = l.id
       LEFT JOIN location_floor_prices f ON r.floor_id = f.id
       LEFT JOIN tenant_early_terminations tet ON tet.tenant_application_id = ta.id
       LEFT JOIN tenant_application prev ON ta.renewal_of = prev.id
+      LEFT JOIN tenant_identities pti ON prev.tenant_identity_id = pti.id
       WHERE tet.is_terminated = false
          OR tet.is_terminated IS NULL
       ORDER BY ta.created_at DESC`
@@ -329,6 +296,7 @@ export async function GET(req) {
 
     const rows = result.rows.map((row) => ({
       tenant_application_id: row.tenant_application_id,
+      tenant_identity_id: row.tenant_identity_id,
       user_id: row.user_id,
       tenant_name: row.tenant_name,
       tenant_nik: row.tenant_nik,
@@ -366,6 +334,9 @@ export async function GET(req) {
         ? {
             tenant_application_id: row.old_tenant_id,
             tenant_name: row.old_tenant_name,
+            tenant_nik: row.old_tenant_nik,
+            tenant_phone: row.old_tenant_phone,
+            ktp_file_path: row.old_ktp_file_path,
             start_date: row.old_start_date,
             end_date: row.old_end_date,
             document_number: row.old_document_number,

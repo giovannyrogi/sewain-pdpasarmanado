@@ -50,7 +50,6 @@ const AddUser = ({
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [roleId, setRoleId] = useState("");
-  const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [showPass, setShowPass] = useState(false);
 
@@ -64,7 +63,6 @@ const AddUser = ({
         username,
         password,
         roleId,
-        phone,
         email,
       });
       if (response.data.success) {
@@ -75,9 +73,9 @@ const AddUser = ({
             message: response.data.message || "User berhasil ditambahkan!",
             severity: "success",
           });
+        getUsersData();
+        getDataRoles();
         setTimeout(() => {
-          getUsersData();
-          getDataRoles();
           onClose();
           clearForm();
           loadingFalse();
@@ -111,7 +109,6 @@ const AddUser = ({
     setUsername("");
     setPassword("");
     setRoleId("");
-    setPhone("");
     setEmail("");
   };
 
@@ -162,7 +159,7 @@ const AddUser = ({
                 color="primary"
               />
             </Grid>
-            <Grid size={6}>
+            <Grid size={12}>
               <TextField
                 label="Username"
                 variant="filled"
@@ -175,7 +172,7 @@ const AddUser = ({
                 color="primary"
               />
             </Grid>
-            <Grid size={6}>
+            <Grid size={12}>
               <TextField
                 label="Password"
                 variant="filled"
@@ -236,24 +233,7 @@ const AddUser = ({
                 </Select>
               </FormControl>
             </Grid>
-            <Grid size={6}>
-              <TextField
-                label="No Telpon"
-                variant="filled"
-                fullWidth
-                value={phone}
-                onChange={(e) => {
-                  // Hanya izinkan angka
-                  const onlyNums = e.target.value.replace(/[^0-9]/g, "");
-                  setPhone(onlyNums);
-                }}
-                autoFocus
-                required
-                disabled={loading}
-                color="primary"
-              />
-            </Grid>
-            <Grid size={6}>
+            <Grid size={12}>
               <TextField
                 label="Email"
                 variant="filled"

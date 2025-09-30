@@ -30,6 +30,7 @@ import LoadingBackdrop from "@/app/components/loading/Backdrop";
 import { useThemeMode } from "@/app/components/themeprovider/ThemeContext";
 import DetailRoomsModal from "@/app/components/detailroomsmodal/page";
 import ViewCalcPPNModal from "@/app/components/view-calc-ppn-modal/ViewCalcPPNModal";
+import InformationPreviewModal from "@/app/components/informationpreviewmodal/page";
 
 const AddTenantApplication = ({
   open,
@@ -67,11 +68,7 @@ const AddTenantApplication = ({
   const theme = useTheme();
 
   const [ktpFilePath, setKtpFilePath] = useState("");
-  const [ktpFile, setKtpFile] = useState(null);
   const [locationId, setLocationId] = useState("");
-  const [tenantName, setTenantName] = useState("");
-  const [tenantNIK, setTenantNIK] = useState("");
-  const [tenantPhone, setTenantPhone] = useState("");
   const [roomId, setRoomId] = useState("");
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
@@ -109,6 +106,12 @@ const AddTenantApplication = ({
     useState(0);
   const [totalPaymentDownPayment, setTotalPaymentDownPayment] = useState(0);
   const [totalInstallment, setTotalInstallment] = useState(0);
+
+  const [listDataIdentity, setListDataIdentity] = useState([]);
+  const [identityID, setIdentityID] = useState(null);
+  const [selectedDataIdentity, setSelectedDataIdentity] = useState("");
+  const [openViewInformationModal, setOpenViewInformationModal] =
+    useState(false);
 
   const getRoomsData = async (locationId) => {
     if (!locationId) {
@@ -177,10 +180,6 @@ const AddTenantApplication = ({
         `/api/tenant-application/tenant-extends/${id}`
       );
       console.log("response previous data", response);
-      setTenantName(response.data?.data?.tenant_application?.tenant_name);
-      setTenantNIK(response.data?.data?.tenant_application?.tenant_nik);
-      setTenantPhone(response.data?.data?.tenant_application?.tenant_phone);
-      setKtpFilePath(response.data?.data?.tenant_application?.ktp_file_path);
       setLocationId(response.data?.data?.locations?.id);
 
       await getRoomsData(response.data?.data?.locations?.id);
@@ -203,6 +202,34 @@ const AddTenantApplication = ({
       }, 1000);
     }
   };
+
+  const getListIdentities = async () => {
+    loadingTrue();
+    setLoadingMessage("Mengambil data tenant baru...");
+    try {
+      const response = await axios.get("/api/tenant-application/new-tenant");
+      console.log("response identity-list", response);
+      if (response.data.success) {
+        setListDataIdentity(response.data.data);
+        setTimeout(() => {
+          loadingFalse();
+          setLoadingMessage("");
+        }, 1000);
+      }
+    } catch (error) {
+      console.log("error", error);
+      setTimeout(() => {
+        loadingFalse();
+        setLoadingMessage("");
+      }, 1000);
+    }
+  };
+
+  useEffect(() => {
+    if (open) {
+      getListIdentities();
+    }
+  }, [open]);
 
   // Sinkronisasi DP & Sisa saat totalPayment atau paymentType berubah
   useEffect(() => {
@@ -285,19 +312,6 @@ const AddTenantApplication = ({
     const minDp = Math.round(total * 0.4);
     const dp = Number(downPayment) || 0;
 
-    // Validasi KTP
-    if (!ktpFile && tenantType === "permohonan baru") {
-      onNotify &&
-        onNotify({
-          open: true,
-          message: "Silakan upload gambar KTP terlebih dahulu.",
-          severity: "error",
-        });
-      loadingFalse && loadingFalse();
-      setIsSubmitting(false);
-      return;
-    }
-
     setIsSubmitting(true);
 
     if (paymentType === "cicilan" && dp < minDp) {
@@ -369,9 +383,6 @@ const AddTenantApplication = ({
       const formData = new FormData();
       formData.append("location_id", locationId);
       formData.append("room_id", roomId);
-      formData.append("tenant_name", tenantName);
-      formData.append("tenant_nik", tenantNIK);
-      formData.append("tenant_phone", tenantPhone);
       formData.append("payment_type", paymentType);
       formData.append("total_payment", totalPayment);
       formData.append("down_payment", downPayment);
@@ -380,6 +391,7 @@ const AddTenantApplication = ({
       formData.append("user_id", user.id);
       formData.append("current_step", 1);
       formData.append("tenant_type", tenantType);
+      formData.append("tenant_identity_id", identityID);
 
       if (tenantType === "perpanjang tenant" && endDate) {
         // tenant lama endDate dijadikan start_date tenant baru
@@ -389,10 +401,6 @@ const AddTenantApplication = ({
 
         formData.append("start_date", newStartDate);
         formData.append("end_date", newEndDate);
-      }
-
-      if (ktpFilePath) {
-        formData.append("ktp_file_path", ktpFilePath);
       }
 
       // hanya kirim data cicilan kalau paymentType === 'cicilan'
@@ -424,14 +432,10 @@ const AddTenantApplication = ({
         }
       }
 
-      if (ktpFile) {
-        formData.append("ktp_file", ktpFile);
-      }
-
       if (tenantType === "perpanjang tenant") {
         formData.append(
           "renewal_of",
-          selectedDataTenantExtends ? selectedDataTenantExtends.id : null
+          selectedDataTenantExtends ? selectedDataTenantExtends?.tenant_application_id : null
         );
       }
 
@@ -495,17 +499,14 @@ const AddTenantApplication = ({
   const clearForm = () => {
     setLocationId("");
     setRoomId("");
-    setTenantName("");
-    setTenantNIK("");
-    setTenantPhone("");
     setStartDate(null);
     setEndDate(null);
     setPaymentType("lunas");
     setTotalPayment("");
     setDownPayment("");
     setRemainingPayment("");
-    setKtpFile(null);
-    setKtpFilePath(null);
+    setListDataIdentity([]);
+    setIdentityID("");
     setEstimatedInstallment1("");
     setEstimatedInstallment2("");
     setEstimatedInstallment3("");
@@ -514,27 +515,6 @@ const AddTenantApplication = ({
     setEstimatedInstallmentDate3(null);
     setTenantType("permohonan baru");
     setSelectedDataTenantExtends(null);
-  };
-
-  const handleKtpChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      if (file.size > 1024 * 1024) {
-        // 1MB = 1024*1024 bytes
-        onNotify &&
-          onNotify({
-            open: true,
-            message:
-              "Ukuran file maksimal 1MB. Silakan pilih file yang lebih kecil.",
-            severity: "error",
-          });
-        // Reset input file agar user bisa pilih ulang
-        e.target.value = "";
-        return;
-      }
-      setKtpFile(file);
-      setKtpFilePath(URL.createObjectURL(file));
-    }
   };
 
   // Pilihan dropdown
@@ -619,7 +599,7 @@ const AddTenantApplication = ({
                 )}
               />
             </Grid>
-            {tenantType === "perpanjang tenant" && (
+            {tenantType === "perpanjang tenant" ? (
               <Grid size={12}>
                 <Autocomplete
                   disabled={!tenantType || tenantType === "permohonan baru"}
@@ -628,12 +608,14 @@ const AddTenantApplication = ({
                   value={selectedDataTenantExtends}
                   onChange={(event, newValue) => {
                     setSelectedDataTenantExtends(newValue ?? null);
+                    // console.log("newValue perpanjang tenant", newValue);
 
                     // clear form setelah menghapus data tenant lama
                     if (!newValue) {
                       clearForm();
                     } else {
-                      getCurrentExtendTenant(newValue?.id);
+                      getCurrentExtendTenant(newValue?.tenant_application_id);
+                      setIdentityID(newValue?.tenant_identity_id);
                     }
                   }}
                   renderInput={(params) => (
@@ -646,71 +628,40 @@ const AddTenantApplication = ({
                   )}
                 />
               </Grid>
-            )}
-            <Grid size={12}>
-              <TextField
-                label="Nama Lengkap(sesuai KTP)"
-                // placeholder="Cth: 2.86"
-                variant="filled"
-                fullWidth
-                value={tenantName}
-                onChange={(e) => setTenantName(e.target.value)}
-                autoFocus
-                required
-                disabled={loading}
-                color="primary"
-              />
-            </Grid>
-            <Grid size={6}>
-              <TextField
-                label="NIK"
-                // placeholder="Cth: 2.86"
-                variant="filled"
-                fullWidth
-                value={tenantNIK}
-                onChange={(e) => {
-                  // simpan hanya angka dan tidak ada spasi
-                  setTenantNIK(e.target.value.replace(/[^0-9]/g, ""));
-                }}
-                autoFocus
-                required
-                disabled={loading}
-                color="primary"
-              />
-            </Grid>
-            <Grid size={6}>
-              <TextField
-                label="No HP"
-                // placeholder="Cth: 2.86"
-                variant="filled"
-                fullWidth
-                value={tenantPhone}
-                onChange={(e) => {
-                  // simpan hanya angka dan tidak ada spasi
-                  setTenantPhone(e.target.value.replace(/[^0-9]/g, ""));
-                }}
-                autoFocus
-                required
-                disabled={loading}
-                color="primary"
-              />
-            </Grid>
-            <Grid
-              size={12}
-              sx={{
-                border: `1px solid ${theme.palette.primary.main}`,
-                borderRadius: 2,
-              }}
-            >
-              {ktpFilePath ? (
-                <Box
-                  sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    p: 0.8,
+            ) : (
+              <Grid size={12}>
+                <Autocomplete
+                  options={listDataIdentity || []}
+                  getOptionLabel={(option) => option.full_name || ""}
+                  value={
+                    listDataIdentity.find((item) => item.id === identityID) ||
+                    null
+                  }
+                  onChange={(event, newValue) => {
+                    // console.log("newValue", newValue);
+                    setIdentityID(newValue ? newValue.id : null);
+                    setSelectedDataIdentity(newValue ?? "");
                   }}
-                >
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Pilih Data Penyewa"
+                      variant="filled"
+                      required
+                    />
+                  )}
+                />
+              </Grid>
+            )}
+            {identityID && (
+              <Grid
+                container
+                size={12}
+                sx={{
+                  mt: isMobile ? -2 : -1.2,
+                }}
+              >
+                <Grid size={isMobile ? 12 : 6}>
                   <Typography
                     sx={{
                       fontWeight: "bold",
@@ -721,52 +672,13 @@ const AddTenantApplication = ({
                         textDecoration: "underline",
                       },
                     }}
-                    onClick={() => setOpenPreview(true)}
+                    onClick={() => setOpenViewInformationModal(true)}
                   >
-                    Lihat KTP
+                    Lihat Data Penyewa
                   </Typography>
-                  <IconButton
-                    size="small"
-                    variant={themeMode === "dark" ? "outlined" : "contained"}
-                    color="error"
-                    sx={{ minWidth: 0, p: 0 }}
-                  >
-                    <Icon
-                      icon="line-md:trash"
-                      fontSize={18}
-                      color="error"
-                      onClick={() => setKtpFilePath("")}
-                    />
-                  </IconButton>
-                </Box>
-              ) : (
-                <Button
-                  variant="text"
-                  component="label"
-                  color="primary"
-                  fullWidth
-                  sx={{
-                    textTransform: "none",
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    fontWeight: "bold",
-                  }}
-                  disabled={loading}
-                >
-                  <Typography sx={{ fontWeight: "bold", fontSize: "12px" }}>
-                    Upload KTP
-                  </Typography>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    hidden
-                    onChange={handleKtpChange}
-                    disabled={loading}
-                  />
-                </Button>
-              )}
-            </Grid>
+                </Grid>
+              </Grid>
+            )}
             <Grid size={isMobile ? 12 : 6}>
               <Autocomplete
                 options={dataLocations || []}
@@ -819,6 +731,7 @@ const AddTenantApplication = ({
                     required
                   />
                 )}
+                disabled={!locationId}
               />
             </Grid>
 
@@ -1106,6 +1019,11 @@ const AddTenantApplication = ({
           totalSewaKontrakDownPayment={totalSewaKontrakDownPayment}
           totalPaymentDownPayment={totalPaymentDownPayment}
           totalInstallment={totalInstallment}
+        />
+        <InformationPreviewModal
+          open={openViewInformationModal}
+          onClose={() => setOpenViewInformationModal(false)}
+          selectedData={selectedDataIdentity}
         />
         {/* Modal Preview Gambar */}
         <ImagePreviewModal

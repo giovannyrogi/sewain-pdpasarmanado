@@ -174,6 +174,7 @@ const AddPayment = ({
     formData.append("ppn_amount", Number(PPNAmount));
     formData.append("amount", amount);
     formData.append("remaining_balance", remainingBalanceAfterInstallment);
+    formData.append("payment_type", typePembayaran);
 
     // cek formdata
     // for (const pair of formData.entries()) {

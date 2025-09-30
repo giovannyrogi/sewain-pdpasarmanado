@@ -266,7 +266,7 @@ const AddRoom = ({
                 fullWidth
                 value={roomNumber}
                 onChange={(e) =>
-                  setRoomNumber(e.target.value.replace(/\s/g, ""))
+                  setRoomNumber(e.target.value)
                 }
                 autoFocus
                 required

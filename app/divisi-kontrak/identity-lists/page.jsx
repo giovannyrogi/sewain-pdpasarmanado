@@ -1,23 +1,23 @@
 "use client";
 import { Box, Button, Paper, Typography, useTheme } from "@mui/material";
-import React, { use, useEffect, useState } from "react";
-import { Table, ConfigProvider, theme as antdTheme, Input } from "antd";
+import React, { useEffect, useState } from "react";
+import { Table, ConfigProvider, theme as antdTheme, Input, Tag } from "antd";
 import { useThemeMode } from "../../components/themeprovider/ThemeContext";
 import moment from "moment";
 import { Icon } from "@iconify/react";
 import LoadingBackdrop from "../../components/loading/Backdrop";
 import Notification from "../../components/Notification";
-import AddUser from "./AddUser";
-import EditUser from "./EditUser";
-import DeleteUser from "./DeleteUser";
 import axios from "axios";
-import menuSuperadmin from "@/app/components/menu/MenuItemSuperadmin";
 import BreadcrumbPage from "@/app/components/breadcrumb/page";
-import { useUser } from "@/app/utils/useUser";
+import formatRupiah from "@/app/components/formatrupiah/page";
+import menuDevisiKontrak from "@/app/components/menu/MenuItemDivisiKontrak";
+import AddIdentity from "./AddIdentity";
+import EditIdentity from "./EditIdentity";
+import DeleteIdentity from "./DeleteIdentity";
+import InformationPreviewModal from "@/app/components/informationpreviewmodal/page";
 
-const Users = () => {
-  const [dataUsers, setDataUsers] = useState([]);
-  const [dataRoles, setDataRoles] = useState([]);
+const IdentityList = () => {
+  const [dataIdentities, setDataIdentities] = useState([]);
   const { themeMode } = useThemeMode();
   const theme = useTheme();
   const [searchText, setSearchText] = useState("");
@@ -32,16 +32,16 @@ const Users = () => {
     message: "",
     severity: "success",
   });
-  const [currentRole, setCurrentRole] = useState("");
-  const user = useUser();
+  const [loadingMessage, setLoadingMessage] = useState("Loading...");
+  const [openViewInformationModal, setOpenViewInformationModal] =
+    useState(false);
 
-  const getUsersData = async () => {
+  const getDataIdentities = async () => {
     setLoading(true);
     try {
-      // Kirim role_name sebagai query parameter
-      const response = await axios.get(`/api/users?role_id=${user.role_id}`);
-      console.log("Users data", response);
-      setDataUsers(response.data.data);
+      const response = await axios.get("/api/identity-list");
+      console.log("data identitas", response);
+      setDataIdentities(response.data.data);
       setTimeout(() => {
         setLoading(false);
       }, 1000);
@@ -53,32 +53,31 @@ const Users = () => {
     }
   };
 
-  const getDataRoles = async () => {
-    setLoading(true);
+  useEffect(() => {
+    getDataIdentities();
+  }, []);
 
-    try {
-      const response = await axios.get("/api/roles");
-      console.log("data role", response.data);
-      setDataRoles(response.data.data);
-    } catch (error) {
-      console.log(error);
+  const filteredData = dataIdentities.filter((item) => {
+    // const isAvailableText =
+    //   item.is_available === false
+    //     ? "tersedia"
+    //     : item.is_available === true
+    //     ? "tidak tersedia"
+    //     : "";
+    return (
+      item.full_name?.toLowerCase().includes(searchText.toLowerCase()) ||
+      item.nik?.toLowerCase().includes(searchText.toLowerCase()) ||
+      item.occupation?.toLowerCase().includes(searchText.toLowerCase()) ||
+      item.nationality?.toLowerCase().includes(searchText.toLowerCase()) ||
+      item.birth_place?.toLowerCase().includes(searchText.toLowerCase())
+    );
+  });
+
+  const onChange = (pagination, filters, sorter, extra) => {
+    if (pagination.pageSize !== pageSize) {
+      setPageSize(pagination.pageSize);
     }
   };
-
-  useEffect(() => {
-    if (user) {
-      getUsersData();
-      getDataRoles();
-    }
-  }, [user]);
-
-  const filteredData = dataUsers.filter(
-    (item) =>
-      item.full_name?.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.username?.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.email?.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.role_name?.toLowerCase().includes(searchText.toLowerCase())
-  );
 
   const handleEdit = (record) => {
     // console.log("edit record", record);
@@ -92,10 +91,10 @@ const Users = () => {
     setOpenDeleteModal(true);
   };
 
-  const onChange = (pagination, filters, sorter, extra) => {
-    if (pagination.pageSize !== pageSize) {
-      setPageSize(pagination.pageSize);
-    }
+  const handleViewInformation = (record) => {
+    // console.log("delete record", record);
+    setSelectedData(record);
+    setOpenViewInformationModal(true);
   };
 
   // Utility untuk filter dinamis
@@ -109,12 +108,11 @@ const Users = () => {
     return (value, record) => record[key] === value;
   }
 
-  const nameFilters = generateFilters(dataUsers, "full_name");
-  const roleFilters = generateFilters(dataUsers, "role_name");
+  const nameFilters = generateFilters(dataIdentities, "full_name");
 
   const columns = [
     {
-      title: "Nama User",
+      title: "Nama Lengkap",
       dataIndex: "full_name",
       filters: nameFilters,
       onFilter: createOnFilter("full_name"),
@@ -129,30 +127,45 @@ const Users = () => {
       width: 150,
     },
     {
-      title: "Username",
-      dataIndex: "username",
-      width: 100,
-    },
-    {
-      title: "Password",
-      dataIndex: "password",
-      render: (text) => (
-        <span>{"*".repeat(text?.length > 0 ? text.length : 6)}</span>
+      title: "NIK",
+      dataIndex: "nik",
+      render: (text, record) => (
+        <Typography sx={{ fontWeight: "bold", fontSize: "12px" }}>
+          {record.nik}
+        </Typography>
       ),
       width: 100,
     },
     {
-      title: "Role",
-      dataIndex: "role_name",
-      filters: roleFilters,
-      onFilter: createOnFilter("role_name"),
-      filterSearch: true,
+      title: "Tempat, Tanggal Lahir",
+      dataIndex: "nik",
+      render: (text, record) => (
+        <Typography sx={{ fontWeight: "bold", fontSize: "12px" }}>
+          {record.birth_place},{" "}
+          {moment(record.birth_date).format("D MMMM YYYY")}
+        </Typography>
+      ),
       width: 150,
     },
     {
-      title: "Email",
-      dataIndex: "email",
-      width: 150,
+      title: "Pekerjaan",
+      dataIndex: "occupation",
+      render: (text, record) => (
+        <Typography sx={{ fontWeight: "bold", fontSize: "12px" }}>
+          {record.occupation}
+        </Typography>
+      ),
+      width: 100,
+    },
+    {
+      title: "Kewarganegaraan",
+      dataIndex: "nationality",
+      render: (text, record) => (
+        <Typography sx={{ fontWeight: "bold", fontSize: "12px" }}>
+          {record.nationality}
+        </Typography>
+      ),
+      width: 120,
     },
     {
       title: "Actions",
@@ -174,6 +187,15 @@ const Users = () => {
           <Button
             size="small"
             variant={themeMode === "dark" ? "outlined" : "contained"}
+            color="success"
+            onClick={() => handleViewInformation(record)}
+            sx={{ minWidth: 0, px: 1 }}
+          >
+            <Icon icon="mdi:information-outline" fontSize={18} />
+          </Button>
+          <Button
+            size="small"
+            variant={themeMode === "dark" ? "outlined" : "contained"}
             color="error"
             onClick={() => handleDelete(record)}
             sx={{ minWidth: 0, px: 1 }}
@@ -188,7 +210,7 @@ const Users = () => {
   return (
     <Box sx={{ width: "100%", height: "100%", minHeight: "100%", p: 2 }}>
       {/* Component Breadcrumbs disini */}
-      <BreadcrumbPage menuList={menuSuperadmin} />
+      <BreadcrumbPage menuList={menuDevisiKontrak} />
 
       <Box
         sx={{
@@ -198,7 +220,7 @@ const Users = () => {
           justifyContent: "flex-end",
           transition: "all 0.3s",
           mb: 2,
-          mt: 3,
+          mt: 4,
         }}
       >
         <Button
@@ -215,7 +237,7 @@ const Users = () => {
           }}
         >
           Tambah
-          <Icon icon="line-md:account-add" fontSize="20px" />
+          <Icon icon="qlementine-icons:id-card-16" fontSize="20px" />
         </Button>
       </Box>
       <ConfigProvider
@@ -227,6 +249,7 @@ const Users = () => {
           token: {
             colorPrimary: theme.palette.primary.main, // warna utama (angka aktif, outline, dsb)
             // colorText: theme.palette.text.primary, // warna teks default
+            // colorBgContainer: theme.palette.background.default, // background tabel
           },
         }}
       >
@@ -243,7 +266,7 @@ const Users = () => {
           }}
         >
           <Input.Search
-            placeholder="Cari Nama User"
+            placeholder="Cari..."
             allowClear
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
@@ -266,43 +289,41 @@ const Users = () => {
           />
         </Paper>
       </ConfigProvider>
-      <AddUser
+      <AddIdentity
         open={openAddModal}
         onClose={() => setOpenAddModal(false)}
+        onNotify={(onNotify) => setSnackbar(onNotify)}
         loadingTrue={() => setLoading(true)}
         loadingFalse={() => setLoading(false)}
         loading={loading}
-        getUsersData={getUsersData}
-        getDataRoles={getDataRoles}
-        onNotify={(notif) => setSnackbar(notif)}
-        currentRole={currentRole}
-        dataRoles={dataRoles}
+        getDataIdentities={getDataIdentities}
       />
-      <EditUser
+      <EditIdentity
         open={openEditModal}
         onClose={() => setOpenEditModal(false)}
+        onNotify={(onNotify) => setSnackbar(onNotify)}
         loadingTrue={() => setLoading(true)}
         loadingFalse={() => setLoading(false)}
         loading={loading}
-        getUsersData={getUsersData}
-        getDataRoles={getDataRoles}
+        getDataIdentities={getDataIdentities}
         selectedData={selectedData}
-        onNotify={(notif) => setSnackbar(notif)}
-        currentRole={currentRole}
-        dataRoles={dataRoles}
       />
-      <DeleteUser
+      <DeleteIdentity
         open={openDeleteModal}
         onClose={() => setOpenDeleteModal(false)}
+        onNotify={(onNotify) => setSnackbar(onNotify)}
         loadingTrue={() => setLoading(true)}
         loadingFalse={() => setLoading(false)}
         loading={loading}
-        getUsersData={getUsersData}
-        getDataRoles={getDataRoles}
-        onNotify={(notif) => setSnackbar(notif)}
+        selectedData={selectedData}
+        getDataIdentities={getDataIdentities}
+      />
+      <InformationPreviewModal
+        open={openViewInformationModal}
+        onClose={() => setOpenViewInformationModal(false)}
         selectedData={selectedData}
       />
-      <LoadingBackdrop message="Loading..." open={loading} />
+      <LoadingBackdrop message={loadingMessage} open={loading} />
       {/* Snackbar notification */}
       <Notification
         open={snackbar.open}
@@ -314,4 +335,4 @@ const Users = () => {
   );
 };
 
-export default Users;
+export default IdentityList;

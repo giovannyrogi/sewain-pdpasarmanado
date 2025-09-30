@@ -56,7 +56,6 @@ const Applications = () => {
     severity: "success",
   });
   const [loadingMessage, setLoadingMessage] = useState("Loading...");
-  const [openInformationModal, setOpenInformationModal] = useState(false);
   const [openApprovalModal, setOpenApprovalModal] = useState(false);
   const [
     openTenantApprovalInformationModal,
@@ -169,12 +168,6 @@ const Applications = () => {
     setOpenDeleteModal(true);
   };
 
-  const handleInformation = (record) => {
-    // console.log("delete record", record);
-    setSelectedData(record);
-    setOpenInformationModal(true);
-  };
-
   const handleApproval = (record) => {
     setSelectedData(record);
     setOpenApprovalModal(true);
@@ -229,23 +222,6 @@ const Applications = () => {
       filterSearch: true,
       sorter: (a, b) => a.tenant_name.localeCompare(b.tenant_name),
       sortDirections: ["ascend", "descend"],
-      render: (text, record) => (
-        <Typography
-          sx={{
-            fontWeight: "bold",
-            fontSize: "12px",
-            textTransform: "capitalize",
-            cursor: "pointer",
-            "&:hover": {
-              color: theme.palette.primary.main,
-              textDecoration: "underline",
-            },
-          }}
-          onClick={() => handleInformation(record)}
-        >
-          {record.tenant_name}
-        </Typography>
-      ),
       width: 200,
     },
     {
@@ -275,7 +251,7 @@ const Applications = () => {
       //     </Tag>
       //   );
       // },
-      width: 120,
+      width: 150,
     },
     {
       title: "Lantai",
@@ -631,12 +607,6 @@ const Applications = () => {
         onNotify={(notif) => setSnackbar(notif)}
         selectedData={selectedData}
         user={user}
-      />
-      <InformationPreviewModal
-        open={openInformationModal}
-        onClose={() => setOpenInformationModal(false)}
-        selectedData={selectedData}
-        title="Preview Informasi Pemohon"
       />
       <ApprovalModal
         open={openApprovalModal}

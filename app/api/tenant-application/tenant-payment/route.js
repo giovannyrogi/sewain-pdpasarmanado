@@ -6,10 +6,6 @@ export async function GET() {
     const sql = `
     SELECT
       ta.id AS tenant_application_id,
-      ta.tenant_name,
-      ta.tenant_nik,
-      ta.tenant_phone,
-      ta.ktp_file_path,
       ta.start_date,
       ta.end_date,
       ta.payment_type,
@@ -28,6 +24,13 @@ export async function GET() {
       ta.estimated_installment_2_date,
       ta.estimated_installment_3_date,
       ta.current_payment_step,
+
+      -- ambil data identitas tenant
+      ti.full_name AS tenant_name,
+      ti.nik AS tenant_nik,
+      ti.phone AS tenant_phone,
+      ti.ktp_file_path,
+
       rm.id AS room_id,
       rm.room_number,
       rm.floor_id,
@@ -40,13 +43,16 @@ export async function GET() {
       loc.location_name,
       loc.address AS location_address,
       loc.city AS location_city,
+
       p.id AS payment_id,
       p.payment_date,
       p.amount AS payment_amount,
       p.proof_file_path,
       p.payment_number,
       p.remaining_balance
+
     FROM tenant_application ta
+    LEFT JOIN tenant_identities ti ON ta.tenant_identity_id = ti.id
     LEFT JOIN rooms rm ON rm.id = ta.room_id
     LEFT JOIN locations loc ON loc.id = ta.location_id
     LEFT JOIN location_floor_prices lfp ON lfp.id = rm.floor_id

@@ -3,13 +3,8 @@ import path from "path";
 import pool from "@/lib/dbConfig";
 import moment from "moment";
 
-const uploadDir = path.join(process.cwd(), "public/uploads/ktp");
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
-
 export async function PUT(req, { params }) {
-  const { id } = params;
+  const { id } = await params;
 
   try {
     const formData = await req.formData();
@@ -17,19 +12,12 @@ export async function PUT(req, { params }) {
     // Ambil fields
     const location_id = formData.get("location_id");
     const room_id = formData.get("room_id");
-    const tenant_name = formData.get("tenant_name");
-    const tenant_nik = formData.get("tenant_nik");
-    const tenant_phone = formData.get("tenant_phone");
-    // const start_date = formData.get("start_date");
-    // const end_date = formData.get("end_date");
+    const tenant_identity_id = formData.get("tenant_identity_id");
     const payment_type = formData.get("payment_type");
     const total_payment = formData.get("total_payment");
     const down_payment = formData.get("down_payment");
     const remaining_payment = formData.get("remaining_payment");
     const approval_status = formData.get("approval_status");
-    const ktp_file = formData.get("ktp_file");
-    const ktp_file_path_old = formData.get("ktp_file_path");
-    // const current_step = formData.get("current_step");
     const user_id = formData.get("user_id");
     const estimated_installment_1 = formData.get("estimated_installment_1");
     const estimated_installment_2 = formData.get("estimated_installment_2");
@@ -45,15 +33,30 @@ export async function PUT(req, { params }) {
     );
 
     // Validasi wajib
-    if (
-      !location_id ||
-      !room_id ||
-      !tenant_name ||
-      !tenant_nik ||
-      !tenant_phone
-    ) {
+    if (!location_id) {
       return Response.json(
-        { success: false, message: "Data wajib tidak lengkap." },
+        { success: false, message: "Lokasi wajib diisi." },
+        { status: 400 }
+      );
+    }
+
+    if (!room_id) {
+      return Response.json(
+        { success: false, message: "Ruangan wajib diisi." },
+        { status: 400 }
+      );
+    }
+
+    if (!tenant_identity_id) {
+      return Response.json(
+        { success: false, message: "Identitas wajib diisi." },
+        { status: 400 }
+      );
+    }
+
+    if (!total_payment) {
+      return Response.json(
+        { success: false, message: "Total pembayaran wajib diisi." },
         { status: 400 }
       );
     }
@@ -90,31 +93,6 @@ export async function PUT(req, { params }) {
       );
     }
 
-    // Handle file KTP
-    let ktp_file_path = null;
-    let fileBuffer = null;
-    let filename = null;
-
-    if (ktp_file && typeof ktp_file === "object") {
-      const arrayBuffer = await ktp_file.arrayBuffer();
-      fileBuffer = Buffer.from(arrayBuffer);
-      const ext = path.extname(ktp_file.name) || ".jpg";
-      filename = `ktp_${tenant_name}_${moment(Date.now()).format(
-        "YYYY_MM_DD_HH_mm_ss"
-      )}${ext}`;
-      ktp_file_path = `/uploads/ktp/${filename}`;
-    } else if (ktp_file_path_old) {
-      ktp_file_path = ktp_file_path_old;
-    } else {
-      return Response.json(
-        {
-          success: false,
-          message: "Silakan upload gambar KTP terlebih dahulu.",
-        },
-        { status: 400 }
-      );
-    }
-
     // Normalisasi angka
     const total_payment_num = total_payment ? Number(total_payment) : 0;
     const down_payment_num = down_payment ? Number(down_payment) : 0;
@@ -132,32 +110,27 @@ export async function PUT(req, { params }) {
         SET
         location_id = $1,
         room_id = $2,
-        tenant_name = $3,
-        tenant_nik = $4,
-        tenant_phone = $5,
-        payment_type = $6,
-        total_payment = $7,
-        down_payment = $8,
-        remaining_payment = $9,
-        approval_status = $10,
-        current_step = $11,
-        user_id = $12,
-        ktp_file_path = $13,
-        estimated_installment_1 = $14,
-        estimated_installment_2 = $15,
-        estimated_installment_3 = $16,
-        estimated_installment_1_date = $17,
-        estimated_installment_2_date = $18,
-        estimated_installment_3_date = $19
-        WHERE id = $20
+        tenant_identity_id = $3,
+        payment_type = $4,
+        total_payment = $5,
+        down_payment = $6,
+        remaining_payment = $7,
+        approval_status = $8,
+        current_step = $9,
+        user_id = $10,
+        estimated_installment_1 = $11,
+        estimated_installment_2 = $12,
+        estimated_installment_3 = $13,
+        estimated_installment_1_date = $14,
+        estimated_installment_2_date = $15,
+        estimated_installment_3_date = $16
+        WHERE id = $17
         RETURNING *
         `,
         [
           location_id,
           room_id,
-          tenant_name,
-          tenant_nik,
-          tenant_phone,
+          tenant_identity_id,
           payment_type,
           total_payment_num,
           down_payment_num,
@@ -165,7 +138,6 @@ export async function PUT(req, { params }) {
           approval_status,
           stepToUse,
           user_id,
-          ktp_file_path,
           estimated_installment_1,
           estimated_installment_2,
           estimated_installment_3,
@@ -194,23 +166,17 @@ export async function PUT(req, { params }) {
       // Update tenant_approval: reset hanya yang belum approve
       await client.query(
         `
-  UPDATE tenant_approval
-  SET approver_id = NULL,
-      approved_at = NULL,
-      status = 'pending',
-      notes = NULL
-  WHERE tenant_application_id = $1
-    AND status <> 'approved'  -- ⬅️ hanya pending / rejected
-  `,
+        UPDATE tenant_approval
+        SET approver_id = NULL,
+            approved_at = NULL,
+            status = 'pending',
+            notes = NULL
+        WHERE tenant_application_id = $1
+          AND status <> 'approved'  -- ⬅️ hanya pending / rejected
+        `,
         [id]
       );
       await client.query("COMMIT");
-
-      // Simpan file baru kalau ada
-      if (fileBuffer && filename) {
-        const filepath = path.join(uploadDir, filename);
-        fs.writeFileSync(filepath, fileBuffer);
-      }
 
       return Response.json(
         {
@@ -257,7 +223,7 @@ export async function DELETE(request, context) {
       );
     }
 
-    const { room_id, ktp_file_path } = tenantRes.rows[0];
+    const { room_id } = tenantRes.rows[0];
 
     // Hapus tenant_approval terkait
     await pool.query(
@@ -286,35 +252,6 @@ export async function DELETE(request, context) {
       `UPDATE rooms SET is_available = false, updated_at = NOW() WHERE id = $1`,
       [room_id]
     );
-
-    // Cek apakah file KTP masih dipakai tenant lain
-    if (ktp_file_path) {
-      const fileCheck = await pool.query(
-        `SELECT COUNT(*) FROM tenant_application 
-         WHERE ktp_file_path = $1 AND id <> $2`,
-        [ktp_file_path, id]
-      );
-
-      if (Number(fileCheck.rows[0].count) === 0) {
-        // Aman dihapus karena tidak dipakai tenant lain
-        const filePath = path.join(
-          process.cwd(),
-          "public",
-          "uploads/ktp",
-          path.basename(ktp_file_path)
-        );
-        if (fs.existsSync(filePath)) {
-          fs.unlinkSync(filePath);
-          console.log("File KTP dihapus:", filePath);
-        } else {
-          console.log("File KTP tidak ditemukan:", filePath);
-        }
-      } else {
-        console.log(
-          `File KTP masih dipakai ${fileCheck.rows[0].count} tenant lain, tidak dihapus`
-        );
-      }
-    }
 
     return new Response(
       JSON.stringify({
