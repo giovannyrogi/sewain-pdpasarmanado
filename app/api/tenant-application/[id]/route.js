@@ -209,7 +209,7 @@ export async function DELETE(request, context) {
 
     // Ambil data tenant_application sebelum dihapus
     const tenantRes = await pool.query(
-      `SELECT room_id, ktp_file_path FROM tenant_application WHERE id = $1`,
+      `SELECT room_id FROM tenant_application WHERE id = $1`,
       [id]
     );
 
@@ -249,7 +249,7 @@ export async function DELETE(request, context) {
 
     // Update room agar kembali available
     await pool.query(
-      `UPDATE rooms SET is_available = false, updated_at = NOW() WHERE id = $1`,
+      `UPDATE rooms SET is_available = false, notes = NULL WHERE id = $1`,
       [room_id]
     );
 

@@ -87,8 +87,6 @@ export async function POST(req) {
       );
     }
 
-
-
     // Validasi room + lokasi
     const roomCheck = await pool.query(
       "SELECT * FROM rooms WHERE id = $1 AND location_id = $2",
@@ -184,19 +182,36 @@ export async function POST(req) {
       for (const a of approvals) {
         await client.query(
           `INSERT INTO tenant_approval (
-      tenant_application_id,
-      role_id,
-      step_order,
-      status
-    ) VALUES ($1, $2, $3, $4)`,
+          tenant_application_id,
+          role_id,
+          step_order,
+          status
+        ) VALUES ($1, $2, $3, $4)`,
           [tenantAppId, a.role_id, a.step_order, "pending"]
         );
       }
 
-      // Update rooms -> is_available = true
+      // Ambil nama tenant dari tabel tenant_identities
+      const tenantIdentity = await client.query(
+        `SELECT full_name FROM tenant_identities WHERE id = $1`,
+        [tenant_identity_id]
+      );
+
+      const tenantName = tenantIdentity.rows[0]?.full_name || "-";
+
+      // Format notes
+      const notes =
+        start_date && end_date
+          ? `Ruangan ini sedang digunakan oleh ${tenantName} mulai ${start_date} s/d ${end_date}`
+          : `Ruangan ini sedang digunakan oleh ${tenantName}`;
+
+      // Update rooms -> set is_available = true dan isi notes
       await client.query(
-        `UPDATE rooms SET is_available = true, updated_at = NOW() WHERE id = $1`,
-        [room_id]
+        `UPDATE rooms 
+        SET is_available = true,
+        notes = $2
+        WHERE id = $1`,
+        [room_id, notes]
       );
 
       // Jika semua sukses → commit

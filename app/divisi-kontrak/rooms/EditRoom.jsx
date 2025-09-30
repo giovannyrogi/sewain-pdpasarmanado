@@ -63,6 +63,8 @@ const EditRoom = ({
   const [roomWidth, setRoomWidth] = useState("");
   const [isAvailable, setIsAvailable] = useState(false);
   const [pricePerMeter, setPricePerMeter] = useState("");
+  const [notes, setNotes] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -74,6 +76,7 @@ const EditRoom = ({
       setRoomWidth(selectedData.room_width);
       setIsAvailable(selectedData.is_available);
       setPricePerMeter(selectedData.price_per_m2);
+      setNotes(selectedData.notes || "");
       getFloorData(selectedData.location_id);
     }
   }, [open]);
@@ -119,7 +122,7 @@ const EditRoom = ({
   const handleSubmit = async (e) => {
     e.preventDefault();
     loadingTrue();
-
+    setIsSubmitting(true);
     try {
       const response = await axios.put(`/api/rooms/${selectedData.id}`, {
         location_id: locationId,
@@ -129,6 +132,7 @@ const EditRoom = ({
         room_width: roomWidth,
         is_available: isAvailable,
         price_per_m2: pricePerMeter,
+        notes: notes || null,
       });
 
       if (response.data.success) {
@@ -139,11 +143,12 @@ const EditRoom = ({
             message: response.data.message || "Ruangan berhasil ditambahkan!",
             severity: "success",
           });
+        getRoomsData();
+        getLocationsData();
         setTimeout(() => {
-          getRoomsData();
-          getLocationsData();
           onClose();
           loadingFalse();
+          setIsSubmitting(false);
         }, 1000);
       } else {
         // Notifikasi error
@@ -153,6 +158,10 @@ const EditRoom = ({
             message: response.data.message || "Gagal menambah Ruangan.",
             severity: "error",
           });
+        setTimeout(() => {
+          loadingFalse();
+          setIsSubmitting(false);
+        }, 1000);
       }
     } catch (error) {
       console.log("error", error);
@@ -164,10 +173,11 @@ const EditRoom = ({
             "Terjadi error saat menambah Ruangan.",
           severity: "error",
         });
+      setTimeout(() => {
+        loadingFalse();
+        setIsSubmitting(false);
+      }, 1000);
     }
-    setTimeout(() => {
-      loadingFalse();
-    }, 1000);
   };
 
   return (
@@ -271,7 +281,7 @@ const EditRoom = ({
                 fullWidth
                 value={roomNumber}
                 onChange={(e) =>
-                  setRoomNumber(e.target.value.replace(/\s/g, ""))
+                  setRoomNumber(e.target.value)
                 }
                 autoFocus
                 required
@@ -360,6 +370,24 @@ const EditRoom = ({
                 </Select>
               </FormControl>
             </Grid>
+            {isAvailable && (
+              <Grid size={12}>
+                <TextField
+                  label="Alasan Tidak Tersedia (Optional)"
+                  placeholder="Tuliskan alasan kenapa ruangan tidak tersedia..."
+                  fullWidth
+                  variant="filled"
+                  multiline
+                  rows={4}
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value.slice(0, 150))}
+                  inputProps={{ maxLength: 150 }}
+                />
+                <Typography variant="caption" sx={{ float: "right", mt: 0.5 }}>
+                  {notes.length}/150
+                </Typography>
+              </Grid>
+            )}
             <Grid size={12}>
               <Button
                 type="submit"
@@ -372,12 +400,12 @@ const EditRoom = ({
                   fontSize: 16,
                   textTransform: "none",
                 }}
-                disabled={loading}
+                disabled={isSubmitting}
                 startIcon={
-                  loading && <CircularProgress size={22} color="inherit" />
+                  isSubmitting && <CircularProgress size={22} color="inherit" />
                 }
               >
-                {loading ? "Mengirim..." : "Submit Data"}
+                {isSubmitting ? "Mengirim..." : "Submit Data"}
               </Button>
             </Grid>
           </Grid>

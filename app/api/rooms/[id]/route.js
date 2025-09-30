@@ -13,6 +13,7 @@ export async function PUT(request, { params }) {
       room_width,
       is_available,
       price_per_m2,
+      notes,
     } = body;
 
     // Ambil data room sekarang
@@ -30,26 +31,34 @@ export async function PUT(request, { params }) {
       is_available !== roomData.is_available;
 
     if (wantsToChangeAvailability) {
-      // Ambil semua tenant_application yang menggunakan ruangan ini
+      // Ambil semua tenant_application + tenant_name via join tenant_identities
       const tenantRes = await pool.query(
-        `SELECT id, tenant_name, start_date, end_date
-     FROM tenant_application
-     WHERE room_id = $1`,
+        `
+        SELECT ta.id, ti.full_name AS tenant_name, ta.start_date, ta.end_date
+        FROM tenant_application ta
+        JOIN tenant_identities ti ON ta.tenant_identity_id = ti.id
+        WHERE ta.room_id = $1
+        `,
         [id]
       );
 
-      // Jika tidak ada pemakaian sama sekali -> boleh
       if (tenantRes.rowCount > 0) {
-        const today = moment().startOf("day"); // tanggal sekarang
+        const today = moment(new Date()).format("YYYY-MM-DD");
+        console.log("tenantRes", tenantRes);
+        console.log("today", today);
 
-        // Cek setiap tenant_application, jika ada yg blocking -> tolak
         for (const t of tenantRes.rows) {
           const start = t.start_date
-            ? moment(t.start_date).startOf("day")
+            ? moment(t.start_date).format("YYYY-MM-DD")
             : null;
-          const end = t.end_date ? moment(t.end_date).startOf("day") : null;
+          const end = t.end_date
+            ? moment(t.end_date).format("YYYY-MM-DD")
+            : null;
 
-          // (3) jika tanggal kosong block
+          console.log("start", start);
+          console.log("end", end);
+
+          // Jika tanggal kosong → tetap dianggap blocking
           if (!start || !end) {
             return new Response(
               JSON.stringify({
@@ -60,16 +69,12 @@ export async function PUT(request, { params }) {
             );
           }
 
-          // (2) jika masa berlaku belum selesai (end >= today) block
-          if (end.isSameOrAfter(today)) {
+          // Blok hanya kalau masa sewa masih aktif (end_date >= hari ini)
+          if (end >= today) {
             return new Response(
               JSON.stringify({
                 success: false,
-                message: `Ruangan sedang digunakan oleh "${
-                  t.tenant_name
-                }" sampai ${end.format(
-                  "YYYY-MM-DD"
-                )}. Status ketersediaan tidak dapat diubah.`,
+                message: `Ruangan sedang digunakan oleh "${t.tenant_name}" sampai ${end}. Status ketersediaan tidak dapat diubah.`,
               }),
               { status: 400 }
             );
@@ -78,7 +83,7 @@ export async function PUT(request, { params }) {
       }
     }
 
-    // Jika sampai sini valid → lakukan update (jika is_available tidak dikirim, gunakan nilai lama)
+    // Update data room
     const result = await pool.query(
       `UPDATE rooms 
          SET location_id = $1,
@@ -88,8 +93,8 @@ export async function PUT(request, { params }) {
              room_width  = $5,
              is_available= $6,
              price_per_m2= $7,
-             updated_at = NOW()
-       WHERE id = $8
+             notes = $8
+       WHERE id = $9
        RETURNING *`,
       [
         location_id,
@@ -101,6 +106,7 @@ export async function PUT(request, { params }) {
           ? roomData.is_available
           : is_available,
         price_per_m2,
+        notes,
         id,
       ]
     );
@@ -127,16 +133,18 @@ export async function DELETE(request, context) {
   try {
     const { id } = await context.params;
 
-    // ✅ Cek apakah ada tenant yang menggunakan room ini
+    // Cek apakah ada tenant yang menggunakan room ini (join tenant_identities)
     const checkTenant = await pool.query(
-      `SELECT tenant_name 
-         FROM tenant_application 
-        WHERE room_id = $1`,
+      `
+      SELECT ti.full_name AS tenant_name
+      FROM tenant_application ta
+      JOIN tenant_identities ti ON ta.tenant_identity_id = ti.id
+      WHERE ta.room_id = $1
+      `,
       [id]
     );
 
     if (checkTenant.rows.length > 0) {
-      // Buat list tenant_name jadi string, contoh: "PT Maju Jaya, PT Sukses"
       const tenantList = checkTenant.rows.map((t) => t.tenant_name).join(", ");
 
       return new Response(
@@ -148,7 +156,7 @@ export async function DELETE(request, context) {
       );
     }
 
-    // ✅ Jika aman, hapus ruangan
+    // Jika aman, hapus ruangan
     const result = await pool.query(
       `DELETE FROM rooms WHERE id = $1 RETURNING *`,
       [id]

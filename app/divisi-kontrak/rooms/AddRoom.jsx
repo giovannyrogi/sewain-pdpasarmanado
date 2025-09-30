@@ -59,6 +59,8 @@ const AddRoom = ({
   const [roomWidth, setRoomWidth] = useState("");
   const [isAvailable, setIsAvailable] = useState(false);
   const [pricePerMeter, setPricePerMeter] = useState("");
+  const [notes, setNotes] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const getFloorData = async (locationId) => {
     if (!locationId) {
@@ -101,6 +103,7 @@ const AddRoom = ({
   const handleSubmit = async (e) => {
     e.preventDefault();
     loadingTrue();
+    setIsSubmitting(true);
 
     try {
       const response = await axios.post("/api/rooms", {
@@ -111,6 +114,7 @@ const AddRoom = ({
         room_width: roomWidth,
         is_available: isAvailable,
         price_per_m2: pricePerMeter,
+        notes: notes || null,
       });
 
       if (response.data.success) {
@@ -121,11 +125,12 @@ const AddRoom = ({
             message: response.data.message || "Ruangan berhasil ditambahkan!",
             severity: "success",
           });
+        getRoomsData();
+        getLocationsData();
         setTimeout(() => {
-          getRoomsData();
-          getLocationsData();
           onClose();
           loadingFalse();
+          setIsSubmitting(false);
           clearForm();
         }, 1000);
       } else {
@@ -138,6 +143,7 @@ const AddRoom = ({
           });
         setTimeout(() => {
           loadingFalse();
+          setIsSubmitting(false);
         }, 1000);
       }
     } catch (error) {
@@ -150,6 +156,7 @@ const AddRoom = ({
         });
       setTimeout(() => {
         loadingFalse();
+        setIsSubmitting(false);
       }, 1000);
     }
   };
@@ -161,8 +168,9 @@ const AddRoom = ({
     setRoomArea("");
     setRoomLength("");
     setRoomWidth("");
-    setIsAvailable(true);
+    setIsAvailable(false);
     setPricePerMeter("");
+    setNotes("");
   };
 
   return (
@@ -265,9 +273,7 @@ const AddRoom = ({
                 variant="filled"
                 fullWidth
                 value={roomNumber}
-                onChange={(e) =>
-                  setRoomNumber(e.target.value)
-                }
+                onChange={(e) => setRoomNumber(e.target.value)}
                 autoFocus
                 required
                 disabled={loading}
@@ -355,6 +361,24 @@ const AddRoom = ({
                 </Select>
               </FormControl>
             </Grid>
+            {isAvailable && (
+              <Grid size={12}>
+                <TextField
+                  label="Alasan Tidak Tersedia (Optional)"
+                  placeholder="Tuliskan alasan kenapa ruangan tidak tersedia..."
+                  fullWidth
+                  variant="filled"
+                  multiline
+                  rows={4}
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value.slice(0, 150))}
+                  inputProps={{ maxLength: 150 }}
+                />
+                <Typography variant="caption" sx={{ float: "right", mt: 0.5 }}>
+                  {notes.length}/150
+                </Typography>
+              </Grid>
+            )}
             <Grid size={12}>
               <Button
                 type="submit"
@@ -367,12 +391,12 @@ const AddRoom = ({
                   fontSize: 16,
                   textTransform: "none",
                 }}
-                disabled={loading}
+                disabled={isSubmitting}
                 startIcon={
-                  loading && <CircularProgress size={22} color="inherit" />
+                  isSubmitting && <CircularProgress size={22} color="inherit" />
                 }
               >
-                {loading ? "Mengirim..." : "Submit Data"}
+                {isSubmitting ? "Mengirim..." : "Submit Data"}
               </Button>
             </Grid>
           </Grid>

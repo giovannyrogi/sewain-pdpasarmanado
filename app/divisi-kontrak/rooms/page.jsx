@@ -15,6 +15,7 @@ import EditRoom from "./EditRoom";
 import DeleteRoom from "./DeleteRoom";
 import formatRupiah from "@/app/components/formatrupiah/page";
 import menuDevisiKontrak from "@/app/components/menu/MenuItemDivisiKontrak";
+import NotesModal from "./NotesModal";
 
 const Rooms = () => {
   const [dataRooms, setDataRooms] = useState([]);
@@ -34,6 +35,7 @@ const Rooms = () => {
     severity: "success",
   });
   const [loadingMessage, setLoadingMessage] = useState("Loading...");
+  const [openViewNotesModal, setOpenViewNotesModal] = useState(false);
 
   const getRoomsData = async () => {
     setLoading(true);
@@ -134,6 +136,11 @@ const Rooms = () => {
     { text: "Tidak Tersedia", value: true },
   ];
 
+  const handleViewNotes = (record) => {
+    setSelectedData(record);
+    setOpenViewNotesModal(true);
+  };
+
   const columns = [
     {
       title: "Nama Lokasi",
@@ -148,7 +155,7 @@ const Rooms = () => {
           {record.location_name}
         </Typography>
       ),
-      width: 150,
+      width: 180,
     },
     {
       title: "Nomor",
@@ -157,17 +164,20 @@ const Rooms = () => {
       sortDirections: ["ascend", "descend"],
       render: (text, record) => {
         return (
-          <Tag
-            // warna random berdasarkan angka ganjil genap
-            color={record.id % 2 === 0 ? "pink" : "geekblue"}
-            key={record.id}
-            style={{ fontWeight: "bold" }}
-          >
+          // <Tag
+          //   // warna random berdasarkan angka ganjil genap
+          //   color={record.id % 2 === 0 ? "pink" : "geekblue"}
+          //   key={record.id}
+          //   style={{ fontWeight: "bold" }}
+          // >
+          //   {record.room_number}
+          // </Tag>
+          <Typography sx={{ fontWeight: "bold", fontSize: "12px" }}>
             {record.room_number}
-          </Tag>
+          </Typography>
         );
       },
-      width: 100,
+      width: 150,
     },
     {
       title: "Lantai",
@@ -214,7 +224,7 @@ const Rooms = () => {
     {
       title: "Harga Sewa Ruangan",
       dataIndex: "price_per_m2_width",
-      width: 150,
+      width: 180,
       render: (text, record) => (
         <Typography
           sx={{ fontWeight: "bold", fontSize: "12px", textAlign: "end" }}
@@ -243,6 +253,32 @@ const Rooms = () => {
         );
       },
       width: 100,
+    },
+    {
+      title: "Catatan",
+      dataIndex: "notes",
+      width: 150,
+      render: (text, record) => (
+        <Tag
+          color="lime"
+          key={record.id}
+          style={{ fontWeight: "bold" }}
+          onClick={() => handleViewNotes(record)}
+        >
+          <Typography
+            sx={{
+              fontWeight: "bold",
+              fontSize: "12px",
+              whiteSpace: "pre-wrap",
+              wordWrap: "break-word",
+              textAlign: "center",
+              cursor: "pointer",
+            }}
+          >
+            Lihat Catatan
+          </Typography>
+        </Tag>
+      ),
     },
     {
       title: "Actions",
@@ -393,6 +429,12 @@ const Rooms = () => {
         onNotify={(notif) => setSnackbar(notif)}
         selectedData={selectedData}
       />
+      <NotesModal
+        open={openViewNotesModal}
+        onClose={() => setOpenViewNotesModal(false)}
+        selectedData={selectedData}
+      />
+
       <LoadingBackdrop message={loadingMessage} open={loading} />
       {/* Snackbar notification */}
       <Notification

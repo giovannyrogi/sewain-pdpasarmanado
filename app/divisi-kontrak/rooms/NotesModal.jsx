@@ -13,27 +13,9 @@ import {
   useTheme,
 } from "@mui/material";
 import React, { useEffect, useState } from "react";
-import { Icon } from "@iconify/react";
-import axios from "axios";
-import ImagePreviewModal from "../imagepreviewmodal/page";
-import formatRupiah from "../formatrupiah/page";
-import moment from "moment";
-import ApprovedOverlay from "../tenantapplicationmodal/ApprovedOverlay";
 
-const TerminationReasonModal = ({
-  open,
-  onClose,
-  selectedData,
-  loadingTrue,
-  loadingFalse,
-  onNotify,
-  getDataApprovals = () => {},
-  user,
-}) => {
+const NotesModal = ({ open, onClose, selectedData }) => {
   const isMobile = useMediaQuery("(max-width:600px)");
-
-  const [openPreview, setOpenPreview] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // console.log("selectedData", selectedData);
   const theme = useTheme();
@@ -85,7 +67,7 @@ const TerminationReasonModal = ({
                 // color: theme.palette.primary.main,
               }}
             >
-              Alasan Non-Aktif Tenant
+              Catatan Ruangan
             </Typography>
           </Grid>
 
@@ -108,60 +90,14 @@ const TerminationReasonModal = ({
                   wordWrap: "break-word",
                 }}
               >
-                {selectedData?.reason}
+                {selectedData?.notes || "Tidak ada catatan"}
               </Typography>
             </Grid>
           </Grid>
-
-          {/* <Grid
-            container
-            spacing={1}
-            sx={{
-              mt: 3,
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <Grid size={6}>
-              <Button
-                type="submit"
-                variant="contained"
-                color="error"
-                size="small"
-                sx={{
-                  fontWeight: "bold",
-                  fontSize: 16,
-                  textTransform: "none",
-                  width: 150,
-                }}
-                onClick={onClose}
-                disabled={isSubmitting}
-              >
-                Kembali
-              </Button>
-            </Grid>
-          </Grid> */}
-
-          {/* Modal Preview Gambar */}
-          <ImagePreviewModal
-            open={openPreview}
-            onClose={() => setOpenPreview(false)}
-            imageUrl={
-              selectedData?.ktp_file_path ? selectedData.ktp_file_path : ""
-            }
-            alt="Preview KTP"
-          />
-
-          {selectedData?.approval_status === "approved" ? (
-            <ApprovedOverlay selectedData={selectedData} />
-          ) : (
-            ""
-          )}
         </Box>
       </Fade>
     </Modal>
   );
 };
 
-export default TerminationReasonModal;
+export default NotesModal;
