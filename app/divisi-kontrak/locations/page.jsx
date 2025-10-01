@@ -117,6 +117,11 @@ const Locations = () => {
       width: 100,
     },
     {
+      title: "Kode Lokasi",
+      dataIndex: "location_code",
+      width: 100,
+    },
+    {
       title: "Alamat",
       dataIndex: "address",
       // onFilter: (value, record) => record.address === value,

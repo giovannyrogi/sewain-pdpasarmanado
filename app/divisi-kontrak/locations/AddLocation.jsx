@@ -44,6 +44,7 @@ const AddLocation = ({
   const [locatioName, setLocatioName] = useState("");
   const [city, setCity] = useState("");
   const [address, setAddress] = useState("");
+  const [locationCode, setLocationCode] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -54,6 +55,7 @@ const AddLocation = ({
         location_name: locatioName,
         city: city,
         address: address,
+        location_code: locationCode,
       });
 
       if (response.data.success) {
@@ -99,6 +101,7 @@ const AddLocation = ({
     setLocatioName("");
     setCity("");
     setAddress("");
+    setLocationCode("");
   };
 
   return (
@@ -142,6 +145,19 @@ const AddLocation = ({
                 fullWidth
                 value={locatioName}
                 onChange={(e) => setLocatioName(e.target.value)}
+                autoFocus
+                required
+                disabled={loading}
+                color="primary"
+              />
+            </Grid>
+            <Grid size={12}>
+              <TextField
+                label="Kode Lokasi"
+                variant="filled"
+                fullWidth
+                value={locationCode}
+                onChange={(e) => setLocationCode(e.target.value)}
                 autoFocus
                 required
                 disabled={loading}

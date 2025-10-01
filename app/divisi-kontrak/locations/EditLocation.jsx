@@ -45,15 +45,17 @@ const EditLocation = ({
   const [locatioName, setLocatioName] = useState("");
   const [city, setCity] = useState("");
   const [address, setAddress] = useState("");
+  const [locationCode, setLocationCode] = useState("");
 
   // Setiap kali selectedData atau open berubah, update form
   useEffect(() => {
-    if (selectedData && open) {
+    if (open) {
       setLocatioName(selectedData.location_name || "");
       setCity(selectedData.city || "");
       setAddress(selectedData.address || "");
+      setLocationCode(selectedData.location_code || "");
     }
-  }, [selectedData, open]);
+  }, [open]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -66,6 +68,7 @@ const EditLocation = ({
         location_name: locatioName,
         city: city,
         address,
+        location_code: locationCode,
       });
       console.log("response update", response);
 
@@ -146,6 +149,19 @@ const EditLocation = ({
                 fullWidth
                 value={locatioName}
                 onChange={(e) => setLocatioName(e.target.value)}
+                autoFocus
+                required
+                disabled={loading}
+                color="primary"
+              />
+            </Grid>
+            <Grid size={12}>
+              <TextField
+                label="Kode Lokasi"
+                variant="filled"
+                fullWidth
+                value={locationCode}
+                onChange={(e) => setLocationCode(e.target.value)}
                 autoFocus
                 required
                 disabled={loading}
