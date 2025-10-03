@@ -1,5 +1,4 @@
 import {
-  alpha,
   Autocomplete,
   Box,
   Button,
@@ -25,21 +24,17 @@ import axios from "axios";
 import { useThemeMode } from "@/app/components/themeprovider/ThemeContext";
 import dayjs from "dayjs";
 
-const UpdateDocumentDate = ({
+const UpdateDocumentContract = ({
   open,
   onClose,
   loadingTrue,
   loadingFalse,
   loading,
-  getDataTenantApplication,
-  getLocationsData,
+  getDataContract,
   onNotify,
-  setLoadingMessage,
   selectedData,
 }) => {
   const isMobile = useMediaQuery("(max-width:600px)");
-
-  // console.log("selectedData", selectedData);
 
   const { themeMode } = useThemeMode();
   const theme = useTheme();
@@ -61,49 +56,17 @@ const UpdateDocumentDate = ({
     },
   };
 
-  const [startDate, setStartDate] = useState(null);
-  const [endDate, setEndDate] = useState(null);
   const [documentNumber, setDocumentNumber] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [highestDocumentNumber, setHighestDocumentNumber] = useState(null);
 
   // console.log("selectedData", selectedData);
 
-  const getHighestDocumentNumber = async () => {
-    loadingTrue();
-    try {
-      const response = await axios.get(
-        `/api/tenant-application/update-document`
-      );
-      console.log("response update document", response);
-      if (response.data.success) {
-        setHighestDocumentNumber(response.data.data);
-        setTimeout(() => {
-          loadingFalse();
-        }, 1000);
-      } else {
-        console.log("error", response);
-        setTimeout(() => {
-          loadingFalse();
-        }, 1000);
-      }
-    } catch (error) {
-      console.log(error);
-      setTimeout(() => {
-        loadingFalse();
-      }, 1000);
-    }
-  };
-
-  useEffect(() => {
-    if (open) {
-      getHighestDocumentNumber();
-    }
-    if (open && selectedData?.start_date && selectedData?.end_date) {
-      setStartDate(moment(selectedData?.start_date));
-      setEndDate(moment(selectedData?.end_date));
-    }
-  }, [open]);
+  // useEffect(() => {
+  //   if (open && selectedData?.start_date && selectedData?.end_date) {
+  //     setStartDate(moment(selectedData?.start_date));
+  //     setEndDate(moment(selectedData?.end_date));
+  //   }
+  // }, [open]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -114,22 +77,20 @@ const UpdateDocumentDate = ({
     const now = new Date();
     const monthRoman = toRoman(now.getMonth() + 1);
     const year = now.getFullYear();
-    const prefix = `/PM/${monthRoman}/${year}`;
+    const prefix = `/ PM / SK / - UPP / ${monthRoman} / ${year}`;
     const finalDocNumber = `${documentNumber}${prefix}`;
 
     try {
       const response = await axios.put(
         `/api/tenant-application/update-document/${selectedData.tenant_application_id}`,
         {
-          start_date: startDate,
-          end_date: endDate,
           document_number: finalDocNumber,
         }
       );
       console.log("response", response);
 
       if (response.data.success) {
-        getDataTenantApplication();
+        getDataContract();
         onNotify &&
           onNotify({
             open: true,
@@ -170,10 +131,7 @@ const UpdateDocumentDate = ({
   };
 
   const clearForm = () => {
-    setStartDate(null);
-    setEndDate(null);
     setDocumentNumber("");
-    setHighestDocumentNumber(null);
   };
 
   const toRoman = (num) => {
@@ -212,9 +170,9 @@ const UpdateDocumentDate = ({
             whiteSpace: "nowrap",
             fontWeight: "bold",
             fontSize: "14px",
-            letterSpacing: "1px",
+            // letterSpacing: "1px",
           }}
-        >{`/PM/${monthRoman}/${year}`}</Typography>
+        >{`/ PM / SK / - UPP / ${monthRoman} / ${year}`}</Typography>
       </InputAdornment>
     );
   };
@@ -222,10 +180,7 @@ const UpdateDocumentDate = ({
   return (
     <Modal
       open={open}
-      onClose={() => {
-        onClose();
-        clearForm();
-      }}
+      onClose={onClose}
       sx={{
         display: "flex",
         alignItems: "center",
@@ -266,61 +221,6 @@ const UpdateDocumentDate = ({
 
         <form onSubmit={handleSubmit}>
           <Grid container spacing={isMobile ? 3 : 2}>
-            <>
-              <Grid size={12}>
-                <DatePicker
-                  label="Tanggal Mulai"
-                  // value harus dayjs, bukan string
-                  value={startDate}
-                  onChange={(newValue) => {
-                    // langsung simpan dayjs object
-                    setStartDate(newValue);
-
-                    if (newValue) {
-                      // Tambahkan 365 hari ke tanggal mulai
-                      const end = moment(newValue).add(365, "days");
-
-                      setEndDate(end);
-                    } else {
-                      setEndDate(null);
-                    }
-                  }}
-                  disabled={selectedData?.start_date}
-                  // minDate={moment().startOf("day")}
-                  slotProps={{
-                    textField: {
-                      variant: "filled",
-                      fullWidth: true,
-                      required: true,
-                      disabled: selectedData?.start_date,
-                      color: "primary",
-                    },
-                  }}
-                />
-              </Grid>
-              <Grid size={12}>
-                <DatePicker
-                  label="Tanggal Selesai"
-                  // value harus dayjs, bukan string
-                  value={endDate}
-                  onChange={(newValue) => {
-                    // langsung simpan dayjs object
-                    setEndDate(newValue);
-                  }}
-                  // minDate={moment().startOf("day")}
-                  disabled
-                  slotProps={{
-                    textField: {
-                      variant: "filled",
-                      fullWidth: true,
-                      required: true,
-                      color: "primary",
-                      disabled: true,
-                    },
-                  }}
-                />
-              </Grid>
-            </>
             <Grid size={12}>
               <TextField
                 label="Nomor Dokumen"
@@ -339,37 +239,6 @@ const UpdateDocumentDate = ({
                 color="primary"
               />
             </Grid>
-            {highestDocumentNumber && (
-              <Grid
-                size={12}
-                sx={{
-                  p: 1,
-                  bgcolor:
-                    themeMode === "dark"
-                      ? alpha(theme.palette.primary.main, 0.12)
-                      : alpha(theme.palette.primary.main, 0.12),
-                  borderRadius: 1,
-                  // mt: -1,
-                  mb: -1,
-                  display: "flex",
-                  flexDirection: "row",
-                  gap: 1,
-                }}
-              >
-                <Typography
-                  sx={{
-                    fontSize: "14px",
-                    fontWeight: "bold",
-                    color: "primary.main",
-                  }}
-                >
-                  Nomor Dokumen terakhir adalah{" "}
-                  {highestDocumentNumber?.highest_document_number
-                    .split("/")[0]
-                    .trim() || "-"}
-                </Typography>
-              </Grid>
-            )}
             <Grid size={12}>
               <Button
                 type="submit"
@@ -378,7 +247,7 @@ const UpdateDocumentDate = ({
                 fullWidth
                 size="small"
                 sx={{
-                  mt: 3,
+                  mt: 2,
                   fontWeight: "bold",
                   fontSize: 16,
                   textTransform: "none",
@@ -398,4 +267,4 @@ const UpdateDocumentDate = ({
   );
 };
 
-export default UpdateDocumentDate;
+export default UpdateDocumentContract;

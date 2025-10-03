@@ -51,26 +51,15 @@ const AddFloorPrice = ({
   const [locationId, setLocationId] = useState("");
   const [roomNumber, setRoomNumber] = useState("");
   const [floor, setFloor] = useState("");
-  const [basePrice, setBasePrice] = useState("");
+  const [basePrice, setBasePrice] = useState(0);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     loadingTrue();
 
-    if (basePrice < 0) {
-      onNotify &&
-        onNotify({
-          open: true,
-          message: "Harga tidak boleh kurang dari 0.",
-          severity: "error",
-        });
-      setTimeout(() => {
-        loadingFalse();
-      }, 1000);
-      return;
-    }
+    console.log("basePrice", basePrice);
 
-    if (!basePrice || basePrice === 0) {
+    if (basePrice < 0) {
       onNotify &&
         onNotify({
           open: true,
@@ -134,7 +123,7 @@ const AddFloorPrice = ({
     setLocationId("");
     setRoomNumber("");
     setFloor("");
-    setBasePrice("");
+    setBasePrice(0);
   };
 
   return (
@@ -212,7 +201,7 @@ const AddFloorPrice = ({
                 placeholder="Cth: 2.86"
                 variant="filled"
                 fullWidth
-                value={formatRupiah(basePrice)}
+                value={formatRupiah(basePrice || 0)}
                 onChange={(e) =>
                   setBasePrice(e.target.value.replace(/[^0-9]/g, ""))
                 }

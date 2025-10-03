@@ -41,7 +41,7 @@ export async function GET() {
       lfp.floor,
       lfp.base_price,
       loc.location_name,
-      loc.address AS location_address,
+      loc.street_address AS location_address,
       loc.city AS location_city,
 
       p.id AS payment_id,
@@ -102,6 +102,13 @@ export async function GET() {
         WHERE px.tenant_application_id = ta.id
           AND px.approval_status IN ('proses','rejected')
       )
+
+      -- kalau renewal_of ada, wajib punya document_number (tidak null & tidak kosong)
+      AND (
+        ta.renewal_of IS NULL
+        OR (ta.document_number IS NOT NULL AND trim(ta.document_number) <> '')
+      )
+
 
       -- logika pembayaran
       AND (

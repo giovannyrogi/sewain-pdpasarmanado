@@ -5,11 +5,11 @@ export async function PUT(request, { params }) {
   try {
     const { id } = await params; // id dari URL
     const body = await request.json(); // data dari body
-    const { location_name, city, address, location_code } = body;
+    const { location_name, city, street_address, location_code, province, district, kelurahan } = body;
 
     const result = await pool.query(
-      `UPDATE locations SET location_name=$1, city=$2, address=$3 , location_code=$5 WHERE id=$4 RETURNING *`,
-      [location_name, city, address, id, location_code]
+      `UPDATE locations SET location_name=$1, city=$2, street_address=$3 , location_code=$5, province=$6, district=$7, kelurahan=$8 WHERE id=$4 RETURNING *`,
+      [location_name, city, street_address, id, location_code, province, district, kelurahan]
     );
 
     return new Response(

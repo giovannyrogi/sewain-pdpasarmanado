@@ -51,7 +51,7 @@ const EditFloorPrice = ({
 
   const [locationId, setLocationId] = useState("");
   const [floor, setFloor] = useState("");
-  const [basePrice, setBasePrice] = useState("");
+  const [basePrice, setBasePrice] = useState(0);
 
   const getSelectedData = () => {
     setLocationId(selectedData.location_id);
@@ -70,19 +70,6 @@ const EditFloorPrice = ({
     loadingTrue();
 
     if (basePrice < 0) {
-      onNotify &&
-        onNotify({
-          open: true,
-          message: "Harga tidak boleh kurang dari 0.",
-          severity: "error",
-        });
-      setTimeout(() => {
-        loadingFalse();
-      }, 1000);
-      return;
-    }
-
-    if (!basePrice || basePrice === 0) {
       onNotify &&
         onNotify({
           open: true,
@@ -218,7 +205,7 @@ const EditFloorPrice = ({
                 placeholder="Cth: 2.86"
                 variant="filled"
                 fullWidth
-                value={formatRupiah(basePrice)}
+                value={formatRupiah(basePrice || 0)}
                 onChange={(e) =>
                   setBasePrice(e.target.value.replace(/[^0-9]/g, ""))
                 }

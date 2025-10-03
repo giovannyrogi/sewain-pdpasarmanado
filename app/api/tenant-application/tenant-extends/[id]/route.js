@@ -119,7 +119,7 @@ export async function GET(req, { params }) {
     if (tenant.location_id) {
       const locationSql = `
         SELECT 
-          id, location_name, address, city
+          id, location_name, street_address, city
         FROM locations
         WHERE id = $1
         LIMIT 1

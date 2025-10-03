@@ -22,6 +22,9 @@ import { useReactToPrint } from "react-to-print";
 import PizZip from "pizzip";
 import Docxtemplater from "docxtemplater";
 import { saveAs } from "file-saver";
+import UpdateDocumentContract from "./UpdateDocumentContract";
+import AddContract from "./AddContract";
+import formatRupiah from "@/app/components/formatrupiah/page";
 
 const Contract = () => {
   // Ref untuk dokumen print
@@ -48,6 +51,8 @@ const Contract = () => {
   const [openVerificationModal, setOpenVerificationModal] = useState(false);
   const [openApprovalModal, setOpenApprovalModal] = useState(false);
   const [printData, setPrintData] = useState(null);
+
+  const [openUpdateModal, setOpenUpdateModal] = useState(false);
 
   const getDataContract = async () => {
     setLoading(true);
@@ -109,12 +114,23 @@ const Contract = () => {
     setPrintData(record);
   };
 
+  const handleUpdateDocument = (record) => {
+    setSelectedData(record);
+    setOpenUpdateModal(true);
+  };
+
   // Utility untuk filter dinamis
   const filteredData = dataPayments.filter((item) => {
     if (!searchText) return true;
     const search = searchText.toLowerCase();
 
-    return item?.tenant_name?.toLowerCase().includes(search);
+    return (
+      item?.tenant_identities?.full_name?.toLowerCase().includes(search) ||
+      item?.contracts?.contract_number?.toLowerCase().includes(search) ||
+      item?.locations?.location_name?.toLowerCase().includes(search) ||
+      item?.rooms?.room_number?.toLowerCase().includes(search) ||
+      item?.rooms?.floor?.toLowerCase().includes(search)
+    );
   });
 
   // Utility untuk filter dinamis
@@ -141,80 +157,271 @@ const Contract = () => {
     };
   };
 
-  // Mapping untuk status
-  const approvalStatusMap = {
-    proses: "Dalam Proses",
-    approved: "Disetujui",
-    rejected: "Ditolak",
-  };
-
-  // nested pakai array
   const tenantName = generateFilters(dataPayments, [
-    "tenant_application",
-    "tenant_name",
+    "tenant_identities",
+    "full_name",
   ]);
 
-  //   const paymentTypeFilters = generateFilters(
-  //     dataPayments,
-  //     ["tenant_application", "payment_type"],
-  //     paymentTypeMap
-  //   );
+  const contractNumberFilters = generateFilters(dataPayments, [
+    "contracts",
+    "contract_number",
+  ]);
 
   const columns = [
     {
       title: "Nama Penyewa",
-      dataIndex: "tenant_name",
-      key: "tenant_name",
+      dataIndex: ["tenant_identities", "full_name"],
+      filters: tenantName,
+      onFilter: createOnFilter(["tenant_identities", "full_name"]),
+      filterSearch: true,
+      sorter: (a, b) =>
+        a.tenant_identities.full_name.localeCompare(
+          b.tenant_identities.full_name
+        ),
+      sortDirections: ["ascend", "descend"],
+      render: (text, record) => (
+        <Typography
+          sx={{
+            fontWeight: "bold",
+            fontSize: "12px",
+            textTransform: "capitalize",
+          }}
+        >
+          {record?.tenant_identities?.full_name}
+        </Typography>
+      ),
+      width: 200,
+    },
+    {
+      title: "Nomor Kontrak",
+      dataIndex: ["contracts", "contract_number"],
+      filters: contractNumberFilters,
+      onFilter: createOnFilter(["contracts", "contract_number"]),
+      filterSearch: true,
+      render: (text, record) => {
+        // Ambil hanya angka kontrak di depan sebelum tanda "/"
+        const contractNumberRaw = record.contracts?.contract_number || "-";
+        const contractNumberOnly = contractNumberRaw.split("/")[0].trim(); // hasil: "001"
+        return (
+          <Typography
+            sx={{ fontWeight: "bold", fontSize: "12px", textAlign: "center" }}
+          >
+            {contractNumberOnly}
+          </Typography>
+        );
+      },
+      width: 150,
+      align: "left",
     },
     {
       title: "Nama Lokasi",
-      dataIndex: "location_name",
-      key: "location_name",
+      dataIndex: ["locations", "location_name"],
+      width: 200,
     },
     {
       title: "Nomor Ruangan",
-      dataIndex: "room_number",
-      key: "room_number",
+      dataIndex: ["rooms", "room_number"],
+      width: 150,
     },
     {
       title: "Lantai",
-      dataIndex: "floor",
-      key: "floor",
+      dataIndex: ["rooms", "floor"],
+      width: 150,
     },
-    {
-      title: "Status",
-      dataIndex: "is_fully_paid",
-      key: "is_fully_paid",
-      render: (text, record) => (
-        <Tag color={record.is_fully_paid ? "green" : "red"} key={record.id}>
-          {record.is_fully_paid ? "Lunas" : "Belum Lunas"}
-        </Tag>
-      ),
-    },
+    // {
+    //   title: "Status",
+    //   dataIndex: "is_fully_paid",
+    //   key: "is_fully_paid",
+    //   render: (text, record) => (
+    //     <Tag color={record.is_fully_paid ? "green" : "red"} key={record.id}>
+    //       {record.is_fully_paid ? "Lunas" : "Belum Lunas"}
+    //     </Tag>
+    //   ),
+    // },
     {
       title: "Actions",
       dataIndex: "actions",
-      key: "actions",
+      width: 150,
+      align: "center",
+      fixed: "right",
       render: (text, record) => (
         <Box sx={{ display: "flex", gap: 1, justifyContent: "center" }}>
           <Tooltip title="Download Kontrak">
             <Button
               size="small"
               variant={themeMode === "dark" ? "outlined" : "contained"}
-              color="success"
-              onClick={() => handleEdit(record)}
-              sx={{ minWidth: 0, px: 1 }}
+              color="primary"
+              onClick={() => generateDocument(record)}
+              sx={{
+                minWidth: 0,
+                px: 1,
+                textTransform: "capitalize",
+              }}
             >
-              <Icon icon="line-md:downloading-loop" fontSize={18} color={themeMode === "dark" ? "green" : "white"}/>
+              <Typography
+                sx={{
+                  fontWeight: "bold",
+                  fontSize: "12px",
+                  mr: "3px",
+                }}
+              >
+                Unduh
+              </Typography>
+              <Icon icon="line-md:downloading-loop" fontSize={18} />
             </Button>
           </Tooltip>
+          {/* <Tooltip title="Edit Document Number">
+            <Button
+              size="small"
+              variant={themeMode === "dark" ? "outlined" : "contained"}
+              color="info"
+              onClick={() => handleUpdateDocument(record)}
+              sx={{ minWidth: 0, px: 1 }}
+            >
+              <Icon icon="fluent:slide-text-edit-28-regular" fontSize={18} />
+            </Button>
+          </Tooltip> */}
         </Box>
       ),
     },
   ];
 
+  const numberToWords = (num) => {
+    const satuan = [
+      "",
+      "Satu",
+      "Dua",
+      "Tiga",
+      "Empat",
+      "Lima",
+      "Enam",
+      "Tujuh",
+      "Delapan",
+      "Sembilan",
+      "Sepuluh",
+      "Sebelas",
+    ];
+
+    if (num < 12) {
+      return satuan[num];
+    } else if (num < 20) {
+      return numberToWords(num - 10) + " Belas";
+    } else if (num < 100) {
+      return (
+        numberToWords(Math.floor(num / 10)) +
+        " Puluh " +
+        numberToWords(num % 10)
+      ).trim();
+    } else if (num < 200) {
+      return "Seratus " + numberToWords(num - 100);
+    } else if (num < 1000) {
+      return (
+        numberToWords(Math.floor(num / 100)) +
+        " Ratus " +
+        numberToWords(num % 100)
+      ).trim();
+    } else if (num < 2000) {
+      return "Seribu " + numberToWords(num - 1000);
+    } else if (num < 1000000) {
+      return (
+        numberToWords(Math.floor(num / 1000)) +
+        " Ribu " +
+        numberToWords(num % 1000)
+      ).trim();
+    } else if (num < 1000000000) {
+      return (
+        numberToWords(Math.floor(num / 1000000)) +
+        " Juta " +
+        numberToWords(num % 1000000)
+      ).trim();
+    } else if (num < 1000000000000) {
+      return (
+        numberToWords(Math.floor(num / 1000000000)) +
+        " Miliar " +
+        numberToWords(num % 1000000000)
+      ).trim();
+    } else {
+      return "Angka terlalu besar";
+    }
+  };
+
   const generateDocument = async (record) => {
-    // console.log("record", record.tenant_name);
+    // console.log("record", record);
+
+    setLoading(true);
+    setLoadingMessage("Generating document...");
+
+    const birthDate = record.tenant_identities?.birth_date
+      ? moment(record.tenant_identities.birth_date)
+      : "-";
+
+    // Ambil tanggal kontrak dari record
+    const contractDate = record.contracts?.contract_date
+      ? moment(record.contracts.contract_date)
+      : "-";
+
+    const dayName = contractDate.format("dddd"); // Nama hari: Senin, Selasa, dll
+    const dayNumber = parseInt(contractDate.format("D")); // Nomor tanggal: 2
+    const dayInWords = numberToWords(dayNumber); // Tanggal terbilang: Dua
+    const monthName = contractDate.format("MMMM"); // Nama bulan: Oktober
+    const yearNumber = parseInt(contractDate.format("YYYY")); // Tahun angka: 2025
+    const yearInWords = numberToWords(yearNumber); // Tahun terbilang: Dua ribu dua puluh lima
+
+    const birthDateDayName = birthDate.format("dddd"); // Nama hari: Senin, Selasa, dll
+    const birthDateDayNumber = parseInt(birthDate.format("D")); // Nomor tanggal: 2
+    const birthDateDayInWords = numberToWords(birthDateDayNumber); // Tanggal terbilang: Dua
+    const birthDateMonthName = birthDate.format("MMMM"); // Nama bulan: Oktober
+    const birthDateYearNumber = parseInt(birthDate.format("YYYY")); // Tahun angka: 2025
+    const birthDateYearInWords = numberToWords(birthDateYearNumber); // Tahun terbilang: Dua ribu dua puluh lima
+
+    // masa Berlaku
+    const startDate = moment(record?.tenant_application?.start_date);
+    const endDate = moment(record?.tenant_application?.end_date);
+
+    // start date
+    const startDateDayNumber = parseInt(startDate.format("D"));
+    const startDateInWords = numberToWords(startDateDayNumber);
+    const startDateMonthName = startDate.format("MMMM");
+    const startDateYearNumber = parseInt(startDate.format("YYYY"));
+    const startDateYearInWords = numberToWords(startDateYearNumber);
+
+    // end date
+    const endDateDayNumber = parseInt(endDate.format("D"));
+    const endDateInWords = numberToWords(endDateDayNumber);
+    const endDateMonthName = endDate.format("MMMM");
+    const endDateYearNumber = parseInt(endDate.format("YYYY"));
+    const endDateYearInWords = numberToWords(endDateYearNumber);
+
+    // hitung masa berlaku dari start_date ke end_date ada berapa lama, jika 1 tahun maka tampilkan 1
+    const masaBerlaku = endDate.diff(startDate, "years");
+    const masaBerlakuInWords = numberToWords(masaBerlaku);
+
+    const currentYear = moment().format("YYYY");
+    const month = moment().format("M");
+
+    // total pembayaran
+    const totalPayment =
+      Number(record?.tenant_application?.total_payment || 0) - 50000;
+    const totalPaymentInWords = numberToWords(Number(totalPayment));
+    const totalPPN = Number(totalPayment) * 0.11;
+    const totalPPNInWords = numberToWords(Number(totalPPN));
+
+    // convert month to romawi
+    const romawi = [
+      "I",
+      "II",
+      "III",
+      "IV",
+      "V",
+      "VI",
+      "VII",
+      "VIII",
+      "IX",
+      "X",
+      "XI",
+      "XII",
+    ];
+    const monthInRomawi = romawi[month - 1];
 
     try {
       // Ambil template docx dari folder public/documents
@@ -230,9 +437,59 @@ const Contract = () => {
 
       // Mapping data dari record
       const data = {
-        tenant_name: record.tenant_name || "-",
-        room_number: record.room_number || "-",
-        location_name: record.location_name || "-",
+        day_name: dayName || "-",
+        day_number: dayNumber || "-",
+        day_in_words: dayInWords || "-",
+        month_name: monthName || "-",
+        year_number: yearNumber || "-",
+        year_in_words: yearInWords || "-",
+        tenant_name: record.tenant_identities?.full_name || "-",
+        room_number: record.rooms?.room_number || "-",
+        location_name: record.locations?.location_name || "-",
+        currentYear: currentYear || "-",
+        monthInRomawi: monthInRomawi || "-",
+        contract_number: record.contracts?.contract_number || "-",
+        location_code: record.locations?.location_code || "-",
+        floor: record.rooms?.floor || "-",
+        birth_place: record.tenant_identities?.birth_place || "-",
+        birth_date: `${birthDateDayNumber} (${birthDateDayInWords}) ${birthDateMonthName} ${birthDateYearNumber} (${birthDateYearInWords})`,
+        nik: record.tenant_identities?.nik || "-",
+        occupation: record.tenant_identities?.occupation || "-",
+        religion: record.tenant_identities?.religion || "-",
+        nationality:
+          record.tenant_identities?.nationality === "WNI"
+            ? "Warga Negara Indonesia"
+            : "Warga Negara Asing",
+        street_address: record.tenant_identities?.street_address || "-",
+        rt: record.tenant_identities?.rt || "-",
+        rw: record.tenant_identities?.rw || "-",
+        kelurahan: record.tenant_identities?.kelurahan || "-",
+        district: record.tenant_identities?.district || "-",
+        city: record.tenant_identities?.city || "-",
+        province: record.tenant_identities?.province || "-",
+        room_width: record.rooms?.room_width || "-",
+        room_length: record.rooms?.room_length || "-",
+        room_area: record.rooms?.room_area || "-",
+        province: record.locations?.province || "-",
+        kelurahan: record.locations?.kelurahan || "-",
+        district: record.locations?.district || "-",
+        location_city: record.locations?.city || "-",
+        startDateDayNumber: startDateDayNumber || "-",
+        startDateInWords: startDateInWords || "-",
+        startDateMonthName: startDateMonthName || "-",
+        startDateYearNumber: startDateYearNumber || "-",
+        startDateYearInWords: startDateYearInWords || "-",
+        endDateDayNumber: endDateDayNumber || "-",
+        endDateInWords: endDateInWords || "-",
+        endDateMonthName: endDateMonthName || "-",
+        endDateYearNumber: endDateYearNumber || "-",
+        endDateYearInWords: endDateYearInWords || "-",
+        masaBerlaku: masaBerlaku || "-",
+        masaBerlakuInWords: masaBerlakuInWords || "-",
+        totalPayment: formatRupiah(totalPayment) || "-",
+        totalPaymentInWords: totalPaymentInWords || "-",
+        totalPPN: formatRupiah(totalPPN) || "-",
+        totalPPNInWords: totalPPNInWords || "-",
       };
 
       // Render ke docx
@@ -245,7 +502,10 @@ const Contract = () => {
           "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
       });
 
-      saveAs(out, `kontrak_${record.tenant_name}.docx`);
+      setTimeout(() => {
+        saveAs(out, `Contract_${record.tenant_identities?.full_name}.docx`);
+        setLoading(false);
+      }, 1000);
     } catch (err) {
       console.error("Error generate document:", err);
     }
@@ -269,6 +529,38 @@ const Contract = () => {
           },
         }}
       >
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "flex-end",
+            transition: "all 0.3s",
+            mb: 2,
+            mt: 4,
+          }}
+        >
+          <Button
+            variant={themeMode === "dark" ? "outlined" : "contained"}
+            onClick={() => setOpenAddModal(true)}
+            sx={{
+              textTransform: "none",
+              display: "flex",
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 1,
+              fontWeight: "bold",
+            }}
+          >
+            Tambah
+            <Icon
+              icon="fluent:document-one-page-add-24-regular"
+              fontSize="20px"
+            />
+          </Button>
+        </Box>
+
         <Paper
           elevation={6}
           sx={{
@@ -279,7 +571,6 @@ const Contract = () => {
             width: "100%",
             bgcolor: "background.default",
             overflowX: "auto",
-            mt: 6,
           }}
         >
           <Input.Search
@@ -290,7 +581,7 @@ const Contract = () => {
             style={{ width: 250, marginBottom: 20, marginTop: 10 }}
           />
           <Table
-            rowKey={"id"}
+            rowKey={(record) => record.contracts.id}
             columns={columns}
             dataSource={filteredData}
             onChange={onChange}
@@ -306,6 +597,28 @@ const Contract = () => {
           />
         </Paper>
       </ConfigProvider>
+
+      <AddContract
+        open={openAddModal}
+        onClose={() => setOpenAddModal(false)}
+        getDataContract={getDataContract}
+        loading={loading}
+        loadingTrue={() => setLoading(true)}
+        loadingFalse={() => setLoading(false)}
+        loadingMessage={loadingMessage}
+        setLoadingMessage={setLoadingMessage}
+        onNotify={(notify) => setSnackbar(notify)}
+      />
+
+      <UpdateDocumentContract
+        open={openUpdateModal}
+        onClose={() => setOpenUpdateModal(false)}
+        getDataContract={getDataContract}
+        loading={loading}
+        setLoading={setLoading}
+        loadingMessage={loadingMessage}
+        onNotify={(notify) => setSnackbar(notify)}
+      />
 
       <LoadingBackdrop message={loadingMessage} open={loading} />
       {/* Snackbar notification */}

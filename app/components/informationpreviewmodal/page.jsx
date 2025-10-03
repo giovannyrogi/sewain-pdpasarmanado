@@ -21,9 +21,6 @@ import moment from "moment";
 const InformationPreviewModal = ({ open, onClose, selectedData }) => {
   const isMobile = useMediaQuery("(max-width:600px)");
 
-  // console.log('selectedData', selectedData);
-  
-
   const [openPreview, setOpenPreview] = useState(false);
 
   //   console.log("selectedData", selectedData);

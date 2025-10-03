@@ -24,22 +24,21 @@ import moment from "moment";
 import axios from "axios";
 import { useThemeMode } from "@/app/components/themeprovider/ThemeContext";
 import dayjs from "dayjs";
+import InformationPreviewModal from "@/app/components/informationpreviewmodal/page";
+import { Tag } from "antd";
 
-const UpdateDocumentDate = ({
+const AddContract = ({
   open,
   onClose,
   loadingTrue,
   loadingFalse,
   loading,
-  getDataTenantApplication,
-  getLocationsData,
+  getDataContract,
   onNotify,
-  setLoadingMessage,
   selectedData,
+  setLoadingMessage,
 }) => {
   const isMobile = useMediaQuery("(max-width:600px)");
-
-  // console.log("selectedData", selectedData);
 
   const { themeMode } = useThemeMode();
   const theme = useTheme();
@@ -61,23 +60,49 @@ const UpdateDocumentDate = ({
     },
   };
 
-  const [startDate, setStartDate] = useState(null);
-  const [endDate, setEndDate] = useState(null);
   const [documentNumber, setDocumentNumber] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [highestDocumentNumber, setHighestDocumentNumber] = useState(null);
+  const [listAvailableTenant, setListAvailableTenant] = useState([]);
+  const [selectedTenantId, setSelectedTenantId] = useState(null);
+  const [selectedTenantData, setSelectedTenantData] = useState(null);
+  const [openPreviewModal, setOpenPreviewModal] = useState(false);
 
   // console.log("selectedData", selectedData);
 
-  const getHighestDocumentNumber = async () => {
+  const getListTenantFullyPaid = async () => {
     loadingTrue();
     try {
-      const response = await axios.get(
-        `/api/tenant-application/update-document`
-      );
-      console.log("response update document", response);
+      const response = await axios.get(`/api/contracts/tenants-fully-paid`);
+      console.log("response", response);
+
       if (response.data.success) {
-        setHighestDocumentNumber(response.data.data);
+        // mapping biar gampang dipakai di Autocomplete
+        const mapped = response.data.data.map((item) => ({
+          tenant_application_id: item.tenant_application.id,
+          full_name: item.tenant_identities.full_name,
+          nik: item.tenant_identities.nik,
+          phone: item.tenant_identities.phone,
+          ktp_file_path: item.tenant_identities.ktp_file_path,
+          id: item.tenant_identities.id,
+          birth_place: item.tenant_identities.birth_place,
+          birth_date: item.tenant_identities.birth_date,
+          occupation: item.tenant_identities.occupation,
+          religion: item.tenant_identities.religion,
+          nationality: item.tenant_identities.nationality,
+          street_address: item.tenant_identities.street_address,
+          rt: item.tenant_identities.rt,
+          rw: item.tenant_identities.rw,
+          kelurahan: item.tenant_identities.kelurahan,
+          district: item.tenant_identities.district,
+          city: item.tenant_identities.city,
+          province: item.tenant_identities.province,
+          location_code: item.locations.location_code,
+          latest_contract_number: item.contracts.latest_contract_number,
+          latest_contract_number_only:
+            item.contracts.latest_contract_number_only,
+        }));
+
+        setListAvailableTenant(mapped);
         setTimeout(() => {
           loadingFalse();
         }, 1000);
@@ -88,7 +113,7 @@ const UpdateDocumentDate = ({
         }, 1000);
       }
     } catch (error) {
-      console.log(error);
+      console.log("error", error);
       setTimeout(() => {
         loadingFalse();
       }, 1000);
@@ -97,11 +122,8 @@ const UpdateDocumentDate = ({
 
   useEffect(() => {
     if (open) {
-      getHighestDocumentNumber();
-    }
-    if (open && selectedData?.start_date && selectedData?.end_date) {
-      setStartDate(moment(selectedData?.start_date));
-      setEndDate(moment(selectedData?.end_date));
+      setLoadingMessage("Loading...");
+      getListTenantFullyPaid();
     }
   }, [open]);
 
@@ -114,26 +136,26 @@ const UpdateDocumentDate = ({
     const now = new Date();
     const monthRoman = toRoman(now.getMonth() + 1);
     const year = now.getFullYear();
-    const prefix = `/PM/${monthRoman}/${year}`;
-    const finalDocNumber = `${documentNumber}${prefix}`;
+    const prefix = `${" "}/ PM / SK / - ${
+      selectedTenantData?.location_code
+        ? selectedTenantData?.location_code
+        : "-"
+    } / ${monthRoman} / ${year}`;
+    const finalContractNumber = `${documentNumber}${prefix}`;
 
     try {
-      const response = await axios.put(
-        `/api/tenant-application/update-document/${selectedData.tenant_application_id}`,
-        {
-          start_date: startDate,
-          end_date: endDate,
-          document_number: finalDocNumber,
-        }
-      );
+      const response = await axios.post(`/api/contracts`, {
+        tenant_application_id: selectedTenantId,
+        contract_number: finalContractNumber,
+      });
       console.log("response", response);
 
       if (response.data.success) {
-        getDataTenantApplication();
+        getDataContract();
         onNotify &&
           onNotify({
             open: true,
-            message: response.data.message || "Berhasil mengupdate document",
+            message: response.data.message || "Berhasil Membuat Kontrak",
             severity: "success",
           });
         setTimeout(() => {
@@ -146,7 +168,7 @@ const UpdateDocumentDate = ({
         onNotify &&
           onNotify({
             open: true,
-            message: response.data.message || "Gagal mengupdate document",
+            message: response.data.message || "Gagal Membuat Kontrak",
             severity: "error",
           });
         setTimeout(() => {
@@ -159,7 +181,7 @@ const UpdateDocumentDate = ({
       onNotify &&
         onNotify({
           open: true,
-          message: error.response.data.message || "Gagal mengupdate document",
+          message: error.response.data.message || "Gagal Membuat kontrak",
           severity: "error",
         });
       setTimeout(() => {
@@ -170,10 +192,10 @@ const UpdateDocumentDate = ({
   };
 
   const clearForm = () => {
-    setStartDate(null);
-    setEndDate(null);
     setDocumentNumber("");
-    setHighestDocumentNumber(null);
+    setSelectedTenantData(null);
+    setSelectedTenantId(null);
+    setListAvailableTenant([]);
   };
 
   const toRoman = (num) => {
@@ -212,9 +234,13 @@ const UpdateDocumentDate = ({
             whiteSpace: "nowrap",
             fontWeight: "bold",
             fontSize: "14px",
-            letterSpacing: "1px",
+            // letterSpacing: "1px",
           }}
-        >{`/PM/${monthRoman}/${year}`}</Typography>
+        >{`/ PM / SK / - ${
+          selectedTenantData?.location_code
+            ? selectedTenantData?.location_code
+            : "-"
+        } / ${monthRoman} / ${year}`}</Typography>
       </InputAdornment>
     );
   };
@@ -222,10 +248,7 @@ const UpdateDocumentDate = ({
   return (
     <Modal
       open={open}
-      onClose={() => {
-        onClose();
-        clearForm();
-      }}
+      onClose={onClose}
       sx={{
         display: "flex",
         alignItems: "center",
@@ -252,7 +275,7 @@ const UpdateDocumentDate = ({
           <Typography
             sx={{ fontWeight: "bold", fontSize: isMobile ? "18px" : "20px" }}
           >
-            Update Data Dokumen
+            Tambah Kontrak Baru
           </Typography>
         </Box>
 
@@ -266,64 +289,66 @@ const UpdateDocumentDate = ({
 
         <form onSubmit={handleSubmit}>
           <Grid container spacing={isMobile ? 3 : 2}>
-            <>
-              <Grid size={12}>
-                <DatePicker
-                  label="Tanggal Mulai"
-                  // value harus dayjs, bukan string
-                  value={startDate}
-                  onChange={(newValue) => {
-                    // langsung simpan dayjs object
-                    setStartDate(newValue);
-
-                    if (newValue) {
-                      // Tambahkan 365 hari ke tanggal mulai
-                      const end = moment(newValue).add(365, "days");
-
-                      setEndDate(end);
-                    } else {
-                      setEndDate(null);
-                    }
-                  }}
-                  disabled={selectedData?.start_date}
-                  // minDate={moment().startOf("day")}
-                  slotProps={{
-                    textField: {
-                      variant: "filled",
-                      fullWidth: true,
-                      required: true,
-                      disabled: selectedData?.start_date,
-                      color: "primary",
-                    },
-                  }}
-                />
+            <Grid size={12}>
+              <Autocomplete
+                options={listAvailableTenant || []}
+                getOptionLabel={(option) => option.full_name || ""}
+                value={
+                  listAvailableTenant.find(
+                    (item) => item.tenant_application_id === selectedTenantId
+                  ) || null
+                }
+                onChange={(event, newValue) => {
+                  console.log("newValue", newValue);
+                  if (!newValue) {
+                    setSelectedTenantId(null);
+                    setSelectedTenantData(null);
+                    return;
+                  }
+                  setSelectedTenantId(
+                    newValue ? newValue.tenant_application_id : null
+                  );
+                  setSelectedTenantData(newValue);
+                }}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Pilih Data Penyewa"
+                    variant="filled"
+                    required
+                  />
+                )}
+              />
+            </Grid>
+            {selectedTenantId && (
+              <Grid
+                container
+                size={12}
+                sx={{
+                  mt: isMobile ? -2 : -1.2,
+                }}
+              >
+                <Grid size={isMobile ? 12 : 6}>
+                  <Typography
+                    sx={{
+                      fontWeight: "bold",
+                      fontSize: "12px",
+                      cursor: "pointer",
+                      color: theme.palette.primary.main,
+                      "&:hover": {
+                        textDecoration: "underline",
+                      },
+                    }}
+                    onClick={() => setOpenPreviewModal(true)}
+                  >
+                    Lihat Data Penyewa
+                  </Typography>
+                </Grid>
               </Grid>
-              <Grid size={12}>
-                <DatePicker
-                  label="Tanggal Selesai"
-                  // value harus dayjs, bukan string
-                  value={endDate}
-                  onChange={(newValue) => {
-                    // langsung simpan dayjs object
-                    setEndDate(newValue);
-                  }}
-                  // minDate={moment().startOf("day")}
-                  disabled
-                  slotProps={{
-                    textField: {
-                      variant: "filled",
-                      fullWidth: true,
-                      required: true,
-                      color: "primary",
-                      disabled: true,
-                    },
-                  }}
-                />
-              </Grid>
-            </>
+            )}
             <Grid size={12}>
               <TextField
-                label="Nomor Dokumen"
+                label="Nomor Kontrak"
                 // placeholder="Cth: 001"
                 variant="filled"
                 fullWidth
@@ -339,7 +364,7 @@ const UpdateDocumentDate = ({
                 color="primary"
               />
             </Grid>
-            {highestDocumentNumber && (
+            {selectedTenantData && (
               <Grid
                 size={12}
                 sx={{
@@ -363,8 +388,8 @@ const UpdateDocumentDate = ({
                     color: "primary.main",
                   }}
                 >
-                  Nomor Dokumen terakhir adalah{" "}
-                  {highestDocumentNumber?.highest_document_number
+                  Nomor kontrak terakhir adalah{" "}
+                  {selectedTenantData?.latest_contract_number
                     .split("/")[0]
                     .trim() || "-"}
                 </Typography>
@@ -378,7 +403,7 @@ const UpdateDocumentDate = ({
                 fullWidth
                 size="small"
                 sx={{
-                  mt: 3,
+                  mt: 2,
                   fontWeight: "bold",
                   fontSize: 16,
                   textTransform: "none",
@@ -393,9 +418,15 @@ const UpdateDocumentDate = ({
             </Grid>
           </Grid>
         </form>
+
+        <InformationPreviewModal
+          open={openPreviewModal}
+          onClose={() => setOpenPreviewModal(false)}
+          selectedData={selectedTenantData}
+        />
       </Box>
     </Modal>
   );
 };
 
-export default UpdateDocumentDate;
+export default AddContract;

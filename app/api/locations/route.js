@@ -5,12 +5,12 @@ import moment from "moment";
 export async function POST(req) {
   try {
     const body = await req.json();
-    const { location_name, city, address, location_code } = body;
+    const { location_name, city, street_address, location_code, kelurahan, district, province } = body;
 
     const result = await pool.query(
-      `INSERT INTO locations (location_name, city, address, location_code)
-       VALUES ($1, $2, $3, $4) RETURNING *`,
-      [location_name, city, address, location_code]
+      `INSERT INTO locations (location_name, city, street_address, location_code, kelurahan, district, province)
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+      [location_name, city, street_address, location_code, kelurahan, district, province]
     );
     return new Response(
       JSON.stringify({
@@ -38,7 +38,10 @@ export async function GET(req) {
       id: row.id,
       location_name: row.location_name,
       city: row.city,
-      address: row.address,
+      street_address: row.street_address,
+      kelurahan: row.kelurahan,
+      district: row.district,
+      province: row.province,
       location_code: row.location_code,
       updated_at: row.updated_at
         ? moment(row.updated_at).format("YYYY-MM-DD HH:mm:ss")

@@ -171,7 +171,7 @@ export async function GET() {
 
         -- location
         loc.location_name,
-        loc.address,
+        loc.street_address,
         loc.city,
 
         -- payment approval
@@ -270,7 +270,7 @@ export async function GET() {
         },
         location: {
           location_name: row.location_name,
-          address: row.address,
+          street_address: row.street_address,
           city: row.city,
         },
       };

@@ -131,24 +131,6 @@ const Payments = () => {
     setPrintData(record);
   };
 
-  const filteredData = dataPayments.filter((item) => {
-    if (!searchText) return true;
-    const search = searchText.toLowerCase();
-
-    return (
-      item?.tenant_application?.tenant_name?.toLowerCase().includes(search) ||
-      item?.tenant_application?.payment_type?.toLowerCase().includes(search) ||
-      (item?.payments?.payment_number &&
-        `cicilan ${item.payments.payment_number}`
-          .toLowerCase()
-          .includes(search)) ||
-      (item?.payments?.approval_status &&
-        approvalStatusMap[item.payments.approval_status]
-          ?.toLowerCase()
-          .includes(search))
-    );
-  });
-
   // Utility untuk filter dinamis
   const getValueByPath = (obj, path) => {
     if (Array.isArray(path)) {
@@ -217,6 +199,24 @@ const Payments = () => {
     ["payments", "approval_status"],
     approvalStatusMap
   );
+
+  const filteredData = dataPayments.filter((item) => {
+    if (!searchText) return true;
+    const search = searchText.toLowerCase();
+
+    return (
+      item?.tenant_application?.tenant_name?.toLowerCase().includes(search) ||
+      item?.tenant_application?.payment_type?.toLowerCase().includes(search) ||
+      (item?.payments?.payment_number &&
+        `cicilan ${item.payments.payment_number}`
+          .toLowerCase()
+          .includes(search)) ||
+      (item?.payments?.approval_status &&
+        approvalStatusMap[item.payments.approval_status]
+          ?.toLowerCase()
+          .includes(search))
+    );
+  });
 
   const columns = [
     {
