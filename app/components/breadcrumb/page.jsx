@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { Breadcrumbs, Link, Typography, Paper, useTheme } from "@mui/material";
+import { Breadcrumbs, Link, Typography, Paper, useTheme, Box } from "@mui/material";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import { usePathname } from "next/navigation";
 import { useThemeMode } from "../themeprovider/ThemeContext";
@@ -77,12 +77,12 @@ const BreadcrumbPage = ({ menuList = [] }) => {
   const breadcrumbs = findMenuPath(menuList, pathParts);
 
   return (
-    <Paper
-      elevation={6}
+    <Box
+      // elevation={6}
       sx={{
         p: "10px 15px 10px 15px",
         width: "100%",
-        bgcolor: "background.default",
+        // bgcolor: "background.default",
         overflowX: "auto",
         mt: 1,
         mb: 2,
@@ -128,7 +128,7 @@ const BreadcrumbPage = ({ menuList = [] }) => {
           )
         )}
       </Breadcrumbs>
-    </Paper>
+    </Box>
   );
 };
 

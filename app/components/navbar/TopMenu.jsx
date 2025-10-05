@@ -11,6 +11,8 @@ import {
   Tooltip,
   useTheme,
   alpha,
+  Paper,
+  useMediaQuery,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu"; // <-- Tambahkan ini
 import LightModeIcon from "@mui/icons-material/LightMode";
@@ -20,91 +22,106 @@ import PersonIcon from "@mui/icons-material/Person";
 import BusinessIcon from "@mui/icons-material/Business";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import { Icon } from "@iconify/react";
+import { useThemeMode } from "../themeprovider/ThemeContext";
+import LoadingBackdrop from "../loading/Backdrop";
+import axios from "axios";
+import { redirect } from "next/navigation";
 
-const TopMenu = ({
-  themeMode,
-  setThemeMode,
-  onProfile = () => {},
-  onMenuIconClick = () => {}, // <-- Tambahkan prop ini
-}) => {
+const TopMenu = ({ user, onBurgerClick }) => {
   const theme = useTheme();
+  const isMobile = useMediaQuery("(max-width:1200px)");
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
+  const { themeMode, setThemeMode } = useThemeMode();
+  const [loading, setLoading] = useState(false);
 
   const handleAvatarClick = (event) => setAnchorEl(event.currentTarget);
   const handleMenuClose = () => setAnchorEl(null);
 
-  const onLogout = () => {
-    handleMenuClose();
-    localStorage.removeItem("user");
-    window.location.href = "/";
+  const handleLogout = async () => {
+    setLoading(true);
+    try {
+      await axios.post("/api/logout");
+      setTimeout(() => {
+        // window.location.href = "/login"; // middleware akan handle redirect
+        redirect("/login");
+      }, 1000);
+    } catch (err) {
+      console.log("error logout", err);
+      setLoading(false);
+    }
   };
 
   return (
-    <Box
+    <Paper
       sx={{
         p: 2,
-        width: "100%",
-        height: "70px",
+        height: "55px",
         display: "flex",
         flexDirection: "row",
         alignItems: "center",
-        justifyContent: "space-between",
+        justifyContent: isMobile ? "space-between" : "flex-end",
         transition: "all 0.3s",
+        borderRadius: "0px",
         // marginBottom: "20px",
+        // background: themeMode === "dark" ? "#1C1C1C" : "#fff",
       }}
     >
-      {/* Left: Burger Icon + Logo + Main Office */}
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-        {/* <IconButton
-          onClick={onMenuIconClick}
-          edge="start"
-          color="inherit"
-          aria-label="open drawer"
-          sx={{ mr: 1 }}
-        >
-          <MenuIcon />
-        </IconButton> */}
-        {/* <LocationOnIcon sx={{ fontSize: 32, color: "primary.main" }} /> */}
-        <Typography variant="h6" fontWeight="bold">
-          Main Office
-        </Typography>
-      </Box>
+      {/* Left: Burger Icon */}
+      {isMobile && (
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <IconButton
+            onClick={onBurgerClick}
+            edge="start"
+            aria-label="open drawer"
+            sx={{
+              mr: 1,
+              color: theme.palette.primary.main,
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+            }}
+          >
+            <MenuIcon />
+            <Typography sx={{fontFamily:'poppins', fontWeight:'bold'}}>Menu</Typography>
+          </IconButton>
+        </Box>
+      )}
 
       {/* Right: Theme Toggle + Avatar */}
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-        {/* <Tooltip title={themeMode === "dark" ? "Light Mode" : "Dark Mode"}>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+        <Tooltip title={themeMode === "dark" ? "Light Mode" : "Dark Mode"}>
           <IconButton
-            onClick={() =>
-              setThemeMode(themeMode === "dark" ? "light" : "dark")
-            }
+            onClick={() => {
+              setThemeMode(themeMode === "dark" ? "light" : "dark");
+              localStorage.setItem(
+                "currentTheme",
+                JSON.stringify({
+                  currentThemeMode: themeMode === "dark" ? "light" : "dark",
+                })
+              );
+            }}
             aria-label="toggle theme"
             sx={{
               color: themeMode === "dark" ? "#fff" : "#222",
               transition: "background-color 0.3s, color 0.3s",
+              color: theme.palette.primary.main,
+              bgcolor: alpha(theme.palette.primary.main, 0.1),
+              "&:hover": {
+                bgcolor: alpha(theme.palette.primary.main, 0.2),
+              },
             }}
           >
-            {themeMode === "dark" ? <LightModeIcon /> : <DarkModeIcon />}
+            {themeMode === "dark" ? (
+              <Icon icon="line-md:moon-rising-filled-loop" fontSize="22px" />
+            ) : (
+              <Icon
+                icon="line-md:moon-filled-alt-to-sunny-filled-loop-transition"
+                fontSize="22px"
+              />
+            )}
           </IconButton>
-        </Tooltip> */}
-        {/* <Tooltip title="Profile">
-          <IconButton onClick={handleAvatarClick} size="small" sx={{ ml: 1 }}>
-            <Avatar
-              src={"/avatar-women2.png"}
-              alt="Super Admin"
-              sx={{
-                width: 36,
-                height: 36,
-                bgcolor: "primary.main",
-                border: "2px solid #eee",
-              }}
-              imgProps={{
-                referrerPolicy: "no-referrer",
-                style: { objectFit: "cover" },
-              }}
-            />
-          </IconButton>
-        </Tooltip> */}
+        </Tooltip>
         <Tooltip title="Setting">
           <IconButton
             onClick={handleAvatarClick}
@@ -120,7 +137,7 @@ const TopMenu = ({
             <Icon
               icon="line-md:cog-filled-loop"
               color={theme.palette.primary.main}
-              fontSize="36px"
+              fontSize="25px"
             />
           </IconButton>
         </Tooltip>
@@ -142,14 +159,14 @@ const TopMenu = ({
             horizontal: "right",
           }}
         >
-          <MenuItem onClick={onProfile}>
+          <MenuItem>
             <ListItemIcon>
               <PersonIcon fontSize="small" />
             </ListItemIcon>
             Profil
           </MenuItem>
           <Divider />
-          <MenuItem onClick={onLogout}>
+          <MenuItem onClick={handleLogout}>
             <ListItemIcon>
               <LogoutIcon fontSize="small" />
             </ListItemIcon>
@@ -157,7 +174,9 @@ const TopMenu = ({
           </MenuItem>
         </Menu>
       </Box>
-    </Box>
+      {/* Spinner full screen saat redirect */}
+      <LoadingBackdrop open={loading} message="Logging out..." />
+    </Paper>
   );
 };
 

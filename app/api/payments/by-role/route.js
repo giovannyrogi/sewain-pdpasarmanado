@@ -1,5 +1,6 @@
+import pool from "@/lib/dbConfig";
 import moment from "moment";
-import pool from "@/lib/db"; // sesuaikan path pool-mu
+
 
 export async function GET(req) {
   try {

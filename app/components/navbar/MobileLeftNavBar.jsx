@@ -26,12 +26,18 @@ import Image from "next/image";
 import { redirect, usePathname, useRouter } from "next/navigation";
 import axios from "axios";
 
-const MobileLeftNavBar = ({ menus, activeMenu, onMenuClick, user }) => {
+const MobileLeftNavBar = ({
+  menus,
+  activeMenu,
+  onMenuClick,
+  user,
+  drawerOpen,
+  onCloseDrawer,
+}) => {
   const theme = useTheme();
   const router = useRouter();
   const pathname = usePathname();
   const { themeMode, setThemeMode } = useThemeMode();
-  const [drawerOpen, setDrawerOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -83,6 +89,7 @@ const MobileLeftNavBar = ({ menus, activeMenu, onMenuClick, user }) => {
         minHeight: "100%",
         display: "flex",
         flexDirection: "column",
+        zIndex: 99999,
       }}
     >
       <Box
@@ -298,7 +305,7 @@ const MobileLeftNavBar = ({ menus, activeMenu, onMenuClick, user }) => {
                           selected={isSubMenuActive(sub)}
                           onClick={() => {
                             handleMenuClick(sub);
-                            setDrawerOpen(false);
+                            onCloseDrawer();
                           }}
                         >
                           {sub.showIcon ? (
@@ -372,10 +379,10 @@ const MobileLeftNavBar = ({ menus, activeMenu, onMenuClick, user }) => {
           )}
         </List>
 
-        <Divider sx={{ mt: 2 }} />
+        {/* <Divider sx={{ mt: 2 }} /> */}
 
         {/* Settings Menu */}
-        <List sx={{ mt: 2 }}>
+        {/* <List sx={{ mt: 2 }}>
           <ListItem disablePadding>
             <ListItemButton
               onClick={() =>
@@ -424,6 +431,7 @@ const MobileLeftNavBar = ({ menus, activeMenu, onMenuClick, user }) => {
               )}
             </ListItemButton>
           </ListItem>
+
           <Collapse
             in={openDropdown === "settings"}
             timeout="auto"
@@ -623,11 +631,11 @@ const MobileLeftNavBar = ({ menus, activeMenu, onMenuClick, user }) => {
               ))}
             </List>
           </Collapse>
-        </List>
+        </List> */}
       </Box>
 
       {/* Logout Button - Always at Bottom */}
-      <Box sx={{ flexShrink: 0, mt: 2 }}>
+      {/* <Box sx={{ flexShrink: 0, mt: 2 }}>
         <List>
           <ListItem disablePadding>
             <ListItemButton
@@ -660,13 +668,13 @@ const MobileLeftNavBar = ({ menus, activeMenu, onMenuClick, user }) => {
             </ListItemButton>
           </ListItem>
         </List>
-      </Box>
+      </Box> */}
     </Paper>
   );
 
   return (
     <Box>
-      <Button
+      {/* <Button
         onClick={() => setDrawerOpen(true)}
         sx={{
           display: "flex",
@@ -679,11 +687,11 @@ const MobileLeftNavBar = ({ menus, activeMenu, onMenuClick, user }) => {
       >
         <Icon icon="line-md:close-to-menu-transition" fontSize={25} />
         <Typography>Menu</Typography>
-      </Button>
+      </Button> */}
       <Drawer
         anchor="left"
         open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
+        onClose={onCloseDrawer}
         PaperProps={{
           sx: {
             width: 260,

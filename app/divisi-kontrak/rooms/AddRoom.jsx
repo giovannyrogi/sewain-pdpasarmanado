@@ -351,9 +351,10 @@ const AddRoom = ({
                   value={isAvailable}
                   defaultValue={true}
                   onChange={(e) => {
-                    console.log("isAvailable", e.target.value);
-
                     setIsAvailable(e.target.value);
+                    if (e.target.value === false) {
+                      setNotes("");
+                    }
                   }}
                 >
                   <MenuItem value={false}>Tersedia</MenuItem>

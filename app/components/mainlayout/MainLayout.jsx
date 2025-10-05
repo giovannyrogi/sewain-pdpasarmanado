@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 import { Box, Grid, useMediaQuery } from "@mui/material";
 import MobileLeftNavBar from "../navbar/MobileLeftNavBar";
 import LeftNavBar from "../navbar/LeftNavBar";
@@ -12,6 +12,7 @@ import menuDirekturBisnis from "../menu/MenuItemDirekturBisnis";
 import menuItemDirekturUtama from "../menu/MenuItemDirekturUtama";
 import menuKepalaSubdivisi from "../menu/MenuItemKepalaSubdivisi";
 import menuDivisiKeuangan from "../menu/MenuItemDivisiKeuangan";
+import TopMenu from "../navbar/TopMenu";
 
 // mapping role_id → menu
 const roleMenus = {
@@ -25,17 +26,13 @@ const roleMenus = {
   8: menuDivisiKeuangan,
 };
 
-const NavbarWrapper = ({ isMobile, menus, user }) =>
-  isMobile ? (
-    <MobileLeftNavBar menus={menus} user={user} />
-  ) : (
-    <LeftNavBar menus={menus} user={user} />
-  );
-
 const MainLayout = ({ children }) => {
   const isMobile = useMediaQuery("(max-width:1200px)");
   const user = useUser();
   const menus = roleMenus[user?.role_id] ?? [];
+
+  // Pusatkan kontrol Drawer di MainLayout
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   return (
     <Box
@@ -44,14 +41,36 @@ const MainLayout = ({ children }) => {
         bgcolor: "background.default",
         color: "text.primary",
         transition: "all 0.3s",
-        p: isMobile ? 2 : 0,
+        // p: isMobile ? 2 : 0,
       }}
     >
-      <Grid container columnGap={5} rowGap={1}>
-        <Grid size={2.3}>
-          <NavbarWrapper isMobile={isMobile} menus={menus} user={user} />
+      <Grid container rowGap={1}>
+        {/* Sidebar hanya muncul di desktop */}
+        {!isMobile && (
+          <Grid size={2.3} sx={{ zIndex: 1 }}>
+            <LeftNavBar menus={menus} user={user} />
+          </Grid>
+        )}
+
+        {/* Konten utama */}
+        <Grid size={isMobile ? 12 : 9.7}>
+          <Grid size={12}>
+            {/* 🔹 Kirim kontrol Drawer ke TopMenu */}
+            <TopMenu user={user} onBurgerClick={() => setDrawerOpen(true)} />
+          </Grid>
+
+          {/* 🔹 Drawer mobile muncul di bawah TopMenu */}
+          {isMobile && (
+            <MobileLeftNavBar
+              menus={menus}
+              user={user}
+              drawerOpen={drawerOpen}
+              onCloseDrawer={() => setDrawerOpen(false)}
+            />
+          )}
+
+          <Grid size={12}>{children}</Grid>
         </Grid>
-        <Grid size={isMobile ? 12 : 9.2}>{children}</Grid>
       </Grid>
     </Box>
   );

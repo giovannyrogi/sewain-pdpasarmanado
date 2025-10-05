@@ -415,14 +415,14 @@ const LeftNavBar = ({ menus, activeMenu, onMenuClick, user }) => {
           )}
         </List>
 
-        <Divider
+        {/* <Divider
           sx={{
             mt: 2,
           }}
-        />
+        /> */}
 
         {/* Settings Menu*/}
-        <List sx={{ mt: 2 }}>
+        {/* <List sx={{ mt: 2 }}>
           <ListItem disablePadding>
             <ListItemButton
               onClick={() =>
@@ -673,11 +673,11 @@ const LeftNavBar = ({ menus, activeMenu, onMenuClick, user }) => {
               ))}
             </List>
           </Collapse>
-        </List>
+        </List> */}
       </Box>
 
       {/* Logout Button - Always at Bottom */}
-      <Box sx={{ flexShrink: 0, mt: 2 }}>
+      {/* <Box sx={{ flexShrink: 0, mt: 2 }}>
         <List>
           <ListItem disablePadding>
             <ListItemButton
@@ -710,7 +710,7 @@ const LeftNavBar = ({ menus, activeMenu, onMenuClick, user }) => {
             </ListItemButton>
           </ListItem>
         </List>
-      </Box>
+      </Box> */}
       {/* Spinner full screen saat redirect */}
       <LoadingBackdrop open={loading} message="Logging out..." />
     </Paper>
