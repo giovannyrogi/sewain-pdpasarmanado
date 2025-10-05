@@ -435,7 +435,9 @@ const AddTenantApplication = ({
       if (tenantType === "perpanjang tenant") {
         formData.append(
           "renewal_of",
-          selectedDataTenantExtends ? selectedDataTenantExtends?.tenant_application_id : null
+          selectedDataTenantExtends
+            ? selectedDataTenantExtends?.tenant_application_id
+            : null
         );
       }
 
@@ -580,14 +582,16 @@ const AddTenantApplication = ({
                 }
                 onChange={(event, newValue) => {
                   // simpan value ke state
-                  setTenantType(newValue ? newValue.value : null);
                   if (newValue?.value === "perpanjang tenant") {
+                    clearForm();
                     getListTenantExtends();
                   } else {
                     clearForm();
                     setListDataTenantExtends([]);
                     setSelectedDataTenantExtends(null);
+                    getListIdentities();
                   }
+                  setTenantType(newValue ? newValue.value : null);
                 }}
                 renderInput={(params) => (
                   <TextField
