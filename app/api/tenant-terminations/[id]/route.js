@@ -5,9 +5,6 @@ import path from "path";
 export async function DELETE(request, context) {
   const { id } = await context.params; // termination_id
 
-  console.log('id', id);
-  
-
   try {
     if (!id) {
       return new Response(

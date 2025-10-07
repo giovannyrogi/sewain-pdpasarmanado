@@ -26,11 +26,11 @@ const CardViewIncome = ({
   const isTablet = useMediaQuery("(max-width:1200px)");
   const [checked, setChecked] = useState(false);
 
-  console.log("currentMonthIncomeWithTax", currentMonthIncomeWithTax);
+  // console.log("currentMonthIncomeWithTax", currentMonthIncomeWithTax);
   // console.log("currentMonthIncomeWithoutTax", currentMonthIncomeWithoutTax);
 
   const handleChange = (event) => {
-    console.log("checked", event.target.checked);
+    // console.log("checked", event.target.checked);
 
     setChecked(event.target.checked);
   };
@@ -41,7 +41,7 @@ const CardViewIncome = ({
       sx={{
         backgroundColor: "background.default",
         p: 2,
-        height: "170px",
+        height: "180px",
         borderRadius: "15px",
         // onhover drop shadow
         "&:hover": {
@@ -55,18 +55,23 @@ const CardViewIncome = ({
       }}
     >
       <Grid container spacing={1}>
-        <Grid container spacing={1} size={12} mb={2}>
-          <Grid size={7}>
-            <Typography
-              sx={{
-                fontSize: "14px",
-                fontWeight: "bold",
-                fontFamily: "poppins",
-              }}
-            >
-              Pendapatan Bulan Ini
-            </Typography>
-          </Grid>
+        <Grid container spacing={1} size={12}>
+          {loading ? (
+            <Skeleton variant="rounded" width="100%" height={20} />
+          ) : (
+            <Grid size={7}>
+              <Typography
+                sx={{
+                  fontSize: "15px",
+                  fontWeight: "bold",
+                  fontFamily: "poppins",
+                }}
+              >
+                Pendapatan Bulan Ini
+              </Typography>
+            </Grid>
+          )}
+
           <Grid
             size={5}
             display={"flex"}
@@ -88,6 +93,7 @@ const CardViewIncome = ({
                 </Typography>
                 <Checkbox
                   checked={checked}
+                  size="small"
                   onChange={handleChange}
                   sx={{
                     m: 0,
@@ -98,6 +104,19 @@ const CardViewIncome = ({
             )}
           </Grid>
         </Grid>
+
+        {loading ? undefined : (
+          <Divider
+            sx={{
+              // borderWidth: "1px",
+              borderColor: theme.palette.primary.main,
+              // mt: 1,
+              width: "100%",
+              mt: "-5px",
+              mb: 2,
+            }}
+          />
+        )}
 
         {loading ? (
           <Box
@@ -129,6 +148,7 @@ const CardViewIncome = ({
                 width="100%"
                 height={30}
               />
+              <Skeleton variant="rounded" width="100%" height={20} />
             </Box>
 
             <Box
@@ -261,7 +281,17 @@ const CardViewIncome = ({
                           // textAlign: "justify",
                         }}
                       >
-                        Pendapatan meningkat dibanding bulan lalu
+                        Pendapatan meningkat dibandingkan dengan bulan lalu{" "}
+                        <span
+                          style={{
+                            color: theme.palette.primary.main,
+                          }}
+                        >
+                          {formatRupiah(
+                            currentMonthIncomeWithTax?.last_month
+                              ?.total_income || 0
+                          )}
+                        </span>
                       </Typography>
                     </Grid>
                   </Grid>
@@ -326,7 +356,17 @@ const CardViewIncome = ({
                           // textAlign: "justify",
                         }}
                       >
-                        Pendapatan menurun dibanding bulan lalu
+                        Pendapatan menurun dibandingkan dengan bulan lalu{" "}
+                        <span
+                          style={{
+                            color: theme.palette.primary.main,
+                          }}
+                        >
+                          {formatRupiah(
+                            currentMonthIncomeWithTax?.last_month
+                              ?.total_income || 0
+                          )}
+                        </span>
                       </Typography>
                     </Grid>
                   </Grid>
@@ -392,7 +432,17 @@ const CardViewIncome = ({
                         // textAlign: "justify",
                       }}
                     >
-                      Pendapatan meningkat dibanding bulan lalu
+                      Pendapatan meningkat dibandingkan dengan bulan lalu{" "}
+                      <span
+                        style={{
+                          color: theme.palette.primary.main,
+                        }}
+                      >
+                        {formatRupiah(
+                          currentMonthIncomeWithoutTax?.last_month
+                            ?.total_income || 0
+                        )}
+                      </span>
                     </Typography>
                   </Grid>
                 </Grid>
@@ -457,7 +507,17 @@ const CardViewIncome = ({
                         // textAlign: "justify",
                       }}
                     >
-                      Pendapatan menurun dibanding bulan lalu
+                      Pendapatan menurun dibandingkan dengan bulan lalu{" "}
+                      <span
+                        style={{
+                          color: theme.palette.primary.main,
+                        }}
+                      >
+                        {formatRupiah(
+                          currentMonthIncomeWithoutTax?.last_month
+                            ?.total_income || 0
+                        )}
+                      </span>
                     </Typography>
                   </Grid>
                 </Grid>

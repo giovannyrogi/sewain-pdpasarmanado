@@ -20,6 +20,7 @@ import {
 } from "@mui/x-charts";
 import CardViewIncome from "./CardViewIncome";
 import axios from "axios";
+import CardViewContract from "./CardViewContract";
 
 const Dashboard = () => {
   const isTablet = useMediaQuery("(max-width:1200px)");
@@ -32,6 +33,7 @@ const Dashboard = () => {
   const [currentMonthIncomeWithTax, setCurrentMonthIncomeWithTax] = useState(
     {}
   );
+  const [currentContractStatus, setCurrentContractStatus] = useState({});
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -60,10 +62,29 @@ const Dashboard = () => {
     }
   };
 
+  const getCurrentContractStatus = async () => {
+    try {
+      const response = await axios.get(
+        "/api/dashboard/current-contracts-status"
+      );
+
+      console.log("response contracts", response);
+
+      if (response.data.success) {
+        setCurrentContractStatus(response?.data?.data);
+      } else {
+        console.error("Error fetching current contracts:", response);
+      }
+    } catch (error) {
+      console.error("Error fetching  current contracts:", error);
+    }
+  };
+
   const getAllData = async () => {
     try {
       setLoading(true);
       await getCurrentMonthIncome();
+      await getCurrentContractStatus();
     } catch (error) {
       console.error(error);
     } finally {
@@ -107,24 +128,9 @@ const Dashboard = () => {
         </Grid>
 
         <Grid size={isMobile ? 12 : isTablet ? 6 : 4}>
-          <Paper
-            elevation={6}
-            sx={{
-              backgroundColor: "background.default",
-              p: 2,
-              height: "170px",
-              borderRadius: "15px",
-              // onhover drop shadow
-              "&:hover": {
-                boxShadow: 15,
-                transition: "all 0.3s",
-                border: `solid 1px ${theme.palette.primary.main}`,
-              },
-            }}
-          >
-            Dashboard Content
-          </Paper>
+          <CardViewContract loading={loading} data={currentContractStatus} />
         </Grid>
+
         <Grid size={isMobile ? 12 : isTablet ? 6 : 4}>
           <Paper
             elevation={6}

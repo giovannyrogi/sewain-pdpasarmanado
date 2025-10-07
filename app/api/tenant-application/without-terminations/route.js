@@ -3,6 +3,8 @@ import moment from "moment";
 
 export async function GET(req) {
   try {
+    const today = moment().format("YYYY-MM-DD");
+
     const result = await pool.query(
       `
       SELECT
@@ -50,10 +52,12 @@ export async function GET(req) {
       LEFT JOIN location_floor_prices f ON r.floor_id = f.id
       LEFT JOIN tenant_early_terminations tet 
           ON ta.id = tet.tenant_application_id
-      WHERE tet.tenant_application_id IS NULL
+      WHERE 
+        tet.tenant_application_id IS NULL
         AND ta.approval_status = 'approved'
         AND ta.start_date IS NOT NULL
         AND ta.end_date IS NOT NULL
+        AND ta.end_date >= $1
         -- pastikan hanya ambil data terakhir (hide renewal lama meskipun status proses)
         AND NOT EXISTS (
           SELECT 1
@@ -61,7 +65,8 @@ export async function GET(req) {
           WHERE r.renewal_of = ta.id
         )
       ORDER BY ta.created_at DESC
-      `
+      `,
+      [today]
     );
 
     const rows = result.rows.map((row) => ({
@@ -109,7 +114,7 @@ export async function GET(req) {
     return new Response(
       JSON.stringify({
         success: true,
-        message: "Berhasil mengambil data tenant application",
+        message: "Berhasil mengambil data tenant application (belum expired)",
         data: rows,
       }),
       { status: 200 }
