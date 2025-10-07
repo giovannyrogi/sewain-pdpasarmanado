@@ -25,17 +25,13 @@ const ViewPieChart = ({ loading, contractApprovalStatus }) => {
         backgroundColor: "background.default",
         p: 2,
         borderRadius: "15px",
+        // height: "400px",
       }}
     >
       <Grid container spacing={1}>
         {/* Header */}
         {loading ? (
-          <Skeleton
-            variant="text"
-            width="100%"
-            height={30}
-            animation="wave"
-          />
+          <Skeleton variant="text" width="100%" height={30} animation="wave" />
         ) : (
           <Grid size={12}>
             <Typography

@@ -76,7 +76,15 @@ const CardViewContract = ({
 
         {/* Content */}
         {loading ? (
-          <Box sx={{ display: "flex", gap: 1, width: "100%", height: "100%" }}>
+          <Box
+            sx={{
+              display: "flex",
+              gap: 1,
+              width: "100%",
+              height: "100%",
+              mt: 1,
+            }}
+          >
             <Skeleton
               variant="rounded"
               width="33%"
