@@ -44,14 +44,14 @@ const CardViewIncome = ({
         height: "180px",
         borderRadius: "15px",
         // onhover drop shadow
-        "&:hover": {
-          boxShadow: 15,
-          transition: "all 0.2s",
-          border:
-            themeMode === "dark"
-              ? `solid 1px ${theme.palette.primary.main}`
-              : "unset",
-        },
+        // "&:hover": {
+        //   boxShadow: 15,
+        //   transition: "all 0.2s",
+        //   border:
+        //     themeMode === "dark"
+        //       ? `solid 1px ${theme.palette.primary.main}`
+        //       : "unset",
+        // },
       }}
     >
       <Grid container spacing={1}>

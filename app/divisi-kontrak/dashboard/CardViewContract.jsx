@@ -28,14 +28,14 @@ const CardViewContract = ({
         p: 2,
         height: "180px",
         borderRadius: "15px",
-        "&:hover": {
-          boxShadow: 15,
-          transition: "all 0.2s ease",
-          border:
-            themeMode === "dark"
-              ? `solid 1px ${theme.palette.primary.main}`
-              : "unset",
-        },
+        // "&:hover": {
+        //   boxShadow: 15,
+        //   transition: "all 0.2s ease",
+        //   border:
+        //     themeMode === "dark"
+        //       ? `solid 1px ${theme.palette.primary.main}`
+        //       : "unset",
+        // },
       }}
     >
       <Grid container spacing={1}>

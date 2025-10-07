@@ -21,6 +21,7 @@ import {
 import CardViewIncome from "./CardViewIncome";
 import axios from "axios";
 import CardViewContract from "./CardViewContract";
+import ViewPieChart from "./PieChart";
 
 const Dashboard = () => {
   const isTablet = useMediaQuery("(max-width:1200px)");
@@ -34,6 +35,7 @@ const Dashboard = () => {
     {}
   );
   const [currentContractStatus, setCurrentContractStatus] = useState({});
+  const [contractApprovalStatus, setContractApprovalStatus] = useState({});
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -80,11 +82,30 @@ const Dashboard = () => {
     }
   };
 
+  const getContractApprovalStatus = async () => {
+    try {
+      const response = await axios.get(
+        "/api/dashboard/contracts-approval-status"
+      );
+
+      console.log("response approval", response);
+
+      if (response.data.success) {
+        setContractApprovalStatus(response.data.data);
+      } else {
+        console.error("Error fetching approval status:", response);
+      }
+    } catch (error) {
+      console.error("Error fetching approval status:", error);
+    }
+  };
+
   const getAllData = async () => {
     try {
       setLoading(true);
       await getCurrentMonthIncome();
       await getCurrentContractStatus();
+      await getContractApprovalStatus();
     } catch (error) {
       console.error(error);
     } finally {
@@ -137,14 +158,14 @@ const Dashboard = () => {
             sx={{
               backgroundColor: "background.default",
               p: 2,
-              height: "170px",
+              height: "180px",
               borderRadius: "15px",
               // onhover drop shadow
-              "&:hover": {
-                boxShadow: 15,
-                transition: "all 0.3s",
-                border: `solid 1px ${theme.palette.primary.main}`,
-              },
+              // "&:hover": {
+              //   boxShadow: 15,
+              //   transition: "all 0.3s",
+              //   border: `solid 1px ${theme.palette.primary.main}`,
+              // },
             }}
           >
             Dashboard Content
@@ -182,45 +203,7 @@ const Dashboard = () => {
           </Paper>
         </Grid>
         <Grid size={isMobile ? 12 : isTablet ? 12 : 4}>
-          <Paper
-            elevation={6}
-            sx={{
-              backgroundColor: "background.default",
-              p: 2,
-              borderRadius: "15px",
-            }}
-          >
-            <PieChart
-              series={[
-                {
-                  data: [
-                    {
-                      value: 10,
-                      label: "Disetujui",
-                      labelMarkType: (
-                        <Icon icon="duo-icons:approved" fontSize="20px" />
-                      ),
-                      highlightScope: { fade: "global", highlight: "item" },
-                    },
-                    {
-                      value: 15,
-                      label: "Dalam Proses",
-                      labelMarkType: "sadasd",
-                    },
-                    { value: 20, label: "Ditolak", labelMarkType: "" },
-                  ],
-                },
-              ]}
-              width={200}
-              sx={{
-                [`.${pieClasses.series}[data-series="outer"] .${pieArcClasses.root}`]:
-                  {
-                    opacity: 0.6,
-                  },
-              }}
-              height={200}
-            />
-          </Paper>
+          <ViewPieChart loading={loading} contractApprovalStatus={contractApprovalStatus} />
         </Grid>
       </Grid>
     </Box>
