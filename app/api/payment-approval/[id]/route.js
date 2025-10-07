@@ -4,8 +4,14 @@ export async function PUT(request, { params }) {
   try {
     const { id } = await params; // id payment_approval
     const body = await request.json();
-    const { payment_id, status, approver_id, role_id, tenant_application_id, payment_type } =
-      body;
+    const {
+      payment_id,
+      status,
+      approver_id,
+      role_id,
+      tenant_application_id,
+      payment_type,
+    } = body;
 
     // Validasi input status
     if (!["approved"].includes(status)) {
@@ -76,7 +82,32 @@ export async function PUT(request, { params }) {
     );
 
     // Jika payment_number == 3, set tenant_application.is_fully_paid = true
-    if (paymentData.payment_number === 3 || payment_type === "lunas") {
+    // if (paymentData.payment_number === 3 || payment_type === "lunas") {
+    //   await pool.query(
+    //     `UPDATE tenant_application
+    //      SET is_fully_paid = true
+    //      WHERE id = $1`,
+    //     [tenant_application_id]
+    //   );
+    // }
+
+    // Cek apakah pembayaran terakhir sudah lunas (remaining_balance <= 0)
+    const latestPaymentRes = await pool.query(
+      `
+      SELECT remaining_balance 
+      FROM payments 
+      WHERE tenant_application_id = $1
+      ORDER BY payment_number DESC
+      LIMIT 1
+      `,
+      [tenant_application_id]
+    );
+
+    const latestRemaining = parseFloat(
+      latestPaymentRes.rows[0]?.remaining_balance || 0
+    );
+
+    if (latestRemaining <= 0) {
       await pool.query(
         `UPDATE tenant_application 
          SET is_fully_paid = true
