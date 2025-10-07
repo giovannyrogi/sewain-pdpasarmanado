@@ -361,7 +361,7 @@ const Applications = () => {
         <Typography
           sx={{ fontWeight: "bold", fontSize: "12px", textAlign: "end" }}
         >
-          {formatRupiah(record.total_payment)}
+          {formatRupiah(Number(record.total_payment) + Number(record.admin_fee))}
         </Typography>
       ),
       width: 150,

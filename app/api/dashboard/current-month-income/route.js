@@ -65,13 +65,7 @@ export async function GET(req) {
         lastMonthWithoutTax = parseFloat(row.total_without_tax) || 0;
     });
 
-    // === 🔹 4. Kurangi 50.000 dari total keseluruhan (bukan per data) ===
-    if (currentMonthWithoutTax > 0) currentMonthWithoutTax -= 50000;
-    if (lastMonthWithoutTax > 0) lastMonthWithoutTax -= 50000;
-    if (currentMonthWithTax > 0) currentMonthWithTax -= 50000;
-    if (lastMonthWithTax > 0) lastMonthWithTax -= 50000;
-
-    // === 5. Hitung selisih dan persentase ===
+    // === 4. Hitung selisih dan persentase ===
     const differenceWithTax = Math.abs(currentMonthWithTax - lastMonthWithTax);
     const differenceWithoutTax = Math.abs(
       currentMonthWithoutTax - lastMonthWithoutTax
@@ -89,7 +83,7 @@ export async function GET(req) {
           )
         : 0;
 
-    // === 6. Tentukan trend (up | down | equal) ===
+    // === 5. Tentukan trend (up | down | equal) ===
     const trendWithTax =
       currentMonthWithTax > lastMonthWithTax
         ? "up"

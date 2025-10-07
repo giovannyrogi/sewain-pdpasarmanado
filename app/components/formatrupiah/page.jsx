@@ -1,21 +1,23 @@
 /**
- * Format angka/string ke format mata uang Rupiah, contoh: Rp. 3.000.000
- * @param {number|string} value - Angka atau string yang akan diformat
- * @returns {string} - Hasil format, misal: "Rp. 3.000.000"
+ * Format angka/string ke format mata uang Rupiah dengan akurasi tinggi.
+ * @param {number|string} value - Nilai yang akan diformat.
+ * @param {"useRp"|"hideRp"} type - Tipe format: tampilkan "Rp." atau tidak.
+ * @returns {string}
  */
 function formatRupiah(value, type = "useRp") {
-  // Pastikan value berupa angka
+  // Konversi ke angka
   let number = Number(value);
-  if (isNaN(number)) return "Rp. 0";
+  if (isNaN(number)) return type === "useRp" ? "Rp. 0" : "0";
 
-  // Format ke Rupiah dengan pemisah ribuan
-  if (type === "hideRp") {
-    return number.toLocaleString("id-ID", { maximumFractionDigits: 0 });
-  } else {
-    return (
-      "Rp. " + number.toLocaleString("id-ID", { maximumFractionDigits: 0 })
-    );
-  }
+  // Pastikan angka dibulatkan ke bawah agar tidak naik 1 digit akibat floating point
+  number = Math.floor(number);
+
+  // Format ke string lokal Indonesia
+  const formatted = number.toLocaleString("id-ID", {
+    maximumFractionDigits: 0,
+  });
+
+  return type === "useRp" ? `Rp. ${formatted}` : formatted;
 }
 
 export default formatRupiah;

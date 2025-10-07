@@ -115,14 +115,12 @@ const AddPayment = ({
     e.preventDefault();
     loadingTrue();
 
-    console.log("selectedData", selectedData);
-
+    // console.log("selectedData payment", selectedData);
     let grandTotal = 0;
     let PPNAmount = 0;
     let nilaiKontrak = 0;
     let remainingBalanceAfterInstallment = 0;
-    const totalSewaKontrakRuangan =
-      selectedData?.price_per_m2 * selectedData?.room_area;
+    // console.log('selectedData?.total_payment_room', selectedData?.total_payment_room);
 
     if (selectedData?.payment_type === "cicilan") {
       nilaiKontrak = amount / 1.11;
@@ -130,19 +128,19 @@ const AddPayment = ({
       grandTotal = nilaiKontrak + PPNAmount;
       remainingBalanceAfterInstallment = remainingBalance - grandTotal;
     } else {
-      PPNAmount = totalSewaKontrakRuangan * 0.11;
-      grandTotal = totalSewaKontrakRuangan + PPNAmount;
+      PPNAmount = Number(selectedData?.total_payment_room) * 0.11;
+      grandTotal = Number(selectedData?.total_payment_room) + PPNAmount;
     }
 
-    console.log("amount", amount);
-    console.log("PPNAmount", PPNAmount);
-    console.log("nilaiKontrak", nilaiKontrak);
-    console.log("grandTotal", grandTotal);
-    console.log("remainingBalance", remainingBalance);
-    console.log(
-      "remainingBalanceAfterInstallment",
-      remainingBalanceAfterInstallment
-    );
+    // console.log("amount", amount);
+    // console.log("PPNAmount", PPNAmount);
+    // console.log("nilaiKontrak", nilaiKontrak);
+    // console.log("grandTotal", grandTotal);
+    // console.log("remainingBalance", remainingBalance);
+    // console.log(
+    //   "remainingBalanceAfterInstallment",
+    //   remainingBalanceAfterInstallment
+    // );
 
     // console.log("amount", amount);
     // console.log("remainingBalance", remainingBalance);
@@ -358,7 +356,7 @@ const AddPayment = ({
                     setTypePembayaran("lunas");
                   }
 
-                  console.log("newvalue", newValue);
+                  // console.log("newvalue", newValue);
 
                   if (newValue?.payment_type === "lunas") {
                     setAmount(Number(newValue?.total_payment));

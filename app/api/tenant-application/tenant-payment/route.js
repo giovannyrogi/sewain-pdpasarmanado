@@ -24,6 +24,8 @@ export async function GET() {
       ta.estimated_installment_2_date,
       ta.estimated_installment_3_date,
       ta.current_payment_step,
+      ta.admin_fee,
+      ta.total_payment_room,
 
       -- ambil data identitas tenant
       ti.full_name AS tenant_name,

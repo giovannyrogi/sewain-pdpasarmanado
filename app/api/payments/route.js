@@ -151,6 +151,8 @@ export async function GET() {
         ta.estimated_installment_2_date,
         ta.estimated_installment_3_date,   
         ta.current_payment_step,   
+        ta.total_payment_room,
+        ta.admin_fee,
 
         -- tenant_identities 
         ti.full_name AS tenant_name,
@@ -232,6 +234,8 @@ export async function GET() {
           estimated_installment_2_date: row.estimated_installment_2_date,
           estimated_installment_3_date: row.estimated_installment_3_date,
           current_payment_step: row.current_payment_step,
+          total_payment_room: row.total_payment_room,
+          admin_fee: row.admin_fee,
         },
         payments: {
           payment_id: row.payment_id,

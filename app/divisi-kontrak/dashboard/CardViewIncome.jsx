@@ -182,13 +182,17 @@ const CardViewIncome = ({
                     >
                       {checked
                         ? formatRupiah(
-                            currentMonthIncomeWithTax?.current_month
-                              ?.total_income || 0,
+                            Number(
+                              currentMonthIncomeWithTax?.current_month
+                                ?.total_income
+                            ) || 0,
                             "hideRp"
                           )
                         : formatRupiah(
-                            currentMonthIncomeWithoutTax?.current_month
-                              ?.total_income || 0,
+                            Number(
+                              currentMonthIncomeWithoutTax?.current_month
+                                ?.total_income
+                            ) || 0,
                             "hideRp"
                           )}
                     </Typography>
@@ -312,7 +316,7 @@ const CardViewIncome = ({
                     <Grid size={12}>
                       <Typography
                         sx={{
-                          fontSize: "10px",
+                          fontSize: "11px",
                           fontWeight: "bold",
                           fontFamily: "poppins",
                           // baris baru ketika mencapai max width
@@ -378,7 +382,7 @@ const CardViewIncome = ({
                   <Grid size={12}>
                     <Typography
                       sx={{
-                        fontSize: "10px",
+                        fontSize: "11px",
                         fontWeight: "bold",
                         fontFamily: "poppins",
                         // baris baru ketika mencapai max width
@@ -443,7 +447,7 @@ const CardViewIncome = ({
                   <Grid size={12}>
                     <Typography
                       sx={{
-                        fontSize: "10px",
+                        fontSize: "11px",
                         fontWeight: "bold",
                         fontFamily: "poppins",
                         // baris baru ketika mencapai max width

@@ -308,6 +308,8 @@ const AddTenantApplication = ({
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    const totalPaymentWithoutAdminFee =
+      Number(totalPayment) - biayaAdministrasi;
     const total = Number(totalPayment) || 0;
     const minDp = Math.round(total * 0.4);
     const dp = Number(downPayment) || 0;
@@ -384,7 +386,7 @@ const AddTenantApplication = ({
       formData.append("location_id", locationId);
       formData.append("room_id", roomId);
       formData.append("payment_type", paymentType);
-      formData.append("total_payment", totalPayment);
+      formData.append("total_payment", totalPaymentWithoutAdminFee);
       formData.append("down_payment", downPayment);
       formData.append("remaining_payment", remainingPayment);
       formData.append("approval_status", approvalStatus);
@@ -393,6 +395,7 @@ const AddTenantApplication = ({
       formData.append("tenant_type", tenantType);
       formData.append("tenant_identity_id", identityID);
       formData.append("total_payment_room", totalSewaKontrakRuangan);
+      formData.append("admin_fee", biayaAdministrasi);
 
       if (tenantType === "perpanjang tenant" && endDate) {
         // tenant lama endDate dijadikan start_date tenant baru

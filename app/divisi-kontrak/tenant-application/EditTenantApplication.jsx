@@ -319,6 +319,8 @@ const EditTenantApplication = ({
     e.preventDefault();
     setLoadingMessage("Loading...");
 
+    const totalPaymentWithoutAdminFee =
+      Number(totalPayment) - biayaAdministrasi;
     const total = Number(totalPayment) || 0;
     const minDp = Math.round(total * 0.4);
     const dp = Number(downPayment) || 0;
@@ -396,13 +398,13 @@ const EditTenantApplication = ({
       formData.append("room_id", roomId);
       formData.append("tenant_identity_id", identityID);
       formData.append("payment_type", paymentType);
-      formData.append("total_payment", totalPayment);
+      formData.append("total_payment", totalPaymentWithoutAdminFee);
       formData.append("down_payment", downPayment);
       formData.append("remaining_payment", remainingPayment);
       formData.append("approval_status", approvalStatus);
       formData.append("user_id", user.id);
       formData.append("current_step", 1);
-      formData.append("total_payment_room", totalSewaKontrakRuangan)
+      formData.append("total_payment_room", totalSewaKontrakRuangan);
 
       // hanya kirim data cicilan kalau paymentType === 'cicilan'
       if (paymentType === "cicilan") {
@@ -455,10 +457,10 @@ const EditTenantApplication = ({
               response?.data?.message || "Form Permohonan berhasil dibuat!",
             severity: "success",
           });
+        getDataTenantApplication();
+        getLocationsData();
+        getRoomsData();
         setTimeout(() => {
-          getDataTenantApplication();
-          getLocationsData();
-          getRoomsData();
           onClose();
           setIsSubmitting(false);
         }, 1000);

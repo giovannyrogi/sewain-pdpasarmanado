@@ -367,13 +367,23 @@ const Payments = () => {
       title: "Total Pembayaran",
       dataIndex: ["payments", "payment_amount"],
       filterSearch: true,
-      render: (text, record) => (
-        <Typography
-          sx={{ fontWeight: "bold", fontSize: "12px", textAlign: "end" }}
-        >
-          {formatRupiah(record.payments?.payment_amount)}
-        </Typography>
-      ),
+      render: (text, record) =>
+        record.tenant_application?.payment_type === "cicilan" ? (
+          <Typography
+            sx={{ fontWeight: "bold", fontSize: "12px", textAlign: "end" }}
+          >
+            {formatRupiah(Number(record.payments?.payment_amount))}
+          </Typography>
+        ) : (
+          <Typography
+            sx={{ fontWeight: "bold", fontSize: "12px", textAlign: "end" }}
+          >
+            {formatRupiah(
+              Number(record.payments?.payment_amount) +
+                Number(record.tenant_application?.admin_fee)
+            )}
+          </Typography>
+        ),
       width: 160,
     },
     {
