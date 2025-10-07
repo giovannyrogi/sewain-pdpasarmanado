@@ -402,6 +402,7 @@ const EditTenantApplication = ({
       formData.append("approval_status", approvalStatus);
       formData.append("user_id", user.id);
       formData.append("current_step", 1);
+      formData.append("total_payment_room", totalSewaKontrakRuangan)
 
       // hanya kirim data cicilan kalau paymentType === 'cicilan'
       if (paymentType === "cicilan") {
@@ -763,6 +764,7 @@ const EditTenantApplication = ({
                   setTotalPayment(e.target.value.replace(/[^0-9]/g, ""));
                 }}
                 required
+                disabled
                 color="primary"
               />
             </Grid>
@@ -804,6 +806,7 @@ const EditTenantApplication = ({
                       );
                     }}
                     required
+                    disabled
                     color="primary"
                   />
                 </Grid>
@@ -841,6 +844,7 @@ const EditTenantApplication = ({
                       );
                     }}
                     required
+                    disabled
                     color="primary"
                   />
                 </Grid>
@@ -878,6 +882,7 @@ const EditTenantApplication = ({
                       );
                     }}
                     required
+                    disabled
                     color="primary"
                   />
                 </Grid>

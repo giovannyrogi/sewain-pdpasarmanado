@@ -34,6 +34,7 @@ export async function POST(req) {
       "estimated_installment_date_3"
     );
     const tenant_type = formData.get("tenant_type");
+    const total_payment_room = formData.get("total_payment_room");
 
     const total = Number(total_payment) || 0;
     const minDp = Math.round(total * 0.4);
@@ -135,11 +136,12 @@ export async function POST(req) {
           estimated_installment_3_date,
           renewal_of,
           start_date,
-          end_date
+          end_date,
+          total_payment_room
         )
         VALUES (
           $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13,
-          $14, $15, $16, $17, $18, $19
+          $14, $15, $16, $17, $18, $19, $20
         )
         RETURNING *
         `,
@@ -163,6 +165,7 @@ export async function POST(req) {
           renewal_of,
           start_date,
           end_date,
+          total_payment_room,
         ]
       );
 

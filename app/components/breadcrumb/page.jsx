@@ -78,11 +78,11 @@ const BreadcrumbPage = ({ menuList = [] }) => {
 
   return (
     <Box
-      // elevation={6}
+      elevation={6}
       sx={{
         p: "10px 15px 10px 15px",
         width: "100%",
-        // bgcolor: "background.default",
+        bgcolor: "background.default",
         overflowX: "auto",
         mt: 1,
         mb: 2,

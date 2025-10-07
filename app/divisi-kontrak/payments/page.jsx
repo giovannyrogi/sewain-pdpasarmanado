@@ -22,7 +22,6 @@ import AddPayment from "./AddPayment";
 import { useUser } from "@/app/utils/useUser";
 import ImagePreviewModal from "@/app/components/imagepreviewmodal/page";
 import PaymentApprovalModal from "@/app/components/payment-approval-modal/PaymentApprovalModa";
-import EditPayment from "./EditPayment";
 import DeletePayment from "./DeletePayment";
 import ApprovalModal from "@/app/divisi-keuangan/payments/ApprovalModal";
 import { useReactToPrint } from "react-to-print";

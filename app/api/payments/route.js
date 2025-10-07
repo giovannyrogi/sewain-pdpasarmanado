@@ -27,6 +27,7 @@ export async function POST(req) {
     const uploadedBy = formData.get("uploaded_by");
     const ppnAmount = formData.get("ppn_amount");
     const payment_type = formData.get("payment_type");
+    const contract_amount = formData.get("contract_amount");
 
     // Kondisi untuk remaining balance
     let remainingBalance = 0;
@@ -61,8 +62,8 @@ export async function POST(req) {
     // Insert ke table payments
     const insertPaymentQuery = `
       INSERT INTO payments 
-        (tenant_application_id, payment_number, amount, payment_date, proof_file_path, uploaded_by, approval_status, ppn_amount, remaining_balance)
-      VALUES ($1, $2, $3, $4, $5, $6, 'proses', $7, $8)
+        (tenant_application_id, payment_number, amount, payment_date, proof_file_path, uploaded_by, approval_status, ppn_amount, remaining_balance, contract_amount)
+      VALUES ($1, $2, $3, $4, $5, $6, 'proses', $7, $8, $9)
       RETURNING id;
     `;
 
@@ -75,6 +76,7 @@ export async function POST(req) {
       uploadedBy,
       ppnAmount,
       remainingBalance,
+      contract_amount,
     ];
 
     const paymentResult = await client.query(insertPaymentQuery, paymentValues);

@@ -392,6 +392,7 @@ const AddTenantApplication = ({
       formData.append("current_step", 1);
       formData.append("tenant_type", tenantType);
       formData.append("tenant_identity_id", identityID);
+      formData.append("total_payment_room", totalSewaKontrakRuangan);
 
       if (tenantType === "perpanjang tenant" && endDate) {
         // tenant lama endDate dijadikan start_date tenant baru

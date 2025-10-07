@@ -47,19 +47,19 @@ const MainLayout = ({ children }) => {
       <Grid container rowGap={1}>
         {/* Sidebar hanya muncul di desktop */}
         {!isMobile && (
-          <Grid size={2.3} sx={{ zIndex: 1 }}>
+          <Grid size={2} sx={{ zIndex: 1 }}>
             <LeftNavBar menus={menus} user={user} />
           </Grid>
         )}
 
         {/* Konten utama */}
-        <Grid size={isMobile ? 12 : 9.7}>
+        <Grid size={isMobile ? 12 : 10}>
           <Grid size={12}>
-            {/* 🔹 Kirim kontrol Drawer ke TopMenu */}
+            {/* Kirim kontrol Drawer ke TopMenu */}
             <TopMenu user={user} onBurgerClick={() => setDrawerOpen(true)} />
           </Grid>
 
-          {/* 🔹 Drawer mobile muncul di bawah TopMenu */}
+          {/* Drawer mobile muncul di bawah TopMenu */}
           {isMobile && (
             <MobileLeftNavBar
               menus={menus}

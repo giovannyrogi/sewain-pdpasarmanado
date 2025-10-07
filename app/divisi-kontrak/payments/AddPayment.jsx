@@ -115,11 +115,34 @@ const AddPayment = ({
     e.preventDefault();
     loadingTrue();
 
-    const nilaiKontrak = amount / 1.11;
-    const PPNAmount = nilaiKontrak * 0.11;
-    const grandTotal = nilaiKontrak + PPNAmount;
+    console.log("selectedData", selectedData);
 
-    const remainingBalanceAfterInstallment = remainingBalance - grandTotal;
+    let grandTotal = 0;
+    let PPNAmount = 0;
+    let nilaiKontrak = 0;
+    let remainingBalanceAfterInstallment = 0;
+    const totalSewaKontrakRuangan =
+      selectedData?.price_per_m2 * selectedData?.room_area;
+
+    if (selectedData?.payment_type === "cicilan") {
+      nilaiKontrak = amount / 1.11;
+      PPNAmount = nilaiKontrak * 0.11;
+      grandTotal = nilaiKontrak + PPNAmount;
+      remainingBalanceAfterInstallment = remainingBalance - grandTotal;
+    } else {
+      PPNAmount = totalSewaKontrakRuangan * 0.11;
+      grandTotal = totalSewaKontrakRuangan + PPNAmount;
+    }
+
+    console.log("amount", amount);
+    console.log("PPNAmount", PPNAmount);
+    console.log("nilaiKontrak", nilaiKontrak);
+    console.log("grandTotal", grandTotal);
+    console.log("remainingBalance", remainingBalance);
+    console.log(
+      "remainingBalanceAfterInstallment",
+      remainingBalanceAfterInstallment
+    );
 
     // console.log("amount", amount);
     // console.log("remainingBalance", remainingBalance);
@@ -175,6 +198,7 @@ const AddPayment = ({
     formData.append("amount", amount);
     formData.append("remaining_balance", remainingBalanceAfterInstallment);
     formData.append("payment_type", typePembayaran);
+    formData.append("contract_amount", nilaiKontrak);
 
     // cek formdata
     // for (const pair of formData.entries()) {
@@ -479,7 +503,10 @@ const AddPayment = ({
                 }}
                 autoFocus
                 required
-                disabled={selectedData?.payment_number === 2 || selectedData?.payment_type === "lunas"}
+                disabled={
+                  selectedData?.payment_number === 2 ||
+                  selectedData?.payment_type === "lunas"
+                }
                 color="primary"
               />
             </Grid>

@@ -682,8 +682,8 @@ const DetailTenantApplicationModal = ({
                   overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
                 }}
               >
-                {selectedData?.total_payment
-                  ? formatRupiah(selectedData.total_payment)
+                {totalSewaKontrakRuangan
+                  ? formatRupiah(totalSewaKontrakRuangan)
                   : "-"}
               </Typography>
             </Grid>

@@ -31,6 +31,7 @@ export async function PUT(req, { params }) {
     const estimated_installment_3_date = formData.get(
       "estimated_installment_date_3"
     );
+    const total_payment_room = formData.get("total_payment_room");
 
     // Validasi wajib
     if (!location_id) {
@@ -123,8 +124,9 @@ export async function PUT(req, { params }) {
         estimated_installment_3 = $13,
         estimated_installment_1_date = $14,
         estimated_installment_2_date = $15,
-        estimated_installment_3_date = $16
-        WHERE id = $17
+        estimated_installment_3_date = $16,
+        total_payment_room = $17
+        WHERE id = $18
         RETURNING *
         `,
         [
@@ -144,6 +146,7 @@ export async function PUT(req, { params }) {
           estimated_installment_1_date,
           estimated_installment_2_date,
           estimated_installment_3_date,
+          total_payment_room,
           id,
         ]
       );
