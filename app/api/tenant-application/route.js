@@ -211,13 +211,16 @@ export async function POST(req) {
           ? `Ruangan ini sedang digunakan oleh ${tenantName} mulai ${start_date} s/d ${end_date}`
           : `Ruangan ini sedang digunakan oleh ${tenantName}`;
 
-      // Update rooms -> set is_available = true dan isi notes
+      // Update rooms → set status = 'occupied' dan occupied_by = tenantAppId
       await client.query(
-        `UPDATE rooms 
-        SET is_available = true,
-        notes = $2
-        WHERE id = $1`,
-        [room_id, notes]
+        `
+        UPDATE rooms 
+        SET status = 'occupied',
+            occupied_by = $2,
+            notes = $3
+        WHERE id = $1
+        `,
+        [room_id, tenantAppId, notes]
       );
 
       // Jika semua sukses → commit

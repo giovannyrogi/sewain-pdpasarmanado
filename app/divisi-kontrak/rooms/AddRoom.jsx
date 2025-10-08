@@ -57,7 +57,7 @@ const AddRoom = ({
   const [roomArea, setRoomArea] = useState("");
   const [roomLength, setRoomLength] = useState("");
   const [roomWidth, setRoomWidth] = useState("");
-  const [isAvailable, setIsAvailable] = useState(false);
+  const [statusRoom, setStatusRoom] = useState("available");
   const [pricePerMeter, setPricePerMeter] = useState("");
   const [notes, setNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -112,7 +112,7 @@ const AddRoom = ({
         floor_id: floorId,
         room_length: roomLength,
         room_width: roomWidth,
-        is_available: isAvailable,
+        status: statusRoom,
         price_per_m2: pricePerMeter,
         notes: notes || null,
       });
@@ -168,9 +168,10 @@ const AddRoom = ({
     setRoomArea("");
     setRoomLength("");
     setRoomWidth("");
-    setIsAvailable(false);
+    setStatusRoom("available");
     setPricePerMeter("");
     setNotes("");
+    setDataFloor([]);
   };
 
   return (
@@ -348,21 +349,25 @@ const AddRoom = ({
                   Pilih Status
                 </InputLabel>
                 <Select
-                  value={isAvailable}
-                  defaultValue={true}
+                  value={statusRoom}
+                  defaultValue={statusRoom}
                   onChange={(e) => {
-                    setIsAvailable(e.target.value);
-                    if (e.target.value === false) {
+                    setStatusRoom(e.target.value);
+                    if (e.target.value === "available" || "occupied") {
                       setNotes("");
                     }
                   }}
                 >
-                  <MenuItem value={false}>Tersedia</MenuItem>
-                  <MenuItem value={true}>Tidak Tersedia</MenuItem>
+                  <MenuItem value="available">Tersedia</MenuItem>
+                  <MenuItem value="occupied">Tidak Tersedia</MenuItem>
+                  <MenuItem value="maintenance">
+                    Ruangan Dalam Perbaikan
+                  </MenuItem>
+                  <MenuItem value="unavailable">Ruangan Tidak Layak</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
-            {isAvailable && (
+            {(statusRoom === "maintenance" || statusRoom === "unavailable") && (
               <Grid size={12}>
                 <TextField
                   label="Alasan Tidak Tersedia (Optional)"
@@ -374,6 +379,7 @@ const AddRoom = ({
                   value={notes}
                   onChange={(e) => setNotes(e.target.value.slice(0, 150))}
                   inputProps={{ maxLength: 150 }}
+                  required
                 />
                 <Typography variant="caption" sx={{ float: "right", mt: 0.5 }}>
                   {notes.length}/150

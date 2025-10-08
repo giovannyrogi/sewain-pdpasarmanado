@@ -32,6 +32,8 @@ export async function PUT(req) {
 
     const ktpFile = formData.get("ktpFile");
     const oldKtpPath = formData.get("oldKtpPath"); // path lama dikirim dari FE
+    const notes = formData.get("notes");
+    const status = formData.get("status");
 
     if (!id) {
       return Response.json(
@@ -86,8 +88,9 @@ export async function PUT(req) {
           city = $14,
           province = $15,
           phone = $16,
-          updated_at = NOW()
-        WHERE id = $17
+          notes = $17,
+          status = $18
+        WHERE id = $19
         RETURNING *
         `,
         [
@@ -107,6 +110,8 @@ export async function PUT(req) {
           city,
           province,
           phone,
+          notes,
+          status,
           id,
         ]
       );

@@ -69,7 +69,8 @@ const IdentityList = () => {
       item.nik?.toLowerCase().includes(searchText.toLowerCase()) ||
       item.occupation?.toLowerCase().includes(searchText.toLowerCase()) ||
       item.nationality?.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.birth_place?.toLowerCase().includes(searchText.toLowerCase())
+      item.birth_place?.toLowerCase().includes(searchText.toLowerCase()) ||
+      item.status?.toLowerCase().includes(searchText.toLowerCase())
     );
   });
 
@@ -109,6 +110,11 @@ const IdentityList = () => {
   }
 
   const nameFilters = generateFilters(dataIdentities, "full_name");
+  const statusFilters = [
+    { text: "Aktif", value: "active" },
+    { text: "Tidak Aktif", value: "inactive" },
+    { text: "Blacklist", value: "blacklisted" },
+  ];
 
   const columns = [
     {
@@ -157,15 +163,43 @@ const IdentityList = () => {
       ),
       width: 100,
     },
+    // {
+    //   title: "Kewarganegaraan",
+    //   dataIndex: "nationality",
+    //   render: (text, record) => (
+    //     <Typography sx={{ fontWeight: "bold", fontSize: "12px" }}>
+    //       {record.nationality}
+    //     </Typography>
+    //   ),
+    //   width: 120,
+    // },
     {
-      title: "Kewarganegaraan",
-      dataIndex: "nationality",
-      render: (text, record) => (
-        <Typography sx={{ fontWeight: "bold", fontSize: "12px" }}>
-          {record.nationality}
-        </Typography>
-      ),
-      width: 120,
+      title: "Status",
+      dataIndex: "status",
+      filters: statusFilters,
+      onFilter: (value, record) => record.status === value,
+      render: (text, record) => {
+        return (
+          <Tag
+            color={
+              record.status === "active"
+                ? "green"
+                : record.status === "inactive"
+                ? "red"
+                : "yellow"
+            }
+            key={record.id}
+            style={{ fontWeight: "bold" }}
+          >
+            {record.status === "active"
+              ? "Aktif"
+              : record.status === "inactive"
+              ? "Tidak Aktif"
+              : "Blacklist"}
+          </Tag>
+        );
+      },
+      width: 100,
     },
     {
       title: "Actions",

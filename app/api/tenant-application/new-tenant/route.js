@@ -25,14 +25,18 @@ export async function GET(req) {
         ti.province,
         ti.postal_code,
         ti.phone,
+        ti.status,
+        ti.notes,
         ti.created_at,
         ti.updated_at
       FROM tenant_identities ti
-      WHERE NOT EXISTS (
-        SELECT 1 
-        FROM tenant_application ta 
-        WHERE ta.tenant_identity_id = ti.id
-      )
+      WHERE 
+        ti.status = 'active'
+        AND NOT EXISTS (
+          SELECT 1
+          FROM tenant_application ta
+          WHERE ta.tenant_identity_id = ti.id
+        )
       ORDER BY ti.created_at DESC
       `
     );
@@ -48,8 +52,9 @@ export async function GET(req) {
       nationality: row.nationality,
       religion: row.religion,
       occupation: row.occupation,
+      status: row.status,
+      notes: row.notes,
 
-      // alamat detail
       street_address: row.street_address,
       rt: row.rt,
       rw: row.rw,
@@ -58,7 +63,6 @@ export async function GET(req) {
       city: row.city,
       province: row.province,
       postal_code: row.postal_code,
-
       phone: row.phone,
 
       updated_at: row.updated_at
@@ -73,13 +77,13 @@ export async function GET(req) {
       JSON.stringify({
         success: true,
         message:
-          "Berhasil mengambil data tenant identities yang belum terdaftar",
+          "Berhasil mengambil data tenant identities berstatus aktif dan tidak sedang digunakan atau dalam proses sewa",
         data: rows,
       }),
       { status: 200 }
     );
   } catch (err) {
-    console.error("error", err);
+    console.error("Error GET tenant identities:", err);
     return new Response(
       JSON.stringify({ success: false, message: err.message }),
       { status: 500 }

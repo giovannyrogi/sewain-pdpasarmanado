@@ -629,7 +629,7 @@ const AddTenantApplication = ({
                   renderInput={(params) => (
                     <TextField
                       {...params}
-                      label="Pilih Tenant Lama"
+                      label="Pilih Data Penyewa"
                       variant="filled"
                       required
                     />

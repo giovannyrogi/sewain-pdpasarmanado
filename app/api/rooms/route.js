@@ -11,14 +11,14 @@ export async function POST(req) {
       floor_id,
       room_length,
       room_width,
-      is_available,
+      status,
       price_per_m2,
       notes,
     } = body;
 
     const result = await pool.query(
       `INSERT INTO rooms 
-       (location_id, room_number, floor_id, room_length, room_width, price_per_m2, is_available, notes)
+       (location_id, room_number, floor_id, room_length, room_width, price_per_m2, status, notes)
        VALUES ($1, $2, $3, $4, $5, $6, $7 , $8)
        RETURNING *`,
       [
@@ -28,7 +28,7 @@ export async function POST(req) {
         room_length,
         room_width,
         price_per_m2 || 0,
-        is_available,
+        status,
         notes,
       ]
     );
@@ -61,7 +61,7 @@ export async function GET(req) {
          r.room_length,
          r.room_width,
          r.room_area,
-         r.is_available,
+         r.status,
          r.updated_at,
          r.created_at,
          r.location_id,
@@ -92,7 +92,7 @@ export async function GET(req) {
       floor_id: row.floor_id,
       room_floor: row.room_floor,
       base_price: row.base_price,
-      is_available: row.is_available,
+      status: row.status,
       updated_at: row.updated_at
         ? moment(row.updated_at).format("YYYY-MM-DD HH:mm:ss")
         : null,

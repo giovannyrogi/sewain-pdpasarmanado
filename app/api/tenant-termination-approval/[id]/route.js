@@ -98,10 +98,16 @@ export async function PUT(request, { params }) {
           [stepOrder, tenant_early_termination_id, new Date()]
         );
 
-        // update rooms.is_available=false (ruangan sekarang kosong)
+        // Update rooms: ubah status ke 'available', kosongkan occupied_by dan notes
         if (room_id) {
           await client.query(
-            `UPDATE rooms SET is_available=false WHERE id=$1`,
+            `
+            UPDATE rooms 
+            SET status = 'available', 
+                occupied_by = NULL,
+                notes = NULL
+            WHERE id = $1
+            `,
             [room_id]
           );
         }

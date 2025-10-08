@@ -97,21 +97,21 @@ const ViewLineChart = ({ loading, yearlyIncomeData }) => {
             ]}
             series={[
               {
-                label: "Pendapatan Dengan PPN (11%)",
-                data: withTaxData,
-                // area: true,
-                showMark: true,
-                color: "#FFC107",
-                fillOpacity: 0.1,
-                strokeWidth: 2.5,
-                valueFormatter: (v) => formatRupiah(v),
-              },
-              {
                 label: "Pendapatan Bersih",
                 data: withoutTaxData,
                 // area: true,
                 showMark: true,
                 color: "#4CAF50",
+                fillOpacity: 0.1,
+                strokeWidth: 2.5,
+                valueFormatter: (v) => formatRupiah(v),
+              },
+              {
+                label: "Pendapatan Dengan PPN (11%)",
+                data: withTaxData,
+                // area: true,
+                showMark: true,
+                color: "#FFC107",
                 fillOpacity: 0.1,
                 strokeWidth: 2.5,
                 valueFormatter: (v) => formatRupiah(v),

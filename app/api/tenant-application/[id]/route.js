@@ -151,19 +151,43 @@ export async function PUT(req, { params }) {
         ]
       );
 
-      // Update room availability
+      const tenantApp = result.rows[0];
+
+      // Ambil nama tenant dari tabel tenant_identities
+      const tenantIdentity = await client.query(
+        `SELECT full_name FROM tenant_identities WHERE id = $1`,
+        [tenant_identity_id]
+      );
+      const tenantName = tenantIdentity.rows[0]?.full_name || "-";
+
+      // Format catatan/notes
+      const notes = `Ruangan ini sedang digunakan oleh ${tenantName}`;
+
+      // Jika ruangan berubah → perbarui status dan occupied_by
       if (oldRoomId !== room_id) {
-        // Room lama jadi false
+        // Ruangan lama jadi available kembali
         await client.query(
-          `UPDATE rooms SET is_available = false, updated_at = NOW() WHERE id = $1`,
+          `
+          UPDATE rooms 
+          SET status = 'available',
+              occupied_by = NULL,
+              notes = NULL
+          WHERE id = $1
+          `,
           [oldRoomId]
         );
       }
 
-      // Room baru jadi true
+      // Ruangan baru diupdate jadi digunakan
       await client.query(
-        `UPDATE rooms SET is_available = true, updated_at = NOW() WHERE id = $1`,
-        [room_id]
+        `
+        UPDATE rooms 
+        SET status = 'occupied',
+            occupied_by = $2,
+            notes = $3
+        WHERE id = $1
+        `,
+        [room_id, tenantApp.id, notes]
       );
 
       // Update tenant_approval: reset hanya yang belum approve
@@ -175,10 +199,11 @@ export async function PUT(req, { params }) {
             status = 'pending',
             notes = NULL
         WHERE tenant_application_id = $1
-          AND status <> 'approved'  -- ⬅️ hanya pending / rejected
+          AND status <> 'approved' 
         `,
         [id]
       );
+
       await client.query("COMMIT");
 
       return Response.json(
@@ -205,18 +230,22 @@ export async function PUT(req, { params }) {
   }
 }
 
-// DELETE Tenant Application
+
 export async function DELETE(request, context) {
+  const client = await pool.connect();
   try {
     const { id } = await context.params;
 
+    await client.query("BEGIN");
+
     // Ambil data tenant_application sebelum dihapus
-    const tenantRes = await pool.query(
+    const tenantRes = await client.query(
       `SELECT room_id FROM tenant_application WHERE id = $1`,
       [id]
     );
 
     if (tenantRes.rows.length === 0) {
+      await client.query("ROLLBACK");
       return new Response(
         JSON.stringify({
           success: false,
@@ -228,17 +257,31 @@ export async function DELETE(request, context) {
 
     const { room_id } = tenantRes.rows[0];
 
+    // Update room agar kembali available sebelum menghapus tenant_application
+    await client.query(
+      `
+      UPDATE rooms 
+      SET status = 'available', 
+          occupied_by = NULL, 
+          notes = NULL 
+      WHERE id = $1
+      `,
+      [room_id]
+    );
+
     // Hapus tenant_approval terkait
-    await pool.query(
-      `DELETE FROM tenant_approval WHERE tenant_application_id=$1`,
+    await client.query(
+      `DELETE FROM tenant_approval WHERE tenant_application_id = $1`,
       [id]
     );
 
     // Hapus tenant_application
-    const result = await pool.query(
-      `DELETE FROM tenant_application WHERE id=$1 RETURNING *`,
+    const result = await client.query(
+      `DELETE FROM tenant_application WHERE id = $1 RETURNING *`,
       [id]
     );
+
+    await client.query("COMMIT");
 
     if (result.rows.length === 0) {
       return new Response(
@@ -250,24 +293,25 @@ export async function DELETE(request, context) {
       );
     }
 
-    // Update room agar kembali available
-    await pool.query(
-      `UPDATE rooms SET is_available = false, notes = NULL WHERE id = $1`,
-      [room_id]
-    );
-
     return new Response(
       JSON.stringify({
         success: true,
-        message: "Berhasil menghapus Data Penyewa dan Ruangan tersedia kembali",
+        message:
+          "Berhasil menghapus Data Penyewa dan Ruangan tersedia kembali",
       }),
       { status: 200 }
     );
   } catch (err) {
-    console.log("Error delete Data Penyewa", err);
+    await pool.query("ROLLBACK");
+    console.error("Error delete Data Penyewa:", err);
     return new Response(
-      JSON.stringify({ success: false, message: err.message }),
+      JSON.stringify({
+        success: false,
+        message: err.message,
+      }),
       { status: 500 }
     );
+  } finally {
+    client.release();
   }
 }

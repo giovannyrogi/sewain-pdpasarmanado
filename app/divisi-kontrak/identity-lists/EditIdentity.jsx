@@ -90,6 +90,9 @@ const EditIdentity = ({
   const [kecamatanCode, setKecamatanCode] = useState("");
   const [kelurahanCode, setKelurahanCode] = useState("");
 
+  const [status, setStatus] = useState("active");
+  const [notes, setNotes] = useState("");
+
   /* panggil sekali untuk isi data saat mount */
   useEffect(() => {
     if (open) {
@@ -108,6 +111,8 @@ const EditIdentity = ({
       setRt(selectedData?.rt || "");
       setRw(selectedData?.rw || "");
       setWargaNegara(selectedData?.nationality || "WNI");
+      setStatus(selectedData?.status || "active");
+      setNotes(selectedData?.notes || "");
 
       // isi list provinsi
       const allProv = wilayah.provinsi();
@@ -182,6 +187,8 @@ const EditIdentity = ({
     formData.append("kabupaten", kabupaten);
     formData.append("kecamatan", kecamatan);
     formData.append("kelurahan", kelurahan);
+    formData.append("status", status);
+    formData.append("notes", notes);
 
     // log formdata
     // for (let pair of formData.entries()) {
@@ -715,6 +722,49 @@ const EditIdentity = ({
                 />
               </Grid>
             </Grid>
+
+            <Grid size={12}>
+              {" "}
+              <FormControl fullWidth variant="filled" required>
+                <InputLabel id="demo-simple-select-filled-label">
+                  Pilih Status
+                </InputLabel>
+                <Select
+                  value={status}
+                  defaultValue={status}
+                  onChange={(e) => {
+                    setStatus(e.target.value);
+                    if (e.target.value === "active" || "inactive") {
+                      setNotes("");
+                    }
+                  }}
+                >
+                  <MenuItem value="active">Aktif</MenuItem>
+                  <MenuItem value="inactive">Tidak Aktif</MenuItem>
+                  <MenuItem value="blacklisted">Blacklist</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+
+            {status === "blacklisted" && (
+              <Grid size={12}>
+                <TextField
+                  label="Alasan Blacklist"
+                  placeholder="Alasan Blacklist..."
+                  fullWidth
+                  variant="filled"
+                  multiline
+                  rows={4}
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value.slice(0, 150))}
+                  inputProps={{ maxLength: 150 }}
+                  required
+                />
+                <Typography variant="caption" sx={{ float: "right", mt: 0.5 }}>
+                  {notes.length}/150
+                </Typography>
+              </Grid>
+            )}
 
             <Grid size={12}>
               <Button

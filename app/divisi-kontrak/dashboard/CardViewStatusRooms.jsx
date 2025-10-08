@@ -12,10 +12,7 @@ import {
 } from "@mui/material";
 import React from "react";
 
-const CardViewContract = ({
-  loading,
-  data = { aktif: 0, nonaktif: 0, expired: 0 },
-}) => {
+const CardViewStatusRooms = ({ loading }) => {
   const theme = useTheme();
   const { themeMode } = useThemeMode();
   const isMobile = useMediaQuery("(max-width:600px)");
@@ -55,8 +52,8 @@ const CardViewContract = ({
                 fontWeight: "bold",
                 fontFamily: "poppins",
               }}
-            > 
-              Jumlah Kontrak
+            >
+              Status Ruangan
             </Typography>
           </Grid>
         )}
@@ -155,7 +152,7 @@ const CardViewContract = ({
                     fontFamily: "poppins",
                   }}
                 >
-                  {data.active ?? 0}
+                  0
                 </Typography>
               </Box>
             </Grid>
@@ -200,7 +197,7 @@ const CardViewContract = ({
                     fontFamily: "poppins",
                   }}
                 >
-                  {data.non_active ?? 0}
+                  0
                 </Typography>
               </Box>
             </Grid>
@@ -245,7 +242,7 @@ const CardViewContract = ({
                     fontFamily: "poppins",
                   }}
                 >
-                  {data.expired ?? 0}
+                  0
                 </Typography>
               </Box>
             </Grid>
@@ -256,4 +253,4 @@ const CardViewContract = ({
   );
 };
 
-export default CardViewContract;
+export default CardViewStatusRooms;

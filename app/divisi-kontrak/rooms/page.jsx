@@ -132,8 +132,10 @@ const Rooms = () => {
   const nameFilters = generateFilters(dataRooms, "location_name");
   const roomFloorFilter = generateFilters(dataRooms, "room_floor");
   const statusFilters = [
-    { text: "Tersedia", value: false },
-    { text: "Tidak Tersedia", value: true },
+    { text: "Tersedia", value: "available" },
+    { text: "Tidak Tersedia", value: "occupied" },
+    { text: "Dalam Perbaikan", value: "maintenance" },
+    { text: "Tidak Layak", value: "unavailable" },
   ];
 
   const handleViewNotes = (record) => {
@@ -235,20 +237,31 @@ const Rooms = () => {
     },
     {
       title: "Status",
-      dataIndex: "is_available",
-      // sorter: (a, b) => Number(a.is_available) - Number(b.is_available),
-      // sortDirections: ["ascend", "descend"],
+      dataIndex: "status",
       filters: statusFilters,
-      onFilter: (value, record) => record.is_available === value,
+      onFilter: (value, record) => record.status === value,
       render: (text, record) => {
-        if (typeof record?.is_available !== "boolean") return null;
         return (
           <Tag
-            color={!record.is_available ? "green" : "red"}
+            color={
+              record.status === "available"
+                ? "green"
+                : record.status === "occupied"
+                ? "red"
+                : record.status === "maintenance"
+                ? "orange"
+                : "yellow"
+            }
             key={record.id}
             style={{ fontWeight: "bold" }}
           >
-            {!record.is_available ? "Tersedia" : "Tidak Tersedia"}
+            {record.status === "available"
+              ? "Tersedia"
+              : record.status === "occupied"
+              ? "Tidak Tersedia"
+              : record.status === "maintenance"
+              ? "Dalam Perbaikan"
+              : "Tidak Layak"}
           </Tag>
         );
       },

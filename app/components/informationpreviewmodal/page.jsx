@@ -17,6 +17,7 @@ import { Icon } from "@iconify/react";
 import axios from "axios";
 import ImagePreviewModal from "../imagepreviewmodal/page";
 import moment from "moment";
+import { Tag } from "antd";
 
 const InformationPreviewModal = ({ open, onClose, selectedData }) => {
   const isMobile = useMediaQuery("(max-width:600px)");
@@ -245,6 +246,74 @@ const InformationPreviewModal = ({ open, onClose, selectedData }) => {
                 {selectedData?.phone ? selectedData.phone : "-"}
               </Typography>
             </Grid>
+
+            <Grid size={6} sx={{ display: "flex", flexDirection: "column" }}>
+              <Typography
+                sx={{
+                  fontWeight: "bold",
+                  fontSize: "15px",
+                  color: theme.palette.primary.main,
+                }}
+              >
+                Status
+              </Typography>
+              <Tag
+                color={
+                  selectedData?.status === "active"
+                    ? "green"
+                    : selectedData?.status === "inactive"
+                    ? "red"
+                    : "yellow"
+                }
+                key={selectedData?.id}
+                style={{
+                  fontWeight: "bold",
+                  // width mengikuti ukurang kata
+                  width: "fit-content",
+                }}
+              >
+                <Typography
+                  sx={{
+                    fontWeight: "bold",
+                    fontSize: "14px",
+                    wordBreak: "break-word", // <-- biar kata panjang pecah
+                    whiteSpace: "normal", // <-- biar bisa turun baris
+                    overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
+                  }}
+                >
+                  {selectedData?.status === "active"
+                    ? "Aktif"
+                    : selectedData?.status === "inactive"
+                    ? "Tidak Aktif"
+                    : "Blacklist"}
+                </Typography>
+              </Tag>
+            </Grid>
+
+            {selectedData?.status === "blacklisted" && (
+              <Grid size={12} sx={{ display: "flex", flexDirection: "column" }}>
+                <Typography
+                  sx={{
+                    fontWeight: "bold",
+                    fontSize: "15px",
+                    color: theme.palette.primary.main,
+                  }}
+                >
+                  Catatan
+                </Typography>
+                <Typography
+                  sx={{
+                    fontWeight: "bold",
+                    fontSize: "14px",
+                    wordBreak: "break-word", // <-- biar kata panjang pecah
+                    whiteSpace: "normal", // <-- biar bisa turun baris
+                    overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
+                  }}
+                >
+                  {selectedData?.notes ? selectedData.notes : "-"}
+                </Typography>
+              </Grid>
+            )}
           </Grid>
 
           <Box>

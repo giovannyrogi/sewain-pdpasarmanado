@@ -11,7 +11,7 @@ export async function PUT(request, { params }) {
       floor_id,
       room_length,
       room_width,
-      is_available,
+      status, // ✅ ganti dari is_available ke status
       price_per_m2,
       notes,
     } = body;
@@ -24,13 +24,14 @@ export async function PUT(request, { params }) {
         { status: 404 }
       );
     }
+
     const roomData = roomRes.rows[0];
 
-    const wantsToChangeAvailability =
-      typeof is_available !== "undefined" &&
-      is_available !== roomData.is_available;
+    // Cek apakah status berubah
+    const wantsToChangeStatus =
+      typeof status !== "undefined" && status !== roomData.status;
 
-    if (wantsToChangeAvailability) {
+    if (wantsToChangeStatus) {
       // Ambil semua tenant_application + tenant_name via join tenant_identities
       const tenantRes = await pool.query(
         `
@@ -44,8 +45,6 @@ export async function PUT(request, { params }) {
 
       if (tenantRes.rowCount > 0) {
         const today = moment(new Date()).format("YYYY-MM-DD");
-        console.log("tenantRes", tenantRes);
-        console.log("today", today);
 
         for (const t of tenantRes.rows) {
           const start = t.start_date
@@ -55,26 +54,23 @@ export async function PUT(request, { params }) {
             ? moment(t.end_date).format("YYYY-MM-DD")
             : null;
 
-          console.log("start", start);
-          console.log("end", end);
-
           // Jika tanggal kosong → tetap dianggap blocking
           if (!start || !end) {
             return new Response(
               JSON.stringify({
                 success: false,
-                message: `Ruangan ini terdaftar pada permohonan penyewa "${t.tenant_name}". Status ketersediaan tidak dapat diubah.`,
+                message: `Ruangan ini terdaftar pada permohonan penyewa "${t.tenant_name}". Status tidak dapat diubah.`,
               }),
               { status: 400 }
             );
           }
 
-          // Blok hanya kalau masa sewa masih aktif (end_date >= hari ini)
+          // Jika masa sewa masih aktif
           if (end >= today) {
             return new Response(
               JSON.stringify({
                 success: false,
-                message: `Ruangan sedang digunakan oleh "${t.tenant_name}" sampai ${end}. Status ketersediaan tidak dapat diubah.`,
+                message: `Ruangan sedang digunakan oleh "${t.tenant_name}" sampai ${end}. Status tidak dapat diubah.`,
               }),
               { status: 400 }
             );
@@ -87,13 +83,14 @@ export async function PUT(request, { params }) {
     const result = await pool.query(
       `UPDATE rooms 
          SET location_id = $1,
-             room_number = $2,
-             floor_id    = $3,
-             room_length = $4,
-             room_width  = $5,
-             is_available= $6,
-             price_per_m2= $7,
-             notes = $8
+             room_number  = $2,
+             floor_id     = $3,
+             room_length  = $4,
+             room_width   = $5,
+             status       = $6,
+             price_per_m2 = $7,
+             notes        = $8,
+             updated_at   = NOW()
        WHERE id = $9
        RETURNING *`,
       [
@@ -102,9 +99,7 @@ export async function PUT(request, { params }) {
         floor_id,
         room_length,
         room_width,
-        typeof is_available === "undefined"
-          ? roomData.is_available
-          : is_available,
+        typeof status === "undefined" ? roomData.status : status,
         price_per_m2,
         notes,
         id,

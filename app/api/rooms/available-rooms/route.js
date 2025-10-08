@@ -1,11 +1,13 @@
 import pool from "@/lib/dbConfig";
 import moment from "moment";
+
 export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url);
     const locationId = searchParams.get("location_id");
 
     let result;
+
     if (locationId) {
       // Filter rooms hanya untuk lokasi tertentu
       result = await pool.query(
@@ -18,7 +20,7 @@ export async function GET(req) {
           rooms.room_width,
           rooms.room_area,
           rooms.price_per_m2,
-          rooms.is_available,
+          rooms.status,
           rooms.updated_at,
           rooms.created_at,
           rooms.location_id,
@@ -27,8 +29,9 @@ export async function GET(req) {
           location_floor_prices.base_price
         FROM rooms
         JOIN locations ON rooms.location_id = locations.id
-        LEFT JOIN location_floor_prices ON rooms.floor_id = location_floor_prices.id
-        WHERE rooms.is_available = false 
+        LEFT JOIN location_floor_prices 
+          ON rooms.floor_id = location_floor_prices.id
+        WHERE rooms.status = 'available'
           AND rooms.location_id = $1
         ORDER BY rooms.created_at DESC
         `,
@@ -46,7 +49,7 @@ export async function GET(req) {
           rooms.room_width,
           rooms.room_area,
           rooms.price_per_m2,
-          rooms.is_available,
+          rooms.status,
           rooms.updated_at,
           rooms.created_at,
           rooms.location_id,
@@ -57,7 +60,7 @@ export async function GET(req) {
         JOIN locations ON rooms.location_id = locations.id
         LEFT JOIN location_floor_prices 
           ON rooms.floor_id = location_floor_prices.id 
-        WHERE rooms.is_available = false
+        WHERE rooms.status = 'available'
         ORDER BY rooms.created_at DESC
         `
       );
@@ -75,7 +78,7 @@ export async function GET(req) {
       floor_id: row.floor_id,
       floor: row.floor,
       base_price: row.base_price,
-      is_available: row.is_available,
+      status: row.status, 
       updated_at: row.updated_at
         ? moment(row.updated_at).format("YYYY-MM-DD HH:mm:ss")
         : null,
@@ -87,12 +90,13 @@ export async function GET(req) {
     return new Response(
       JSON.stringify({
         success: true,
-        message: "Berhasil mengambil data rooms",
+        message: "Berhasil mengambil data rooms yang tersedia",
         data: rows,
       }),
       { status: 200 }
     );
   } catch (err) {
+    console.error("Error GET rooms", err);
     return new Response(
       JSON.stringify({ success: false, message: err.message }),
       { status: 500 }

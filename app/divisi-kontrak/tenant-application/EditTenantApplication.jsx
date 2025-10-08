@@ -115,14 +115,15 @@ const EditTenantApplication = ({
     useState(false);
 
   const getListIdentities = async () => {
-    console.log("tenant_identity_id");
+    // console.log("tenant_identity_id");
 
     loadingTrue();
     setLoadingMessage("Mengambil data tenant...");
     try {
       const response = await axios.get(
-        `/api/identity-list?id=${selectedData?.tenant_identity_id}`
+        `/api/identity-list/${selectedData?.tenant_identity_id}`
       );
+
       console.log("response identity-list", response);
       if (response.data.success) {
         setListDataIdentity(response.data.data);
@@ -246,7 +247,7 @@ const EditTenantApplication = ({
     if (paymentType === "cicilan") {
       const total = Number(totalPayment) || 0;
       const defaultDP = Math.round(total * 0.4);
-      // setDownPayment(defaultDP);
+      setDownPayment(defaultDP);
       setRemainingPayment(total - defaultDP);
     } else {
       setDownPayment("");
@@ -572,7 +573,7 @@ const EditTenantApplication = ({
                   null
                 }
                 onChange={(event, newValue) => {
-                  console.log("newValue", newValue);
+                  // console.log("newValue", newValue);
                   setIdentityID(newValue ? newValue.id : null);
                   setSelectedDataIdentity(newValue ?? "");
                 }}
@@ -749,6 +750,9 @@ const EditTenantApplication = ({
                   defaultValue={true}
                   onChange={(e) => {
                     setPaymentType(e.target.value);
+                    if (e.target.value === "lunas") {
+                      setDownPayment(0);
+                    }
                   }}
                 >
                   <MenuItem value={"cicilan"}>Cicilan</MenuItem>

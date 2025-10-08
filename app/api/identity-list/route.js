@@ -21,6 +21,8 @@ export async function POST(req) {
     const occupation = formData.get("pekerjaan");
     const nationality = formData.get("wargaNegara");
     const phone = formData.get("phone");
+    const status = formData.get("status");
+    const notes = formData.get("notes");
 
     const street_address = formData.get("alamatJalan");
     const rt = formData.get("rt");
@@ -40,7 +42,8 @@ export async function POST(req) {
       !religion ||
       !occupation ||
       !nationality ||
-      !phone
+      !phone ||
+      !status
     ) {
       return Response.json(
         { success: false, message: "Data wajib tidak lengkap." },
@@ -91,12 +94,12 @@ export async function POST(req) {
         INSERT INTO tenant_identities (
           nik, full_name, ktp_file_path, birth_place, birth_date, nationality,
           religion, occupation, street_address, rt, rw, kelurahan, district,
-          city, province, phone
+          city, province, phone, status, notes
         )
         VALUES (
           $1, $2, $3, $4, $5, $6,
           $7, $8, $9, $10, $11, $12, $13,
-          $14, $15, $16
+          $14, $15, $16, $17, $18
         )
         RETURNING *
         `,
@@ -117,6 +120,8 @@ export async function POST(req) {
           city,
           province,
           phone,
+          status,
+          notes,
         ]
       );
 
@@ -175,6 +180,8 @@ export async function GET(req) {
         province,
         postal_code,
         phone,
+        status,
+        notes,
         created_at,
         updated_at
       FROM tenant_identities 
@@ -193,6 +200,9 @@ export async function GET(req) {
       nationality: row.nationality,
       religion: row.religion,
       occupation: row.occupation,
+      status: row.status,
+      phone: row.phone,
+      notes: row.notes,
 
       // alamat detail
       street_address: row.street_address,
@@ -203,8 +213,7 @@ export async function GET(req) {
       city: row.city,
       province: row.province,
       postal_code: row.postal_code,
-
-      phone: row.phone,
+      
 
       updated_at: row.updated_at
         ? moment(row.updated_at).format("YYYY-MM-DD HH:mm:ss")

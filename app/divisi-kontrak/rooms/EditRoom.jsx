@@ -61,7 +61,7 @@ const EditRoom = ({
   const [roomArea, setRoomArea] = useState("");
   const [roomLength, setRoomLength] = useState("");
   const [roomWidth, setRoomWidth] = useState("");
-  const [isAvailable, setIsAvailable] = useState(false);
+  const [statusRoom, setStatusRoom] = useState("available");
   const [pricePerMeter, setPricePerMeter] = useState("");
   const [notes, setNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -74,7 +74,7 @@ const EditRoom = ({
       setRoomArea(selectedData.room_area);
       setRoomLength(selectedData.room_length);
       setRoomWidth(selectedData.room_width);
-      setIsAvailable(selectedData.is_available);
+      setStatusRoom(selectedData.status);
       setPricePerMeter(selectedData.price_per_m2);
       setNotes(selectedData.notes || "");
       getFloorData(selectedData.location_id);
@@ -130,7 +130,7 @@ const EditRoom = ({
         floor_id: floorId,
         room_length: roomLength,
         room_width: roomWidth,
-        is_available: isAvailable,
+        status: statusRoom,
         price_per_m2: pricePerMeter,
         notes: notes || null,
       });
@@ -280,9 +280,7 @@ const EditRoom = ({
                 variant="filled"
                 fullWidth
                 value={roomNumber}
-                onChange={(e) =>
-                  setRoomNumber(e.target.value)
-                }
+                onChange={(e) => setRoomNumber(e.target.value)}
                 autoFocus
                 required
                 disabled={loading}
@@ -357,20 +355,25 @@ const EditRoom = ({
                   Pilih Status
                 </InputLabel>
                 <Select
-                  value={isAvailable}
-                  defaultValue={true}
+                  value={statusRoom}
+                  defaultValue={statusRoom}
                   onChange={(e) => {
-                    console.log("isAvailable", e.target.value);
-
-                    setIsAvailable(e.target.value);
+                    setStatusRoom(e.target.value);
+                    if (e.target.value === "available" || "occupied") {
+                      setNotes("");
+                    }
                   }}
                 >
-                  <MenuItem value={false}>Tersedia</MenuItem>
-                  <MenuItem value={true}>Tidak Tersedia</MenuItem>
+                  <MenuItem value="available">Tersedia</MenuItem>
+                  <MenuItem value="occupied">Tidak Tersedia</MenuItem>
+                  <MenuItem value="maintenance">
+                    Ruangan Dalam Perbaikan
+                  </MenuItem>
+                  <MenuItem value="unavailable">Ruangan Tidak Layak</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
-            {isAvailable && (
+            {(statusRoom === "maintenance" || statusRoom === "unavailable") && (
               <Grid size={12}>
                 <TextField
                   label="Alasan Tidak Tersedia (Optional)"
@@ -382,6 +385,7 @@ const EditRoom = ({
                   value={notes}
                   onChange={(e) => setNotes(e.target.value.slice(0, 150))}
                   inputProps={{ maxLength: 150 }}
+                  required
                 />
                 <Typography variant="caption" sx={{ float: "right", mt: 0.5 }}>
                   {notes.length}/150
