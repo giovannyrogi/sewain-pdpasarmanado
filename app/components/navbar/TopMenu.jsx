@@ -29,7 +29,7 @@ import { redirect } from "next/navigation";
 
 const TopMenu = ({ user, onBurgerClick, onShowLoading, onHideLoading }) => {
   const theme = useTheme();
-  const isMobile = useMediaQuery("(max-width:1200px)");
+  const isMobile = useMediaQuery("(max-width:1300px)");
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
   const { themeMode, setThemeMode } = useThemeMode();

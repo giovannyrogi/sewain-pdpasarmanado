@@ -170,7 +170,7 @@ const Dashboard = () => {
         width: "100%",
         height: "100%",
         p: 2,
-        mt: 3,
+        mt: 1,
       }}
     >
       <Grid container size={12}>

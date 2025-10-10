@@ -28,7 +28,7 @@ const roleMenus = {
 };
 
 const MainLayout = ({ children }) => {
-  const isMobile = useMediaQuery("(max-width:1200px)");
+  const isMobile = useMediaQuery("(max-width:1300px)");
   const user = useUser();
   const menus = roleMenus[user?.role_id] ?? [];
 

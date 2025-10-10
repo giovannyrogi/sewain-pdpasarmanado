@@ -113,7 +113,7 @@ const LeftNavBar = ({ menus, activeMenu, onMenuClick, user }) => {
                   : "/logo-lightmode.png"
               }
               alt="logo-sewain"
-              style={{ height: 60, width: 180 }}
+              style={{ height: 60, width: 160 }}
             />
             {/* <Typography
               sx={{
