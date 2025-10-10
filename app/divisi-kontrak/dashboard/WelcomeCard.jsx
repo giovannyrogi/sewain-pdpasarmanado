@@ -85,7 +85,59 @@ const WelcomeCard = ({ user, loading, isMobile, isTablet }) => {
       }}
     >
       {loading ? (
-        <Skeleton variant="rounded" width="80%" height={100} animation="wave" />
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: isMobile ? "column" : "row",
+            height: "100%",
+            // width: "100%",
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "flex-start",
+              justifyContent: "flex-start",
+              height: "100%",
+              width: isMobile ? "100%" : "60%",
+              gap: 1.5,
+            }}
+          >
+            <Skeleton
+              variant="rounded"
+              width={isMobile ? "80%" : isTablet ? "65%" : "38%"}
+              height={33}
+              animation="wave"
+            />
+            <Skeleton
+              variant="rounded"
+              width={isMobile ? "90%" : isTablet ? "70%" : "40%"}
+              height={20}
+              animation="wave"
+            />
+            <Skeleton
+              variant="rounded"
+              width={isMobile ? "50%" : isTablet ? "45%" : "25%"}
+              height={20}
+              animation="wave"
+            />
+          </Box>
+          <Box
+            align={isMobile ? "center" : "right"}
+            sx={{
+              height: "100%",
+              width: isMobile ? "100%" : "40%",
+            }}
+          >
+            <Skeleton
+              variant="rounded"
+              width="280px"
+              height="210px"
+              animation="wave"
+            />
+          </Box>
+        </Box>
       ) : (
         <Grid container spacing={1}>
           <Grid container size={isMobile ? 12 : isTablet ? 6 : 8} spacing={1}>
