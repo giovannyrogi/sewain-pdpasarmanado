@@ -13,6 +13,7 @@ import menuItemDirekturUtama from "../menu/MenuItemDirekturUtama";
 import menuKepalaSubdivisi from "../menu/MenuItemKepalaSubdivisi";
 import menuDivisiKeuangan from "../menu/MenuItemDivisiKeuangan";
 import TopMenu from "../navbar/TopMenu";
+import LoadingBackdrop from "../loading/Backdrop";
 
 // mapping role_id → menu
 const roleMenus = {
@@ -33,46 +34,87 @@ const MainLayout = ({ children }) => {
 
   // Pusatkan kontrol Drawer di MainLayout
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [loadingBackdropOpen, setLoadingBackdropOpen] = useState(false);
+
+  // Contoh: aktifkan backdrop saat logout dipanggil dari TopMenu
+  const handleShowLoading = () => setLoadingBackdropOpen(true);
+  const handleHideLoading = () => setLoadingBackdropOpen(false);
 
   return (
-    <Box
-      sx={{
-        minHeight: "100vh",
-        bgcolor: "background.default",
-        color: "text.primary",
-        transition: "all 0.3s",
-        // p: isMobile ? 2 : 0,
-      }}
-    >
-      <Grid container rowGap={1}>
-        {/* Sidebar hanya muncul di desktop */}
-        {!isMobile && (
-          <Grid size={2} sx={{ zIndex: 1 }}>
-            <LeftNavBar menus={menus} user={user} />
-          </Grid>
-        )}
-
-        {/* Konten utama */}
-        <Grid size={isMobile ? 12 : 10}>
-          <Grid size={12}>
-            {/* Kirim kontrol Drawer ke TopMenu */}
-            <TopMenu user={user} onBurgerClick={() => setDrawerOpen(true)} />
-          </Grid>
-
-          {/* Drawer mobile muncul di bawah TopMenu */}
-          {isMobile && (
-            <MobileLeftNavBar
-              menus={menus}
-              user={user}
-              drawerOpen={drawerOpen}
-              onCloseDrawer={() => setDrawerOpen(false)}
-            />
+    <>
+      {/* === GLOBAL BACKDROP === */}
+      <LoadingBackdrop open={loadingBackdropOpen} message="Mohon tunggu..." />
+      <Box
+        sx={{
+          minHeight: "100vh",
+          bgcolor: "background.default",
+          color: "text.primary",
+          transition: "all 0.3s",
+          // p: isMobile ? 2 : 0,
+        }}
+      >
+        <Grid container rowGap={1}>
+          {/* Sidebar hanya muncul di desktop */}
+          {!isMobile && (
+            <Grid
+              size={2}
+              sx={{
+                zIndex: 10,
+                position: "sticky",
+                top: 0,
+                alignSelf: "flex-start",
+                height: "100vh",
+                overflowY: "auto",
+              }}
+            >
+              <LeftNavBar menus={menus} user={user} />
+            </Grid>
           )}
 
-          <Grid size={12}>{children}</Grid>
+          {/* Konten utama */}
+          <Grid size={isMobile ? 12 : 10}>
+            <Grid
+              size={12}
+              sx={{
+                position: "sticky",
+                top: 0,
+                zIndex: 9,
+                backgroundColor: "background.default",
+              }}
+            >
+              {/* Kirim kontrol Drawer ke TopMenu */}
+              <TopMenu
+                user={user}
+                onBurgerClick={() => setDrawerOpen(true)}
+                onShowLoading={handleShowLoading}
+                onHideLoading={handleHideLoading}
+              />
+            </Grid>
+
+            {/* Drawer mobile muncul di bawah TopMenu */}
+            {isMobile && (
+              <MobileLeftNavBar
+                menus={menus}
+                user={user}
+                drawerOpen={drawerOpen}
+                onCloseDrawer={() => setDrawerOpen(false)}
+              />
+            )}
+
+            <Grid
+              size={12}
+              // sx={{
+              //   overflowY: "auto",
+              //   height: "calc(100vh - 55px)", // tinggi layar dikurangi tinggi TopMenu
+              //   p: 2,
+              // }}
+            >
+              {children}
+            </Grid>
+          </Grid>
         </Grid>
-      </Grid>
-    </Box>
+      </Box>
+    </>
   );
 };
 

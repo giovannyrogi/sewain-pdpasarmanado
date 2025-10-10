@@ -84,6 +84,7 @@ const LeftNavBar = ({ menus, activeMenu, onMenuClick, user }) => {
         minHeight: "100vh",
         display: "flex",
         flexDirection: "column",
+        borderRight: themeMode === "dark" ? "1px solid #333" : "1px solid #ddd",
       }}
     >
       {/* Area Menu & Settings */}

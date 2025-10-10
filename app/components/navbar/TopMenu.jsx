@@ -27,19 +27,18 @@ import LoadingBackdrop from "../loading/Backdrop";
 import axios from "axios";
 import { redirect } from "next/navigation";
 
-const TopMenu = ({ user, onBurgerClick }) => {
+const TopMenu = ({ user, onBurgerClick, onShowLoading, onHideLoading }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery("(max-width:1200px)");
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
   const { themeMode, setThemeMode } = useThemeMode();
-  const [loading, setLoading] = useState(false);
 
   const handleAvatarClick = (event) => setAnchorEl(event.currentTarget);
   const handleMenuClose = () => setAnchorEl(null);
 
   const handleLogout = async () => {
-    setLoading(true);
+    onShowLoading?.();
     try {
       await axios.post("/api/logout");
       setTimeout(() => {
@@ -48,7 +47,7 @@ const TopMenu = ({ user, onBurgerClick }) => {
       }, 1000);
     } catch (err) {
       console.log("error logout", err);
-      setLoading(false);
+      onHideLoading?.();
     }
   };
 
@@ -83,7 +82,9 @@ const TopMenu = ({ user, onBurgerClick }) => {
             }}
           >
             <MenuIcon />
-            <Typography sx={{fontFamily:'poppins', fontWeight:'bold'}}>Menu</Typography>
+            <Typography sx={{ fontFamily: "poppins", fontWeight: "bold" }}>
+              Menu
+            </Typography>
           </IconButton>
         </Box>
       )}
@@ -174,8 +175,6 @@ const TopMenu = ({ user, onBurgerClick }) => {
           </MenuItem>
         </Menu>
       </Box>
-      {/* Spinner full screen saat redirect */}
-      <LoadingBackdrop open={loading} message="Logging out..." />
     </Paper>
   );
 };
