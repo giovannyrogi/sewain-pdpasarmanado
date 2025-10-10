@@ -24,13 +24,16 @@ import CardViewContract from "./CardViewContract";
 import ViewPieChart from "./PieChart";
 import ViewLineChart from "./LineChart";
 import CardViewStatusRooms from "./CardViewStatusRooms";
+import WelcomeCard from "./WelcomeCard";
+import { useUser } from "@/app/utils/useUser";
 
 const Dashboard = () => {
+  const user = useUser();
   const isTablet = useMediaQuery("(max-width:1300px)");
   const isMobile = useMediaQuery("(max-width:750px)");
   const { themeMode, setThemeMode } = useThemeMode();
   const theme = useTheme();
-  const [user, setUser] = useState(null);
+  const [dataUser, setDataUser] = useState(null);
   const [currentMonthIncomeWithoutTax, setCurrentMonthIncomeWithoutTax] =
     useState({});
   const [currentMonthIncomeWithTax, setCurrentMonthIncomeWithTax] = useState(
@@ -41,13 +44,6 @@ const Dashboard = () => {
   const [yearlyIncomeData, setYearlyIncomeData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [dataRoomStatus, setDataRoomStatus] = useState([]);
-
-  useEffect(() => {
-    const storedUser = localStorage.getItem("loggedInUser");
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-  }, []);
 
   const getCurrentMonthIncome = async () => {
     try {
@@ -136,9 +132,20 @@ const Dashboard = () => {
     }
   };
 
+  const getUserData = async () => {
+    try {
+      if (user) {
+        setDataUser(user);
+      }
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+    }
+  };
+
   const getAllData = async () => {
     try {
       setLoading(true);
+      await getUserData();
       await getCurrentMonthIncome();
       await getCurrentContractStatus();
       await getContractApprovalStatus();
@@ -163,9 +170,16 @@ const Dashboard = () => {
         width: "100%",
         height: "100%",
         p: 2,
+        mt: 3,
       }}
     >
-      <Grid container spacing={2} mt={3} alignItems="flex-start">
+      <Grid container size={12}>
+        <Grid size={12}>
+          <WelcomeCard user={user} loading={loading} isMobile={isMobile} isTablet={isTablet} />
+        </Grid>
+      </Grid>
+
+      <Grid container spacing={2} mt={2} alignItems="flex-start">
         {/* === KOLOM 1 (KIRI) === */}
         <Grid
           container

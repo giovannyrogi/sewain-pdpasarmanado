@@ -45,7 +45,7 @@ const CardViewIncome = ({
         borderRadius: "15px",
         transition: "all 0.2s ease",
         "&:hover": {
-          transform: "translateY(-10px)",
+          transform: "translateY(-4px)",
           boxShadow: 10,
         },
       }}

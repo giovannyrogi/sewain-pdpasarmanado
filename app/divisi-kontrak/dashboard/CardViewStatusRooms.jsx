@@ -27,8 +27,8 @@ const CardViewStatusRooms = ({ data, loading }) => {
         borderRadius: "15px",
         transition: "all 0.2s ease",
         "&:hover": {
-          transform: "translateY(-10px)",
-          boxShadow: 0,
+          transform: "translateY(-4px)",
+          boxShadow: 10,
         },
       }}
     >
