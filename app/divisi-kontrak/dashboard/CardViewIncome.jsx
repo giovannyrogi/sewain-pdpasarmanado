@@ -41,17 +41,13 @@ const CardViewIncome = ({
       sx={{
         backgroundColor: "background.default",
         p: 2,
-        height: "180px",
+        height: "200px",
         borderRadius: "15px",
-        // onhover drop shadow
-        // "&:hover": {
-        //   boxShadow: 15,
-        //   transition: "all 0.2s",
-        //   border:
-        //     themeMode === "dark"
-        //       ? `solid 1px ${theme.palette.primary.main}`
-        //       : "unset",
-        // },
+        transition: "all 0.2s ease",
+        "&:hover": {
+          transform: "translateY(-10px)",
+          boxShadow: 10,
+        },
       }}
     >
       <Grid container spacing={1}>
@@ -113,7 +109,7 @@ const CardViewIncome = ({
               // mt: 1,
               width: "100%",
               mt: "-5px",
-              mb: 2,
+              mb: 3,
             }}
           />
         )}
@@ -195,7 +191,7 @@ const CardViewIncome = ({
                     </Typography>
                     <Typography
                       sx={{
-                        fontSize: "26px",
+                        fontSize: "30px",
                         fontWeight: "bold",
                         fontFamily: "poppins",
                       }}
@@ -219,206 +215,9 @@ const CardViewIncome = ({
                   </Box>
                 )}
               </Grid>
-              {checked ? (
-                currentMonthIncomeWithTax?.trend === "up" ? (
-                  <Grid container size={12}>
-                    <Grid
-                      size={12}
-                      sx={{
-                        display: "flex",
-                        flexDirection: "row",
-                        justifyContent: "flex-start",
-                        alignItems: "center",
-                        gap: "5px",
-                      }}
-                    >
-                      <Tag
-                        color="green"
-                        style={{
-                          display: "flex",
-                          flexDirection: "row",
-                          alignItems: "center",
-                          gap: "5px",
-                        }}
-                      >
-                        <Icon
-                          icon="iconamoon:trend-up-fill"
-                          fontSize={20}
-                          style={{
-                            color: "green",
-                          }}
-                        />
-                        <Typography
-                          sx={{
-                            fontSize: "11px",
-                            fontWeight: "bold",
-                            fontFamily: "poppins",
-                            // baris baru ketika mencapai max width
-                            wordWrap: "break-word",
-                            whiteSpace: "pre-wrap",
-                            overflow: "hidden",
-                            textAlign: "justify",
-                          }}
-                        >
-                          {currentMonthIncomeWithTax?.percentage_change}% (+{" "}
-                          {formatRupiah(
-                            currentMonthIncomeWithTax?.difference || 0
-                          )}
-                          )
-                        </Typography>
-                      </Tag>
-                    </Grid>
-                    <Grid size={12}>
-                      <Typography
-                        sx={{
-                          fontSize: "11px",
-                          fontWeight: "bold",
-                          fontFamily: "poppins",
-                          // baris baru ketika mencapai max width
-                          wordWrap: "break-word",
-                          whiteSpace: "pre-wrap",
-                          overflow: "hidden",
-                          // textAlign: "justify",
-                        }}
-                      >
-                        Pendapatan meningkat dibandingkan dengan bulan lalu{" "}
-                        <span
-                          style={{
-                            color: theme.palette.primary.main,
-                          }}
-                        >
-                          {formatRupiah(
-                            currentMonthIncomeWithTax?.last_month
-                              ?.total_income || 0
-                          )}
-                        </span>
-                      </Typography>
-                    </Grid>
-                  </Grid>
-                ) : currentMonthIncomeWithTax?.trend === "down" ? (
-                  <Grid container size={12}>
-                    <Grid
-                      size={12}
-                      sx={{
-                        display: "flex",
-                        flexDirection: "row",
-                        justifyContent: "flex-start",
-                        alignItems: "center",
-                        gap: "5px",
-                      }}
-                    >
-                      <Tag
-                        color="red"
-                        style={{
-                          display: "flex",
-                          flexDirection: "row",
-                          alignItems: "center",
-                          gap: "5px",
-                        }}
-                      >
-                        <Icon
-                          icon="iconamoon:trend-down-fill"
-                          fontSize={20}
-                          style={{
-                            color: "red",
-                          }}
-                        />
-                        <Typography
-                          sx={{
-                            fontSize: "11px",
-                            fontWeight: "bold",
-                            fontFamily: "poppins",
-                            // baris baru ketika mencapai max width
-                            wordWrap: "break-word",
-                            whiteSpace: "pre-wrap",
-                            overflow: "hidden",
-                            textAlign: "justify",
-                          }}
-                        >
-                          {currentMonthIncomeWithTax?.percentage_change}% (-{" "}
-                          {formatRupiah(
-                            currentMonthIncomeWithTax?.difference || 0
-                          )}
-                          )
-                        </Typography>
-                      </Tag>
-                    </Grid>
-                    <Grid size={12}>
-                      <Typography
-                        sx={{
-                          fontSize: "11px",
-                          fontWeight: "bold",
-                          fontFamily: "poppins",
-                          // baris baru ketika mencapai max width
-                          wordWrap: "break-word",
-                          whiteSpace: "pre-wrap",
-                          overflow: "hidden",
-                          // textAlign: "justify",
-                        }}
-                      >
-                        Pendapatan menurun dibandingkan dengan bulan lalu{" "}
-                        <span
-                          style={{
-                            color: theme.palette.primary.main,
-                          }}
-                        >
-                          {formatRupiah(
-                            currentMonthIncomeWithTax?.last_month
-                              ?.total_income || 0
-                          )}
-                        </span>
-                      </Typography>
-                    </Grid>
-                  </Grid>
-                ) : undefined
-              ) : currentMonthIncomeWithoutTax?.trend === "up" ? (
-                <Grid container size={12}>
-                  <Grid
-                    size={12}
-                    sx={{
-                      display: "flex",
-                      flexDirection: "row",
-                      justifyContent: "flex-start",
-                      alignItems: "center",
-                      gap: "5px",
-                    }}
-                  >
-                    <Tag
-                      color="green"
-                      style={{
-                        display: "flex",
-                        flexDirection: "row",
-                        alignItems: "center",
-                        gap: "5px",
-                      }}
-                    >
-                      <Icon
-                        icon="iconamoon:trend-up-fill"
-                        fontSize={20}
-                        style={{
-                          color: "green",
-                        }}
-                      />
-                      <Typography
-                        sx={{
-                          fontSize: "11px",
-                          fontWeight: "bold",
-                          fontFamily: "poppins",
-                          // baris baru ketika mencapai max width
-                          wordWrap: "break-word",
-                          whiteSpace: "pre-wrap",
-                          overflow: "hidden",
-                          textAlign: "justify",
-                        }}
-                      >
-                        {currentMonthIncomeWithoutTax?.percentage_change}% (+{" "}
-                        {formatRupiah(
-                          currentMonthIncomeWithoutTax?.difference || 0
-                        )}
-                        )
-                      </Typography>
-                    </Tag>
-                  </Grid>
+              {currentMonthIncomeWithTax?.last_month?.total_income === 0 &&
+              currentMonthIncomeWithoutTax?.last_month?.total_income === 0 ? (
+                <Grid container mt={3}>
                   <Grid size={12}>
                     <Typography
                       sx={{
@@ -432,96 +231,320 @@ const CardViewIncome = ({
                         // textAlign: "justify",
                       }}
                     >
-                      Pendapatan meningkat dibandingkan dengan bulan lalu{" "}
-                      <span
-                        style={{
-                          color: theme.palette.primary.main,
-                        }}
-                      >
-                        {formatRupiah(
-                          currentMonthIncomeWithoutTax?.last_month
-                            ?.total_income || 0
-                        )}
-                      </span>
+                      Belum ada data pendapatan bulan lalu untuk jadi
+                      perbandingan.
                     </Typography>
                   </Grid>
                 </Grid>
-              ) : currentMonthIncomeWithoutTax?.trend === "down" ? (
-                <Grid container size={12}>
-                  <Grid
-                    size={12}
-                    sx={{
-                      display: "flex",
-                      flexDirection: "row",
-                      justifyContent: "flex-start",
-                      alignItems: "center",
-                      gap: "5px",
-                    }}
-                  >
-                    <Tag
-                      color="red"
-                      style={{
-                        display: "flex",
-                        flexDirection: "row",
-                        alignItems: "center",
-                        gap: "5px",
-                      }}
-                    >
-                      <Icon
-                        icon="iconamoon:trend-down-fill"
-                        fontSize={20}
-                        style={{
-                          color: "red",
-                        }}
-                      />
-                      <Typography
+              ) : (
+                <>
+                  {checked ? (
+                    currentMonthIncomeWithTax?.trend === "up" ? (
+                      <Grid container size={12}>
+                        <Grid
+                          size={12}
+                          sx={{
+                            display: "flex",
+                            flexDirection: "row",
+                            justifyContent: "flex-start",
+                            alignItems: "center",
+                            gap: "5px",
+                          }}
+                        >
+                          <Tag
+                            color="green"
+                            style={{
+                              display: "flex",
+                              flexDirection: "row",
+                              alignItems: "center",
+                              gap: "5px",
+                            }}
+                          >
+                            <Icon
+                              icon="iconamoon:trend-up-fill"
+                              fontSize={20}
+                              style={{
+                                color: "green",
+                              }}
+                            />
+                            <Typography
+                              sx={{
+                                fontSize: "11px",
+                                fontWeight: "bold",
+                                fontFamily: "poppins",
+                                // baris baru ketika mencapai max width
+                                wordWrap: "break-word",
+                                whiteSpace: "pre-wrap",
+                                overflow: "hidden",
+                                textAlign: "justify",
+                              }}
+                            >
+                              {currentMonthIncomeWithTax?.percentage_change}% (+{" "}
+                              {formatRupiah(
+                                currentMonthIncomeWithTax?.difference || 0
+                              )}
+                              )
+                            </Typography>
+                          </Tag>
+                        </Grid>
+                        <Grid size={12} mt={1.5}>
+                          <Typography
+                            sx={{
+                              fontSize: "11px",
+                              fontWeight: "bold",
+                              fontFamily: "poppins",
+                              // baris baru ketika mencapai max width
+                              wordWrap: "break-word",
+                              whiteSpace: "pre-wrap",
+                              overflow: "hidden",
+                              // textAlign: "justify",
+                            }}
+                          >
+                            Pendapatan meningkat dibandingkan dengan bulan lalu{" "}
+                            <span
+                              style={{
+                                color: theme.palette.primary.main,
+                              }}
+                            >
+                              {formatRupiah(
+                                currentMonthIncomeWithTax?.last_month
+                                  ?.total_income || 0
+                              )}
+                            </span>
+                          </Typography>
+                        </Grid>
+                      </Grid>
+                    ) : currentMonthIncomeWithTax?.trend === "down" ? (
+                      <Grid container size={12}>
+                        <Grid
+                          size={12}
+                          sx={{
+                            display: "flex",
+                            flexDirection: "row",
+                            justifyContent: "flex-start",
+                            alignItems: "center",
+                            gap: "5px",
+                          }}
+                        >
+                          <Tag
+                            color="red"
+                            style={{
+                              display: "flex",
+                              flexDirection: "row",
+                              alignItems: "center",
+                              gap: "5px",
+                            }}
+                          >
+                            <Icon
+                              icon="iconamoon:trend-down-fill"
+                              fontSize={20}
+                              style={{
+                                color: "red",
+                              }}
+                            />
+                            <Typography
+                              sx={{
+                                fontSize: "11px",
+                                fontWeight: "bold",
+                                fontFamily: "poppins",
+                                // baris baru ketika mencapai max width
+                                wordWrap: "break-word",
+                                whiteSpace: "pre-wrap",
+                                overflow: "hidden",
+                                textAlign: "justify",
+                              }}
+                            >
+                              {currentMonthIncomeWithTax?.percentage_change}% (-{" "}
+                              {formatRupiah(
+                                currentMonthIncomeWithTax?.difference || 0
+                              )}
+                              )
+                            </Typography>
+                          </Tag>
+                        </Grid>
+                        <Grid size={12} mt={1.5}>
+                          <Typography
+                            sx={{
+                              fontSize: "11px",
+                              fontWeight: "bold",
+                              fontFamily: "poppins",
+                              // baris baru ketika mencapai max width
+                              wordWrap: "break-word",
+                              whiteSpace: "pre-wrap",
+                              overflow: "hidden",
+                              // textAlign: "justify",
+                            }}
+                          >
+                            Pendapatan menurun dibandingkan dengan bulan lalu{" "}
+                            <span
+                              style={{
+                                color: theme.palette.primary.main,
+                              }}
+                            >
+                              {formatRupiah(
+                                currentMonthIncomeWithTax?.last_month
+                                  ?.total_income || 0
+                              )}
+                            </span>
+                          </Typography>
+                        </Grid>
+                      </Grid>
+                    ) : undefined
+                  ) : currentMonthIncomeWithoutTax?.trend === "up" ? (
+                    <Grid container size={12}>
+                      <Grid
+                        size={12}
                         sx={{
-                          fontSize: "11px",
-                          fontWeight: "bold",
-                          fontFamily: "poppins",
-                          // baris baru ketika mencapai max width
-                          wordWrap: "break-word",
-                          whiteSpace: "pre-wrap",
-                          overflow: "hidden",
-                          textAlign: "justify",
+                          display: "flex",
+                          flexDirection: "row",
+                          justifyContent: "flex-start",
+                          alignItems: "center",
+                          gap: "5px",
                         }}
                       >
-                        {currentMonthIncomeWithoutTax?.percentage_change}% (-{" "}
-                        {formatRupiah(
-                          currentMonthIncomeWithoutTax?.difference || 0
-                        )}
-                        )
-                      </Typography>
-                    </Tag>
-                  </Grid>
-                  <Grid size={12}>
-                    <Typography
-                      sx={{
-                        fontSize: "11px",
-                        fontWeight: "bold",
-                        fontFamily: "poppins",
-                        // baris baru ketika mencapai max width
-                        wordWrap: "break-word",
-                        whiteSpace: "pre-wrap",
-                        overflow: "hidden",
-                        // textAlign: "justify",
-                      }}
-                    >
-                      Pendapatan menurun dibandingkan dengan bulan lalu{" "}
-                      <span
-                        style={{
-                          color: theme.palette.primary.main,
+                        <Tag
+                          color="green"
+                          style={{
+                            display: "flex",
+                            flexDirection: "row",
+                            alignItems: "center",
+                            gap: "5px",
+                          }}
+                        >
+                          <Icon
+                            icon="iconamoon:trend-up-fill"
+                            fontSize={20}
+                            style={{
+                              color: "green",
+                            }}
+                          />
+                          <Typography
+                            sx={{
+                              fontSize: "11px",
+                              fontWeight: "bold",
+                              fontFamily: "poppins",
+                              // baris baru ketika mencapai max width
+                              wordWrap: "break-word",
+                              whiteSpace: "pre-wrap",
+                              overflow: "hidden",
+                              textAlign: "justify",
+                            }}
+                          >
+                            {currentMonthIncomeWithoutTax?.percentage_change}%
+                            (+{" "}
+                            {formatRupiah(
+                              currentMonthIncomeWithoutTax?.difference || 0
+                            )}
+                            )
+                          </Typography>
+                        </Tag>
+                      </Grid>
+                      <Grid size={12} mt={1.5}>
+                        <Typography
+                          sx={{
+                            fontSize: "11px",
+                            fontWeight: "bold",
+                            fontFamily: "poppins",
+                            // baris baru ketika mencapai max width
+                            wordWrap: "break-word",
+                            whiteSpace: "pre-wrap",
+                            overflow: "hidden",
+                            // textAlign: "justify",
+                          }}
+                        >
+                          Pendapatan meningkat dibandingkan dengan bulan lalu{" "}
+                          <span
+                            style={{
+                              color: theme.palette.primary.main,
+                            }}
+                          >
+                            {formatRupiah(
+                              currentMonthIncomeWithoutTax?.last_month
+                                ?.total_income || 0
+                            )}
+                          </span>
+                        </Typography>
+                      </Grid>
+                    </Grid>
+                  ) : currentMonthIncomeWithoutTax?.trend === "down" ? (
+                    <Grid container size={12}>
+                      <Grid
+                        size={12}
+                        sx={{
+                          display: "flex",
+                          flexDirection: "row",
+                          justifyContent: "flex-start",
+                          alignItems: "center",
+                          gap: "5px",
                         }}
                       >
-                        {formatRupiah(
-                          currentMonthIncomeWithoutTax?.last_month
-                            ?.total_income || 0
-                        )}
-                      </span>
-                    </Typography>
-                  </Grid>
-                </Grid>
-              ) : undefined}
+                        <Tag
+                          color="red"
+                          style={{
+                            display: "flex",
+                            flexDirection: "row",
+                            alignItems: "center",
+                            gap: "5px",
+                          }}
+                        >
+                          <Icon
+                            icon="iconamoon:trend-down-fill"
+                            fontSize={20}
+                            style={{
+                              color: "red",
+                            }}
+                          />
+                          <Typography
+                            sx={{
+                              fontSize: "11px",
+                              fontWeight: "bold",
+                              fontFamily: "poppins",
+                              // baris baru ketika mencapai max width
+                              wordWrap: "break-word",
+                              whiteSpace: "pre-wrap",
+                              overflow: "hidden",
+                              textAlign: "justify",
+                            }}
+                          >
+                            {currentMonthIncomeWithoutTax?.percentage_change}%
+                            (-{" "}
+                            {formatRupiah(
+                              currentMonthIncomeWithoutTax?.difference || 0
+                            )}
+                            )
+                          </Typography>
+                        </Tag>
+                      </Grid>
+                      <Grid size={12} mt={1.5}>
+                        <Typography
+                          sx={{
+                            fontSize: "11px",
+                            fontWeight: "bold",
+                            fontFamily: "poppins",
+                            // baris baru ketika mencapai max width
+                            wordWrap: "break-word",
+                            whiteSpace: "pre-wrap",
+                            overflow: "hidden",
+                            // textAlign: "justify",
+                          }}
+                        >
+                          Pendapatan menurun dibandingkan dengan bulan lalu{" "}
+                          <span
+                            style={{
+                              color: theme.palette.primary.main,
+                            }}
+                          >
+                            {formatRupiah(
+                              currentMonthIncomeWithoutTax?.last_month
+                                ?.total_income || 0
+                            )}
+                          </span>
+                        </Typography>
+                      </Grid>
+                    </Grid>
+                  ) : undefined}
+                </>
+              )}
             </Grid>
             {/* Icon Money Bag */}
             <Grid container size={3} align="end">

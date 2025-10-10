@@ -188,7 +188,7 @@ const AddPayment = ({
 
     formData.append("proof_file", proofFile);
     formData.append("type_pembayaran", typePembayaran);
-    formData.append("payment_date", paymentDate);
+    formData.append("payment_date", moment(paymentDate).format("YYYY-MM-DD"));
     formData.append("tenant_name", selectedData.tenant_name);
     formData.append("uploaded_by", user.id || null);
     formData.append("payment_number", paymentNumber);

@@ -29,15 +29,6 @@ const menuItemDirekturUtama = [
         showIcon: true,
       },
       {
-        label: "Payments",
-        value: "payments",
-        path: "/direktur-utama/payments",
-        icon: (
-          <Icon icon="streamline-freehand:money-atm-withdraw" fontSize="20px" />
-        ),
-        showIcon: true,
-      },
-      {
         label: "Contracts",
         value: "contracts",
         path: "/direktur-utama/contracts",

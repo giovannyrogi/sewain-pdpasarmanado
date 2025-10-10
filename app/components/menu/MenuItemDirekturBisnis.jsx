@@ -28,22 +28,6 @@ const menuDirekturBisnis = [
         icon: <Icon icon="pepicons-pop:lock-closed-circle" fontSize="20px" />,
         showIcon: true,
       },
-      {
-        label: "Payments",
-        value: "payments",
-        path: "/direktur-bisnis/payments",
-        icon: (
-          <Icon icon="streamline-freehand:money-atm-withdraw" fontSize="20px" />
-        ),
-        showIcon: true,
-      },
-      {
-        label: "Contracts",
-        value: "contracts",
-        path: "/direktur-bisnis/contracts",
-        icon: <Icon icon="clarity:contract-line" fontSize="20px" />,
-        showIcon: true,
-      },
     ],
   },
   {

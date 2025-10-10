@@ -174,7 +174,7 @@ export async function GET(req) {
         ta.approval_status AS tenant_approval_status,
         ta.current_step AS tenant_current_step,
         ta.user_id,
-        ta.updated_at AS tenant_updated_at,
+        ta.tenant_identity_id,
 
         -- lokasi & ruangan
         l.id AS location_id,
@@ -213,6 +213,8 @@ export async function GET(req) {
       termination_created_at: moment(row.termination_created_at).format(
         "D MMMM YYYY"
       ),
+
+      tenant_identity_id: row.tenant_identity_id,
 
       // identitas tenant
       tenant_name: row.tenant_name,

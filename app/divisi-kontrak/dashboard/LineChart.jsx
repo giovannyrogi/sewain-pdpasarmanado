@@ -17,7 +17,7 @@ import formatRupiah from "@/app/components/formatrupiah/page";
 const ViewLineChart = ({ loading, yearlyIncomeData }) => {
   const theme = useTheme();
   const { themeMode } = useThemeMode();
-  const isMobile = useMediaQuery("(max-width:600px)");
+  const isMobile = useMediaQuery("(max-width:750px)");
 
   // Pastikan data valid
   const incomeArray = Array.isArray(yearlyIncomeData)
@@ -35,9 +35,14 @@ const ViewLineChart = ({ loading, yearlyIncomeData }) => {
         backgroundColor: "background.default",
         p: 2,
         borderRadius: "15px",
-        height: isMobile ? "400px" : "380px",
+        height: isMobile ? "460px" : "450px",
         display: "flex",
         flexDirection: "column",
+        transition: "all 0.2s ease",
+        "&:hover": {
+          transform: "translateY(-3px)",
+          boxShadow: 10,
+        },
       }}
     >
       {/* Header */}
@@ -78,7 +83,7 @@ const ViewLineChart = ({ loading, yearlyIncomeData }) => {
       ) : (
         <Box sx={{ flexGrow: 1 }}>
           <LineChart
-            height={310}
+            height={360}
             xAxis={[
               {
                 data: xLabels,
@@ -88,18 +93,29 @@ const ViewLineChart = ({ loading, yearlyIncomeData }) => {
             ]}
             yAxis={[
               {
-                // Hilangkan label & garis sumbu Y
-                tickLabelStyle: { display: "none" }, // sembunyikan angka
-                // tickSize: 0, // sembunyikan tanda kecil
-                // label: "", // tidak ada label sumbu
-                // axisLine: true, // sembunyikan garis sumbu
+                valueFormatter: (value) => {
+                  if (value >= 1_000_000_000)
+                    return `${(value / 1_000_000_000).toFixed(1)}M`;
+                  if (value >= 1_000_000)
+                    return `${(value / 1_000_000).toFixed(1)}JT`;
+                  if (value >= 1_000) return `${(value / 1_000).toFixed(0)}K`;
+                  return value;
+                },
+                tickLabelStyle: {
+                  fontFamily: "Poppins",
+                  fontSize: 12,
+                  fill: themeMode === "dark" ? "#e0e0e0" : "#333",
+                  // textOverflow: "unset",
+                  // overflow: "visible",
+                },
+                width: 50,
               },
             ]}
             series={[
               {
                 label: "Pendapatan Bersih",
                 data: withoutTaxData,
-                // area: true,
+                area: false,
                 showMark: true,
                 color: "#4CAF50",
                 fillOpacity: 0.1,
@@ -109,7 +125,7 @@ const ViewLineChart = ({ loading, yearlyIncomeData }) => {
               {
                 label: "Pendapatan Dengan PPN (11%)",
                 data: withTaxData,
-                // area: true,
+                area: false,
                 showMark: true,
                 color: "#FFC107",
                 fillOpacity: 0.1,
@@ -131,7 +147,7 @@ const ViewLineChart = ({ loading, yearlyIncomeData }) => {
             // }}
             margin={{
               top: 10,
-              right: 20,
+              right: 30,
               left: 10,
               bottom: 40,
             }}

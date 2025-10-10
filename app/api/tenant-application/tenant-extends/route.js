@@ -21,6 +21,8 @@ export async function GET(req) {
         AND ta.start_date IS NOT NULL
         AND ta.end_date IS NOT NULL
         AND ta.end_date <= $1
+        AND is_fully_paid = true
+        AND ti.status = 'active'
         -- hanya pilih tenant_application yang merupakan leaf (tidak punya renewal/child)
         AND NOT EXISTS (
           SELECT 1
@@ -40,13 +42,14 @@ export async function GET(req) {
         : null,
       end_date: row.end_date ? moment(row.end_date).format("YYYY-MM-DD") : null,
       approval_status: row.approval_status,
-      tenant_name: row.tenant_name, 
+      tenant_name: row.tenant_name,
     }));
 
     return new Response(
       JSON.stringify({
         success: true,
-        message: "Berhasil mengambil data tenant application",
+        message:
+          "Berhasil mengambil data tenant application yang dapat diperpanjang",
         data: rows,
       }),
       { status: 200 }

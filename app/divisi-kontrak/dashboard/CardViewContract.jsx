@@ -26,16 +26,13 @@ const CardViewContract = ({
       sx={{
         backgroundColor: "background.default",
         p: 2,
-        height: "180px",
+        height: "200px",
         borderRadius: "15px",
-        // "&:hover": {
-        //   boxShadow: 15,
-        //   transition: "all 0.2s ease",
-        //   border:
-        //     themeMode === "dark"
-        //       ? `solid 1px ${theme.palette.primary.main}`
-        //       : "unset",
-        // },
+        transition: "all 0.2s ease",
+        "&:hover": {
+          transform: "translateY(-10px)",
+          boxShadow: 10,
+        },
       }}
     >
       <Grid container spacing={1}>
@@ -55,7 +52,7 @@ const CardViewContract = ({
                 fontWeight: "bold",
                 fontFamily: "poppins",
               }}
-            > 
+            >
               Jumlah Kontrak
             </Typography>
           </Grid>
@@ -125,6 +122,7 @@ const CardViewContract = ({
                       : "rgba(0, 200, 0, 0.1)",
                   borderRadius: "12px",
                   p: 1.5,
+                  height:'120px',
                   transition: "all 0.2s ease",
                   "&:hover": {
                     transform: "scale(1.05)",
@@ -134,7 +132,7 @@ const CardViewContract = ({
               >
                 <Icon
                   icon="mdi:check-decagram"
-                  fontSize={30}
+                  fontSize={35}
                   color="#4CAF50"
                   style={{ marginBottom: 5 }}
                 />
@@ -150,7 +148,7 @@ const CardViewContract = ({
                 </Typography>
                 <Typography
                   sx={{
-                    fontSize: "16px",
+                    fontSize: "18px",
                     fontWeight: "bold",
                     fontFamily: "poppins",
                   }}
@@ -170,6 +168,7 @@ const CardViewContract = ({
                       : "rgba(255, 0, 0, 0.1)",
                   borderRadius: "12px",
                   p: 1.5,
+                  height:'120px',
                   transition: "all 0.2s ease",
                   "&:hover": {
                     transform: "scale(1.05)",
@@ -179,7 +178,7 @@ const CardViewContract = ({
               >
                 <Icon
                   icon="mdi:close-octagon"
-                  fontSize={30}
+                  fontSize={35}
                   color="#FF5252"
                   style={{ marginBottom: 5 }}
                 />
@@ -195,7 +194,7 @@ const CardViewContract = ({
                 </Typography>
                 <Typography
                   sx={{
-                    fontSize: "16px",
+                    fontSize: "18px",
                     fontWeight: "bold",
                     fontFamily: "poppins",
                   }}
@@ -215,6 +214,7 @@ const CardViewContract = ({
                       : "rgba(255, 193, 7, 0.1)", // lembut untuk light mode
                   borderRadius: "12px",
                   p: 1.5,
+                  height:'120px',
                   transition: "all 0.2s ease",
                   "&:hover": {
                     transform: "scale(1.05)",
@@ -224,7 +224,7 @@ const CardViewContract = ({
               >
                 <Icon
                   icon="mdi:clock-alert"
-                  fontSize={30}
+                  fontSize={35}
                   color="#FFC107" // warna kuning amber utama
                   style={{ marginBottom: 5 }}
                 />
@@ -240,7 +240,7 @@ const CardViewContract = ({
                 </Typography>
                 <Typography
                   sx={{
-                    fontSize: "16px",
+                    fontSize: "18px",
                     fontWeight: "bold",
                     fontFamily: "poppins",
                   }}

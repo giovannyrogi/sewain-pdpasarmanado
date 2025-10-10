@@ -77,7 +77,7 @@ export async function GET(req, { params }) {
       const roomSql = `
         SELECT 
           id, location_id, room_number, floor_id, room_length, room_width,
-          room_area, price_per_m2, is_available
+          room_area, price_per_m2, status
         FROM rooms
         WHERE id = $1
         LIMIT 1

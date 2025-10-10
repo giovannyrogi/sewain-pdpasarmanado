@@ -67,6 +67,7 @@ const TenantTerminationApprovalModal = ({
           status: "approved", // atau "rejected"
           approver_id: user.id,
           room_id: selectedData.room_id,
+          tenant_identity_id: selectedData?.tenant_identity_id,
         }
       );
       console.log("response", response.data);
@@ -545,7 +546,9 @@ const TenantTerminationApprovalModal = ({
                 }}
               >
                 {selectedData?.termination_created_at
-                  ? moment(selectedData?.termination_created_at).format("YYYY/MM/DD")
+                  ? moment(selectedData?.termination_created_at).format(
+                      "YYYY/MM/DD"
+                    )
                   : "-"}
               </Typography>
             </Grid>
@@ -573,60 +576,6 @@ const TenantTerminationApprovalModal = ({
           />
 
           <Grid container spacing={1}>
-            <Grid
-              size={isMobile ? 12 : 6}
-              sx={{ display: "flex", flexDirection: "column" }}
-            >
-              <Typography
-                sx={{
-                  fontWeight: "bold",
-                  fontSize: "14px",
-                  color: theme.palette.primary.main,
-                }}
-              >
-                Alasan
-              </Typography>
-              <Typography
-                sx={{
-                  fontWeight: "bold",
-                  fontSize: "13px",
-                  wordBreak: "break-word", // <-- biar kata panjang pecah
-                  whiteSpace: "normal", // <-- biar bisa turun baris
-                  overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
-                }}
-              >
-                {selectedData?.reason ? selectedData.reason : "-"}
-              </Typography>
-            </Grid>
-
-            <Grid
-              size={isMobile ? 12 : 6}
-              sx={{ display: "flex", flexDirection: "column" }}
-            >
-              <Typography
-                sx={{
-                  fontWeight: "bold",
-                  fontSize: "14px",
-                  color: theme.palette.primary.main,
-                }}
-              >
-                Dibuat Oleh
-              </Typography>
-              <Typography
-                sx={{
-                  fontWeight: "bold",
-                  fontSize: "13px",
-                  wordBreak: "break-word", // <-- biar kata panjang pecah
-                  whiteSpace: "normal", // <-- biar bisa turun baris
-                  overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
-                }}
-              >
-                {selectedData?.termination_processed_by_full_name
-                  ? selectedData.termination_processed_by_full_name
-                  : "-"}
-              </Typography>
-            </Grid>
-
             <Grid
               size={isMobile ? 12 : 6}
               sx={{ display: "flex", flexDirection: "column" }}
@@ -671,6 +620,60 @@ const TenantTerminationApprovalModal = ({
                   Belum ada surat
                 </Typography>
               )}
+            </Grid>
+
+            <Grid
+              size={isMobile ? 12 : 6}
+              sx={{ display: "flex", flexDirection: "column" }}
+            >
+              <Typography
+                sx={{
+                  fontWeight: "bold",
+                  fontSize: "14px",
+                  color: theme.palette.primary.main,
+                }}
+              >
+                Dibuat Oleh
+              </Typography>
+              <Typography
+                sx={{
+                  fontWeight: "bold",
+                  fontSize: "13px",
+                  wordBreak: "break-word", // <-- biar kata panjang pecah
+                  whiteSpace: "normal", // <-- biar bisa turun baris
+                  overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
+                }}
+              >
+                {selectedData?.termination_processed_by_full_name
+                  ? selectedData.termination_processed_by_full_name
+                  : "-"}
+              </Typography>
+            </Grid>
+
+            <Grid
+              size={isMobile ? 12 : 6}
+              sx={{ display: "flex", flexDirection: "column" }}
+            >
+              <Typography
+                sx={{
+                  fontWeight: "bold",
+                  fontSize: "14px",
+                  color: theme.palette.primary.main,
+                }}
+              >
+                Alasan Non-Aktif
+              </Typography>
+              <Typography
+                sx={{
+                  fontWeight: "bold",
+                  fontSize: "13px",
+                  wordBreak: "break-word", // <-- biar kata panjang pecah
+                  whiteSpace: "normal", // <-- biar bisa turun baris
+                  overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
+                }}
+              >
+                {selectedData?.reason ? selectedData.reason : "-"}
+              </Typography>
             </Grid>
           </Grid>
 

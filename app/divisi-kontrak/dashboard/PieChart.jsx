@@ -25,7 +25,11 @@ const ViewPieChart = ({ loading, contractApprovalStatus }) => {
         backgroundColor: "background.default",
         p: 2,
         borderRadius: "15px",
-        // height: "400px",
+        transition: "all 0.2s ease",
+        "&:hover": {
+          transform: "translateY(-3px)",
+          boxShadow: 10,
+        },
       }}
     >
       <Grid container spacing={1}>

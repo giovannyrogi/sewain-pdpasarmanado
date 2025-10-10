@@ -26,8 +26,8 @@ import ViewLineChart from "./LineChart";
 import CardViewStatusRooms from "./CardViewStatusRooms";
 
 const Dashboard = () => {
-  const isTablet = useMediaQuery("(max-width:1200px)");
-  const isMobile = useMediaQuery("(max-width:600px)");
+  const isTablet = useMediaQuery("(max-width:1300px)");
+  const isMobile = useMediaQuery("(max-width:750px)");
   const { themeMode, setThemeMode } = useThemeMode();
   const theme = useTheme();
   const [user, setUser] = useState(null);
@@ -36,10 +36,11 @@ const Dashboard = () => {
   const [currentMonthIncomeWithTax, setCurrentMonthIncomeWithTax] = useState(
     {}
   );
-  const [currentContractStatus, setCurrentContractStatus] = useState({});
-  const [contractApprovalStatus, setContractApprovalStatus] = useState({});
-  const [yearlyIncomeData, setYearlyIncomeData] = useState({});
+  const [currentContractStatus, setCurrentContractStatus] = useState([]);
+  const [contractApprovalStatus, setContractApprovalStatus] = useState([]);
+  const [yearlyIncomeData, setYearlyIncomeData] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [dataRoomStatus, setDataRoomStatus] = useState([]);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("loggedInUser");
@@ -105,7 +106,7 @@ const Dashboard = () => {
 
   const getYearlyIncomeData = async () => {
     try {
-      const response = await axios.get("/api/dashboard/yearly-income"); // Ganti dengan URL API yang sesuai
+      const response = await axios.get("/api/dashboard/yearly-income");
 
       console.log("response yearly income", response);
 
@@ -119,6 +120,22 @@ const Dashboard = () => {
     }
   };
 
+  const getDataRoomStatus = async () => {
+    try {
+      const response = await axios.get("/api/dashboard/current-rooms-status");
+
+      console.log("response room status", response);
+
+      if (response.data.success) {
+        setDataRoomStatus(response.data.data);
+      } else {
+        console.error("Error fetching room status data:", response);
+      }
+    } catch (error) {
+      console.error("Error fetching room status data:", error);
+    }
+  };
+
   const getAllData = async () => {
     try {
       setLoading(true);
@@ -126,6 +143,7 @@ const Dashboard = () => {
       await getCurrentContractStatus();
       await getContractApprovalStatus();
       await getYearlyIncomeData();
+      await getDataRoomStatus();
     } catch (error) {
       console.error(error);
     } finally {
@@ -147,35 +165,65 @@ const Dashboard = () => {
         p: 2,
       }}
     >
-      <Grid container spacing={2} mt={3}>
-        <Grid size={isMobile ? 12 : isTablet ? 6 : 4}>
-          <CardViewIncome
-            currentMonthIncomeWithTax={currentMonthIncomeWithTax}
-            currentMonthIncomeWithoutTax={currentMonthIncomeWithoutTax}
-            loading={loading}
-          />
+      <Grid container spacing={2} mt={3} alignItems="flex-start">
+        {/* === KOLOM 1 (KIRI) === */}
+        <Grid
+          container
+          size={isMobile || isTablet ? 12 : 8}
+          direction="column"
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 2,
+            alignSelf: "flex-start",
+          }}
+        >
+          <Grid container spacing={2}>
+            <Grid size={isMobile ? 12 : 6}>
+              <CardViewIncome
+                currentMonthIncomeWithTax={currentMonthIncomeWithTax}
+                currentMonthIncomeWithoutTax={currentMonthIncomeWithoutTax}
+                loading={loading}
+              />
+            </Grid>
+
+            <Grid size={isMobile ? 12 : 6}>
+              <CardViewContract
+                loading={loading}
+                data={currentContractStatus}
+              />
+            </Grid>
+          </Grid>
+
+          <Grid size={12}>
+            <ViewLineChart
+              loading={loading}
+              yearlyIncomeData={yearlyIncomeData}
+            />
+          </Grid>
         </Grid>
 
-        <Grid size={isMobile ? 12 : isTablet ? 6 : 4}>
-          <CardViewContract loading={loading} data={currentContractStatus} />
-        </Grid>
+        {/* === KOLOM 2 (KANAN) === */}
+        <Grid
+          container
+          size={isMobile || isTablet ? 12 : 4}
+          sx={{
+            display: "flex",
+            flexDirection: isMobile ? "column" : "row",
+            gap: 2,
+            alignSelf: "flex-start",
+          }}
+        >
+          <Grid size={isMobile ? 12 : isTablet ? 6 : 12}>
+            <CardViewStatusRooms loading={loading} data={dataRoomStatus} />
+          </Grid>
 
-        <Grid size={isMobile ? 12 : isTablet ? 6 : 4}>
-          <CardViewStatusRooms loading={loading} />
-        </Grid>
-
-        <Grid size={isMobile ? 12 : isTablet ? 12 : 8}>
-          <ViewLineChart
-            loading={loading}
-            yearlyIncomeData={yearlyIncomeData}
-          />
-        </Grid>
-
-        <Grid size={isMobile ? 12 : isTablet ? 12 : 4}>
-          <ViewPieChart
-            loading={loading}
-            contractApprovalStatus={contractApprovalStatus}
-          />
+          <Grid size={isMobile ? 12 : isTablet ? 6 : 12}>
+            <ViewPieChart
+              loading={loading}
+              contractApprovalStatus={contractApprovalStatus}
+            />
+          </Grid>
         </Grid>
       </Grid>
     </Box>

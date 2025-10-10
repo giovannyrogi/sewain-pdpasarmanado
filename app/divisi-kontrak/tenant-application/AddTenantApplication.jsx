@@ -445,9 +445,9 @@ const AddTenantApplication = ({
         );
       }
 
-      for (let pair of formData.entries()) {
-        console.log(pair[0], pair[1]);
-      }
+      // for (let pair of formData.entries()) {
+      //   console.log(pair[0], pair[1]);
+      // }
 
       const response = await axios.post("/api/tenant-application", formData, {
         headers: {
@@ -465,10 +465,10 @@ const AddTenantApplication = ({
               response?.data?.message || "Form Permohonan berhasil dibuat!",
             severity: "success",
           });
+        getDataTenantApplication();
+        getLocationsData();
+        getRoomsData();
         setTimeout(() => {
-          getDataTenantApplication();
-          getLocationsData();
-          getRoomsData();
           onClose();
           setIsSubmitting(false);
           clearForm();

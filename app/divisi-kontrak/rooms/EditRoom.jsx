@@ -376,7 +376,7 @@ const EditRoom = ({
             {(statusRoom === "maintenance" || statusRoom === "unavailable") && (
               <Grid size={12}>
                 <TextField
-                  label="Alasan Tidak Tersedia (Optional)"
+                  label="Alasan Tidak Tersedia"
                   placeholder="Tuliskan alasan kenapa ruangan tidak tersedia..."
                   fullWidth
                   variant="filled"

@@ -73,22 +73,47 @@ export async function GET() {
 
         -- contracts (ambil nomor kontrak terbesar)
         mc.contract_number AS latest_contract_number,
+        mc.contract_num_only AS latest_contract_number_only,
+
+       -- tetap tampilkan nomor kontrak terbesar
+        mc.contract_number AS latest_contract_number,
         mc.contract_num_only AS latest_contract_number_only
 
       FROM tenant_application ta
       LEFT JOIN tenant_identities ti ON ta.tenant_identity_id = ti.id
       LEFT JOIN rooms rm ON rm.id = ta.room_id
       LEFT JOIN locations loc ON loc.id = ta.location_id
-      CROSS JOIN max_contract mc
-      WHERE ta.is_fully_paid = true
+      LEFT JOIN max_contract mc ON TRUE
+
+      WHERE 
+        ta.is_fully_paid = TRUE
+        AND ta.approval_status = 'approved'
         AND ta.start_date IS NOT NULL
         AND ta.end_date IS NOT NULL
-        AND ta.id IS NOT NULL
-        -- hanya ambil yang BELUM ada di tabel contracts
+
+        -- hanya tampilkan kontrak terakhir (belum diperpanjang lagi)
         AND NOT EXISTS (
-          SELECT 1 FROM contracts c WHERE c.tenant_application_id = ta.id
+          SELECT 1 
+          FROM tenant_application next_app 
+          WHERE next_app.renewal_of = ta.id
         )
-      ORDER BY ta.created_at DESC
+
+        -- belum dibuatkan kontrak di tabel contracts
+        AND NOT EXISTS (
+          SELECT 1 
+          FROM contracts c 
+          WHERE c.tenant_application_id = ta.id
+        )
+
+        -- belum pernah dinonaktifkan (terminated)
+        AND NOT EXISTS (
+          SELECT 1
+          FROM tenant_early_terminations tet
+          WHERE tet.tenant_application_id = ta.id
+            AND tet.is_terminated = TRUE
+        )
+
+      ORDER BY ta.created_at DESC;
     `;
 
     const result = await pool.query(sql);

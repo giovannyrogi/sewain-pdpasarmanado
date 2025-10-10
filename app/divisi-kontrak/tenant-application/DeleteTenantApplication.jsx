@@ -43,10 +43,10 @@ const DeleteTenantApplication = ({
             message: response.data.message || "Tenant berhasil dihapus!",
             severity: "success",
           });
+        getDataTenantApplication();
+        getLocationsData();
 
         setTimeout(() => {
-          getDataTenantApplication();
-          getLocationsData();
           onClose();
           loadingFalse();
         }, 1000);
@@ -66,8 +66,7 @@ const DeleteTenantApplication = ({
       onNotify &&
         onNotify({
           open: true,
-          message:
-            error.response.data.message || "Gagal menghapus Tenant.",
+          message: error.response.data.message || "Gagal menghapus Tenant.",
           severity: "error",
         });
       setTimeout(() => {
@@ -196,7 +195,6 @@ const DeleteTenantApplication = ({
                   fontSize: 14,
                 }}
               >
-                Ruangan{" "}
                 {selectedData && selectedData.room_number
                   ? selectedData.room_number
                   : ""}

@@ -24,6 +24,9 @@ import menuKepalaSeksi from "@/app/components/menu/MenuItemKepalaSeksi";
 import TerminationReasonModal from "@/app/components/terminationreasonmodal/TerminationReasonModal";
 import TerminationApprovalModal from "@/app/components/approvalmodal/TerminationApprovalModal";
 import TenantTerminationApprovalModal from "@/app/components/tenant-termination-approval-modal/TenantTerminationApprovalModal";
+import menuItemDirekturUtama from "@/app/components/menu/MenuItemDirekturUtama";
+import menuKepalaDivisi from "@/app/components/menu/MenuItemKepalaDivisi";
+import menuKepalaSubdivisi from "@/app/components/menu/MenuItemKepalaSubdivisi";
 
 const TenantTerminations = () => {
   const user = useUser();
@@ -95,11 +98,7 @@ const TenantTerminations = () => {
     return (
       item.tenant_name?.toLowerCase().includes(searchText.toLowerCase()) ||
       item.location_name?.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.payment_type?.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.room_number?.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.down_payment?.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.total_payment?.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.remaining_payment?.toLowerCase().includes(searchText.toLowerCase())
+      item.room_number?.toLowerCase().includes(searchText.toLowerCase())
     );
   });
 
@@ -161,6 +160,12 @@ const TenantTerminations = () => {
     "payment_type"
   );
 
+  const approvalStatusFilters = [
+    { text: "Dalam Proses", value: "proses" },
+    { text: "Ditolak", value: "rejected" },
+    { text: "Disetujui", value: "approved" },
+  ];
+
   const columns = [
     {
       title: "Nama Penyewa",
@@ -197,6 +202,11 @@ const TenantTerminations = () => {
       filterSearch: true,
       sorter: (a, b) => a.location_name.localeCompare(b.location_name),
       sortDirections: ["ascend", "descend"],
+      render: (text, record) => (
+        <Typography sx={{ fontSize: "12px" }}>
+          {record.location_name}
+        </Typography>
+      ),
       width: 200,
     },
     {
@@ -204,18 +214,9 @@ const TenantTerminations = () => {
       dataIndex: "room_number",
       sorter: (a, b) => a.room_number.localeCompare(b.room_number),
       sortDirections: ["ascend", "descend"],
-      render: (text, record) => {
-        return (
-          <Tag
-            // warna random berdasarkan angka ganjil genap
-            color={record.id % 2 === 0 ? "pink" : "geekblue"}
-            key={record.termination_id}
-            style={{ fontWeight: "bold" }}
-          >
-            {record.room_number}
-          </Tag>
-        );
-      },
+      render: (text, record) => (
+        <Typography sx={{ fontSize: "12px" }}>{record.room_number}</Typography>
+      ),
       width: 120,
     },
     {
@@ -246,6 +247,8 @@ const TenantTerminations = () => {
     {
       title: "Status Persetujuan",
       dataIndex: "termination_approval_status",
+      filters: approvalStatusFilters,
+      onFilter: createOnFilter("termination_approval_status"),
       filterSearch: true,
       render: (text, record) => {
         return (
@@ -275,7 +278,7 @@ const TenantTerminations = () => {
           </Tag>
         );
       },
-      width: 150,
+      width: 200,
     },
     {
       title: "Actions",
@@ -326,7 +329,7 @@ const TenantTerminations = () => {
   return (
     <Box sx={{ width: "100%", height: "100%", minHeight: "100%", p: 2 }}>
       {/* Component Breadcrumbs disini */}
-      <BreadcrumbPage menuList={menuKepalaSeksi} />
+      <BreadcrumbPage menuList={menuKepalaSubdivisi} />
 
       <ConfigProvider
         theme={{

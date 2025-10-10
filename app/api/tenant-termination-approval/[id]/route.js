@@ -1,11 +1,18 @@
 import pool from "@/lib/dbConfig";
+import moment from "moment";
 
 export async function PUT(request, { params }) {
   const client = await pool.connect();
   try {
     const { id } = params; // id tenant_termination_approval
     const body = await request.json();
-    const { tenant_early_termination_id, status, approver_id, room_id } = body;
+    const {
+      tenant_early_termination_id,
+      status,
+      approver_id,
+      room_id,
+      tenant_identity_id,
+    } = body;
 
     // --- Ambil data approval yang akan diupdate ---
     const approvalRes = await client.query(
@@ -97,6 +104,42 @@ export async function PUT(request, { params }) {
            WHERE id=$2`,
           [stepOrder, tenant_early_termination_id, new Date()]
         );
+
+        // Update tenant_identity: ubah status ke 'blacklisted' dan isi notes
+        // sesuai dengan reason yang ada pada tabel tenant_early_terminations
+        const today = moment().format("YYYY-MM-DD");
+
+        if (tenant_identity_id) {
+          const reasonRes = await client.query(
+            `SELECT reason FROM tenant_early_terminations WHERE id=$1`,
+            [tenant_early_termination_id]
+          );
+
+          const reason =
+            reasonRes.rows[0]?.reason || "Tanpa alasan yang tercatat";
+          const today = moment().format("YYYY-MM-DD");
+
+          await client.query(
+            `
+              UPDATE tenant_identities 
+              SET status = 'blacklisted', 
+                  notes = $2
+              WHERE id = $1
+            `,
+            [
+              tenant_identity_id,
+              `Data telah di non-aktifkan pada tanggal ${today}. Dengan alasan "${reason}"`,
+            ]
+          );
+        } else {
+          return new Response(
+            JSON.stringify({
+              success: false,
+              message: "Data Tenant Identity tidak ditemukan",
+            }),
+            { status: 404 }
+          );
+        }
 
         // Update rooms: ubah status ke 'available', kosongkan occupied_by dan notes
         if (room_id) {

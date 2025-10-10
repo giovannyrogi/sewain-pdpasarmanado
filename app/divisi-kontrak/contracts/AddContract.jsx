@@ -364,7 +364,8 @@ const AddContract = ({
                 color="primary"
               />
             </Grid>
-            {selectedTenantData && (
+            {selectedTenantData &&
+            selectedTenantData?.latest_contract_number ? (
               <Grid
                 size={12}
                 sx={{
@@ -390,10 +391,14 @@ const AddContract = ({
                 >
                   Nomor kontrak terakhir adalah{" "}
                   {selectedTenantData?.latest_contract_number
-                    .split("/")[0]
-                    .trim() || "-"}
+                    ? selectedTenantData?.latest_contract_number
+                        .split("/")[0]
+                        .trim()
+                    : "-"}
                 </Typography>
               </Grid>
+            ) : (
+              undefined
             )}
             <Grid size={12}>
               <Button

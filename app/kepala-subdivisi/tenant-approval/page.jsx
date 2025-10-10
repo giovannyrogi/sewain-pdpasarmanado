@@ -20,9 +20,13 @@ import menuSuperadmin from "@/app/components/menu/MenuItemSuperadmin";
 import BreadcrumbPage from "@/app/components/breadcrumb/page";
 import { useUser } from "@/app/utils/useUser";
 import ApprovalModal from "@/app/components/approvalmodal/page";
-import menuKepalaSubdivisi from "@/app/components/menu/MenuItemKepalaSubdivisi";
-import TenantApprovalModal from "@/app/components/tenantapprovalmodal/TenantApprovalModal";
+import menuDirekturBisnis from "@/app/components/menu/MenuItemDirekturBisnis";
 import TenantRejectModal from "@/app/components/tenantapprovalmodal/TenantRejectModal";
+import TenantApprovalModal from "@/app/components/tenantapprovalmodal/TenantApprovalModal";
+import menuItemDirekturUtama from "@/app/components/menu/MenuItemDirekturUtama";
+import menuKepalaDivisi from "@/app/components/menu/MenuItemKepalaDivisi";
+import menuKepalaSeksi from "@/app/components/menu/MenuItemKepalaSeksi";
+import menuKepalaSubdivisi from "@/app/components/menu/MenuItemKepalaSubdivisi";
 
 const TenantApproval = () => {
   const user = useUser();
@@ -86,10 +90,6 @@ const TenantApproval = () => {
     }
   }, [user]);
 
-  const filteredData = approvalList.filter((item) =>
-    item.role_name?.toLowerCase().includes(searchText.toLowerCase())
-  );
-
   const handleTenantApprove = (record) => {
     // console.log("edit record", record);
     setSelectedData(record);
@@ -114,6 +114,19 @@ const TenantApproval = () => {
   };
 
   // Utility untuk filter dinamis
+  const filteredData = approvalList.filter((item) => {
+    if (!searchText) return true;
+    const search = searchText.toLowerCase();
+
+    return (
+      item.tenant_name?.toLowerCase().includes(search) ||
+      item.location_name?.toLowerCase().includes(search) ||
+      item.room_number?.toLowerCase().includes(search) ||
+      item.document_number?.toLowerCase().includes(search)
+    );
+  });
+
+  // Utility untuk filter dinamis
   function generateFilters(data, key) {
     return [...new Set(data.map((item) => item[key]))]
       .filter((val) => val !== undefined && val !== null)
@@ -126,6 +139,16 @@ const TenantApproval = () => {
 
   const tenantNameFilters = generateFilters(approvalList, "tenant_name");
   const locationFilters = generateFilters(approvalList, "location_name");
+  const documentNumberFilters = generateFilters(
+    approvalList,
+    "document_number"
+  );
+
+  const approvalStatusFilters = [
+    { text: "Dalam Proses", value: "proses" },
+    { text: "Ditolak", value: "rejected" },
+    { text: "Disetujui", value: "approved" },
+  ];
 
   const columns = [
     {
@@ -141,7 +164,28 @@ const TenantApproval = () => {
             record.tenant_name.slice(1)}
         </Typography>
       ),
-      width: 150,
+      width: 200,
+    },
+    {
+      title: "Nomor Dokumen",
+      dataIndex: "document_number",
+      filters: documentNumberFilters,
+      onFilter: createOnFilter("document_number"),
+      filterSearch: true,
+      render: (text, record) => {
+        // Ambil hanya angka dokumen di depan sebelum tanda "/"
+        const documentNumberRaw = record?.document_number || "-";
+        const documentNumberOnly = documentNumberRaw.split("/")[0].trim(); // hasil: "001"
+        return (
+          <Typography
+            sx={{ fontWeight: "bold", fontSize: "12px", textAlign: "center" }}
+          >
+            {documentNumberOnly}
+          </Typography>
+        );
+      },
+      width: 180,
+      align: "left",
     },
     {
       title: "Lokasi",
@@ -151,28 +195,26 @@ const TenantApproval = () => {
       filterSearch: true,
       sorter: (a, b) => a.location_name.localeCompare(b.location_name),
       sortDirections: ["ascend", "descend"],
-      width: 130,
+      render: (text, record) => (
+        <Typography sx={{ fontSize: "12px" }}>
+          {record.location_name}
+        </Typography>
+      ),
+      width: 200,
     },
     {
       title: "Ruangan",
       dataIndex: "room_number",
-      render: (text, record) => {
-        return (
-          <Tag
-            // warna random berdasarkan angka ganjil genap
-            color={record.id % 2 === 0 ? "pink" : "geekblue"}
-            key={record.id}
-            style={{ fontWeight: "bold" }}
-          >
-            {record.room_number}
-          </Tag>
-        );
-      },
-      width: 100,
+      render: (text, record) => (
+        <Typography sx={{ fontSize: "12px" }}>{record.room_number}</Typography>
+      ),
+      width: 150,
     },
     {
       title: "Status Persetujuan",
       dataIndex: "approval_status",
+      filters: approvalStatusFilters,
+      onFilter: createOnFilter("approval_status"),
       filterSearch: true,
       render: (text, record) => {
         return (
@@ -185,10 +227,11 @@ const TenantApproval = () => {
                 ? "orange"
                 : "green"
             }
-            key={record.id}
+            key={record.tenant_application_id}
             style={{
               fontWeight: "bold",
               cursor: "pointer",
+              fontSize: "12px",
             }}
             onClick={() => handleApproval(record)}
           >
@@ -198,7 +241,7 @@ const TenantApproval = () => {
           </Tag>
         );
       },
-      width: 150,
+      width: 170,
     },
     {
       title: "Tanggal Dibuat",
@@ -206,19 +249,14 @@ const TenantApproval = () => {
       filterSearch: true,
       sorter: (a, b) => a.created_at.localeCompare(b.created_at),
       sortDirections: ["ascend", "descend"],
-      render: (text, record) =>
-        moment(record.created_at).format("DD-MM-YYYY HH:mm:ss"),
-      width: 150,
-    },
-    {
-      title: "Tanggal Diperbarui",
-      dataIndex: "updated_at",
-      filterSearch: true,
-      sorter: (a, b) => a.updated_at.localeCompare(b.updated_at),
-      sortDirections: ["ascend", "descend"],
-      render: (text, record) =>
-        moment(record.updated_at).format("DD-MM-YYYY HH:mm:ss"),
-      width: 150,
+      render: (text, record) => {
+        return (
+          <Typography sx={{ fontSize: "12px" }}>
+            {moment(record.created_at).format("DD-MM-YYYY HH:mm:ss")}
+          </Typography>
+        );
+      },
+      width: 200,
     },
     {
       title: "Actions",

@@ -102,25 +102,6 @@ const Applications = () => {
     }
   }, [user]);
 
-  const filteredData = dataTenantApplication.filter((item) => {
-    // const isAvailableText =
-    //   item.is_available === true
-    //     ? "tersedia"
-    //     : item.is_available === false
-    //     ? "tidak tersedia"
-    //     : "";
-
-    return (
-      item.tenant_name?.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.location_name?.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.payment_type?.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.room_number?.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.down_payment?.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.total_payment?.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.remaining_payment?.toLowerCase().includes(searchText.toLowerCase())
-    );
-  });
-
   const onChange = (pagination, filters, sorter, extra) => {
     if (pagination.pageSize !== pageSize) {
       setPageSize(pagination.pageSize);
@@ -185,6 +166,28 @@ const Applications = () => {
     setOpenUpdateDateModal(true);
   };
 
+  const filteredData = dataTenantApplication.filter((item) => {
+    // const isAvailableText =
+    //   item.is_available === true
+    //     ? "tersedia"
+    //     : item.is_available === false
+    //     ? "tidak tersedia"
+    //     : "";
+
+    return (
+      item.tenant_name?.toLowerCase().includes(searchText.toLowerCase()) ||
+      item.location_name?.toLowerCase().includes(searchText.toLowerCase()) ||
+      item.payment_type?.toLowerCase().includes(searchText.toLowerCase()) ||
+      item.room_number?.toLowerCase().includes(searchText.toLowerCase()) ||
+      item.down_payment?.toLowerCase().includes(searchText.toLowerCase()) ||
+      item.total_payment?.toLowerCase().includes(searchText.toLowerCase()) ||
+      item.remaining_payment
+        ?.toLowerCase()
+        .includes(searchText.toLowerCase()) ||
+      item.document_number?.toLowerCase().includes(searchText.toLowerCase())
+    );
+  });
+
   // Utility untuk filter dinamis
   function generateFilters(data, key) {
     return [...new Set(data.map((item) => item[key]))]
@@ -207,6 +210,11 @@ const Applications = () => {
     "payment_type"
   );
 
+  const documentNumberFilters = generateFilters(
+    dataTenantApplication,
+    "document_number"
+  );
+
   const approvalStatusFilters = [
     { text: "Dalam Proses", value: "proses" },
     { text: "Ditolak", value: "rejected" },
@@ -223,6 +231,27 @@ const Applications = () => {
       sorter: (a, b) => a.tenant_name.localeCompare(b.tenant_name),
       sortDirections: ["ascend", "descend"],
       width: 200,
+    },
+    {
+      title: "Nomor Dokumen",
+      dataIndex: "document_numnber",
+      filters: documentNumberFilters,
+      onFilter: createOnFilter("document_numnber"),
+      filterSearch: true,
+      render: (text, record) => {
+        // Ambil hanya angka dokumen di depan sebelum tanda "/"
+        const documentNumberRaw = record?.document_number || "-";
+        const documentNumberOnly = documentNumberRaw.split("/")[0].trim(); // hasil: "001"
+        return (
+          <Typography
+            sx={{ fontWeight: "bold", fontSize: "12px", textAlign: "center" }}
+          >
+            {documentNumberOnly}
+          </Typography>
+        );
+      },
+      width: 180,
+      align: "left",
     },
     {
       title: "Lokasi",
@@ -361,7 +390,9 @@ const Applications = () => {
         <Typography
           sx={{ fontWeight: "bold", fontSize: "12px", textAlign: "end" }}
         >
-          {formatRupiah(Number(record.total_payment) + Number(record.admin_fee))}
+          {formatRupiah(
+            Number(record.total_payment) + Number(record.admin_fee)
+          )}
         </Typography>
       ),
       width: 150,

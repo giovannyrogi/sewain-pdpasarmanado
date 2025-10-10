@@ -60,7 +60,7 @@ export async function GET(req) {
       tapp.remaining_payment,
       tapp.approval_status AS tenant_approval_status,
       tapp.current_step AS tenant_current_step,
-      tapp.updated_at AS tenant_updated_at,
+      tapp.tenant_identity_id,
 
       -- Data lokasi & ruangan
       l.id AS location_id,

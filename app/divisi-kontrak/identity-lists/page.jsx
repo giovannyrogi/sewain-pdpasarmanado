@@ -225,7 +225,7 @@ const IdentityList = () => {
             onClick={() => handleViewInformation(record)}
             sx={{ minWidth: 0, px: 1 }}
           >
-            <Icon icon="mdi:information-outline" fontSize={18} />
+            <Icon icon="line-md:chat-round-alert" fontSize={18} />
           </Button>
           <Button
             size="small"

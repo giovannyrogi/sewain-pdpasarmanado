@@ -29,15 +29,6 @@ const menuKepalaSeksi = [
         showIcon: true,
       },
       {
-        label: "Payments",
-        value: "payments",
-        path: "/kepala-seksi/payments",
-        icon: (
-          <Icon icon="streamline-freehand:money-atm-withdraw" fontSize="20px" />
-        ),
-        showIcon: true,
-      },
-      {
         label: "Contracts",
         value: "contracts",
         path: "/kepala-seksi/contracts",
