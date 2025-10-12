@@ -29,12 +29,12 @@ export async function GET() {
     });
 
     // Bentuk response data yang dikirim ke frontend
-    const responseData = [
-      { status: "available", total: defaultData.available },
-      { status: "occupied", total: defaultData.occupied },
-      { status: "unavailable", total: defaultData.unavailable },
-      { status: "maintenance", total: defaultData.maintenance },
-    ];
+    const responseData = {
+      available: defaultData.available,
+      occupied: defaultData.occupied,
+      unavailable: defaultData.unavailable,
+      maintenance: defaultData.maintenance,
+    };
 
     return new Response(
       JSON.stringify({

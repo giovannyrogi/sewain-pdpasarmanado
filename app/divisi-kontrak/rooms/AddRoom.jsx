@@ -359,7 +359,7 @@ const AddRoom = ({
                   }}
                 >
                   <MenuItem value="available">Tersedia</MenuItem>
-                  <MenuItem value="occupied">Tidak Tersedia</MenuItem>
+                  <MenuItem value="occupied">Sudah Terisi</MenuItem>
                   <MenuItem value="maintenance">
                     Ruangan Dalam Perbaikan
                   </MenuItem>

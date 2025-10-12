@@ -247,10 +247,10 @@ const Rooms = () => {
               record.status === "available"
                 ? "green"
                 : record.status === "occupied"
-                ? "red"
+                ? "yellow"
                 : record.status === "maintenance"
                 ? "orange"
-                : "yellow"
+                : "red"
             }
             key={record.id}
             style={{ fontWeight: "bold" }}
@@ -258,7 +258,7 @@ const Rooms = () => {
             {record.status === "available"
               ? "Tersedia"
               : record.status === "occupied"
-              ? "Tidak Tersedia"
+              ? "Sudah Terisi"
               : record.status === "maintenance"
               ? "Dalam Perbaikan"
               : "Tidak Layak"}

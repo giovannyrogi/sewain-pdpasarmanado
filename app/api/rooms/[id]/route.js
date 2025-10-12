@@ -2,8 +2,9 @@ import pool from "@/lib/dbConfig";
 import moment from "moment";
 
 export async function PUT(request, { params }) {
+  const client = await pool.connect();
   try {
-    const { id } = await params; // id dari URL (rooms.id)
+    const { id } = params;
     const body = await request.json();
     const {
       location_id,
@@ -11,29 +12,28 @@ export async function PUT(request, { params }) {
       floor_id,
       room_length,
       room_width,
-      status, // ✅ ganti dari is_available ke status
+      status,
       price_per_m2,
       notes,
     } = body;
 
-    // Ambil data room sekarang
-    const roomRes = await pool.query(`SELECT * FROM rooms WHERE id=$1`, [id]);
+    // 1. Cek data ruangan
+    const roomRes = await client.query(`SELECT * FROM rooms WHERE id=$1`, [id]);
     if (roomRes.rowCount === 0) {
-      return new Response(
-        JSON.stringify({ success: false, message: "Ruangan tidak ditemukan" }),
+      return Response.json(
+        { success: false, message: "Ruangan tidak ditemukan" },
         { status: 404 }
       );
     }
 
     const roomData = roomRes.rows[0];
-
-    // Cek apakah status berubah
     const wantsToChangeStatus =
       typeof status !== "undefined" && status !== roomData.status;
 
+    // 2. Kalau user mau ubah status ruangan
     if (wantsToChangeStatus) {
-      // Ambil semua tenant_application + tenant_name via join tenant_identities
-      const tenantRes = await pool.query(
+      // Cek apakah ruangan ini pernah / sedang disewa
+      const tenantRes = await client.query(
         `
         SELECT ta.id, ti.full_name AS tenant_name, ta.start_date, ta.end_date
         FROM tenant_application ta
@@ -44,7 +44,7 @@ export async function PUT(request, { params }) {
       );
 
       if (tenantRes.rowCount > 0) {
-        const today = moment(new Date()).format("YYYY-MM-DD");
+        const today = moment().format("YYYY-MM-DD");
 
         for (const t of tenantRes.rows) {
           const start = t.start_date
@@ -54,34 +54,78 @@ export async function PUT(request, { params }) {
             ? moment(t.end_date).format("YYYY-MM-DD")
             : null;
 
-          // Jika tanggal kosong → tetap dianggap blocking
+          // Tidak boleh ubah kalau tanggal kontrak belum lengkap
           if (!start || !end) {
-            return new Response(
-              JSON.stringify({
+            return Response.json(
+              {
                 success: false,
-                message: `Ruangan ini terdaftar pada permohonan penyewa "${t.tenant_name}". Status tidak dapat diubah.`,
-              }),
+                message: `Ruangan ini masih terdaftar pada permohonan penyewa "${t.tenant_name}". Status tidak dapat diubah.`,
+              },
               { status: 400 }
             );
           }
 
-          // Jika masa sewa masih aktif
-          if (end >= today) {
-            return new Response(
-              JSON.stringify({
+          // Cek apakah ada terminasi
+          const terminateRes = await client.query(
+            `
+            SELECT is_terminated, approval_status
+            FROM tenant_early_terminations
+            WHERE tenant_application_id = $1
+            ORDER BY id DESC
+            LIMIT 1
+            `,
+            [t.id]
+          );
+
+          const hasTermination = terminateRes.rowCount > 0;
+          const termination = hasTermination ? terminateRes.rows[0] : null;
+          const isTerminatedApproved =
+            hasTermination &&
+            termination.is_terminated === true &&
+            termination.approval_status === "approved";
+
+          // Kalau kontrak masih aktif DAN belum terminasi disetujui
+          if (end >= today && !isTerminatedApproved) {
+            return Response.json(
+              {
                 success: false,
                 message: `Ruangan sedang digunakan oleh "${t.tenant_name}" sampai ${end}. Status tidak dapat diubah.`,
-              }),
+              },
               { status: 400 }
             );
           }
+
+          // Kalau belum ada terminasi data sama sekali
+          if (end >= today && !hasTermination) {
+            return Response.json(
+              {
+                success: false,
+                message: `Penyewa "${t.tenant_name}" belum memiliki data terminasi kontrak. Status tidak dapat diubah.`,
+              },
+              { status: 400 }
+            );
+          }
+
+          // Kalau ada terminasi tapi belum disetujui
+          if (hasTermination && !isTerminatedApproved) {
+            return Response.json(
+              {
+                success: false,
+                message: `Kontrak penyewa "${t.tenant_name}" belum disetujui terminasi. Status ruangan tidak dapat diubah.`,
+              },
+              { status: 400 }
+            );
+          }
+
+          
         }
       }
     }
 
-    // Update data room
-    const result = await pool.query(
-      `UPDATE rooms 
+    // 3. Update data room
+    const updateRes = await client.query(
+      `
+      UPDATE rooms 
          SET location_id = $1,
              room_number  = $2,
              floor_id     = $3,
@@ -92,7 +136,8 @@ export async function PUT(request, { params }) {
              notes        = $8,
              updated_at   = NOW()
        WHERE id = $9
-       RETURNING *`,
+       RETURNING *
+      `,
       [
         location_id,
         room_number,
@@ -106,20 +151,22 @@ export async function PUT(request, { params }) {
       ]
     );
 
-    return new Response(
-      JSON.stringify({
+    return Response.json(
+      {
         success: true,
         message: "Berhasil mengubah data Ruangan",
-        data: result.rows[0],
-      }),
+        data: updateRes.rows[0],
+      },
       { status: 200 }
     );
   } catch (err) {
-    console.error("Error update Ruangan", err);
-    return new Response(
-      JSON.stringify({ success: false, message: err.message }),
+    console.error("Error update Ruangan:", err);
+    return Response.json(
+      { success: false, message: err.message },
       { status: 500 }
     );
+  } finally {
+    client.release();
   }
 }
 

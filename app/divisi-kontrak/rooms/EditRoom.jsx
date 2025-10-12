@@ -365,7 +365,7 @@ const EditRoom = ({
                   }}
                 >
                   <MenuItem value="available">Tersedia</MenuItem>
-                  <MenuItem value="occupied">Tidak Tersedia</MenuItem>
+                  <MenuItem value="occupied">Sudah Diisi</MenuItem>
                   <MenuItem value="maintenance">
                     Ruangan Dalam Perbaikan
                   </MenuItem>

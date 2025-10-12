@@ -1,4 +1,5 @@
 import { useThemeMode } from "@/app/components/themeprovider/ThemeContext";
+import { Icon } from "@iconify/react";
 import {
   Box,
   Divider,
@@ -10,35 +11,12 @@ import {
   useTheme,
 } from "@mui/material";
 import React from "react";
-import { BarChart } from "@mui/x-charts";
-import { Icon } from "@iconify/react";
+import { pieArcClasses, PieChart, pieClasses } from "@mui/x-charts";
 
-const CardViewStatusRooms = ({ data, loading }) => {
+const ViewPieChart = ({ loading, contractApprovalStatus }) => {
   const theme = useTheme();
   const { themeMode } = useThemeMode();
   const isMobile = useMediaQuery("(max-width:600px)");
-
-  console.log("data", data);
-
-  // Warna & label sesuai status
-  const statusMap = {
-    available: { label: "Tersedia", color: "#4CAF50" }, // hijau
-    occupied: { label: "Sudah Terisi", color: "#FFEB3B" }, // merah
-    maintenance: { label: "Dalam Perbaikan", color: "#FF9800" }, // oranye
-    unavailable: { label: "Tidak Layak", color: "#F44336" }, // kuning
-  };
-
-  const statuses = ["available", "occupied", "unavailable", "maintenance"];
-
-  // Dataset: 1 bar mewakili 1 status (ambil dari object data, bukan array)
-  const dataset =
-    statuses.map((status) => ({
-      status: statusMap[status].label,
-      value: data?.[status] ?? 0, // gunakan nilai dari object
-    })) || [];
-
-  // Array warna sesuai urutan dataset
-  const colors = statuses.map((s) => statusMap[s].color);
 
   return (
     <Paper
@@ -46,24 +24,18 @@ const CardViewStatusRooms = ({ data, loading }) => {
       sx={{
         backgroundColor: "background.default",
         p: 2,
-        // height: "180px",
         borderRadius: "15px",
         transition: "all 0.2s ease",
         "&:hover": {
-          transform: "translateY(-10px)",
-          boxShadow: 0,
+          transform: "translateY(-3px)",
+          boxShadow: 10,
         },
       }}
     >
       <Grid container spacing={1}>
         {/* Header */}
         {loading ? (
-          <Skeleton
-            variant="rounded"
-            width="100%"
-            height={20}
-            animation="wave"
-          />
+          <Skeleton variant="text" width="100%" height={30} animation="wave" />
         ) : (
           <Grid size={12}>
             <Typography
@@ -73,23 +45,24 @@ const CardViewStatusRooms = ({ data, loading }) => {
                 fontFamily: "poppins",
               }}
             >
-              Status Ruangan
+              Status Persetujuan Kontrak
             </Typography>
           </Grid>
         )}
 
-        {!loading && (
+        {loading ? undefined : (
           <Divider
             sx={{
+              // borderWidth: "1px",
               borderColor: theme.palette.primary.main,
+              // mt: 1,
               width: "100%",
               mt: "-5px",
-              mb: 1.5,
+              mb: 1,
             }}
           />
         )}
 
-        {/* Content */}
         {loading ? (
           <Box
             sx={{
@@ -102,40 +75,12 @@ const CardViewStatusRooms = ({ data, loading }) => {
               alignItems: "center",
             }}
           >
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "row",
-                justifyItems: "center",
-                alignItems: "center",
-                gap: 1,
-              }}
-            >
-              <Skeleton
-                variant="rectangular"
-                width={60}
-                height={80}
-                animation="wave"
-              />
-              <Skeleton
-                variant="rectangular"
-                width={60}
-                height={80}
-                animation="wave"
-              />
-              <Skeleton
-                variant="rectangular"
-                width={60}
-                height={80}
-                animation="wave"
-              />
-              <Skeleton
-                variant="rectangular"
-                width={60}
-                height={80}
-                animation="wave"
-              />
-            </Box>
+            <Skeleton
+              variant="circular"
+              width={210}
+              height={210}
+              animation="wave"
+            />
             <Box
               sx={{
                 display: "flex",
@@ -161,46 +106,86 @@ const CardViewStatusRooms = ({ data, loading }) => {
                 height={30}
                 animation="wave"
               />
-              <Skeleton
-                variant="text"
-                width="100%"
-                height={30}
-                animation="wave"
-              />
             </Box>
           </Box>
         ) : (
-          <Grid container size={12} spacing={1}>
-            <BarChart
-              dataset={dataset}
-              xAxis={[
-                {
-                  scaleType: "band",
-                  dataKey: "status",
-                  colorMap: {
-                    type: "ordinal",
-                    values: dataset.map((d) => d.status),
-                    colors: colors,
+          <Grid container size={12}>
+            <Grid size={12}>
+              <PieChart
+                series={[
+                  {
+                    data:
+                      contractApprovalStatus.approved === 0 &&
+                      contractApprovalStatus?.process === 0 &&
+                      contractApprovalStatus?.rejected === 0
+                        ? [
+                            {
+                              value: 1,
+                              label: "Belum Ada Data (0)",
+                              color: theme.palette.grey[400],
+                            },
+                          ]
+                        : [
+                            {
+                              value: contractApprovalStatus.approved || 0,
+                              label: `Disetujui (${
+                                contractApprovalStatus.approved || 0
+                              })`,
+                              color: "#4caf50",
+                            },
+                            {
+                              value: contractApprovalStatus.process || 0,
+                              label: `Dalam Proses (${
+                                contractApprovalStatus.process || 0
+                              })`,
+                              color: "#ffb300",
+                            },
+                            {
+                              value: contractApprovalStatus.rejected || 0,
+                              label: `Ditolak (${
+                                contractApprovalStatus.rejected || 0
+                              })`,
+                              color: "#f44336",
+                            },
+                          ],
+                    highlightScope: { faded: "global", highlighted: "item" },
+                    faded: {
+                      innerRadius: 30,
+                      additionalRadius: -10,
+                      color: "gray",
+                    },
+                    //valueFormatter supaya tooltip tidak menampilkan angka otomatis
+                    valueFormatter: (value, context) => {
+                      // return null atau "" untuk menyembunyikan nilai default
+                      return "";
+                    },
                   },
-                },
-              ]}
-              series={[
-                {
-                  dataKey: "value",
-                  label: "Total",
-                },
-              ]}
-              grid={{ horizontal: false, vertical: false }}
-              slotProps={{
-                legend: { hidden: true },
-              }}
-              sx={{
-                "& .MuiChartsAxis-root": { display: "none" },
-                "& .MuiChartsLegend-root": { display: "none" },
-                "& .MuiBarElement-root": { stroke: "none" },
-              }}
-              height={120}
-            />
+                ]}
+                width={210}
+                height={210}
+                slotProps={{
+                  tooltip: {
+                    trigger: "item",
+                  },
+                  legend: {
+                    // direction: "row", // horizontal
+                    // position: { vertical: "bottom", horizontal: "middle" }, // di bawah chart
+                    // padding: 10,
+                    hidden: true,
+                  },
+                }}
+                sx={{
+                  [`.${pieClasses.root}`]: {
+                    transition: "all 0.3s ease-in-out",
+                  },
+                  [`.${pieArcClasses.root}:hover`]: {
+                    filter: "brightness(1.3)",
+                    transform: "scale(1.05)",
+                    transition: "all 0.2s ease",
+                  },
+                }}
+              />
+            </Grid>
 
             <Grid container size={12} sx={{ margin: "0px 10px 5px 10px" }}>
               <Grid
@@ -223,8 +208,8 @@ const CardViewStatusRooms = ({ data, loading }) => {
                   }}
                 >
                   <Icon
-                    icon="fluent-mdl2:work-item-bar-solid"
-                    fontSize={20}
+                    icon="mynaui:diamond-solid"
+                    fontSize={15}
                     color="#4caf50"
                   />
                   <Typography
@@ -234,7 +219,7 @@ const CardViewStatusRooms = ({ data, loading }) => {
                       fontFamily: "poppins",
                     }}
                   >
-                    Tersedia
+                    Disetujui
                   </Typography>
                 </Box>
 
@@ -245,7 +230,7 @@ const CardViewStatusRooms = ({ data, loading }) => {
                     fontFamily: "poppins",
                   }}
                 >
-                  ({data?.available || 0})
+                  ({contractApprovalStatus.approved || 0})
                 </Typography>
               </Grid>
 
@@ -276,9 +261,9 @@ const CardViewStatusRooms = ({ data, loading }) => {
                   }}
                 >
                   <Icon
-                    icon="fluent-mdl2:work-item-bar-solid"
-                    fontSize={20}
-                    color="#FFEB3B"
+                    icon="mynaui:diamond-solid"
+                    fontSize={15}
+                    color="#ffb300"
                   />
                   <Typography
                     sx={{
@@ -287,7 +272,7 @@ const CardViewStatusRooms = ({ data, loading }) => {
                       fontFamily: "poppins",
                     }}
                   >
-                    Sudah Terisi
+                    Dalam Proses
                   </Typography>
                 </Box>
 
@@ -298,7 +283,7 @@ const CardViewStatusRooms = ({ data, loading }) => {
                     fontFamily: "poppins",
                   }}
                 >
-                  ({data?.occupied || 0})
+                  ({contractApprovalStatus.process || 0})
                 </Typography>
               </Grid>
 
@@ -329,61 +314,8 @@ const CardViewStatusRooms = ({ data, loading }) => {
                   }}
                 >
                   <Icon
-                    icon="fluent-mdl2:work-item-bar-solid"
-                    fontSize={20}
-                    color="#FF9800"
-                  />
-                  <Typography
-                    sx={{
-                      fontSize: "12px",
-                      fontWeight: "bold",
-                      fontFamily: "poppins",
-                    }}
-                  >
-                    Dalam Perbaikan
-                  </Typography>
-                </Box>
-
-                <Typography
-                  sx={{
-                    fontSize: "12px",
-                    fontWeight: "bold",
-                    fontFamily: "poppins",
-                  }}
-                >
-                  ({data?.maintenance || 0})
-                </Typography>
-              </Grid>
-
-              <Divider
-                sx={{
-                  width: "100%",
-                  borderColor: theme.palette.text.secondary,
-                }}
-              />
-
-              <Grid
-                size={12}
-                sx={{
-                  display: "flex",
-                  flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  gap: 1,
-                }}
-              >
-                <Box
-                  sx={{
-                    display: "flex",
-                    flexDirection: "row",
-                    alignItems: "center",
-                    justifyContent: "flex-start",
-                    gap: 1,
-                  }}
-                >
-                  <Icon
-                    icon="fluent-mdl2:work-item-bar-solid"
-                    fontSize={20}
+                    icon="mynaui:diamond-solid"
+                    fontSize={15}
                     color="#f44336"
                   />
                   <Typography
@@ -393,7 +325,7 @@ const CardViewStatusRooms = ({ data, loading }) => {
                       fontFamily: "poppins",
                     }}
                   >
-                    Tidak Layak
+                    Ditolak
                   </Typography>
                 </Box>
 
@@ -404,7 +336,7 @@ const CardViewStatusRooms = ({ data, loading }) => {
                     fontFamily: "poppins",
                   }}
                 >
-                  ({data?.unavailable || 0})
+                  ({contractApprovalStatus.rejected || 0})
                 </Typography>
               </Grid>
             </Grid>
@@ -415,4 +347,4 @@ const CardViewStatusRooms = ({ data, loading }) => {
   );
 };
 
-export default CardViewStatusRooms;
+export default ViewPieChart;

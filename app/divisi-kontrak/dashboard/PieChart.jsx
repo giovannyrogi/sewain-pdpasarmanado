@@ -208,7 +208,7 @@ const ViewPieChart = ({ loading, contractApprovalStatus }) => {
                   }}
                 >
                   <Icon
-                    icon="mynaui:diamond-solid"
+                    icon="carbon:circle-filled"
                     fontSize={15}
                     color="#4caf50"
                   />
@@ -261,7 +261,7 @@ const ViewPieChart = ({ loading, contractApprovalStatus }) => {
                   }}
                 >
                   <Icon
-                    icon="mynaui:diamond-solid"
+                    icon="carbon:circle-filled"
                     fontSize={15}
                     color="#ffb300"
                   />
@@ -314,7 +314,7 @@ const ViewPieChart = ({ loading, contractApprovalStatus }) => {
                   }}
                 >
                   <Icon
-                    icon="mynaui:diamond-solid"
+                    icon="carbon:circle-filled"
                     fontSize={15}
                     color="#f44336"
                   />
