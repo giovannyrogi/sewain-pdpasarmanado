@@ -7,9 +7,46 @@ export async function POST(req) {
     const body = await req.json();
     const { location_id, floor, base_price } = body;
 
+    // validasi field wajib
+    if (!location_id) {
+      return new Response(
+        JSON.stringify({ success: false, message: "Lokasi wajib diisi!" }),
+        { status: 200 }
+      );
+    }
+
+    if (!floor) {
+      return new Response(
+        JSON.stringify({ success: false, message: "Lantai wajib diisi!" }),
+        { status: 200 }
+      );
+    }
+
+    if (base_price < 0) {
+      return new Response(
+        JSON.stringify({ success: false, message: "Harga wajib diisi!" }),
+        { status: 200 }
+      );
+    }
+
+    // validasi apakah lantai sudah terdaftar pada lokasi yang dipilih
+    const checkFloor = await pool.query(
+      `SELECT 1 FROM location_floor_prices WHERE location_id = $1 AND floor = $2`,
+      [location_id, floor]
+    );
+    if (checkFloor.rows.length > 0) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: "Lantai sudah terdaftar pada lokasi ini!",
+        }),
+        { status: 200 }
+      );
+    }
+
     const result = await pool.query(
       `INSERT INTO location_floor_prices (location_id, floor, base_price) VALUES ($1, $2, $3) RETURNING *`,
-      [location_id, floor, base_price]
+      [location_id, floor, base_price || 0]
     );
     return new Response(
       JSON.stringify({

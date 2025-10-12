@@ -50,7 +50,7 @@ const CardViewStatusRooms = ({ data, loading }) => {
         borderRadius: "15px",
         transition: "all 0.2s ease",
         "&:hover": {
-          transform: "translateY(-10px)",
+          transform: "translateY(-3px)",
           boxShadow: 0,
         },
       }}
@@ -202,84 +202,64 @@ const CardViewStatusRooms = ({ data, loading }) => {
               height={120}
             />
 
-            <Grid container size={12} sx={{ margin: "0px 10px 5px 10px" }}>
-              <Grid
-                size={12}
-                sx={{
-                  display: "flex",
-                  flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  gap: 1,
-                }}
-              >
-                <Box
-                  sx={{
-                    display: "flex",
-                    flexDirection: "row",
-                    alignItems: "center",
-                    justifyContent: "flex-start",
-                    gap: 1,
-                  }}
-                >
-                  <Icon
-                    icon="fluent-mdl2:work-item-bar-solid"
-                    fontSize={20}
-                    color="#4caf50"
-                  />
-                  <Typography
-                    sx={{
-                      fontSize: "12px",
-                      fontWeight: "bold",
-                      fontFamily: "poppins",
-                    }}
-                  >
-                    Tersedia
-                  </Typography>
-                </Box>
-
-                <Typography
-                  sx={{
-                    fontSize: "12px",
-                    fontWeight: "bold",
-                    fontFamily: "poppins",
-                  }}
-                >
-                  ({data?.available || 0})
-                </Typography>
-              </Grid>
-
-              <Divider
+            {data?.available === 0 &&
+            data?.occupied === 0 &&
+            data?.unavailable === 0 &&
+            data?.maintenance === 0 ? (
+              <Box
                 sx={{
                   width: "100%",
-                  borderColor: theme.palette.text.secondary,
-                }}
-              />
-
-              <Grid
-                size={12}
-                sx={{
-                  display: "flex",
-                  flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  gap: 1,
+                  textAlign: "center",
+                  mt: 1,
                 }}
               >
-                <Box
+                <Typography
+                  sx={{
+                    fontSize: "12px",
+                    fontFamily: "poppins",
+                    color: theme.palette.text.main,
+                  }}
+                >
+                  Tidak ada data ruangan yang tersedia
+                </Typography>
+              </Box>
+            ) : (
+              <Grid container size={12} sx={{ margin: "0px 10px 5px 10px" }}>
+                <Grid
+                  size={12}
                   sx={{
                     display: "flex",
                     flexDirection: "row",
                     alignItems: "center",
-                    justifyContent: "flex-start",
+                    justifyContent: "space-between",
                     gap: 1,
                   }}
                 >
-                  <Icon
-                    icon="fluent-mdl2:work-item-bar-solid"
-                    fontSize={20}
-                    color="#FFEB3B"
-                  />
+                  <Box
+                    sx={{
+                      display: "flex",
+                      flexDirection: "row",
+                      alignItems: "center",
+                      justifyContent: "flex-start",
+                      gap: 1,
+                    }}
+                  >
+                    <Icon
+                      icon="fluent-mdl2:work-item-bar-solid"
+                      fontSize={20}
+                      color="#4caf50"
+                    />
+                    <Typography
+                      sx={{
+                        fontSize: "12px",
+                        fontWeight: "bold",
+                        fontFamily: "poppins",
+                      }}
+                    >
+                      Tersedia
+                    </Typography>
+                  </Box>
+
                   <Typography
                     sx={{
                       fontSize: "12px",
@@ -287,52 +267,52 @@ const CardViewStatusRooms = ({ data, loading }) => {
                       fontFamily: "poppins",
                     }}
                   >
-                    Sudah Terisi
+                    ({data?.available || 0})
                   </Typography>
-                </Box>
+                </Grid>
 
-                <Typography
+                <Divider
                   sx={{
-                    fontSize: "12px",
-                    fontWeight: "bold",
-                    fontFamily: "poppins",
+                    width: "100%",
+                    borderColor: theme.palette.text.secondary,
                   }}
-                >
-                  ({data?.occupied || 0})
-                </Typography>
-              </Grid>
+                />
 
-              <Divider
-                sx={{
-                  width: "100%",
-                  borderColor: theme.palette.text.secondary,
-                }}
-              />
-
-              <Grid
-                size={12}
-                sx={{
-                  display: "flex",
-                  flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  gap: 1,
-                }}
-              >
-                <Box
+                <Grid
+                  size={12}
                   sx={{
                     display: "flex",
                     flexDirection: "row",
                     alignItems: "center",
-                    justifyContent: "flex-start",
+                    justifyContent: "space-between",
                     gap: 1,
                   }}
                 >
-                  <Icon
-                    icon="fluent-mdl2:work-item-bar-solid"
-                    fontSize={20}
-                    color="#FF9800"
-                  />
+                  <Box
+                    sx={{
+                      display: "flex",
+                      flexDirection: "row",
+                      alignItems: "center",
+                      justifyContent: "flex-start",
+                      gap: 1,
+                    }}
+                  >
+                    <Icon
+                      icon="fluent-mdl2:work-item-bar-solid"
+                      fontSize={20}
+                      color="#FFEB3B"
+                    />
+                    <Typography
+                      sx={{
+                        fontSize: "12px",
+                        fontWeight: "bold",
+                        fontFamily: "poppins",
+                      }}
+                    >
+                      Sudah Terisi
+                    </Typography>
+                  </Box>
+
                   <Typography
                     sx={{
                       fontSize: "12px",
@@ -340,52 +320,52 @@ const CardViewStatusRooms = ({ data, loading }) => {
                       fontFamily: "poppins",
                     }}
                   >
-                    Dalam Perbaikan
+                    ({data?.occupied || 0})
                   </Typography>
-                </Box>
+                </Grid>
 
-                <Typography
+                <Divider
                   sx={{
-                    fontSize: "12px",
-                    fontWeight: "bold",
-                    fontFamily: "poppins",
+                    width: "100%",
+                    borderColor: theme.palette.text.secondary,
                   }}
-                >
-                  ({data?.maintenance || 0})
-                </Typography>
-              </Grid>
+                />
 
-              <Divider
-                sx={{
-                  width: "100%",
-                  borderColor: theme.palette.text.secondary,
-                }}
-              />
-
-              <Grid
-                size={12}
-                sx={{
-                  display: "flex",
-                  flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  gap: 1,
-                }}
-              >
-                <Box
+                <Grid
+                  size={12}
                   sx={{
                     display: "flex",
                     flexDirection: "row",
                     alignItems: "center",
-                    justifyContent: "flex-start",
+                    justifyContent: "space-between",
                     gap: 1,
                   }}
                 >
-                  <Icon
-                    icon="fluent-mdl2:work-item-bar-solid"
-                    fontSize={20}
-                    color="#f44336"
-                  />
+                  <Box
+                    sx={{
+                      display: "flex",
+                      flexDirection: "row",
+                      alignItems: "center",
+                      justifyContent: "flex-start",
+                      gap: 1,
+                    }}
+                  >
+                    <Icon
+                      icon="fluent-mdl2:work-item-bar-solid"
+                      fontSize={20}
+                      color="#FF9800"
+                    />
+                    <Typography
+                      sx={{
+                        fontSize: "12px",
+                        fontWeight: "bold",
+                        fontFamily: "poppins",
+                      }}
+                    >
+                      Dalam Perbaikan
+                    </Typography>
+                  </Box>
+
                   <Typography
                     sx={{
                       fontSize: "12px",
@@ -393,21 +373,64 @@ const CardViewStatusRooms = ({ data, loading }) => {
                       fontFamily: "poppins",
                     }}
                   >
-                    Tidak Layak
+                    ({data?.maintenance || 0})
                   </Typography>
-                </Box>
+                </Grid>
 
-                <Typography
+                <Divider
                   sx={{
-                    fontSize: "12px",
-                    fontWeight: "bold",
-                    fontFamily: "poppins",
+                    width: "100%",
+                    borderColor: theme.palette.text.secondary,
+                  }}
+                />
+
+                <Grid
+                  size={12}
+                  sx={{
+                    display: "flex",
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: 1,
                   }}
                 >
-                  ({data?.unavailable || 0})
-                </Typography>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      flexDirection: "row",
+                      alignItems: "center",
+                      justifyContent: "flex-start",
+                      gap: 1,
+                    }}
+                  >
+                    <Icon
+                      icon="fluent-mdl2:work-item-bar-solid"
+                      fontSize={20}
+                      color="#f44336"
+                    />
+                    <Typography
+                      sx={{
+                        fontSize: "12px",
+                        fontWeight: "bold",
+                        fontFamily: "poppins",
+                      }}
+                    >
+                      Tidak Layak
+                    </Typography>
+                  </Box>
+
+                  <Typography
+                    sx={{
+                      fontSize: "12px",
+                      fontWeight: "bold",
+                      fontFamily: "poppins",
+                    }}
+                  >
+                    ({data?.unavailable || 0})
+                  </Typography>
+                </Grid>
               </Grid>
-            </Grid>
+            )}
           </Grid>
         )}
       </Grid>

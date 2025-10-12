@@ -121,7 +121,7 @@ const EditFloorPrice = ({
       onNotify &&
         onNotify({
           open: true,
-          message: error.message || "Terjadi error saat menambah Lantai.",
+          message: error.response.datamessage || "Terjadi error saat menambah Lantai.",
           severity: "error",
         });
       setTimeout(() => {
@@ -129,6 +129,9 @@ const EditFloorPrice = ({
       }, 1000);
     }
   };
+
+  // daftar lantai 1 - 10 contoh "Lt. 1"
+  const floors = Array.from({ length: 10 }, (_, index) => `Lt. ${index + 1}`);
 
   return (
     <Modal
@@ -186,18 +189,26 @@ const EditFloorPrice = ({
               </FormControl>
             </Grid>
             <Grid size={12}>
-              <TextField
-                label="Lantai"
-                // placeholder="Hanya isi angka"
-                variant="filled"
-                fullWidth
-                value={floor}
-                onChange={(e) => setFloor(e.target.value)}
-                autoFocus
-                required
-                disabled={loading}
-                color="primary"
-              />
+              {" "}
+              <FormControl fullWidth variant="filled" required>
+                <InputLabel id="demo-simple-select-filled-label">
+                  Pilih Lantai
+                </InputLabel>
+                <Select
+                  value={floor}
+                  onChange={(e) => {
+                    setFloor(e.target.value);
+                    console.log(e.target.value);
+                  }}
+                >
+                  {floors &&
+                    floors.map((index) => (
+                      <MenuItem key={index} value={index}>
+                        {index}
+                      </MenuItem>
+                    ))}
+                </Select>
+              </FormControl>
             </Grid>
             <Grid size={12}>
               <TextField
