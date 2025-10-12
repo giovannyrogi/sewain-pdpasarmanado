@@ -100,6 +100,8 @@ const AddContract = ({
           latest_contract_number: item.contracts.latest_contract_number,
           latest_contract_number_only:
             item.contracts.latest_contract_number_only,
+          status: item.tenant_identities.status,
+          notes: item.tenant_identities.notes,
         }));
 
         setListAvailableTenant(mapped);
@@ -299,7 +301,7 @@ const AddContract = ({
                   ) || null
                 }
                 onChange={(event, newValue) => {
-                  console.log("newValue", newValue);
+                  // console.log("newValue", newValue);
                   if (!newValue) {
                     setSelectedTenantId(null);
                     setSelectedTenantData(null);
@@ -397,9 +399,7 @@ const AddContract = ({
                     : "-"}
                 </Typography>
               </Grid>
-            ) : (
-              undefined
-            )}
+            ) : undefined}
             <Grid size={12}>
               <Button
                 type="submit"

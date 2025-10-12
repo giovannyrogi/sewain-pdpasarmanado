@@ -13,6 +13,9 @@ import menuSuperadmin from "@/app/components/menu/MenuItemSuperadmin";
 import AddRoom from "./AddRoom";
 import EditRoom from "./EditRoom";
 import DeleteRoom from "./DeleteRoom";
+import formatRupiah from "@/app/components/formatrupiah/page";
+import menuDevisiKontrak from "@/app/components/menu/MenuItemDivisiKontrak";
+import NotesModal from "./NotesModal";
 
 const Rooms = () => {
   const [dataRooms, setDataRooms] = useState([]);
@@ -31,6 +34,8 @@ const Rooms = () => {
     message: "",
     severity: "success",
   });
+  const [loadingMessage, setLoadingMessage] = useState("Loading...");
+  const [openViewNotesModal, setOpenViewNotesModal] = useState(false);
 
   const getRoomsData = async () => {
     setLoading(true);
@@ -125,11 +130,18 @@ const Rooms = () => {
   }
 
   const nameFilters = generateFilters(dataRooms, "location_name");
-  const floorFilter = generateFilters(dataRooms, "floor");
+  const roomFloorFilter = generateFilters(dataRooms, "room_floor");
   const statusFilters = [
-    { text: "Tersedia", value: false },
-    { text: "Tidak Tersedia", value: true },
+    { text: "Tersedia", value: "available" },
+    { text: "Tidak Tersedia", value: "occupied" },
+    { text: "Dalam Perbaikan", value: "maintenance" },
+    { text: "Tidak Layak", value: "unavailable" },
   ];
+
+  const handleViewNotes = (record) => {
+    setSelectedData(record);
+    setOpenViewNotesModal(true);
+  };
 
   const columns = [
     {
@@ -145,7 +157,7 @@ const Rooms = () => {
           {record.location_name}
         </Typography>
       ),
-      width: 150,
+      width: 180,
     },
     {
       title: "Nomor",
@@ -154,25 +166,28 @@ const Rooms = () => {
       sortDirections: ["ascend", "descend"],
       render: (text, record) => {
         return (
-          <Tag
-            // warna random berdasarkan angka ganjil genap
-            color={record.id % 2 === 0 ? "pink" : "geekblue"}
-            key={record.id}
-            style={{ fontWeight: "bold" }}
-          >
+          // <Tag
+          //   // warna random berdasarkan angka ganjil genap
+          //   color={record.id % 2 === 0 ? "pink" : "geekblue"}
+          //   key={record.id}
+          //   style={{ fontWeight: "bold" }}
+          // >
+          //   {record.room_number}
+          // </Tag>
+          <Typography sx={{ fontWeight: "bold", fontSize: "12px" }}>
             {record.room_number}
-          </Tag>
+          </Typography>
         );
       },
-      width: 100,
+      width: 150,
     },
     {
       title: "Lantai",
-      dataIndex: "floor",
-      filters: floorFilter,
-      onFilter: createOnFilter("floor"),
+      dataIndex: "room_floor",
+      filters: roomFloorFilter,
+      onFilter: createOnFilter("room_floor"),
       filterSearch: true,
-      sorter: (a, b) => a.floor.localeCompare(b.floor),
+      sorter: (a, b) => a.room_floor.localeCompare(b.room_floor),
       sortDirections: ["ascend", "descend"],
       render: (text, record) => {
         return (
@@ -182,7 +197,7 @@ const Rooms = () => {
             key={record.id}
             style={{ fontWeight: "bold" }}
           >
-            L{record.floor}
+            {record.room_floor}
           </Tag>
         );
       },
@@ -209,25 +224,74 @@ const Rooms = () => {
       ),
     },
     {
+      title: "Harga Sewa Ruangan",
+      dataIndex: "price_per_m2_width",
+      width: 180,
+      render: (text, record) => (
+        <Typography
+          sx={{ fontWeight: "bold", fontSize: "12px", textAlign: "end" }}
+        >
+          {formatRupiah(record.price_per_m2)}
+        </Typography>
+      ),
+    },
+    {
       title: "Status",
-      dataIndex: "is_available",
-      // sorter: (a, b) => Number(a.is_available) - Number(b.is_available),
-      // sortDirections: ["ascend", "descend"],
+      dataIndex: "status",
       filters: statusFilters,
-      onFilter: (value, record) => record.is_available === value,
+      onFilter: (value, record) => record.status === value,
       render: (text, record) => {
-        if (typeof record?.is_available !== "boolean") return null;
         return (
           <Tag
-            color={!record.is_available ? "green" : "red"}
+            color={
+              record.status === "available"
+                ? "green"
+                : record.status === "occupied"
+                ? "yellow"
+                : record.status === "maintenance"
+                ? "orange"
+                : "red"
+            }
             key={record.id}
             style={{ fontWeight: "bold" }}
           >
-            {!record.is_available ? "Tersedia" : "Tidak Tersedia"}
+            {record.status === "available"
+              ? "Tersedia"
+              : record.status === "occupied"
+              ? "Sudah Terisi"
+              : record.status === "maintenance"
+              ? "Dalam Perbaikan"
+              : "Tidak Layak"}
           </Tag>
         );
       },
       width: 100,
+    },
+    {
+      title: "Catatan",
+      dataIndex: "notes",
+      width: 150,
+      render: (text, record) => (
+        <Tag
+          color="lime"
+          key={record.id}
+          style={{ fontWeight: "bold" }}
+          onClick={() => handleViewNotes(record)}
+        >
+          <Typography
+            sx={{
+              fontWeight: "bold",
+              fontSize: "12px",
+              whiteSpace: "pre-wrap",
+              wordWrap: "break-word",
+              textAlign: "center",
+              cursor: "pointer",
+            }}
+          >
+            Lihat Catatan
+          </Typography>
+        </Tag>
+      ),
     },
     {
       title: "Actions",
@@ -263,7 +327,7 @@ const Rooms = () => {
   return (
     <Box sx={{ width: "100%", height: "100%", minHeight: "100%", p: 2 }}>
       {/* Component Breadcrumbs disini */}
-      <BreadcrumbPage menuList={menuSuperadmin} />
+      <BreadcrumbPage menuList={menuDevisiKontrak} />
 
       <Box
         sx={{
@@ -352,6 +416,7 @@ const Rooms = () => {
         getLocationsData={getLocationsData}
         dataLocations={dataLocations}
         onNotify={(notif) => setSnackbar(notif)}
+        setLoadingMessage={(message) => setLoadingMessage(message)}
       />
       <EditRoom
         open={openEditModal}
@@ -364,6 +429,7 @@ const Rooms = () => {
         dataLocations={dataLocations}
         onNotify={(notif) => setSnackbar(notif)}
         selectedData={selectedData}
+        setLoadingMessage={(message) => setLoadingMessage(message)}
       />
       <DeleteRoom
         open={openDeleteModal}
@@ -376,7 +442,13 @@ const Rooms = () => {
         onNotify={(notif) => setSnackbar(notif)}
         selectedData={selectedData}
       />
-      <LoadingBackdrop message="Loading..." open={loading} />
+      <NotesModal
+        open={openViewNotesModal}
+        onClose={() => setOpenViewNotesModal(false)}
+        selectedData={selectedData}
+      />
+
+      <LoadingBackdrop message={loadingMessage} open={loading} />
       {/* Snackbar notification */}
       <Notification
         open={snackbar.open}

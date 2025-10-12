@@ -123,7 +123,9 @@ export async function GET() {
         ti.kelurahan,
         ti.district,
         ti.city,
-        ti.province,
+        ti.province,a
+        ti.status,
+        ti.notes,
 
         -- rooms
         rm.id AS room_id,
@@ -238,6 +240,8 @@ export async function GET() {
             district: row.district,
             city: row.city,
             province: row.province,
+            status: row.status,
+            notes: row.notes,
           },
           rooms: {
             id: row.room_id,
