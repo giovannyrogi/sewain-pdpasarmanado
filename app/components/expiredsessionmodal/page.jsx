@@ -13,7 +13,7 @@ import axios from "axios";
 import moment from "moment";
 
 const ExpiredSessionModal = ({ open, onClose, counter = 0 }) => {
-  const isMobile = useMediaQuery("(max-width:600px)");
+  const isMobile = useMediaQuery("(max-width:750px)");
 
   const theme = useTheme();
 

@@ -124,6 +124,8 @@ const ApprovalModal = ({
     }
   };
 
+  // console.log("selectedData", selectedData);
+
   const handleCalculateTotal = () => {
     // Konversi nilai ke number
     const totalPayment = Number(
@@ -135,28 +137,19 @@ const ApprovalModal = ({
     const remainingPayment = Number(
       selectedData?.payments?.remaining_balance || 0
     );
+    const payment_amount = Number(selectedData?.payments?.payment_amount || 0);
+    const contract_amount = Number(
+      selectedData?.payments?.contract_amount || 0
+    );
+    const ppn_amount = Number(selectedData?.payments?.ppn_amount || 0);
 
-    const paymentInstallment = Number(selectedData?.payments?.payment_amount);
-
-    const nilaiKontrakPaymentInstallment = paymentInstallment / 1.11;
-
-    const paymentInstallmentPPN = nilaiKontrakPaymentInstallment * 0.11;
-
-    const totalPaymentInstallment =
-      nilaiKontrakPaymentInstallment + paymentInstallmentPPN;
-
+    const totalPaymentInstallment = contract_amount + ppn_amount;
     const remainingPaymentAfterInstallment = remainingPayment;
-
-    // console.log("paymentInstallment", paymentInstallment);
-    // console.log(
-    //   "nilaiKontrakPaymentInstallment",
-    //   nilaiKontrakPaymentInstallment
-    // );
-    // console.log("paymentInstallmentPPN", paymentInstallmentPPN);
-    // console.log("totalPaymentInstallment", totalPaymentInstallment);
 
     const totalSewaKontrakRuangan =
       selectedData?.room?.price_per_m2 * selectedData?.room?.room_area;
+
+    // console.log('payment_amount', payment_amount);
 
     // Hitung Nilai Kontrak
     const nilaiKontrak = downPayment / 1.11;
@@ -175,9 +168,8 @@ const ApprovalModal = ({
 
     return {
       remainingPaymentAfterInstallment,
-      paymentInstallment,
-      nilaiKontrakPaymentInstallment,
-      paymentInstallmentPPN,
+      contract_amount,
+      ppn_amount,
       totalPaymentInstallment,
       totalPayment,
       totalSewaKontrakRuangan,
@@ -187,14 +179,14 @@ const ApprovalModal = ({
       totalPPN,
       grandTotal,
       remainingPayment,
+      payment_amount,
     };
   };
 
   const {
     remainingPaymentAfterInstallment,
-    paymentInstallment,
-    nilaiKontrakPaymentInstallment,
-    paymentInstallmentPPN,
+    contract_amount,
+    ppn_amount,
     totalPaymentInstallment,
     totalPayment,
     totalSewaKontrakRuangan,
@@ -204,11 +196,11 @@ const ApprovalModal = ({
     totalPPN,
     grandTotal,
     remainingPayment,
+    payment_amount,
   } = handleCalculateTotal() || {
     remainingPaymentAfterInstallment: 0,
-    paymentInstallment: 0,
-    nilaiKontrakPaymentInstallment: 0,
-    paymentInstallmentPPN: 0,
+    contract_amount: 0,
+    ppn_amount: 0,
     totalPaymentInstallment: 0,
     totalPayment: 0,
     totalSewaKontrakRuangan: 0,
@@ -218,6 +210,7 @@ const ApprovalModal = ({
     totalPPN: 0,
     grandTotal: 0,
     remainingPayment: 0,
+    payment_amount,
   };
 
   // Satu variabel kondisi biar lebih rapi
@@ -1012,9 +1005,7 @@ const ApprovalModal = ({
                       overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
                     }}
                   >
-                    {paymentInstallment
-                      ? formatRupiah(paymentInstallment)
-                      : "-"}
+                    {payment_amount ? formatRupiah(payment_amount) : "-"}
                   </Typography>
                 </Grid>
 
@@ -1043,9 +1034,7 @@ const ApprovalModal = ({
                       overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
                     }}
                   >
-                    {nilaiKontrakPaymentInstallment
-                      ? formatRupiah(nilaiKontrakPaymentInstallment)
-                      : "-"}
+                    {contract_amount ? formatRupiah(contract_amount) : "-"}
                   </Typography>
                 </Grid>
 
@@ -1074,9 +1063,7 @@ const ApprovalModal = ({
                       overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
                     }}
                   >
-                    {paymentInstallmentPPN
-                      ? formatRupiah(paymentInstallmentPPN)
-                      : "-"}
+                    {ppn_amount ? formatRupiah(ppn_amount) : "-"}
                   </Typography>
                 </Grid>
               </Grid>

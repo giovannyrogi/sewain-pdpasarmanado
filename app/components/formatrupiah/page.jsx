@@ -6,15 +6,16 @@
  */
 function formatRupiah(value, type = "useRp") {
   // Konversi ke angka
-  let number = Number(value);
+  const number = Number(value);
   if (isNaN(number)) return type === "useRp" ? "Rp. 0" : "0";
 
-  // Pastikan angka dibulatkan ke bawah agar tidak naik 1 digit akibat floating point
-  number = Math.floor(number);
+  // Cek apakah memiliki nilai desimal
+  const hasDecimal = !Number.isInteger(number);
 
   // Format ke string lokal Indonesia
   const formatted = number.toLocaleString("id-ID", {
-    maximumFractionDigits: 0,
+    minimumFractionDigits: hasDecimal ? 2 : 0,
+    maximumFractionDigits: hasDecimal ? 2 : 0,
   });
 
   return type === "useRp" ? `Rp. ${formatted}` : formatted;

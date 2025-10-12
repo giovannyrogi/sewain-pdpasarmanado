@@ -27,6 +27,7 @@ import { Icon } from "@iconify/react";
 import ImagePreviewModal from "@/app/components/imagepreviewmodal/page";
 import DetailTenantApplicationModal from "@/app/components/tenantapplicationmodal/DetailTenantApplicationModal";
 import dayjs from "dayjs";
+import { calculateContractAndPPN } from "@/app/components/calc-contract-and-ppn/CaclContractAndPPN";
 
 const AddPayment = ({
   open,
@@ -115,27 +116,22 @@ const AddPayment = ({
     e.preventDefault();
     loadingTrue();
 
-    // console.log("selectedData payment", selectedData);
-    let grandTotal = 0;
-    let PPNAmount = 0;
-    let nilaiKontrak = 0;
+    // Hitung nilai kontrak, PPN, dan total sesuai tipe pembayaran
+    const { contractAmount, ppnAmount, total } = calculateContractAndPPN(
+      selectedData?.payment_type,
+      amount,
+      selectedData?.total_payment_room
+    );
+
     let remainingBalanceAfterInstallment = 0;
-    // console.log('selectedData?.total_payment_room', selectedData?.total_payment_room);
 
     if (selectedData?.payment_type === "cicilan") {
-      nilaiKontrak = amount / 1.11;
-      PPNAmount = nilaiKontrak * 0.11;
-      grandTotal = nilaiKontrak + PPNAmount;
-      remainingBalanceAfterInstallment = remainingBalance - grandTotal;
-    } else {
-      PPNAmount = Number(selectedData?.total_payment_room) * 0.11;
-      grandTotal = Number(selectedData?.total_payment_room) + PPNAmount;
+      remainingBalanceAfterInstallment = remainingBalance - total;
     }
 
-    // console.log("amount", amount);
-    // console.log("PPNAmount", PPNAmount);
-    // console.log("nilaiKontrak", nilaiKontrak);
-    // console.log("grandTotal", grandTotal);
+    // console.log("contractAmount", contractAmount);
+    // console.log("PPNAmount", ppnAmount);
+    // console.log("total", total);
     // console.log("remainingBalance", remainingBalance);
     // console.log(
     //   "remainingBalanceAfterInstallment",
@@ -192,11 +188,11 @@ const AddPayment = ({
     formData.append("tenant_name", selectedData.tenant_name);
     formData.append("uploaded_by", user.id || null);
     formData.append("payment_number", paymentNumber);
-    formData.append("ppn_amount", Number(PPNAmount));
+    formData.append("ppn_amount", ppnAmount);
     formData.append("amount", amount);
     formData.append("remaining_balance", remainingBalanceAfterInstallment);
     formData.append("payment_type", typePembayaran);
-    formData.append("contract_amount", nilaiKontrak);
+    formData.append("contract_amount", contractAmount);
 
     // cek formdata
     // for (const pair of formData.entries()) {
@@ -349,6 +345,8 @@ const AddPayment = ({
                   setSelectedTenantApplicationId(
                     newValue ? newValue?.tenant_application_id : null
                   );
+
+                  console.log("newvalue", newValue?.remaining_payment);
 
                   if (newValue?.payment_type === "cicilan") {
                     setTypePembayaran("cicilan");

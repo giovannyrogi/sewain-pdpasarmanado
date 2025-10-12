@@ -198,6 +198,7 @@ const CardViewStatusRooms = ({ data, loading }) => {
                 "& .MuiChartsAxis-root": { display: "none" },
                 "& .MuiChartsLegend-root": { display: "none" },
                 "& .MuiBarElement-root": { stroke: "none" },
+                ml: -3,
               }}
               height={120}
             />

@@ -129,6 +129,7 @@ export async function GET() {
         p.approval_status,
         p.uploaded_by,
         p.ppn_amount,
+        p.contract_amount,
         p.remaining_balance,
 
         -- tenant_application
@@ -248,6 +249,7 @@ export async function GET() {
           approval_status: row.approval_status,
           uploaded_by: row.uploaded_by,
           ppn_amount: row.ppn_amount,
+          contract_amount: row.contract_amount,
           remaining_balance: row.remaining_balance,
         },
         payment_approval: {
