@@ -23,20 +23,38 @@ const BuktiPembayaran = forwardRef(({ data }, ref) => {
     const roomPrice = Number(data?.room?.price_per_m2 || 0);
     const roomArea = Number(data?.room?.room_area || 0);
 
+    const downPayment = Number(data?.tenant_application?.down_payment || 0);
+    const iuranJasaAdministrasi = Number(
+      data?.tenant_application?.admin_fee || 0
+    );
+
+    // hitung nilai kontrak dan PPN dari DP
+    const nilaiKontrakDP = downPayment / 1.11;
+    const PPNDownPayment = nilaiKontrakDP * 0.11;
+
     const totalSewaKontrakRuangan = roomPrice * roomArea;
 
-    const nilaiKontrak = paymentAmount / 1.11;
+    const totalPPNSewaKontrakRuangan = totalSewaKontrakRuangan * 0.11;
+    const grandTotal =
+      totalSewaKontrakRuangan +
+      totalPPNSewaKontrakRuangan +
+      iuranJasaAdministrasi;
 
-    const totalPPN = nilaiKontrak * 0.11;
+    const nilaiKontrak = Number(data?.payments?.contract_amount || 0);
 
-    const grandTotal = nilaiKontrak + totalPPN;
+    const totalPPN = Number(data?.payments?.ppn_amount || 0);
 
     return {
       totalSewaKontrakRuangan,
+      totalPPNSewaKontrakRuangan,
       paymentAmount,
       nilaiKontrak,
       totalPPN,
       grandTotal,
+      iuranJasaAdministrasi,
+      PPNDownPayment,
+      nilaiKontrakDP,
+      downPayment,
     };
   };
 
@@ -44,14 +62,24 @@ const BuktiPembayaran = forwardRef(({ data }, ref) => {
     paymentAmount,
     nilaiKontrak,
     totalPPN,
-    grandTotal,
     totalSewaKontrakRuangan,
+    totalPPNSewaKontrakRuangan,
+    grandTotal,
+    iuranJasaAdministrasi,
+    PPNDownPayment,
+    nilaiKontrakDP,
+    downPayment,
   } = handleCalculateTotal() || {
     totalSewaKontrakRuangan: 0,
     paymentAmount: 0,
     nilaiKontrak: 0,
     totalPPN: 0,
+    totalPPNSewaKontrakRuangan: 0,
     grandTotal: 0,
+    iuranJasaAdministrasi: 0,
+    PPNDownPayment: 0,
+    nilaiKontrakDP: 0,
+    downPayment: 0,
   };
 
   return (
@@ -137,6 +165,7 @@ const BuktiPembayaran = forwardRef(({ data }, ref) => {
         </Grid>
       </Grid>
 
+      {/* Tabel Rincian Tagihan */}
       <table
         style={{
           borderCollapse: "collapse",
@@ -152,12 +181,12 @@ const BuktiPembayaran = forwardRef(({ data }, ref) => {
                 border: "1px solid black",
                 padding: "5px",
                 fontWeight: "bold",
-                // textAlign: "center",
+                textAlign: "center",
                 fontSize: "14px",
                 fontFamily: "calibri",
               }}
             >
-              Rincian Pembayaran Tagihan
+              Rincian Tagihan
             </th>
           </tr>
           <tr>
@@ -220,7 +249,7 @@ const BuktiPembayaran = forwardRef(({ data }, ref) => {
                 fontSize: "13px",
               }}
             >
-              Jumlah Pembayaran
+              Total Sewa Ruangan
             </th>
           </tr>
         </thead>
@@ -316,31 +345,26 @@ const BuktiPembayaran = forwardRef(({ data }, ref) => {
             <td
               colSpan={5}
               style={{
-                fontSize: "12px",
+                border: "1px solid black",
                 fontFamily: "calibri",
-                fontWeight: "bold",
-                whiteSpace: "pre-line",
-                wordBreak: "break-all",
-                border: "solid 1px black",
                 padding: "5px",
+                fontSize: "13px",
+                fontWeight: "bold",
               }}
             >
-              Nilai Kontrak
+              Iuran Jasa Administrasi
             </td>
             <td
-              colSpan={1}
               style={{
-                fontSize: "12px",
+                border: "1px solid black",
                 fontFamily: "calibri",
-                whiteSpace: "pre-line",
-                wordBreak: "break-all",
-                border: "solid 1px black",
                 padding: "5px",
+                fontSize: "13px",
                 textAlign: "right",
                 fontWeight: "bold",
               }}
             >
-              {formatRupiah(nilaiKontrak)},-
+              {formatRupiah(iuranJasaAdministrasi)},-
             </td>
           </tr>
 
@@ -348,31 +372,26 @@ const BuktiPembayaran = forwardRef(({ data }, ref) => {
             <td
               colSpan={5}
               style={{
-                fontSize: "12px",
+                border: "1px solid black",
                 fontFamily: "calibri",
-                fontWeight: "bold",
-                whiteSpace: "pre-line",
-                wordBreak: "break-all",
-                border: "solid 1px black",
                 padding: "5px",
+                fontSize: "13px",
+                fontWeight: "bold",
               }}
             >
-              PPN 11%
+              PPN (11%)
             </td>
             <td
-              colSpan={1}
               style={{
-                fontSize: "12px",
+                border: "1px solid black",
                 fontFamily: "calibri",
-                whiteSpace: "pre-line",
-                wordBreak: "break-all",
-                border: "solid 1px black",
                 padding: "5px",
+                fontSize: "13px",
                 textAlign: "right",
                 fontWeight: "bold",
               }}
             >
-              {formatRupiah(totalPPN)},-
+              {formatRupiah(totalPPNSewaKontrakRuangan)},-
             </td>
           </tr>
 
@@ -380,26 +399,21 @@ const BuktiPembayaran = forwardRef(({ data }, ref) => {
             <td
               colSpan={5}
               style={{
-                fontSize: "12px",
+                border: "1px solid black",
                 fontFamily: "calibri",
-                fontWeight: "bold",
-                whiteSpace: "pre-line",
-                wordBreak: "break-all",
-                border: "solid 1px black",
                 padding: "5px",
+                fontSize: "13px",
+                fontWeight: "bold",
               }}
             >
-              Total Pembayaran
+              Total Tagihan
             </td>
             <td
-              colSpan={1}
               style={{
-                fontSize: "12px",
+                border: "1px solid black",
                 fontFamily: "calibri",
-                whiteSpace: "pre-line",
-                wordBreak: "break-all",
-                border: "solid 1px black",
                 padding: "5px",
+                fontSize: "13px",
                 textAlign: "right",
                 fontWeight: "bold",
               }}
@@ -409,6 +423,364 @@ const BuktiPembayaran = forwardRef(({ data }, ref) => {
           </tr>
         </tbody>
       </table>
+
+      {/* Tabel Rincian Pembayaran */}
+      {data?.tenant_application?.payment_type === "cicilan" ? (
+        <table
+          style={{
+            borderCollapse: "collapse",
+            width: "100%",
+            fontSize: "12px",
+            marginTop: "30px",
+          }}
+        >
+          <thead>
+            <tr>
+              <th
+                colSpan={6}
+                style={{
+                  border: "1px solid black",
+                  padding: "5px",
+                  fontWeight: "bold",
+                  textAlign: "center",
+                  fontSize: "14px",
+                  fontFamily: "calibri",
+                }}
+              >
+                Rincian Pembayaran (Cicilan)
+              </th>
+            </tr>
+            <tr>
+              <th
+                style={{
+                  border: "1px solid black",
+                  padding: "5px",
+                  fontWeight: "bold",
+                  textAlign: "center",
+                  fontSize: "14px",
+                  fontFamily: "calibri",
+                }}
+              >
+                Tahap Pembayaran
+              </th>
+              <th
+                style={{
+                  border: "1px solid black",
+                  padding: "5px",
+                  fontWeight: "bold",
+                  textAlign: "center",
+                  fontSize: "14px",
+                  fontFamily: "calibri",
+                }}
+              >
+                Tanggal Pembayaran
+              </th>
+              <th
+                style={{
+                  border: "1px solid black",
+                  padding: "5px",
+                  fontWeight: "bold",
+                  textAlign: "center",
+                  fontSize: "14px",
+                  fontFamily: "calibri",
+                }}
+              >
+                Nilai Kontrak
+              </th>
+              <th
+                style={{
+                  border: "1px solid black",
+                  padding: "5px",
+                  fontWeight: "bold",
+                  textAlign: "center",
+                  fontSize: "14px",
+                  fontFamily: "calibri",
+                }}
+              >
+                PPN (11%)
+              </th>
+              <th
+                style={{
+                  border: "1px solid black",
+                  padding: "5px",
+                  fontWeight: "bold",
+                  textAlign: "center",
+                  fontSize: "14px",
+                  fontFamily: "calibri",
+                }}
+              >
+                Total Pembayaran
+              </th>
+              <th
+                style={{
+                  border: "1px solid black",
+                  padding: "5px",
+                  fontWeight: "bold",
+                  textAlign: "center",
+                  fontSize: "14px",
+                  fontFamily: "calibri",
+                }}
+              >
+                Sisa Tagihan
+              </th>
+            </tr>
+          </thead>
+
+          {/* Pembayaran Pertama / Uang Muka */}
+          <tbody>
+            <tr>
+              <td
+                style={{
+                  fontSize: "12px",
+                  fontFamily: "calibri",
+                  whiteSpace: "pre-line",
+                  wordBreak: "break-all",
+                  border: "solid 1px black",
+                  padding: "5px",
+                  textAlign: "center",
+                }}
+              >
+                Uang Muka (DP)
+              </td>
+              <td
+                style={{
+                  fontSize: "12px",
+                  fontFamily: "calibri",
+                  whiteSpace: "pre-line",
+                  wordBreak: "break-all",
+                  border: "solid 1px black",
+                  padding: "5px",
+                  textAlign: "center",
+                }}
+              >
+                {moment(data.tenant_application?.created_at).format("Do MMMM YYYY") ||
+                  "-"}
+              </td>
+              <td
+                style={{
+                  border: "1px solid black",
+                  fontFamily: "calibri",
+                  padding: "5px",
+                  fontSize: "13px",
+                  textAlign: "right",
+                  fontWeight: "bold",
+                }}
+              >
+                {formatRupiah(nilaiKontrakDP)},-
+              </td>
+              <td
+                style={{
+                  border: "1px solid black",
+                  fontFamily: "calibri",
+                  padding: "5px",
+                  fontSize: "13px",
+                  textAlign: "right",
+                  fontWeight: "bold",
+                }}
+              >
+                {formatRupiah(PPNDownPayment)},-
+              </td>
+              <td
+                style={{
+                  border: "1px solid black",
+                  fontFamily: "calibri",
+                  padding: "5px",
+                  fontSize: "13px",
+                  textAlign: "right",
+                  fontWeight: "bold",
+                }}
+              >
+                {formatRupiah(downPayment)},-
+              </td>
+              <td
+                style={{
+                  border: "1px solid black",
+                  fontFamily: "calibri",
+                  padding: "5px",
+                  fontSize: "13px",
+                  textAlign: "right",
+                  fontWeight: "bold",
+                }}
+              >
+                {formatRupiah(
+                  Number(data?.tenant_application?.remaining_payment)
+                )}
+                ,-
+              </td>
+            </tr>
+          </tbody>
+
+          {/* Pembayaran Cicilan */}
+          {data.payments?.payment_number === 1 ? (
+            <tbody>
+              <tr>
+                <td
+                  style={{
+                    fontSize: "12px",
+                    fontFamily: "calibri",
+                    whiteSpace: "pre-line",
+                    wordBreak: "break-all",
+                    border: "solid 1px black",
+                    padding: "5px",
+                    textAlign: "center",
+                  }}
+                >
+                  Cicilan (1)
+                </td>
+                <td
+                  style={{
+                    fontSize: "12px",
+                    fontFamily: "calibri",
+                    whiteSpace: "pre-line",
+                    wordBreak: "break-all",
+                    border: "solid 1px black",
+                    padding: "5px",
+                    textAlign: "center",
+                  }}
+                >
+                  {moment(data.payments?.payment_date).format("Do MMMM YYYY") ||
+                    "-"}
+                </td>
+                <td
+                  style={{
+                    border: "1px solid black",
+                    fontFamily: "calibri",
+                    padding: "5px",
+                    fontSize: "13px",
+                    textAlign: "right",
+                    fontWeight: "bold",
+                  }}
+                >
+                  {formatRupiah(nilaiKontrak)},-
+                </td>
+                <td
+                  style={{
+                    border: "1px solid black",
+                    fontFamily: "calibri",
+                    padding: "5px",
+                    fontSize: "13px",
+                    textAlign: "right",
+                    fontWeight: "bold",
+                  }}
+                >
+                  {formatRupiah(totalPPN)},-
+                </td>
+                <td
+                  style={{
+                    border: "1px solid black",
+                    fontFamily: "calibri",
+                    padding: "5px",
+                    fontSize: "13px",
+                    textAlign: "right",
+                    fontWeight: "bold",
+                  }}
+                >
+                  {formatRupiah(data?.payments?.payment_amount)},-
+                </td>
+                <td
+                  style={{
+                    border: "1px solid black",
+                    fontFamily: "calibri",
+                    padding: "5px",
+                    fontSize: "13px",
+                    textAlign: "right",
+                    fontWeight: "bold",
+                  }}
+                >
+                  {formatRupiah(Number(data?.payments?.remaining_balance))},-
+                </td>
+              </tr>
+            </tbody>
+          ) : data.payments?.payment_number === 2 ? (
+            "Cicilan 2"
+          ) : (
+            "Cicilan 3"
+          )}
+        </table>
+      ) : (
+        <table
+          style={{
+            borderCollapse: "collapse",
+            width: "50%",
+            fontSize: "12px",
+            marginTop: "30px",
+          }}
+        >
+          <thead>
+            <tr>
+              <th
+                colSpan={6}
+                style={{
+                  border: "1px solid black",
+                  padding: "5px",
+                  fontWeight: "bold",
+                  textAlign: "center",
+                  fontSize: "14px",
+                  fontFamily: "calibri",
+                }}
+              >
+                Rincian Pembayaran (Lunas)
+              </th>
+            </tr>
+            <tr>
+              <th
+                style={{
+                  border: "1px solid black",
+                  padding: "5px",
+                  fontWeight: "bold",
+                  textAlign: "center",
+                  fontSize: "14px",
+                  fontFamily: "calibri",
+                }}
+              >
+                Tanggal Pembayaran
+              </th>
+              <th
+                style={{
+                  border: "1px solid black",
+                  padding: "5px",
+                  fontWeight: "bold",
+                  textAlign: "center",
+                  fontSize: "14px",
+                  fontFamily: "calibri",
+                }}
+              >
+                Total Pembayaran
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td
+                style={{
+                  fontSize: "12px",
+                  fontFamily: "calibri",
+                  whiteSpace: "pre-line",
+                  wordBreak: "break-all",
+                  border: "solid 1px black",
+                  padding: "5px",
+                  textAlign: "center",
+                }}
+              >
+                {moment(data.payments?.payment_date).format("Do MMMM YYYY") ||
+                  "-"}
+              </td>
+              <td
+                style={{
+                  border: "1px solid black",
+                  fontFamily: "calibri",
+                  padding: "5px",
+                  fontSize: "13px",
+                  textAlign: "right",
+                  fontWeight: "bold",
+                }}
+              >
+                {formatRupiah(grandTotal)},-
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      )}
 
       <Grid container mt={3} spacing={2}>
         <Grid size={12}>

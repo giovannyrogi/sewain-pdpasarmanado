@@ -80,9 +80,6 @@ const TenantApprovalModal = ({
     // Hitung total PPN
     const totalPPN = totalSewaKontrakRuangan * 0.11;
 
-    // Grand total (tambahan biaya administrasi 50.000)
-    const grandTotal = totalSewaKontrakRuangan + totalPPN + 50000;
-
     // Total cicilan semua + PPN
     const totalInstallment = installment1 + installment2 + installment3;
 
@@ -93,7 +90,7 @@ const TenantApprovalModal = ({
       totalDownPayment,
       nilaiKontrak,
       totalPPN,
-      grandTotal,
+      downPayment,
       totalInstallment,
       remainingPayment,
     };
@@ -106,7 +103,7 @@ const TenantApprovalModal = ({
     totalDownPayment,
     nilaiKontrak,
     totalPPN,
-    grandTotal,
+    downPayment,
     totalInstallment,
     remainingPayment,
   } = handleCalculateTotal() || {
@@ -116,7 +113,7 @@ const TenantApprovalModal = ({
     totalDownPayment: 0,
     nilaiKontrak: 0,
     totalPPN: 0,
-    grandTotal: 0,
+    downPayment: 0,
     totalInstallment: 0,
     remainingPayment: 0,
   };
@@ -833,7 +830,7 @@ const TenantApprovalModal = ({
                   overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
                 }}
               >
-                {grandTotal ? formatRupiah(grandTotal) : "-"}
+                {totalPayment ? formatRupiah(totalPayment) : "-"}
               </Typography>
             </Grid>
           </Grid>
@@ -992,7 +989,7 @@ const TenantApprovalModal = ({
                     overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
                   }}
                 >
-                  {totalDownPayment ? formatRupiah(totalDownPayment) : "-"}
+                  {downPayment ? formatRupiah(downPayment) : "-"}
                 </Typography>
               </Grid>
 

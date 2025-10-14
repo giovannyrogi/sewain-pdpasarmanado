@@ -123,7 +123,7 @@ export async function GET() {
         ti.kelurahan,
         ti.district,
         ti.city,
-        ti.province,a
+        ti.province,
         ti.status,
         ti.notes,
 

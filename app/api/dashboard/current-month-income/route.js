@@ -9,12 +9,12 @@ export async function GET(req) {
     const lastMonthYear = moment().subtract(1, "month").year();
 
     // === 1. Query ambil data TANPA pajak ===
-    // SUM(amount), nanti dikurangi 50.000 setelah total dijumlahkan
-    const incomeWithoutTaxQuery = `
+    // SUM(amount)
+    const incomeWithTaxQuery = `
       SELECT
         EXTRACT(MONTH FROM payment_date) AS month,
         EXTRACT(YEAR FROM payment_date) AS year,
-        SUM(amount) AS total_without_tax
+        SUM(amount) AS total_with_tax
       FROM payments
       WHERE approval_status = 'approved'
         AND amount IS NOT NULL
@@ -23,12 +23,12 @@ export async function GET(req) {
     `;
 
     // === 2. Query ambil data DENGAN pajak ===
-    // SUM(amount - ppn_amount), nanti dikurangi 50.000 setelah total dijumlahkan
-    const incomeWithTaxQuery = `
+    // SUM(amount - ppn_amount)
+    const incomeWithoutTaxQuery = `
       SELECT
         EXTRACT(MONTH FROM payment_date) AS month,
         EXTRACT(YEAR FROM payment_date) AS year,
-        SUM(amount - COALESCE(ppn_amount, 0)) AS total_with_tax
+        SUM(amount - COALESCE(ppn_amount, 0)) AS total_without_tax
       FROM payments
       WHERE approval_status = 'approved'
         AND amount IS NOT NULL

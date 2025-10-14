@@ -165,9 +165,10 @@ const Payments = () => {
 
   // Mapping untuk cicilan
   const cicilanMap = {
-    1: "Cicilan 1",
-    2: "Cicilan 2",
-    3: "Cicilan 3",
+    1: "Uang Muka(DP)",
+    2: "Cicilan 1",
+    3: "Cicilan 2",
+    4: "Cicilan 3",
   };
 
   // Mapping untuk tipe pembayaran

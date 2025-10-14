@@ -18,7 +18,7 @@ const CardViewStatusRooms = ({ data, loading }) => {
   const { themeMode } = useThemeMode();
   const isMobile = useMediaQuery("(max-width:600px)");
 
-  console.log("data", data);
+  // console.log("data", data);
 
   // Warna & label sesuai status
   const statusMap = {

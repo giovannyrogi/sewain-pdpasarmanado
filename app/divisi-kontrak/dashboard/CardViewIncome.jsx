@@ -194,6 +194,11 @@ const CardViewIncome = ({
                         fontSize: "30px",
                         fontWeight: "bold",
                         fontFamily: "poppins",
+                        // baris baru ketika mencapai max width
+                        wordWrap: "break-word",
+                        whiteSpace: "pre-wrap",
+                        overflow: "hidden",
+                        // textAlign: "justify",
                       }}
                     >
                       {checked
@@ -201,14 +206,14 @@ const CardViewIncome = ({
                             Number(
                               currentMonthIncomeWithTax?.current_month
                                 ?.total_income
-                            ) || 0,
+                            ).toFixed(0) || 0,
                             "hideRp"
                           )
                         : formatRupiah(
                             Number(
                               currentMonthIncomeWithoutTax?.current_month
                                 ?.total_income
-                            ) || 0,
+                            ).toFixed(0) || 0,
                             "hideRp"
                           )}
                     </Typography>
@@ -281,7 +286,7 @@ const CardViewIncome = ({
                             >
                               {currentMonthIncomeWithTax?.percentage_change}% (+{" "}
                               {formatRupiah(
-                                currentMonthIncomeWithTax?.difference || 0
+                                Number(currentMonthIncomeWithTax?.difference).toFixed(0) || 0
                               )}
                               )
                             </Typography>
@@ -307,8 +312,8 @@ const CardViewIncome = ({
                               }}
                             >
                               {formatRupiah(
-                                currentMonthIncomeWithTax?.last_month
-                                  ?.total_income || 0
+                                Number(currentMonthIncomeWithTax?.last_month
+                                  ?.total_income).toFixed(0) || 0
                               )}
                             </span>
                           </Typography>
@@ -356,7 +361,7 @@ const CardViewIncome = ({
                             >
                               {currentMonthIncomeWithTax?.percentage_change}% (-{" "}
                               {formatRupiah(
-                                currentMonthIncomeWithTax?.difference || 0
+                                Number(currentMonthIncomeWithTax?.difference).toFixed(0) || 0
                               )}
                               )
                             </Typography>
@@ -382,8 +387,8 @@ const CardViewIncome = ({
                               }}
                             >
                               {formatRupiah(
-                                currentMonthIncomeWithTax?.last_month
-                                  ?.total_income || 0
+                                Number(currentMonthIncomeWithTax?.last_month
+                                  ?.total_income).toFixed(2) || 0
                               )}
                             </span>
                           </Typography>
@@ -433,7 +438,7 @@ const CardViewIncome = ({
                             {currentMonthIncomeWithoutTax?.percentage_change}%
                             (+{" "}
                             {formatRupiah(
-                              currentMonthIncomeWithoutTax?.difference || 0
+                              Number(currentMonthIncomeWithoutTax?.difference).toFixed(0) || 0
                             )}
                             )
                           </Typography>
@@ -459,8 +464,8 @@ const CardViewIncome = ({
                             }}
                           >
                             {formatRupiah(
-                              currentMonthIncomeWithoutTax?.last_month
-                                ?.total_income || 0
+                              Number(currentMonthIncomeWithoutTax?.last_month
+                                ?.total_income).toFixed(0) || 0
                             )}
                           </span>
                         </Typography>
@@ -509,7 +514,7 @@ const CardViewIncome = ({
                             {currentMonthIncomeWithoutTax?.percentage_change}%
                             (-{" "}
                             {formatRupiah(
-                              currentMonthIncomeWithoutTax?.difference || 0
+                              Number(currentMonthIncomeWithoutTax?.difference).toFixed(0) || 0
                             )}
                             )
                           </Typography>
@@ -535,8 +540,8 @@ const CardViewIncome = ({
                             }}
                           >
                             {formatRupiah(
-                              currentMonthIncomeWithoutTax?.last_month
-                                ?.total_income || 0
+                              Number(currentMonthIncomeWithoutTax?.last_month
+                                ?.total_income).toFixed(0) || 0
                             )}
                           </span>
                         </Typography>

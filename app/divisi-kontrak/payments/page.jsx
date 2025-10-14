@@ -190,9 +190,10 @@ const Payments = () => {
 
   // Mapping untuk cicilan
   const cicilanMap = {
-    1: "Cicilan 1",
-    2: "Cicilan 2",
-    3: "Cicilan 3",
+    1: "Uang Muka(DP)",
+    2: "Cicilan 1",
+    3: "Cicilan 2",
+    4: "Cicilan 3",
   };
 
   // Mapping untuk tipe pembayaran
@@ -282,11 +283,11 @@ const Payments = () => {
       width: 160,
     },
     {
-      title: "Cicilan Ke",
+      title: "Tahap Cicilan",
       dataIndex: ["payments", "payment_number"],
       filters: cicilanFilters,
       onFilter: createOnFilter(["payments", "payment_number"]),
-      // filterSearch: true,
+      filterSearch: true,
       render: (text, record) => {
         return record.tenant_application.payment_type === "cicilan" ? (
           <Tag
@@ -302,8 +303,10 @@ const Payments = () => {
             style={{ fontWeight: "bold" }}
           >
             {record.payments?.payment_number === 1
-              ? "Cicilan 1"
+              ? "Uang Muka (DP)"
               : record.payments?.payment_number === 2
+              ? "Cicilan 1"
+              : record.payments?.payment_number === 3
               ? "Cicilan 2"
               : "Cicilan 3"}
           </Tag>
@@ -378,10 +381,7 @@ const Payments = () => {
           <Typography
             sx={{ fontWeight: "bold", fontSize: "12px", textAlign: "end" }}
           >
-            {formatRupiah(
-              Number(record.payments?.payment_amount) +
-                Number(record.tenant_application?.admin_fee)
-            )}
+            {formatRupiah(Number(record.payments?.payment_amount))}
           </Typography>
         ),
       width: 160,

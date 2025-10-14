@@ -1,4 +1,5 @@
 import {
+  alpha,
   Autocomplete,
   Box,
   Button,
@@ -271,7 +272,7 @@ const AddTenantApplication = ({
       const dp = Number(downPayment) || 0;
       const SewaKontrakRuangan = dp / 1.11;
       const totalPPN = SewaKontrakRuangan * 0.11;
-      const grandTotal = SewaKontrakRuangan + totalPPN;
+      const grandTotal = Number(SewaKontrakRuangan + totalPPN).toFixed(2);
 
       setTotalPaymentDownPayment(grandTotal);
       setTotalPPNDownPayment(totalPPN);
@@ -308,8 +309,8 @@ const AddTenantApplication = ({
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const totalPaymentWithoutAdminFee =
-      Number(totalPayment) - biayaAdministrasi;
+    // const totalPaymentWithoutAdminFee =
+    //   Number(totalPayment) - biayaAdministrasi;
     const total = Number(totalPayment) || 0;
     const minDp = Math.round(total * 0.4);
     const dp = Number(downPayment) || 0;
@@ -320,7 +321,9 @@ const AddTenantApplication = ({
       onNotify &&
         onNotify({
           open: true,
-          message: "DP minimal 40% dari total pembayaran.",
+          message: `DP minimal 40% (${formatRupiah(
+            minDp
+          )}) dari total pembayaran ${formatRupiah(total)}.`,
           severity: "error",
         });
       setIsSubmitting(false);
@@ -331,7 +334,9 @@ const AddTenantApplication = ({
       onNotify &&
         onNotify({
           open: true,
-          message: "DP tidak boleh lebih besar dari total pembayaran.",
+          message: `DP tidak boleh lebih besar dari total pembayaran ${formatRupiah(
+            total
+          )}.`,
           severity: "error",
         });
       loadingFalse && loadingFalse();
@@ -361,8 +366,9 @@ const AddTenantApplication = ({
         onNotify &&
           onNotify({
             open: true,
-            message:
-              "Total 3 cicilan tidak boleh lebih besar dari sisa pembayaran.",
+            message: `Total cicilan 1, 2 dan 3 tidak boleh lebih besar dari sisa pembayaran ${formatRupiah(
+              remainingPayment
+            )}.`,
             severity: "error",
           });
         setIsSubmitting(false);
@@ -373,7 +379,9 @@ const AddTenantApplication = ({
         onNotify &&
           onNotify({
             open: true,
-            message: "Total 3 cicilan harus sama dengan sisa pembayaran.",
+            message: `Total cicilan 1, 2 dan 3 tidak boleh lebih kecil dari sisa pembayaran ${formatRupiah(
+              remainingPayment
+            )}.`,
             severity: "error",
           });
         setIsSubmitting(false);
@@ -386,7 +394,7 @@ const AddTenantApplication = ({
       formData.append("location_id", locationId);
       formData.append("room_id", roomId);
       formData.append("payment_type", paymentType);
-      formData.append("total_payment", totalPaymentWithoutAdminFee);
+      formData.append("total_payment", totalPayment);
       formData.append("down_payment", downPayment);
       formData.append("remaining_payment", remainingPayment);
       formData.append("approval_status", approvalStatus);
@@ -704,9 +712,40 @@ const AddTenantApplication = ({
                 }
                 onChange={(event, newValue) => {
                   const selectedLocationId = newValue ? newValue.id : "";
-                  setRoomId("");
-                  setLocationId(selectedLocationId);
-                  getRoomsData(selectedLocationId); // <-- load rooms sesuai lokasi
+
+                  if (!selectedLocationId) {
+                    setLocationId("");
+                    setRoomId("");
+                    setStartDate(null);
+                    setEndDate(null);
+                    setPaymentType("lunas");
+                    setTotalPayment("");
+                    setDownPayment("");
+                    setRemainingPayment("");
+                    setEstimatedInstallment1("");
+                    setEstimatedInstallment2("");
+                    setEstimatedInstallment3("");
+                    setEstimatedInstallmentDate1(null);
+                    setEstimatedInstallmentDate2(null);
+                    setEstimatedInstallmentDate3(null);
+                  } else {
+                    setLocationId("");
+                    setRoomId("");
+                    setStartDate(null);
+                    setEndDate(null);
+                    setPaymentType("lunas");
+                    setTotalPayment("");
+                    setDownPayment("");
+                    setRemainingPayment("");
+                    setEstimatedInstallment1("");
+                    setEstimatedInstallment2("");
+                    setEstimatedInstallment3("");
+                    setEstimatedInstallmentDate1(null);
+                    setEstimatedInstallmentDate2(null);
+                    setEstimatedInstallmentDate3(null);
+                    setLocationId(selectedLocationId);
+                    getRoomsData(selectedLocationId); // <-- load rooms sesuai lokasi
+                  }
                 }}
                 renderInput={(params) => (
                   <TextField
@@ -810,7 +849,7 @@ const AddTenantApplication = ({
               <>
                 <Grid size={6}>
                   <TextField
-                    label="Uang Muka"
+                    label="Uang Muka (DP)"
                     variant="filled"
                     fullWidth
                     value={formatRupiah(downPayment)}
@@ -832,6 +871,30 @@ const AddTenantApplication = ({
                     color="primary"
                   />
                 </Grid>
+                <Grid
+                  size={isMobile ? 12 : 6}
+                  sx={{
+                    p: 1,
+                    bgcolor:
+                      themeMode === "dark"
+                        ? alpha(theme.palette.primary.main, 0.12)
+                        : alpha(theme.palette.primary.main, 0.12),
+                    borderRadius: 1,
+                    mt: -1,
+                  }}
+                >
+                  <Typography
+                    sx={{
+                      fontSize: "12px",
+                      fontWeight: "bold",
+                      color: "primary.main",
+                    }}
+                  >
+                    DP minimal 40% ({formatRupiah(totalPayment * 0.4)}) dari
+                    total pembayaran {formatRupiah(totalPayment)}.
+                  </Typography>
+                </Grid>
+                {isMobile ? undefined : <Grid size={6}></Grid>}
                 <Grid size={6}>
                   <TextField
                     label="Cicilan 1"

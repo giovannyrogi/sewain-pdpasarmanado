@@ -19,6 +19,8 @@ import ImagePreviewModal from "../../components/imagepreviewmodal/page";
 import formatRupiah from "../../components/formatrupiah/page";
 import moment from "moment";
 import PaymentApprovedOverlay from "./PaymentsApprovedOverlay";
+import InstallmentDetail from "@/app/components/installment-detail/InstallmentDetail";
+import PaymentProof from "@/app/components/installment-detail/paymentProof";
 
 const ApprovalModal = ({
   open,
@@ -112,19 +114,19 @@ const ApprovalModal = ({
     }
   };
 
-  const handleSwitchImage = (image) => {
+  const handleSwitchImage = (image, imageUrl) => {
     // console.log("imageurl", image);
 
     if (image === "bukti_pembayaran") {
-      setSwitchImage(selectedData?.payments?.proof_file_path);
+      setSwitchImage(imageUrl);
       setOpenPreview(true);
     } else if (image === "KTP") {
-      setSwitchImage(selectedData?.tenant_application?.ktp_file_path);
+      setSwitchImage(imageUrl);
       setOpenPreview(true);
     }
   };
 
-  // console.log("selectedData", selectedData);
+  console.log("selectedData", selectedData);
 
   const handleCalculateTotal = () => {
     // Konversi nilai ke number
@@ -166,6 +168,120 @@ const ApprovalModal = ({
     // Grand total (tambahan biaya administrasi 50.000)
     const grandTotal = totalSewaKontrakRuangan + totalPPN + 50000;
 
+    // Previous Payment DP
+    let previousAmountDP = 0;
+    let previousContractAmountDP = 0;
+    let previousPPNDP = 0;
+    let previousProofFilePathDP = "";
+    let previousPaymentDateDP = "";
+    let previousPaymentNumberDP = 0;
+    let previousRemainingBalanceDP = 0;
+
+    // Previous Payment 1
+    let previousAmount1 = 0;
+    let previousContractAmount1 = 0;
+    let previousPPN1 = 0;
+    let previousProofFilePath1 = "";
+    let previousPaymentDate1 = "";
+    let previousPaymentNumber1 = 0;
+    let previousRemainingBalance1 = 0;
+
+    // Previous Payment 2
+    let previousAmount2 = 0;
+    let previousContractAmount2 = 0;
+    let previousPPN2 = 0;
+    let previousProofFilePath2 = "";
+    let previousPaymentDate2 = "";
+    let previousPaymentNumber2 = 0;
+    let previousRemainingBalance2 = 0;
+
+    // Previous Payment 3
+    let previousAmount3 = 0;
+    let previousContractAmount3 = 0;
+    let previousPPN3 = 0;
+    let previousProofFilePath3 = "";
+    let previousPaymentDate3 = "";
+    let previousPaymentNumber3 = 0;
+    let previousRemainingBalance3 = 0;
+
+    if (selectedData?.payments?.previous_payments?.length > 0) {
+      previousAmountDP = Number(
+        selectedData?.payments?.previous_payments[0]?.amount || 0
+      );
+      previousContractAmountDP = Number(
+        selectedData?.payments?.previous_payments[0]?.contract_amount || 0
+      );
+      previousPPNDP = Number(
+        selectedData?.payments?.previous_payments[0]?.ppn_amount || 0
+      );
+      previousProofFilePathDP =
+        selectedData?.payments?.previous_payments[0]?.proof_file_path;
+      previousPaymentDateDP =
+        selectedData?.payments?.previous_payments[0]?.payment_date;
+      previousPaymentNumberDP =
+        selectedData?.payments?.previous_payments[0]?.payment_number;
+      previousRemainingBalanceDP = Number(
+        selectedData?.payments?.previous_payments[0]?.remaining_balance || 0
+      );
+
+      previousAmount1 = Number(
+        selectedData?.payments?.previous_payments[1]?.amount || 0
+      );
+      previousContractAmount1 = Number(
+        selectedData?.payments?.previous_payments[1]?.contract_amount || 0
+      );
+      previousPPN1 = Number(
+        selectedData?.payments?.previous_payments[1]?.ppn_amount || 0
+      );
+      previousProofFilePath1 =
+        selectedData?.payments?.previous_payments[1]?.proof_file_path;
+      previousPaymentDate1 =
+        selectedData?.payments?.previous_payments[1]?.payment_date;
+      previousPaymentNumber1 =
+        selectedData?.payments?.previous_payments[1]?.payment_number;
+      previousRemainingBalance1 = Number(
+        selectedData?.payments?.previous_payments[1]?.remaining_balance || 0
+      );
+
+      previousAmount2 = Number(
+        selectedData?.payments?.previous_payments[2]?.amount || 0
+      );
+      previousContractAmount2 = Number(
+        selectedData?.payments?.previous_payments[2]?.contract_amount || 0
+      );
+      previousPPN2 = Number(
+        selectedData?.payments?.previous_payments[2]?.ppn_amount || 0
+      );
+      previousProofFilePath2 =
+        selectedData?.payments?.previous_payments[2]?.proof_file_path;
+      previousPaymentDate2 =
+        selectedData?.payments?.previous_payments[2]?.payment_date;
+      previousPaymentNumber2 =
+        selectedData?.payments?.previous_payments[2]?.payment_number;
+      previousRemainingBalance2 = Number(
+        selectedData?.payments?.previous_payments[2]?.remaining_balance || 0
+      );
+
+      previousAmount3 = Number(
+        selectedData?.payments?.previous_payments[3]?.amount || 0
+      );
+      previousContractAmount3 = Number(
+        selectedData?.payments?.previous_payments[3]?.contract_amount || 0
+      );
+      previousPPN3 = Number(
+        selectedData?.payments?.previous_payments[3]?.ppn_amount || 0
+      );
+      previousProofFilePath3 =
+        selectedData?.payments?.previous_payments[3]?.proof_file_path;
+      previousPaymentDate3 =
+        selectedData?.payments?.previous_payments[3]?.payment_date;
+      previousPaymentNumber3 =
+        selectedData?.payments?.previous_payments[3]?.payment_number;
+      previousRemainingBalance3 = Number(
+        selectedData?.payments?.previous_payments[3]?.remaining_balance || 0
+      );
+    }
+
     return {
       remainingPaymentAfterInstallment,
       contract_amount,
@@ -180,6 +296,38 @@ const ApprovalModal = ({
       grandTotal,
       remainingPayment,
       payment_amount,
+
+      previousAmountDP,
+      previousContractAmountDP,
+      previousPPNDP,
+      previousProofFilePathDP,
+      previousPaymentDateDP,
+      previousPaymentNumberDP,
+      previousRemainingBalanceDP,
+
+      previousAmount1,
+      previousContractAmount1,
+      previousPPN1,
+      previousProofFilePath1,
+      previousPaymentDate1,
+      previousPaymentNumber1,
+      previousRemainingBalance1,
+
+      previousAmount2,
+      previousContractAmount2,
+      previousPPN2,
+      previousProofFilePath2,
+      previousPaymentDate2,
+      previousPaymentNumber2,
+      previousRemainingBalance2,
+
+      previousAmount3,
+      previousContractAmount3,
+      previousPPN3,
+      previousProofFilePath3,
+      previousPaymentDate3,
+      previousPaymentNumber3,
+      previousRemainingBalance3,
     };
   };
 
@@ -197,6 +345,38 @@ const ApprovalModal = ({
     grandTotal,
     remainingPayment,
     payment_amount,
+
+    previousAmountDP,
+    previousContractAmountDP,
+    previousPPNDP,
+    previousProofFilePathDP,
+    previousPaymentDateDP,
+    previousPaymentNumberDP,
+    previousRemainingBalanceDP,
+
+    previousAmount1,
+    previousContractAmount1,
+    previousPPN1,
+    previousProofFilePath1,
+    previousPaymentDate1,
+    previousPaymentNumber1,
+    previousRemainingBalance1,
+
+    previousAmount2,
+    previousContractAmount2,
+    previousPPN2,
+    previousProofFilePath2,
+    previousPaymentDate2,
+    previousPaymentNumber2,
+    previousRemainingBalance2,
+
+    previousAmount3,
+    previousContractAmount3,
+    previousPPN3,
+    previousProofFilePath3,
+    previousPaymentDate3,
+    previousPaymentNumber3,
+    previousRemainingBalance3,
   } = handleCalculateTotal() || {
     remainingPaymentAfterInstallment: 0,
     contract_amount: 0,
@@ -211,6 +391,38 @@ const ApprovalModal = ({
     grandTotal: 0,
     remainingPayment: 0,
     payment_amount,
+
+    previousAmountDP: 0,
+    previousContractAmountDP: 0,
+    previousPPNDP: 0,
+    previousProofFilePathDP: "",
+    previousPaymentDateDP: "",
+    previousPaymentNumberDP: 0,
+    previousRemainingBalanceDP: 0,
+
+    previousAmount1: 0,
+    previousContractAmount1: 0,
+    previousPPN1: 0,
+    previousProofFilePath1: "",
+    previousPaymentDate1: "",
+    previousPaymentNumber1: 0,
+    previousRemainingBalance1: 0,
+
+    previousAmount2: 0,
+    previousContractAmount2: 0,
+    previousPPN2: 0,
+    previousProofFilePath2: "",
+    previousPaymentDate2: "",
+    previousPaymentNumber2: 0,
+    previousRemainingBalance2: 0,
+
+    previousAmount3: 0,
+    previousContractAmount3: 0,
+    previousPPN3: 0,
+    previousProofFilePath3: "",
+    previousPaymentDate3: "",
+    previousPaymentNumber3: 0,
+    previousRemainingBalance3: 0,
   };
 
   // Satu variabel kondisi biar lebih rapi
@@ -382,7 +594,12 @@ const ApprovalModal = ({
                       maxHeight: "100%",
                       objectFit: "contain", // biar tetap proporsional
                     }}
-                    onClick={() => handleSwitchImage("KTP")}
+                    onClick={() =>
+                      handleSwitchImage(
+                        "KTP",
+                        selectedData?.tenant_application?.ktp_file_path
+                      )
+                    }
                   />
                 </Box>
 
@@ -622,7 +839,7 @@ const ApprovalModal = ({
 
           <Divider
             sx={{
-              mb: 1,
+              mb: 0.5,
               borderColor: theme.palette.primary.main,
             }}
           />
@@ -736,7 +953,7 @@ const ApprovalModal = ({
                   fontSize: "13px",
                 }}
               >
-                Biaya PPN
+                PPN (11%)
               </Typography>
               <Typography
                 sx={{
@@ -799,168 +1016,301 @@ const ApprovalModal = ({
             }}
           />
 
-          {selectedData?.tenant_application?.payment_type === "cicilan" && (
+          {selectedData?.tenant_application?.payment_type === "cicilan" ? (
             <>
-              <Grid size={12} mt={3}>
-                <Typography
-                  sx={{
-                    fontSize: 16,
-                    fontWeight: "bold",
-                    mb: isMobile ? 0.5 : undefined,
-                  }}
-                >
-                  Pembayaran Pertama
-                </Typography>
-              </Grid>
-
-              <Divider
-                sx={{
-                  mb: 0.5,
-                  borderColor: theme.palette.primary.main,
-                  width: "100%",
-                }}
-              />
-
-              <Grid
-                size={12}
-                sx={{
-                  display: "flex",
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                }}
-              >
-                <Typography
-                  sx={{
-                    fontWeight: "bold",
-                    fontSize: "13px",
-                  }}
-                >
-                  Uang Muka (DP)
-                </Typography>
-                <Typography
-                  sx={{
-                    fontWeight: "bold",
-                    fontSize: "13px",
-                    wordBreak: "break-word", // <-- biar kata panjang pecah
-                    whiteSpace: "normal", // <-- biar bisa turun baris
-                    overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
-                  }}
-                >
-                  {selectedData?.tenant_application?.down_payment
-                    ? formatRupiah(
-                        selectedData?.tenant_application?.down_payment
-                      )
-                    : "-"}
-                </Typography>
-              </Grid>
-
-              <Grid
-                size={12}
-                sx={{
-                  display: "flex",
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                }}
-              >
-                <Typography
-                  sx={{
-                    fontWeight: "bold",
-                    fontSize: "13px",
-                  }}
-                >
-                  Nilai Kontrak
-                </Typography>
-                <Typography
-                  sx={{
-                    fontWeight: "bold",
-                    fontSize: "13px",
-                    wordBreak: "break-word", // <-- biar kata panjang pecah
-                    whiteSpace: "normal", // <-- biar bisa turun baris
-                    overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
-                  }}
-                >
-                  {nilaiKontrak ? formatRupiah(nilaiKontrak) : "-"}
-                </Typography>
-              </Grid>
-
-              <Grid
-                size={12}
-                sx={{
-                  display: "flex",
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                }}
-              >
-                <Typography
-                  sx={{
-                    fontWeight: "bold",
-                    fontSize: "13px",
-                  }}
-                >
-                  PPN 11%
-                </Typography>
-                <Typography
-                  sx={{
-                    fontWeight: "bold",
-                    fontSize: "13px",
-                    wordBreak: "break-word", // <-- biar kata panjang pecah
-                    whiteSpace: "normal", // <-- biar bisa turun baris
-                    overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
-                  }}
-                >
-                  {PPNDownPayment ? formatRupiah(PPNDownPayment) : "-"}
-                </Typography>
-              </Grid>
-
-              <Divider
-                sx={{
-                  borderColor: theme.palette.primary.main,
-                  width: "100%",
-                  mb: 0.5,
-                  mt: 0.5,
-                }}
-              />
-
-              <Grid
-                size={12}
-                sx={{
-                  display: "flex",
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                }}
-              >
-                <Typography
-                  sx={{
-                    fontWeight: "bold",
-                    fontSize: "13px",
-                  }}
-                >
-                  Total Pembayaran
-                </Typography>
-                <Typography
-                  sx={{
-                    fontWeight: "bold",
-                    fontSize: "13px",
-                    wordBreak: "break-word", // <-- biar kata panjang pecah
-                    whiteSpace: "normal", // <-- biar bisa turun baris
-                    overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
-                  }}
-                >
-                  {totalDownPayment ? formatRupiah(totalDownPayment) : "-"}
-                </Typography>
-              </Grid>
-
-              <Divider
-                sx={{
-                  borderColor: theme.palette.primary.main,
-                  width: "100%",
-                  mb: 0.5,
-                  mt: 0.5,
-                }}
-              />
-
               {/* Detail Pembayaran */}
-              <Grid container spacing={1} mt={3}>
+              {selectedData?.payments?.payment_number === 1 ? (
+                <>
+                  <InstallmentDetail
+                    title="Pembayaran Pertama"
+                    paymentNumber="DP"
+                    totalPayment={payment_amount}
+                    contractAmount={contract_amount}
+                    ppnAmount={ppn_amount}
+                    totalInstallment={totalPaymentInstallment}
+                    remainingBalance={remainingPaymentAfterInstallment}
+                  />
+
+                  <Grid container size={12} mt={1}>
+                    <Grid size={12}>
+                      <Typography
+                        sx={{
+                          fontSize: 16,
+                          fontWeight: "bold",
+                          // color: theme.palette.primary.main,
+                        }}
+                      >
+                        Bukti Pembayaran
+                      </Typography>
+                    </Grid>
+
+                    <Divider
+                      sx={{
+                        mb: 0.5,
+                        width: "100%",
+                        borderColor: theme.palette.primary.main,
+                      }}
+                    />
+
+                    <PaymentProof
+                      label="Uang Muka (DP)"
+                      handleSwitchImage={() =>
+                        handleSwitchImage(
+                          "bukti_pembayaran",
+                          selectedData?.payments?.proof_file_path
+                        )
+                      }
+                    />
+                  </Grid>
+                </>
+              ) : selectedData?.payments?.payment_number === 2 ? (
+                <>
+                  <InstallmentDetail
+                    title="Pembayaran Pertama"
+                    paymentNumber="DP"
+                    totalPayment={previousAmountDP}
+                    contractAmount={previousContractAmountDP}
+                    ppnAmount={previousPPNDP}
+                    totalInstallment={previousAmountDP}
+                    remainingBalance={previousRemainingBalanceDP}
+                  />
+                  <InstallmentDetail
+                    title="Cicilan (1)"
+                    totalPayment={payment_amount}
+                    contractAmount={contract_amount}
+                    ppnAmount={ppn_amount}
+                    totalInstallment={totalPaymentInstallment}
+                    remainingBalance={remainingPaymentAfterInstallment}
+                  />
+
+                  <Grid container size={12} mt={1}>
+                    <Grid size={12}>
+                      <Typography
+                        sx={{
+                          fontSize: 16,
+                          fontWeight: "bold",
+                          // color: theme.palette.primary.main,
+                        }}
+                      >
+                        Bukti Pembayaran
+                      </Typography>
+                    </Grid>
+
+                    <Divider
+                      sx={{
+                        mb: 0.5,
+                        width: "100%",
+                        borderColor: theme.palette.primary.main,
+                      }}
+                    />
+                    <Grid container spacing={0.5} size={12}>
+                      <PaymentProof
+                        label="Uang Muka (DP)"
+                        handleSwitchImage={() =>
+                          handleSwitchImage(
+                            "bukti_pembayaran",
+                            previousProofFilePathDP
+                          )
+                        }
+                      />
+
+                      <PaymentProof
+                        label="Cicilan (1)"
+                        handleSwitchImage={() =>
+                          handleSwitchImage(
+                            "bukti_pembayaran",
+                            selectedData?.payments?.proof_file_path
+                          )
+                        }
+                      />
+                    </Grid>
+                  </Grid>
+                </>
+              ) : selectedData?.payments?.payment_number === 3 ? (
+                <>
+                  <InstallmentDetail
+                    title="Pembayaran Pertama"
+                    paymentNumber="DP"
+                    totalPayment={previousAmountDP}
+                    contractAmount={previousContractAmountDP}
+                    ppnAmount={previousPPNDP}
+                    totalInstallment={previousAmountDP}
+                    remainingBalance={previousRemainingBalanceDP}
+                  />
+                  <InstallmentDetail
+                    title="Cicilan (1)"
+                    totalPayment={previousAmount1}
+                    contractAmount={previousContractAmount1}
+                    ppnAmount={previousPPN1}
+                    totalInstallment={previousAmount1}
+                    remainingBalance={previousRemainingBalance1}
+                  />
+                  <InstallmentDetail
+                    title="Cicilan (2)"
+                    totalPayment={payment_amount}
+                    contractAmount={contract_amount}
+                    ppnAmount={ppn_amount}
+                    totalInstallment={totalPaymentInstallment}
+                    remainingBalance={remainingPaymentAfterInstallment}
+                  />
+
+                  <Grid container size={12} mt={1}>
+                    <Grid size={12}>
+                      <Typography
+                        sx={{
+                          fontSize: 16,
+                          fontWeight: "bold",
+                          // color: theme.palette.primary.main,
+                        }}
+                      >
+                        Bukti Pembayaran
+                      </Typography>
+                    </Grid>
+
+                    <Divider
+                      sx={{
+                        mb: 0.5,
+                        width: "100%",
+                        borderColor: theme.palette.primary.main,
+                      }}
+                    />
+                    <Grid container spacing={0.5} size={12}>
+                      <PaymentProof
+                        label="Uang Muka (DP)"
+                        handleSwitchImage={() =>
+                          handleSwitchImage(
+                            "bukti_pembayaran",
+                            previousProofFilePathDP
+                          )
+                        }
+                      />
+
+                      <PaymentProof
+                        label="Cicilan (1)"
+                        handleSwitchImage={() =>
+                          handleSwitchImage(
+                            "bukti_pembayaran",
+                            previousProofFilePath1
+                          )
+                        }
+                      />
+
+                      <PaymentProof
+                        label="Cicilan (2)"
+                        handleSwitchImage={() =>
+                          handleSwitchImage(
+                            "bukti_pembayaran",
+                            selectedData?.payments?.proof_file_path
+                          )
+                        }
+                      />
+                    </Grid>
+                  </Grid>
+                </>
+              ) : (
+                <>
+                  <InstallmentDetail
+                    title="Pembayaran Pertama"
+                    paymentNumber="DP"
+                    totalPayment={previousAmountDP}
+                    contractAmount={previousContractAmountDP}
+                    ppnAmount={previousPPNDP}
+                    totalInstallment={previousAmountDP}
+                    remainingBalance={previousRemainingBalanceDP}
+                  />
+                  <InstallmentDetail
+                    title="Cicilan (1)"
+                    totalPayment={previousAmount1}
+                    contractAmount={previousContractAmount1}
+                    ppnAmount={previousPPN1}
+                    totalInstallment={previousAmount1}
+                    remainingBalance={previousRemainingBalance1}
+                  />
+                  <InstallmentDetail
+                    title="Cicilan (2)"
+                    totalPayment={previousAmount2}
+                    contractAmount={previousContractAmount2}
+                    ppnAmount={previousPPN2}
+                    totalInstallment={previousAmount2}
+                    remainingBalance={previousRemainingBalance2}
+                  />
+                  <InstallmentDetail
+                    title="Cicilan (3)"
+                    totalPayment={payment_amount}
+                    contractAmount={contract_amount}
+                    ppnAmount={ppn_amount}
+                    totalInstallment={totalPaymentInstallment}
+                    remainingBalance={remainingPaymentAfterInstallment}
+                  />
+
+                  <Grid container size={12} mt={1}>
+                    <Grid size={12}>
+                      <Typography
+                        sx={{
+                          fontSize: 16,
+                          fontWeight: "bold",
+                          // color: theme.palette.primary.main,
+                        }}
+                      >
+                        Bukti Pembayaran
+                      </Typography>
+                    </Grid>
+
+                    <Divider
+                      sx={{
+                        mb: 0.5,
+                        width: "100%",
+                        borderColor: theme.palette.primary.main,
+                      }}
+                    />
+                    <Grid container spacing={0.5} size={12}>
+                      <PaymentProof
+                        label="Uang Muka (DP)"
+                        handleSwitchImage={() =>
+                          handleSwitchImage(
+                            "bukti_pembayaran",
+                            previousProofFilePathDP
+                          )
+                        }
+                      />
+
+                      <PaymentProof
+                        label="Cicilan (1)"
+                        handleSwitchImage={() =>
+                          handleSwitchImage(
+                            "bukti_pembayaran",
+                            previousProofFilePath1
+                          )
+                        }
+                      />
+
+                      <PaymentProof
+                        label="Cicilan (2)"
+                        handleSwitchImage={() =>
+                          handleSwitchImage(
+                            "bukti_pembayaran",
+                            previousProofFilePath2
+                          )
+                        }
+                      />
+
+                      <PaymentProof
+                        label="Cicilan (3)"
+                        handleSwitchImage={() =>
+                          handleSwitchImage(
+                            "bukti_pembayaran",
+                            selectedData?.payments?.proof_file_path
+                          )
+                        }
+                      />
+                    </Grid>
+                  </Grid>
+                </>
+              )}
+            </>
+          ) : (
+            <Grid container size={12} mt={2}>
+              <Grid size={12}>
                 <Typography
                   sx={{
                     fontSize: 16,
@@ -968,253 +1318,30 @@ const ApprovalModal = ({
                     // color: theme.palette.primary.main,
                   }}
                 >
-                  Detail Cicilan
+                  Bukti Pembayaran
                 </Typography>
               </Grid>
 
               <Divider
                 sx={{
                   mb: 0.5,
-                  borderColor: theme.palette.primary.main,
-                }}
-              />
-
-              <Grid container size={12} spacing={0.2}>
-                <Grid
-                  size={12}
-                  sx={{
-                    display: "flex",
-                    flexDirection: "row",
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <Typography
-                    sx={{
-                      fontWeight: "bold",
-                      fontSize: "13px",
-                    }}
-                  >
-                    Cicilan {selectedData?.payments?.payment_number}
-                  </Typography>
-                  <Typography
-                    sx={{
-                      fontWeight: "bold",
-                      fontSize: "13px",
-                      wordBreak: "break-word", // <-- biar kata panjang pecah
-                      whiteSpace: "normal", // <-- biar bisa turun baris
-                      overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
-                    }}
-                  >
-                    {payment_amount ? formatRupiah(payment_amount) : "-"}
-                  </Typography>
-                </Grid>
-
-                <Grid
-                  size={12}
-                  sx={{
-                    display: "flex",
-                    flexDirection: "row",
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <Typography
-                    sx={{
-                      fontWeight: "bold",
-                      fontSize: "13px",
-                    }}
-                  >
-                    Nilai Kontrak
-                  </Typography>
-                  <Typography
-                    sx={{
-                      fontWeight: "bold",
-                      fontSize: "13px",
-                      wordBreak: "break-word", // <-- biar kata panjang pecah
-                      whiteSpace: "normal", // <-- biar bisa turun baris
-                      overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
-                    }}
-                  >
-                    {contract_amount ? formatRupiah(contract_amount) : "-"}
-                  </Typography>
-                </Grid>
-
-                <Grid
-                  size={12}
-                  sx={{
-                    display: "flex",
-                    flexDirection: "row",
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <Typography
-                    sx={{
-                      fontWeight: "bold",
-                      fontSize: "13px",
-                    }}
-                  >
-                    Biaya PPN
-                  </Typography>
-                  <Typography
-                    sx={{
-                      fontWeight: "bold",
-                      fontSize: "13px",
-                      wordBreak: "break-word", // <-- biar kata panjang pecah
-                      whiteSpace: "normal", // <-- biar bisa turun baris
-                      overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
-                    }}
-                  >
-                    {ppn_amount ? formatRupiah(ppn_amount) : "-"}
-                  </Typography>
-                </Grid>
-              </Grid>
-
-              <Divider
-                sx={{
-                  mb: 0.5,
-                  mt: 0.5,
-                  borderColor: theme.palette.primary.main,
-                }}
-              />
-
-              {/* Total Pembayaran Cicilan */}
-              <Grid container spacing={1}>
-                <Grid
-                  size={12}
-                  sx={{
-                    display: "flex",
-                    flexDirection: "row",
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <Typography
-                    sx={{
-                      fontWeight: "bold",
-                      fontSize: "13px",
-                    }}
-                  >
-                    Total Cicilan
-                  </Typography>
-                  <Typography
-                    sx={{
-                      fontWeight: "bold",
-                      fontSize: "13px",
-                      wordBreak: "break-word", // <-- biar kata panjang pecah
-                      whiteSpace: "normal", // <-- biar bisa turun baris
-                      overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
-                    }}
-                  >
-                    {totalPaymentInstallment
-                      ? formatRupiah(totalPaymentInstallment)
-                      : "-"}
-                  </Typography>
-                </Grid>
-              </Grid>
-
-              <Divider
-                sx={{
-                  mb: 0.5,
-                  mt: 0.5,
-                  borderColor: theme.palette.primary.main,
-                }}
-              />
-
-              <Grid
-                size={12}
-                sx={{
-                  display: "flex",
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                  mb: 2,
-                }}
-              >
-                <Typography
-                  sx={{
-                    fontWeight: "bold",
-                    fontSize: "13px",
-                  }}
-                >
-                  Sisa Pembayaran
-                </Typography>
-                <Typography
-                  sx={{
-                    fontWeight: "bold",
-                    fontSize: "13px",
-                    wordBreak: "break-word", // <-- biar kata panjang pecah
-                    whiteSpace: "normal", // <-- biar bisa turun baris
-                    overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
-                  }}
-                >
-                  {remainingPaymentAfterInstallment
-                    ? formatRupiah(remainingPaymentAfterInstallment)
-                    : "-"}
-                </Typography>
-              </Grid>
-            </>
-          )}
-
-          <Grid container spacing={1} mt={2}>
-            <Grid size={12} sx={{ display: "flex", flexDirection: "column" }}>
-              <Typography
-                sx={{
-                  fontWeight: "bold",
-                  fontSize: "14px",
-                  color: theme.palette.primary.main,
-                  mb: 0.5,
-                }}
-              >
-                Foto Bukti Transfer
-              </Typography>
-
-              {/* Container dengan tinggi tetap */}
-              <Box
-                sx={{
                   width: "100%",
-                  height: 150, // tinggi konsisten
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "flex-start",
-                  overflow: "hidden",
-                  borderRadius: 2,
-                  // bgcolor: "#f8f8f8",
+                  borderColor: theme.palette.primary.main,
                 }}
-              >
-                <img
-                  src={
-                    selectedData?.payments?.proof_file_path
-                      ? selectedData.payments?.proof_file_path
-                      : ""
+              />
+              <Grid container spacing={0.5} size={12}>
+                <PaymentProof
+                  label="Pembayaran Lunas"
+                  handleSwitchImage={() =>
+                    handleSwitchImage(
+                      "bukti_pembayaran",
+                      selectedData?.payments?.proof_file_path
+                    )
                   }
-                  alt="ktp"
-                  style={{
-                    maxWidth: "100%",
-                    maxHeight: "100%",
-                    objectFit: "contain", // biar tetap proporsional
-                  }}
-                  onClick={() => handleSwitchImage("bukti_pembayaran")}
                 />
-              </Box>
-
-              {/* <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "flex-start",
-                  flexDirection: "row",
-                  mt: 0.5,
-                }}
-              >
-                <Typography
-                  sx={{
-                    fontWeight: "bold",
-                    fontSize: "11px",
-                    color: theme.palette.primary.main,
-                  }}
-                >
-                  Tekan gambar untuk memperbesar
-                </Typography>
-              </Box> */}
+              </Grid>
             </Grid>
-          </Grid>
+          )}
 
           <Grid
             container

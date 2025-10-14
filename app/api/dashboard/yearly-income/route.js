@@ -7,11 +7,11 @@ export async function GET() {
     const currentMonth = moment().month() + 1; // 1–12
 
     // === Query data pendapatan TANPA pajak ===
-    const incomeWithoutTaxQuery = `
+    const incomeWithTaxQuery = `
       SELECT
         EXTRACT(MONTH FROM payment_date) AS month,
         EXTRACT(YEAR FROM payment_date) AS year,
-        SUM(amount) AS total_without_tax
+        SUM(amount) AS total_with_tax
       FROM payments
       WHERE approval_status = 'approved'
         AND amount IS NOT NULL
@@ -21,11 +21,11 @@ export async function GET() {
     `;
 
     // === Query data pendapatan DENGAN pajak ===
-    const incomeWithTaxQuery = `
+    const incomeWithoutTaxQuery = `
       SELECT
         EXTRACT(MONTH FROM payment_date) AS month,
         EXTRACT(YEAR FROM payment_date) AS year,
-        SUM(amount - COALESCE(ppn_amount, 0)) AS total_with_tax
+        SUM(amount - COALESCE(ppn_amount, 0)) AS total_without_tax
       FROM payments
       WHERE approval_status = 'approved'
         AND amount IS NOT NULL

@@ -75,14 +75,8 @@ const DetailTenantApplicationModal = ({
     // Hitung PPN Down Payment
     const PPNDownPayment = nilaiKontrak * 0.11;
 
-    // Hitung Total Uang Muka (DP)
-    const totalDownPayment = nilaiKontrak + PPNDownPayment;
-
     // Hitung total PPN
     const totalPPN = totalSewaKontrakRuangan * 0.11;
-
-    // Grand total (tambahan biaya administrasi 50.000)
-    const grandTotal = totalSewaKontrakRuangan + totalPPN + 50000;
 
     // Total cicilan semua + PPN
     const totalInstallment = installment1 + installment2 + installment3;
@@ -91,12 +85,11 @@ const DetailTenantApplicationModal = ({
       totalPayment,
       totalSewaKontrakRuangan,
       PPNDownPayment,
-      totalDownPayment,
       nilaiKontrak,
       totalPPN,
-      grandTotal,
       totalInstallment,
       remainingPayment,
+      downPayment,
     };
   };
 
@@ -104,22 +97,20 @@ const DetailTenantApplicationModal = ({
     totalPayment,
     totalSewaKontrakRuangan,
     PPNDownPayment,
-    totalDownPayment,
     nilaiKontrak,
     totalPPN,
-    grandTotal,
     totalInstallment,
     remainingPayment,
+    downPayment,
   } = handleCalculateTotal() || {
     totalPayment: 0,
     totalSewaKontrakRuangan: 0,
     PPNDownPayment: 0,
-    totalDownPayment: 0,
     nilaiKontrak: 0,
     totalPPN: 0,
-    grandTotal: 0,
     totalInstallment: 0,
     remainingPayment: 0,
+    downPayment: 0,
   };
 
   return (
@@ -788,7 +779,7 @@ const DetailTenantApplicationModal = ({
                 {/* {selectedData?.total_payment
                 ? formatRupiah(selectedData.total_payment)
                 : "-"} */}{" "}
-                {grandTotal ? formatRupiah(grandTotal) : "-"}
+                {totalPayment ? formatRupiah(totalPayment) : "-"}
               </Typography>
             </Grid>
           </Grid>
@@ -946,7 +937,7 @@ const DetailTenantApplicationModal = ({
                     overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
                   }}
                 >
-                  {totalDownPayment ? formatRupiah(totalDownPayment) : "-"}
+                  {downPayment ? formatRupiah(downPayment) : "-"}
                 </Typography>
               </Grid>
 

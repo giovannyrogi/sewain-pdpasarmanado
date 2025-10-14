@@ -115,7 +115,7 @@ export async function GET() {
       -- logika pembayaran
       AND (
           (ta.payment_type = 'lunas' AND p.id IS NULL)
-          OR (ta.payment_type = 'cicilan' AND (pm.max_payment_number < 3 OR pm.max_payment_number IS NULL))
+          OR (ta.payment_type = 'cicilan' AND (pm.max_payment_number < 4 OR pm.max_payment_number IS NULL))
       )
     ORDER BY ta.id;
     `;

@@ -132,6 +132,26 @@ export async function GET() {
         p.contract_amount,
         p.remaining_balance,
 
+        -- Subquery: pembayaran sebelumnya
+        (
+          SELECT json_agg(
+            json_build_object(
+              'payment_id', p2.id,
+              'payment_number', p2.payment_number,
+              'amount', p2.amount,
+              'ppn_amount', p2.ppn_amount,
+              'contract_amount', p2.contract_amount,
+              'remaining_balance', p2.remaining_balance,
+              'payment_date', p2.payment_date,
+              'proof_file_path', p2.proof_file_path
+            )
+            ORDER BY p2.payment_number
+          )
+          FROM payments p2
+          WHERE p2.tenant_application_id = p.tenant_application_id
+            AND p2.payment_number < p.payment_number
+        ) AS previous_payments,
+
         -- tenant_application
         ta.id AS tenant_application_id,
         ta.start_date,
@@ -251,6 +271,7 @@ export async function GET() {
           ppn_amount: row.ppn_amount,
           contract_amount: row.contract_amount,
           remaining_balance: row.remaining_balance,
+          previous_payments: row.previous_payments || [],
         },
         payment_approval: {
           id: row.id,

@@ -104,7 +104,7 @@ const AddPayment = ({
   }, [open]);
 
   useEffect(() => {
-    if (paymentNumber > 2) {
+    if (paymentNumber > 3) {
       setMinPayment(remainingBalance);
     } else {
       const calcMinPayment = Number(remainingBalance) * 0.2;
@@ -141,12 +141,27 @@ const AddPayment = ({
     // console.log("amount", amount);
     // console.log("remainingBalance", remainingBalance);
 
+    const dp = Number(selectedData?.down_payment) || 0;
+
+    if (amount < dp && paymentNumber === 1) {
+      onNotify &&
+        onNotify({
+          open: true,
+          message: `Total pembayaran tidak boleh dibawah Uang Muka(DP), yaitu sebesar ${formatRupiah(
+            dp
+          )}.`,
+          severity: "error",
+        });
+      loadingFalse();
+      return;
+    }
+
     // jika amount dibawah 20% dari total remainingBalance maka tampilkan pesan error
     if (amount < remainingBalance * 0.2) {
       onNotify &&
         onNotify({
           open: true,
-          message: `Jumlah pembayaran tidak boleh dibawah 20% dari sisa pembayaran ${formatRupiah(
+          message: `Total pembayaran tidak boleh dibawah 20% dari sisa pembayaran ${formatRupiah(
             remainingBalance
           )}.`,
           severity: "error",
@@ -159,7 +174,7 @@ const AddPayment = ({
       onNotify &&
         onNotify({
           open: true,
-          message: `Jumlah pembayaran tidak boleh melebihi sisa pembayaran ${formatRupiah(
+          message: `Total pembayaran tidak boleh melebihi sisa pembayaran ${formatRupiah(
             remainingBalance
           )}.`,
           severity: "error",
@@ -354,7 +369,7 @@ const AddPayment = ({
                     setTypePembayaran("lunas");
                   }
 
-                  // console.log("newvalue", newValue);
+                  console.log("newvalue", newValue);
 
                   if (newValue?.payment_type === "lunas") {
                     setAmount(Number(newValue?.total_payment));
@@ -364,14 +379,18 @@ const AddPayment = ({
                       newValue?.payment_number === null
                     ) {
                       setPaymentNumber(1);
-                      setAmount(Number(newValue?.estimated_installment_1));
-                      setRemainingBalance(Number(newValue?.remaining_payment));
+                      setAmount(Number(newValue?.down_payment));
+                      setRemainingBalance(Number(newValue?.total_payment));
                     } else if (newValue?.payment_number === 1) {
                       setPaymentNumber(2);
-                      setAmount(Number(newValue?.estimated_installment_2));
+                      setAmount(Number(newValue?.remaining_balance));
                       setRemainingBalance(Number(newValue?.remaining_balance));
                     } else if (newValue?.payment_number === 2) {
                       setPaymentNumber(3);
+                      setAmount(Number(newValue?.remaining_balance));
+                      setRemainingBalance(Number(newValue?.remaining_balance));
+                    } else if (newValue?.payment_number === 3) {
+                      setPaymentNumber(4);
                       setAmount(Number(newValue?.remaining_balance));
                       setRemainingBalance(Number(newValue?.remaining_balance));
                     }
@@ -382,7 +401,7 @@ const AddPayment = ({
                 renderInput={(params) => (
                   <TextField
                     {...params}
-                    label="Pilih Tenant"
+                    label="Pilih Penyewa"
                     variant="filled"
                     required
                   />
@@ -410,7 +429,7 @@ const AddPayment = ({
                     }}
                     onClick={() => setOpenDetailTenant(true)}
                   >
-                    Lihat Detail Tenant
+                    Lihat Detail Penyewa
                   </Typography>
                 </Grid>
               </Grid>
@@ -449,7 +468,7 @@ const AddPayment = ({
                 {" "}
                 <FormControl fullWidth variant="filled" required>
                   <InputLabel id="demo-simple-select-filled-label">
-                    Pilih Cicilan
+                    Tahap Cicilan
                   </InputLabel>
                   <Select
                     value={paymentNumber}
@@ -459,9 +478,10 @@ const AddPayment = ({
                     }}
                     disabled
                   >
-                    <MenuItem value={1}>Cicilan 1</MenuItem>
-                    <MenuItem value={2}>Cicilan 2</MenuItem>
-                    <MenuItem value={3}>Cicilan 3</MenuItem>
+                    <MenuItem value={1}>Uang Muka(DP)</MenuItem>
+                    <MenuItem value={2}>Cicilan 1</MenuItem>
+                    <MenuItem value={3}>Cicilan 2</MenuItem>
+                    <MenuItem value={4}>Cicilan 3</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
@@ -500,7 +520,7 @@ const AddPayment = ({
                 autoFocus
                 required
                 disabled={
-                  selectedData?.payment_number === 2 ||
+                  selectedData?.payment_number === 3 ||
                   selectedData?.payment_type === "lunas"
                 }
                 color="primary"
@@ -521,7 +541,21 @@ const AddPayment = ({
                   mb: -1,
                 }}
               >
-                {selectedData?.payment_number === 2 ? (
+                {!selectedData?.payment_number ? (
+                  <Grid size={12}>
+                    <Typography
+                      sx={{
+                        fontSize: "12px",
+                        fontWeight: "bold",
+                        color: "primary.main",
+                      }}
+                    >
+                      Pembayaran Uang Muka(DP) atas nama "
+                      {selectedData?.tenant_name}" sesuai persetujuan awal
+                      Adalah {formatRupiah(selectedData?.down_payment)}
+                    </Typography>
+                  </Grid>
+                ) : selectedData?.payment_number === 3 ? (
                   <Grid size={12}>
                     <Typography
                       sx={{
