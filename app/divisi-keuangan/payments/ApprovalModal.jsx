@@ -833,7 +833,7 @@ const ApprovalModal = ({
                 // color: theme.palette.primary.main,
               }}
             >
-              Detail Pembayaran
+              Detail Tagihan
             </Typography>
           </Grid>
 

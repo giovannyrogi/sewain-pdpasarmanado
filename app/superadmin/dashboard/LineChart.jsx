@@ -25,8 +25,12 @@ const ViewLineChart = ({ loading, yearlyIncomeData }) => {
     : yearlyIncomeData?.data || [];
 
   const xLabels = incomeArray.map((item) => item.month_name);
-  const withTaxData = incomeArray.map((item) => item.total_with_tax || 0);
-  const withoutTaxData = incomeArray.map((item) => item.total_without_tax || 0);
+  const withTaxData = incomeArray.map(
+    (item) => Number(item.total_with_tax).toFixed(0) || 0
+  );
+  const withoutTaxData = incomeArray.map(
+    (item) => Number(item.total_without_tax).toFixed(0) || 0
+  );
 
   return (
     <Paper

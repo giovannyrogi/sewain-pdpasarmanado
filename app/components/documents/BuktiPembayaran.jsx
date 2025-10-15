@@ -18,6 +18,8 @@ const BuktiPembayaran = forwardRef(({ data }, ref) => {
   if (!data) return null;
 
   const handleCalculateTotal = () => {
+    console.log("data", data);
+
     // Konversi nilai ke number
     const paymentAmount = Number(data?.payments?.payment_amount || 0);
     const roomPrice = Number(data?.room?.price_per_m2 || 0);
@@ -44,6 +46,117 @@ const BuktiPembayaran = forwardRef(({ data }, ref) => {
 
     const totalPPN = Number(data?.payments?.ppn_amount || 0);
 
+    // Previous Payment DP
+    let previousAmountDP = 0;
+    let previousContractAmountDP = 0;
+    let previousPPNDP = 0;
+    let previousProofFilePathDP = "";
+    let previousPaymentDateDP = "";
+    let previousPaymentNumberDP = 0;
+    let previousRemainingBalanceDP = 0;
+
+    // Previous Payment 1
+    let previousAmount1 = 0;
+    let previousContractAmount1 = 0;
+    let previousPPN1 = 0;
+    let previousProofFilePath1 = "";
+    let previousPaymentDate1 = "";
+    let previousPaymentNumber1 = 0;
+    let previousRemainingBalance1 = 0;
+
+    // Previous Payment 2
+    let previousAmount2 = 0;
+    let previousContractAmount2 = 0;
+    let previousPPN2 = 0;
+    let previousProofFilePath2 = "";
+    let previousPaymentDate2 = "";
+    let previousPaymentNumber2 = 0;
+    let previousRemainingBalance2 = 0;
+
+    // Previous Payment 3
+    let previousAmount3 = 0;
+    let previousContractAmount3 = 0;
+    let previousPPN3 = 0;
+    let previousProofFilePath3 = "";
+    let previousPaymentDate3 = "";
+    let previousPaymentNumber3 = 0;
+    let previousRemainingBalance3 = 0;
+
+    if (data?.payments?.previous_payments?.length > 0) {
+      previousAmountDP = Number(
+        data?.payments?.previous_payments[0]?.amount || 0
+      );
+      previousContractAmountDP = Number(
+        data?.payments?.previous_payments[0]?.contract_amount || 0
+      );
+      previousPPNDP = Number(
+        data?.payments?.previous_payments[0]?.ppn_amount || 0
+      );
+      previousProofFilePathDP =
+        data?.payments?.previous_payments[0]?.proof_file_path;
+      previousPaymentDateDP =
+        data?.payments?.previous_payments[0]?.payment_date;
+      previousPaymentNumberDP =
+        data?.payments?.previous_payments[0]?.payment_number;
+      previousRemainingBalanceDP = Number(
+        data?.payments?.previous_payments[0]?.remaining_balance || 0
+      );
+
+      previousAmount1 = Number(
+        data?.payments?.previous_payments[1]?.amount || 0
+      );
+      previousContractAmount1 = Number(
+        data?.payments?.previous_payments[1]?.contract_amount || 0
+      );
+      previousPPN1 = Number(
+        data?.payments?.previous_payments[1]?.ppn_amount || 0
+      );
+      previousProofFilePath1 =
+        data?.payments?.previous_payments[1]?.proof_file_path;
+      previousPaymentDate1 = data?.payments?.previous_payments[1]?.payment_date;
+      previousPaymentNumber1 =
+        data?.payments?.previous_payments[1]?.payment_number;
+      previousRemainingBalance1 = Number(
+        data?.payments?.previous_payments[1]?.remaining_balance || 0
+      );
+
+      previousAmount2 = Number(
+        data?.payments?.previous_payments[2]?.amount || 0
+      );
+      previousContractAmount2 = Number(
+        data?.payments?.previous_payments[2]?.contract_amount || 0
+      );
+      previousPPN2 = Number(
+        data?.payments?.previous_payments[2]?.ppn_amount || 0
+      );
+      previousProofFilePath2 =
+        data?.payments?.previous_payments[2]?.proof_file_path;
+      previousPaymentDate2 = data?.payments?.previous_payments[2]?.payment_date;
+      previousPaymentNumber2 =
+        data?.payments?.previous_payments[2]?.payment_number;
+      previousRemainingBalance2 = Number(
+        data?.payments?.previous_payments[2]?.remaining_balance || 0
+      );
+
+      previousAmount3 = Number(
+        data?.payments?.previous_payments[3]?.amount || 0
+      );
+      previousContractAmount3 = Number(
+        data?.payments?.previous_payments[3]?.contract_amount || 0
+      );
+      previousPPN3 = Number(
+        data?.payments?.previous_payments[3]?.ppn_amount || 0
+      );
+      previousProofFilePath3 =
+        data?.payments?.previous_payments[3]?.proof_file_path;
+      previousPaymentDate3 = data?.payments?.previous_payments[3]?.payment_date;
+      previousPaymentNumber3 =
+        data?.payments?.previous_payments[3]?.payment_number;
+      previousRemainingBalance3 = Number(
+        data?.payments?.previous_payments[3]?.remaining_balance || 0
+      );
+    }
+
     return {
       totalSewaKontrakRuangan,
       totalPPNSewaKontrakRuangan,
@@ -55,6 +168,38 @@ const BuktiPembayaran = forwardRef(({ data }, ref) => {
       PPNDownPayment,
       nilaiKontrakDP,
       downPayment,
+
+      previousAmountDP,
+      previousContractAmountDP,
+      previousPPNDP,
+      previousProofFilePathDP,
+      previousPaymentDateDP,
+      previousPaymentNumberDP,
+      previousRemainingBalanceDP,
+
+      previousAmount1,
+      previousContractAmount1,
+      previousPPN1,
+      previousProofFilePath1,
+      previousPaymentDate1,
+      previousPaymentNumber1,
+      previousRemainingBalance1,
+
+      previousAmount2,
+      previousContractAmount2,
+      previousPPN2,
+      previousProofFilePath2,
+      previousPaymentDate2,
+      previousPaymentNumber2,
+      previousRemainingBalance2,
+
+      previousAmount3,
+      previousContractAmount3,
+      previousPPN3,
+      previousProofFilePath3,
+      previousPaymentDate3,
+      previousPaymentNumber3,
+      previousRemainingBalance3,
     };
   };
 
@@ -69,6 +214,38 @@ const BuktiPembayaran = forwardRef(({ data }, ref) => {
     PPNDownPayment,
     nilaiKontrakDP,
     downPayment,
+
+    previousAmountDP,
+    previousContractAmountDP,
+    previousPPNDP,
+    previousProofFilePathDP,
+    previousPaymentDateDP,
+    previousPaymentNumberDP,
+    previousRemainingBalanceDP,
+
+    previousAmount1,
+    previousContractAmount1,
+    previousPPN1,
+    previousProofFilePath1,
+    previousPaymentDate1,
+    previousPaymentNumber1,
+    previousRemainingBalance1,
+
+    previousAmount2,
+    previousContractAmount2,
+    previousPPN2,
+    previousProofFilePath2,
+    previousPaymentDate2,
+    previousPaymentNumber2,
+    previousRemainingBalance2,
+
+    previousAmount3,
+    previousContractAmount3,
+    previousPPN3,
+    previousProofFilePath3,
+    previousPaymentDate3,
+    previousPaymentNumber3,
+    previousRemainingBalance3,
   } = handleCalculateTotal() || {
     totalSewaKontrakRuangan: 0,
     paymentAmount: 0,
@@ -80,6 +257,38 @@ const BuktiPembayaran = forwardRef(({ data }, ref) => {
     PPNDownPayment: 0,
     nilaiKontrakDP: 0,
     downPayment: 0,
+
+    previousAmountDP: 0,
+    previousContractAmountDP: 0,
+    previousPPNDP: 0,
+    previousProofFilePathDP: "",
+    previousPaymentDateDP: "",
+    previousPaymentNumberDP: "",
+    previousRemainingBalanceDP: 0,
+
+    previousAmount1: 0,
+    previousContractAmount1: 0,
+    previousPPN1: 0,
+    previousProofFilePath1: "",
+    previousPaymentDate1: "",
+    previousPaymentNumber1: "",
+    previousRemainingBalance1: 0,
+
+    previousAmount2: 0,
+    previousContractAmount2: 0,
+    previousPPN2: 0,
+    previousProofFilePath2: "",
+    previousPaymentDate2: "",
+    previousPaymentNumber2: "",
+    previousRemainingBalance2: 0,
+
+    previousAmount3: 0,
+    previousContractAmount3: 0,
+    previousPPN3: 0,
+    previousProofFilePath3: "",
+    previousPaymentDate3: "",
+    previousPaymentNumber3: "",
+    previousRemainingBalance3: 0,
   };
 
   return (
@@ -424,14 +633,14 @@ const BuktiPembayaran = forwardRef(({ data }, ref) => {
         </tbody>
       </table>
 
-      {/* Tabel Rincian Pembayaran */}
+      {/* Pembayaran Cicilan */}
       {data?.tenant_application?.payment_type === "cicilan" ? (
         <table
           style={{
             borderCollapse: "collapse",
             width: "100%",
             fontSize: "12px",
-            marginTop: "30px",
+            marginTop: "40px",
           }}
         >
           <thead>
@@ -451,251 +660,117 @@ const BuktiPembayaran = forwardRef(({ data }, ref) => {
               </th>
             </tr>
             <tr>
-              <th
-                style={{
-                  border: "1px solid black",
-                  padding: "5px",
-                  fontWeight: "bold",
-                  textAlign: "center",
-                  fontSize: "14px",
-                  fontFamily: "calibri",
-                }}
-              >
-                Tahap Pembayaran
-              </th>
-              <th
-                style={{
-                  border: "1px solid black",
-                  padding: "5px",
-                  fontWeight: "bold",
-                  textAlign: "center",
-                  fontSize: "14px",
-                  fontFamily: "calibri",
-                }}
-              >
-                Tanggal Pembayaran
-              </th>
-              <th
-                style={{
-                  border: "1px solid black",
-                  padding: "5px",
-                  fontWeight: "bold",
-                  textAlign: "center",
-                  fontSize: "14px",
-                  fontFamily: "calibri",
-                }}
-              >
-                Nilai Kontrak
-              </th>
-              <th
-                style={{
-                  border: "1px solid black",
-                  padding: "5px",
-                  fontWeight: "bold",
-                  textAlign: "center",
-                  fontSize: "14px",
-                  fontFamily: "calibri",
-                }}
-              >
-                PPN (11%)
-              </th>
-              <th
-                style={{
-                  border: "1px solid black",
-                  padding: "5px",
-                  fontWeight: "bold",
-                  textAlign: "center",
-                  fontSize: "14px",
-                  fontFamily: "calibri",
-                }}
-              >
-                Total Pembayaran
-              </th>
-              <th
-                style={{
-                  border: "1px solid black",
-                  padding: "5px",
-                  fontWeight: "bold",
-                  textAlign: "center",
-                  fontSize: "14px",
-                  fontFamily: "calibri",
-                }}
-              >
-                Sisa Tagihan
-              </th>
+              {[
+                "Tahap Pembayaran",
+                "Tanggal Pembayaran",
+                "Nilai Kontrak",
+                "PPN (11%)",
+                "Total Pembayaran",
+                "Sisa Tagihan",
+              ].map((header, i) => (
+                <th
+                  key={i}
+                  style={{
+                    border: "1px solid black",
+                    padding: "5px",
+                    fontWeight: "bold",
+                    textAlign: "center",
+                    fontSize: "13px",
+                    fontFamily: "calibri",
+                  }}
+                >
+                  {header}
+                </th>
+              ))}
             </tr>
           </thead>
-
-          {/* Pembayaran Pertama / Uang Muka */}
           <tbody>
-            <tr>
-              <td
-                style={{
-                  fontSize: "12px",
-                  fontFamily: "calibri",
-                  whiteSpace: "pre-line",
-                  wordBreak: "break-all",
-                  border: "solid 1px black",
-                  padding: "5px",
-                  textAlign: "center",
-                }}
-              >
-                Uang Muka (DP)
-              </td>
-              <td
-                style={{
-                  fontSize: "12px",
-                  fontFamily: "calibri",
-                  whiteSpace: "pre-line",
-                  wordBreak: "break-all",
-                  border: "solid 1px black",
-                  padding: "5px",
-                  textAlign: "center",
-                }}
-              >
-                {moment(data.tenant_application?.created_at).format("Do MMMM YYYY") ||
-                  "-"}
-              </td>
-              <td
-                style={{
-                  border: "1px solid black",
-                  fontFamily: "calibri",
-                  padding: "5px",
-                  fontSize: "13px",
-                  textAlign: "right",
-                  fontWeight: "bold",
-                }}
-              >
-                {formatRupiah(nilaiKontrakDP)},-
-              </td>
-              <td
-                style={{
-                  border: "1px solid black",
-                  fontFamily: "calibri",
-                  padding: "5px",
-                  fontSize: "13px",
-                  textAlign: "right",
-                  fontWeight: "bold",
-                }}
-              >
-                {formatRupiah(PPNDownPayment)},-
-              </td>
-              <td
-                style={{
-                  border: "1px solid black",
-                  fontFamily: "calibri",
-                  padding: "5px",
-                  fontSize: "13px",
-                  textAlign: "right",
-                  fontWeight: "bold",
-                }}
-              >
-                {formatRupiah(downPayment)},-
-              </td>
-              <td
-                style={{
-                  border: "1px solid black",
-                  fontFamily: "calibri",
-                  padding: "5px",
-                  fontSize: "13px",
-                  textAlign: "right",
-                  fontWeight: "bold",
-                }}
-              >
-                {formatRupiah(
-                  Number(data?.tenant_application?.remaining_payment)
-                )}
-                ,-
-              </td>
-            </tr>
-          </tbody>
-
-          {/* Pembayaran Cicilan */}
-          {data.payments?.payment_number === 1 ? (
-            <tbody>
-              <tr>
+            {/* Gabungkan previous_payments + current payment */}
+            {[
+              ...(data?.payments?.previous_payments || []),
+              {
+                payment_number: data?.payments?.payment_number,
+                payment_date: data?.payments?.payment_date,
+                contract_amount: data?.payments?.contract_amount,
+                ppn_amount: data?.payments?.ppn_amount,
+                amount: data?.payments?.payment_amount,
+                remaining_balance: data?.payments?.remaining_balance,
+              },
+            ].map((payment, idx) => (
+              <tr key={idx}>
                 <td
                   style={{
+                    border: "1px solid black",
                     fontSize: "12px",
                     fontFamily: "calibri",
-                    whiteSpace: "pre-line",
-                    wordBreak: "break-all",
-                    border: "solid 1px black",
                     padding: "5px",
                     textAlign: "center",
                   }}
                 >
-                  Cicilan (1)
+                  {payment.payment_number === 1
+                    ? "Uang Muka (DP)"
+                    : `Cicilan ${payment.payment_number - 1}`}
                 </td>
                 <td
                   style={{
+                    border: "1px solid black",
                     fontSize: "12px",
                     fontFamily: "calibri",
-                    whiteSpace: "pre-line",
-                    wordBreak: "break-all",
-                    border: "solid 1px black",
                     padding: "5px",
                     textAlign: "center",
                   }}
                 >
-                  {moment(data.payments?.payment_date).format("Do MMMM YYYY") ||
-                    "-"}
+                  {moment(payment.payment_date).format("D MMMM YYYY")}
                 </td>
                 <td
                   style={{
                     border: "1px solid black",
+                    fontSize: "12px",
                     fontFamily: "calibri",
                     padding: "5px",
-                    fontSize: "13px",
                     textAlign: "right",
-                    fontWeight: "bold",
                   }}
                 >
-                  {formatRupiah(nilaiKontrak)},-
+                  {formatRupiah(payment.contract_amount)},-
                 </td>
                 <td
                   style={{
                     border: "1px solid black",
+                    fontSize: "12px",
                     fontFamily: "calibri",
                     padding: "5px",
-                    fontSize: "13px",
                     textAlign: "right",
-                    fontWeight: "bold",
                   }}
                 >
-                  {formatRupiah(totalPPN)},-
+                  {formatRupiah(payment.ppn_amount)},-
                 </td>
                 <td
                   style={{
                     border: "1px solid black",
+                    fontSize: "12px",
                     fontFamily: "calibri",
                     padding: "5px",
-                    fontSize: "13px",
                     textAlign: "right",
                     fontWeight: "bold",
                   }}
                 >
-                  {formatRupiah(data?.payments?.payment_amount)},-
+                  {formatRupiah(payment.amount)},-
                 </td>
                 <td
                   style={{
                     border: "1px solid black",
+                    fontSize: "12px",
                     fontFamily: "calibri",
                     padding: "5px",
-                    fontSize: "13px",
                     textAlign: "right",
                     fontWeight: "bold",
                   }}
                 >
-                  {formatRupiah(Number(data?.payments?.remaining_balance))},-
+                  {formatRupiah(payment.remaining_balance)},-
                 </td>
               </tr>
-            </tbody>
-          ) : data.payments?.payment_number === 2 ? (
-            "Cicilan 2"
-          ) : (
-            "Cicilan 3"
-          )}
+            ))}
+          </tbody>
         </table>
       ) : (
         <table
@@ -782,28 +857,9 @@ const BuktiPembayaran = forwardRef(({ data }, ref) => {
         </table>
       )}
 
-      <Grid container mt={3} spacing={2}>
-        <Grid size={12}>
-          <Typography
-            sx={{
-              fontSize: "16px",
-              fontWeight: "bold",
-              fontFamily: "calibri",
-              borderBottom: "1px solid black",
-            }}
-          >
-            Foto Bukti Pembayaran
-          </Typography>
-        </Grid>
-        <Grid size={12}>
-          <img
-            src={data?.payments?.proof_file_path}
-            alt={`bukti-pembayaran-${data?.tenant_application?.tenant_name}`}
-            width="700px"
-            height="300px"
-          />
-        </Grid>
-
+      {/* Bagian KTP & Bukti Pembayaran */}
+      <Grid container mt={3} spacing={1}>
+        {/* Foto KTP - hanya tampil sekali */}
         <Grid size={12} mt={3}>
           <Typography
             sx={{
@@ -825,16 +881,153 @@ const BuktiPembayaran = forwardRef(({ data }, ref) => {
             height="250px"
           />
         </Grid>
+
+        {data?.tenant_application?.payment_type === "cicilan" ? (
+          <Grid container>
+            <Grid
+              size={12}
+              sx={{
+                "@media print": {
+                  pageBreakBefore: "always",
+                  breakBefore: "page",
+                  marginTop: "10mm",
+                },
+              }}
+            >
+              <Typography
+                sx={{
+                  fontSize: "16px",
+                  fontWeight: "bold",
+                  fontFamily: "calibri",
+                  borderBottom: "1px solid black",
+                }}
+              >
+                Foto Bukti Pembayaran
+              </Typography>
+            </Grid>
+
+            {/* Mapping semua bukti bayar dari previous_payments + current payment */}
+            {[...(data?.payments?.previous_payments || []), data?.payments]
+              .filter((p) => p && p.proof_file_path) // hanya tampil jika ada file
+              .map((payment, index) => (
+                <Grid
+                  key={index}
+                  size={12}
+                  mb={3}
+                  align="center"
+                  sx={{
+                    "@media print": {
+                      pageBreakBefore:
+                        payment.payment_number === 3 ? "always" : "unset",
+                      breakBefore:
+                        payment.payment_number === 3 ? "page" : "unset",
+                      marginTop:
+                        payment.payment_number === 3 ? "15mm" : "unset",
+                    },
+                  }}
+                >
+                  <Typography
+                    sx={{
+                      fontSize: "14px",
+                      fontWeight: "bold",
+                      fontFamily: "calibri",
+                      mb: 1,
+                    }}
+                  >
+                    {payment.payment_number === 1
+                      ? "Uang Muka (DP)"
+                      : `Cicilan ${payment.payment_number - 1}`}{" "}
+                    — Tanggal:{" "}
+                    {moment(payment.payment_date).format("D MMMM YYYY")}
+                  </Typography>
+                  <img
+                    src={payment.proof_file_path}
+                    alt={`bukti-pembayaran-${payment.payment_number}-${data?.tenant_application?.tenant_name}`}
+                    width="700px"
+                    height="300px"
+                    style={{
+                      border: "1px solid #ddd",
+                      borderRadius: "8px",
+                    }}
+                  />
+                </Grid>
+              ))}
+          </Grid>
+        ) : (
+          <Grid container>
+            <Grid
+              size={12}
+              sx={{
+                "@media print": {
+                  pageBreakBefore: "always",
+                  breakBefore: "page",
+                  marginTop: "10mm",
+                },
+              }}
+            >
+              <Typography
+                sx={{
+                  fontSize: "16px",
+                  fontWeight: "bold",
+                  fontFamily: "calibri",
+                  borderBottom: "1px solid black",
+                }}
+              >
+                Foto Bukti Pembayaran
+              </Typography>
+            </Grid>
+
+            <Grid
+              size={12}
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                mb: 4,
+              }}
+            >
+              <Typography
+                sx={{
+                  fontSize: "14px",
+                  fontFamily: "calibri",
+                  fontWeight: "bold",
+                  mb: 1,
+                }}
+              >
+                Pembayaran Lunas -{" "}
+                {moment(data?.payments?.payment_date).format("D MMMM YYYY")}
+              </Typography>
+              <img
+                src={data?.payments?.proof_file_path}
+                alt={`bukti-pembayaran-pembayaran-lunas`}
+                width="700px"
+                height="300px"
+                style={{
+                  border: "1px solid #ccc",
+                  borderRadius: "8px",
+                  objectFit: "contain",
+                }}
+              />
+            </Grid>
+          </Grid>
+        )}
       </Grid>
 
       <Grid container mt={4} spacing={2}>
         <Grid size={12} textAlign={"right"}>
           <Typography
             sx={{
-              fontSize: "11px",
-              fontFamily: "calibri",
-              color: "gray",
-              fontWeight: "bold",
+              "@media print": {
+                position: "fixed",
+                bottom: 0,
+                right: 0,
+                fontSize: "11px",
+                fontFamily: "calibri",
+                color: "gray",
+                fontWeight: "bold",
+                paddingRight: "10mm",
+                paddingBottom: "5mm",
+              },
             }}
           >
             Dicetak Tanggal : {""}

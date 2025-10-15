@@ -49,7 +49,7 @@ const Dashboard = () => {
     try {
       const response = await axios.get("/api/dashboard/current-month-income");
 
-      // console.log("response", response);
+      console.log("response monthly income", response);
 
       if (response.data.success) {
         const data = response.data.data;
