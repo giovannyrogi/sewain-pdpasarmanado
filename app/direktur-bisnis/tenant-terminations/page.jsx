@@ -24,6 +24,9 @@ import menuKepalaSeksi from "@/app/components/menu/MenuItemKepalaSeksi";
 import TerminationReasonModal from "@/app/components/terminationreasonmodal/TerminationReasonModal";
 import TerminationApprovalModal from "@/app/components/approvalmodal/TerminationApprovalModal";
 import TenantTerminationApprovalModal from "@/app/components/tenant-termination-approval-modal/TenantTerminationApprovalModal";
+import menuItemDirekturUtama from "@/app/components/menu/MenuItemDirekturUtama";
+import menuKepalaDivisi from "@/app/components/menu/MenuItemKepalaDivisi";
+import TenantRejectTerminationModal from "@/app/components/tenant-termination-approval-modal/TenantRejectTerminationModal";
 
 const TenantTerminations = () => {
   const user = useUser();
@@ -83,21 +86,6 @@ const TenantTerminations = () => {
       getDataTenantTerminations();
     }
   }, [user]);
-
-  const filteredData = dataTenantTerminations.filter((item) => {
-    // const isAvailableText =
-    //   item.is_available === true
-    //     ? "tersedia"
-    //     : item.is_available === false
-    //     ? "tidak tersedia"
-    //     : "";
-
-    return (
-      item.tenant_name?.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.location_name?.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.room_number?.toLowerCase().includes(searchText.toLowerCase())
-    );
-  });
 
   const onChange = (pagination, filters, sorter, extra) => {
     if (pagination.pageSize !== pageSize) {
@@ -163,6 +151,14 @@ const TenantTerminations = () => {
     { text: "Disetujui", value: "approved" },
   ];
 
+  const filteredData = dataTenantTerminations.filter((item) => {
+    return (
+      item.tenant_name?.toLowerCase().includes(searchText.toLowerCase()) ||
+      item.location_name?.toLowerCase().includes(searchText.toLowerCase()) ||
+      item.room_number?.toLowerCase().includes(searchText.toLowerCase())
+    );
+  });
+
   const columns = [
     {
       title: "Nama Penyewa",
@@ -200,7 +196,9 @@ const TenantTerminations = () => {
       sorter: (a, b) => a.location_name.localeCompare(b.location_name),
       sortDirections: ["ascend", "descend"],
       render: (text, record) => (
-        <Typography sx={{ fontSize: "12px" }}>{record.location_name}</Typography>
+        <Typography sx={{ fontSize: "12px" }}>
+          {record.location_name}
+        </Typography>
       ),
       width: 200,
     },
@@ -387,6 +385,17 @@ const TenantTerminations = () => {
         getDataTenantTerminations={getDataTenantTerminations}
         user={user}
         onNotify={(notif) => setSnackbar(notif)}
+      />
+      <TenantRejectTerminationModal
+        open={cancelTenantTerminationsModal}
+        onClose={() => setCancelTenantTerminationsModal(false)}
+        loadingTrue={() => setLoading(true)}
+        loadingFalse={() => setLoading(false)}
+        loading={loading}
+        onNotify={(notif) => setSnackbar(notif)}
+        selectedData={selectedData}
+        getDataApprovals={getDataTenantTerminations}
+        user={user}
       />
       <TerminationReasonModal
         open={openTerminationReasonModal}

@@ -43,7 +43,7 @@ const MainLayout = ({ children }) => {
   return (
     <>
       {/* === GLOBAL BACKDROP === */}
-      <LoadingBackdrop open={loadingBackdropOpen} message="Mohon tunggu..." />
+      <LoadingBackdrop open={loadingBackdropOpen} message="Loading..." />
       <Box
         sx={{
           minHeight: "100vh",

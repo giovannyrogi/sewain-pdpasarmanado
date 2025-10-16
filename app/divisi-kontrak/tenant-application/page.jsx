@@ -166,28 +166,6 @@ const Applications = () => {
     setOpenUpdateDateModal(true);
   };
 
-  const filteredData = dataTenantApplication.filter((item) => {
-    // const isAvailableText =
-    //   item.is_available === true
-    //     ? "tersedia"
-    //     : item.is_available === false
-    //     ? "tidak tersedia"
-    //     : "";
-
-    return (
-      item.tenant_name?.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.location_name?.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.payment_type?.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.room_number?.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.down_payment?.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.total_payment?.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.remaining_payment
-        ?.toLowerCase()
-        .includes(searchText.toLowerCase()) ||
-      item.document_number?.toLowerCase().includes(searchText.toLowerCase())
-    );
-  });
-
   // Utility untuk filter dinamis
   function generateFilters(data, key) {
     return [...new Set(data.map((item) => item[key]))]
@@ -220,6 +198,21 @@ const Applications = () => {
     { text: "Ditolak", value: "rejected" },
     { text: "Disetujui", value: "approved" },
   ];
+
+  const filteredData = dataTenantApplication.filter((item) => {
+    return (
+      item.tenant_name?.toLowerCase().includes(searchText.toLowerCase()) ||
+      item.location_name?.toLowerCase().includes(searchText.toLowerCase()) ||
+      item.payment_type?.toLowerCase().includes(searchText.toLowerCase()) ||
+      item.room_number?.toLowerCase().includes(searchText.toLowerCase()) ||
+      item.down_payment?.toLowerCase().includes(searchText.toLowerCase()) ||
+      item.total_payment?.toLowerCase().includes(searchText.toLowerCase()) ||
+      item.remaining_payment
+        ?.toLowerCase()
+        .includes(searchText.toLowerCase()) ||
+      item.document_number?.toLowerCase().includes(searchText.toLowerCase())
+    );
+  });
 
   const columns = [
     {
@@ -335,11 +328,11 @@ const Applications = () => {
           <Tag
             // warna random berdasarkan angka ganjil genap
             color={
-              record.approval_status === "proses" && themeMode === "dark"
+              record.approval_status === "proses"
                 ? "yellow"
-                : record.approval_status === "proses" && themeMode === "light"
-                ? "orange"
-                : "green"
+                : record.approval_status === "approved"
+                ? "green"
+                : "red"
             }
             key={record.tenant_application_id}
             style={{
@@ -350,7 +343,11 @@ const Applications = () => {
           >
             {record.approval_status === "proses"
               ? `Dalam Proses ${record.current_step}/5`
-              : "Disetujui"}
+              : record.approval_status === "approved"
+              ? "Disetujui"
+              : record.approval_status === "rejected"
+              ? "Tidak Disetujui"
+              : "Dibatalkan"}
           </Tag>
         );
       },

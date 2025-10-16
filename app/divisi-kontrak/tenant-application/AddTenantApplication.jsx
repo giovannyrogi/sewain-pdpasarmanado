@@ -206,7 +206,7 @@ const AddTenantApplication = ({
 
   const getListIdentities = async () => {
     loadingTrue();
-    setLoadingMessage("Mengambil data tenant baru...");
+    setLoadingMessage("Mengambil data penyewa baru...");
     try {
       const response = await axios.get("/api/tenant-application/new-tenant");
       console.log("response identity-list", response);

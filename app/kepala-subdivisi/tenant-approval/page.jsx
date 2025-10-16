@@ -26,7 +26,6 @@ import TenantApprovalModal from "@/app/components/tenantapprovalmodal/TenantAppr
 import menuItemDirekturUtama from "@/app/components/menu/MenuItemDirekturUtama";
 import menuKepalaDivisi from "@/app/components/menu/MenuItemKepalaDivisi";
 import menuKepalaSeksi from "@/app/components/menu/MenuItemKepalaSeksi";
-import menuKepalaSubdivisi from "@/app/components/menu/MenuItemKepalaSubdivisi";
 
 const TenantApproval = () => {
   const user = useUser();
@@ -107,25 +106,6 @@ const TenantApproval = () => {
     setOpenApprovalModal(true);
   };
 
-  const onChange = (pagination, filters, sorter, extra) => {
-    if (pagination.pageSize !== pageSize) {
-      setPageSize(pagination.pageSize);
-    }
-  };
-
-  // Utility untuk filter dinamis
-  const filteredData = approvalList.filter((item) => {
-    if (!searchText) return true;
-    const search = searchText.toLowerCase();
-
-    return (
-      item.tenant_name?.toLowerCase().includes(search) ||
-      item.location_name?.toLowerCase().includes(search) ||
-      item.room_number?.toLowerCase().includes(search) ||
-      item.document_number?.toLowerCase().includes(search)
-    );
-  });
-
   // Utility untuk filter dinamis
   function generateFilters(data, key) {
     return [...new Set(data.map((item) => item[key]))]
@@ -149,6 +129,25 @@ const TenantApproval = () => {
     { text: "Ditolak", value: "rejected" },
     { text: "Disetujui", value: "approved" },
   ];
+
+  const onChange = (pagination, filters, sorter, extra) => {
+    if (pagination.pageSize !== pageSize) {
+      setPageSize(pagination.pageSize);
+    }
+  };
+
+  // Utility untuk filter dinamis
+  const filteredData = approvalList.filter((item) => {
+    if (!searchText) return true;
+    const search = searchText.toLowerCase();
+
+    return (
+      item.tenant_name?.toLowerCase().includes(search) ||
+      item.location_name?.toLowerCase().includes(search) ||
+      item.room_number?.toLowerCase().includes(search) ||
+      item.document_number?.toLowerCase().includes(search)
+    );
+  });
 
   const columns = [
     {
@@ -221,23 +220,26 @@ const TenantApproval = () => {
           <Tag
             // warna random berdasarkan angka ganjil genap
             color={
-              record.approval_status === "proses" && themeMode === "dark"
+              record.approval_status === "proses"
                 ? "yellow"
-                : record.approval_status === "proses" && themeMode === "light"
-                ? "orange"
-                : "green"
+                : record.approval_status === "approved"
+                ? "green"
+                : "red"
             }
             key={record.tenant_application_id}
             style={{
               fontWeight: "bold",
               cursor: "pointer",
-              fontSize: "12px",
             }}
             onClick={() => handleApproval(record)}
           >
             {record.approval_status === "proses"
               ? `Dalam Proses ${record.current_step}/5`
-              : "Disetujui"}
+              : record.approval_status === "approved"
+              ? "Disetujui"
+              : record.approval_status === "rejected"
+              ? "Tidak Disetujui"
+              : "Dibatalkan"}
           </Tag>
         );
       },
@@ -300,7 +302,7 @@ const TenantApproval = () => {
   return (
     <Box sx={{ width: "100%", height: "100%", minHeight: "100%", p: 2 }}>
       {/* Component Breadcrumbs disini */}
-      <BreadcrumbPage menuList={menuKepalaSubdivisi} />
+      <BreadcrumbPage menuList={menuKepalaSeksi} />
 
       {/* <Box
         sx={{

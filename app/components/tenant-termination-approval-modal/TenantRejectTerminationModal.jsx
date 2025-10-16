@@ -10,11 +10,12 @@ import {
   Fade,
   Grid,
   TextField,
+  Divider,
 } from "@mui/material";
 import React, { useState } from "react";
 import axios from "axios";
 
-const TenantRejectModal = ({
+const TenantRejectTerminationModal = ({
   open,
   onClose,
   loadingTrue,
@@ -23,7 +24,7 @@ const TenantRejectModal = ({
   onNotify,
   selectedData,
   getDataApprovals,
-  user
+  user,
 }) => {
   const isMobile = useMediaQuery("(max-width:600px)");
   const theme = useTheme();
@@ -34,11 +35,11 @@ const TenantRejectModal = ({
     loadingTrue();
     try {
       const response = await axios.put(
-        `/api/tenant-approval/tenant-rejected/${selectedData.id}`,
+        `/api/tenant-termination-approval/tenant-rejected/${selectedData.termination_approval_id}`,
         {
           notes,
           status: "rejected",
-          tenant_application_id: selectedData.tenant_application_id,
+          tenant_early_termination_id: selectedData.tenant_early_termination_id,
           approver_id: user.id,
         }
       );
@@ -113,11 +114,17 @@ const TenantRejectModal = ({
           <Typography
             variant="h6"
             fontWeight={700}
-            mb={4}
             sx={{ textAlign: "center", color: theme.palette.primary.main }}
           >
-            Tolak Permohonan Sewa Ruangan
+            Tolak Permintaan Non-Aktif
           </Typography>
+
+          <Divider
+            sx={{
+              mb: 4,
+              borderColor: theme.palette.primary.main,
+            }}
+          />
 
           <form onSubmit={handleSubmit}>
             <Grid container spacing={2}>
@@ -166,7 +173,7 @@ const TenantRejectModal = ({
                     ) : null
                   }
                 >
-                  {loading ? "Memproses..." : "Tolak Permohonan"}
+                  {loading ? "Memproses..." : "Tolak Permintaan"}
                 </Button>
               </Grid>
             </Grid>
@@ -177,4 +184,4 @@ const TenantRejectModal = ({
   );
 };
 
-export default TenantRejectModal;
+export default TenantRejectTerminationModal;

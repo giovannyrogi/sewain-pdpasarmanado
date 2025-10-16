@@ -26,7 +26,7 @@ import TerminationApprovalModal from "@/app/components/approvalmodal/Termination
 import TenantTerminationApprovalModal from "@/app/components/tenant-termination-approval-modal/TenantTerminationApprovalModal";
 import menuItemDirekturUtama from "@/app/components/menu/MenuItemDirekturUtama";
 import menuKepalaDivisi from "@/app/components/menu/MenuItemKepalaDivisi";
-import menuKepalaSubdivisi from "@/app/components/menu/MenuItemKepalaSubdivisi";
+import TenantRejectTerminationModal from "@/app/components/tenant-termination-approval-modal/TenantRejectTerminationModal";
 
 const TenantTerminations = () => {
   const user = useUser();
@@ -86,21 +86,6 @@ const TenantTerminations = () => {
       getDataTenantTerminations();
     }
   }, [user]);
-
-  const filteredData = dataTenantTerminations.filter((item) => {
-    // const isAvailableText =
-    //   item.is_available === true
-    //     ? "tersedia"
-    //     : item.is_available === false
-    //     ? "tidak tersedia"
-    //     : "";
-
-    return (
-      item.tenant_name?.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.location_name?.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.room_number?.toLowerCase().includes(searchText.toLowerCase())
-    );
-  });
 
   const onChange = (pagination, filters, sorter, extra) => {
     if (pagination.pageSize !== pageSize) {
@@ -165,6 +150,14 @@ const TenantTerminations = () => {
     { text: "Ditolak", value: "rejected" },
     { text: "Disetujui", value: "approved" },
   ];
+
+  const filteredData = dataTenantTerminations.filter((item) => {
+    return (
+      item.tenant_name?.toLowerCase().includes(searchText.toLowerCase()) ||
+      item.location_name?.toLowerCase().includes(searchText.toLowerCase()) ||
+      item.room_number?.toLowerCase().includes(searchText.toLowerCase())
+    );
+  });
 
   const columns = [
     {
@@ -329,7 +322,7 @@ const TenantTerminations = () => {
   return (
     <Box sx={{ width: "100%", height: "100%", minHeight: "100%", p: 2 }}>
       {/* Component Breadcrumbs disini */}
-      <BreadcrumbPage menuList={menuKepalaSubdivisi} />
+      <BreadcrumbPage menuList={menuKepalaSeksi} />
 
       <ConfigProvider
         theme={{
@@ -392,6 +385,17 @@ const TenantTerminations = () => {
         getDataTenantTerminations={getDataTenantTerminations}
         user={user}
         onNotify={(notif) => setSnackbar(notif)}
+      />
+      <TenantRejectTerminationModal
+        open={cancelTenantTerminationsModal}
+        onClose={() => setCancelTenantTerminationsModal(false)}
+        loadingTrue={() => setLoading(true)}
+        loadingFalse={() => setLoading(false)}
+        loading={loading}
+        onNotify={(notif) => setSnackbar(notif)}
+        selectedData={selectedData}
+        getDataApprovals={getDataTenantTerminations}
+        user={user}
       />
       <TerminationReasonModal
         open={openTerminationReasonModal}

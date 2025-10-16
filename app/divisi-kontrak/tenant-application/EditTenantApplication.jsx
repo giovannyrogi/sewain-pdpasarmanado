@@ -118,7 +118,7 @@ const EditTenantApplication = ({
     // console.log("tenant_identity_id");
 
     loadingTrue();
-    setLoadingMessage("Mengambil data tenant...");
+    setLoadingMessage("Mengambil data penyewa...");
     try {
       const response = await axios.get(
         `/api/identity-list/${selectedData?.tenant_identity_id}`
@@ -215,7 +215,6 @@ const EditTenantApplication = ({
       setTotalPayment(selectedData.total_payment || "");
       setDownPayment(selectedData.down_payment || "");
       setRemainingPayment(selectedData.remaining_payment || "");
-      setApprovalStatus(selectedData.approval_status || "proses");
 
       getRoomsData(selectedData.location_id);
       handleViewDetailRooms(selectedData);

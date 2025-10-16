@@ -19,7 +19,7 @@ export async function GET(req) {
     `
     SELECT
       -- ID Approval
-      tta.id AS approval_id,
+      tta.id AS termination_approval_id,
       tta.tenant_early_termination_id,
 
       -- Data tenant early termination

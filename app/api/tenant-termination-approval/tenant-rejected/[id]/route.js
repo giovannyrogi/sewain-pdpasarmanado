@@ -4,15 +4,15 @@ export async function PUT(request, { params }) {
   const client = await pool.connect();
 
   try {
-    const { id } = await params; // id tenant_approval dari URL
+    const { id } = await params; // id tenant_termination_approval dari URL
     const body = await request.json();
-    const { notes, status, approver_id, tenant_application_id } = body;
+    const { notes, status, approver_id, tenant_early_termination_id } = body;
 
     if (!notes) {
       return new Response(
         JSON.stringify({
           success: false,
-          message: "Alasan penolakan wajib diisi",
+          message: "Alasan Non-aktif wajib diisi",
         }),
         { status: 400 }
       );
@@ -20,9 +20,9 @@ export async function PUT(request, { params }) {
 
     await client.query("BEGIN");
 
-    // Ambil data tenant_approval yang akan diupdate
+    // Ambil data tenant_termination_approval yang akan diupdate
     const approvalRes = await client.query(
-      `SELECT * FROM tenant_approval WHERE id=$1`,
+      `SELECT * FROM tenant_termination_approval WHERE id=$1`,
       [id]
     );
 
@@ -31,7 +31,7 @@ export async function PUT(request, { params }) {
       return new Response(
         JSON.stringify({
           success: false,
-          message: "Data tenant approval tidak ditemukan",
+          message: "Data termination approval tidak ditemukan",
         }),
         { status: 404 }
       );
@@ -40,21 +40,21 @@ export async function PUT(request, { params }) {
     const approvalData = approvalRes.rows[0];
     const stepOrder = approvalData.step_order;
 
-    // Ambil current_step dari tenant_application
+    // Ambil current_step dari tenant_early_terminations
     const tenantRes = await client.query(
-      `SELECT current_step FROM tenant_application WHERE id=$1`,
-      [tenant_application_id]
+      `SELECT current_step FROM tenant_early_terminations WHERE id=$1`,
+      [tenant_early_termination_id]
     );
     const currentStep = tenantRes.rows[0]?.current_step || 1;
 
     // Validasi step untuk reject
     if (stepOrder > currentStep) {
       const prevStepRes = await client.query(
-        `SELECT ta.step_order, r.role_name 
-         FROM tenant_approval ta
-         JOIN roles r ON ta.role_id = r.id
-         WHERE ta.tenant_application_id=$1 AND ta.step_order=$2`,
-        [tenant_application_id, currentStep]
+        `SELECT tta.step_order, r.role_name 
+         FROM tenant_termination_approval tta
+         JOIN roles r ON tta.role_id = r.id
+         WHERE tta.tenant_early_termination_id=$1 AND tta.step_order=$2`,
+        [tenant_early_termination_id, currentStep]
       );
 
       const prevRoleName =
@@ -64,15 +64,15 @@ export async function PUT(request, { params }) {
       return new Response(
         JSON.stringify({
           success: false,
-          message: `Masih menunggu approval dari ${prevRoleName}, tidak bisa menolak`,
+          message: `Masih menunggu approval dari ${prevRoleName}, tidak bisa menolak permintaan`,
         }),
         { status: 200 }
       );
     }
 
-    // Update tenant_approval (penolakan)
+    // Update tenant_termination_approval
     const updateApproval = await client.query(
-      `UPDATE tenant_approval 
+      `UPDATE tenant_termination_approval 
        SET status=$1, notes=$2, approver_id=$3, approved_at=NOW()
        WHERE id=$4 RETURNING *`,
       [status, notes, approver_id, id]
@@ -83,26 +83,26 @@ export async function PUT(request, { params }) {
       return new Response(
         JSON.stringify({
           success: false,
-          message: "Gagal mengupdate data tenant approval",
+          message: "Gagal mengupdate data termination approval",
         }),
         { status: 500 }
       );
     }
 
-    // Update tenant_application.approval_status menjadi 'rejected'
-    const updateApplication = await client.query(
-      `UPDATE tenant_application
+    // Update juga tenant_early_terminations.approval_status ke 'rejected'
+    const updateEarlyTermination = await client.query(
+      `UPDATE tenant_early_terminations 
        SET approval_status='rejected'
        WHERE id=$1 RETURNING *`,
-      [tenant_application_id]
+      [tenant_early_termination_id]
     );
 
-    if (updateApplication.rowCount === 0) {
+    if (updateEarlyTermination.rowCount === 0) {
       await client.query("ROLLBACK");
       return new Response(
         JSON.stringify({
           success: false,
-          message: "Gagal memperbarui status tenant application",
+          message: "Gagal memperbarui status tenant_early_terminations",
         }),
         { status: 500 }
       );
@@ -113,17 +113,17 @@ export async function PUT(request, { params }) {
     return new Response(
       JSON.stringify({
         success: true,
-        message: "Penolakan sewa ruangan berhasil diproses",
+        message: "Berhasil menolak permintaan Non-Aktif",
         data: {
           approval: updateApproval.rows[0],
-          application: updateApplication.rows[0],
+          early_termination: updateEarlyTermination.rows[0],
         },
       }),
       { status: 200 }
     );
   } catch (error) {
     await client.query("ROLLBACK");
-    console.error("Error update tenant_approval:", error);
+    console.error("Error update tenant_termination_approval:", error);
     return new Response(
       JSON.stringify({
         success: false,
