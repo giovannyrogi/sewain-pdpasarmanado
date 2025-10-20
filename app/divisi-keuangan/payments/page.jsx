@@ -276,22 +276,30 @@ const Payments = () => {
       width: 160,
     },
     {
-      title: "Cicilan Ke",
+      title: "Tahap Cicilan",
       dataIndex: ["payments", "payment_number"],
       filters: cicilanFilters,
       onFilter: createOnFilter(["payments", "payment_number"]),
-      // filterSearch: true,
+      filterSearch: true,
       render: (text, record) => {
         return record.tenant_application.payment_type === "cicilan" ? (
           <Tag
             // warna random berdasarkan angka ganjil genap
-            color="lime"
+            color={
+              record.payments?.payment_number === 1
+                ? "volcano"
+                : record.payments?.payment_number === 2
+                ? "lime"
+                : "orange"
+            }
             key={record.payments?.payment_id}
             style={{ fontWeight: "bold" }}
           >
             {record.payments?.payment_number === 1
-              ? "Cicilan 1"
+              ? "Uang Muka (DP)"
               : record.payments?.payment_number === 2
+              ? "Cicilan 1"
+              : record.payments?.payment_number === 3
               ? "Cicilan 2"
               : "Cicilan 3"}
           </Tag>

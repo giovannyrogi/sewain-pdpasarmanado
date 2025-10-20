@@ -496,6 +496,7 @@ const AddPayment = ({
                   setPaymentDate(newValue);
                 }}
                 // minDate={dayjs()} // bulan sekarang ke atas
+                maxDate={dayjs()}
                 slotProps={{
                   textField: {
                     variant: "filled",

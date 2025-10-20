@@ -131,6 +131,15 @@ const AddTenantApplication = ({
 
       console.log("response rooms", response.data);
 
+      if (response.data.data.length === 0) {
+        onNotify &&
+          onNotify({
+            open: true,
+            message: `Tidak ada ruangan yang tersedia untuk lokasi ini.`,
+            severity: "error",
+          });
+      }
+
       setDataAvailableRooms(response.data.data);
       setTimeout(() => {
         loadingFalse();
@@ -404,6 +413,7 @@ const AddTenantApplication = ({
       formData.append("tenant_identity_id", identityID);
       formData.append("total_payment_room", totalSewaKontrakRuangan);
       formData.append("admin_fee", biayaAdministrasi);
+      formData.append("total_ppn", totalPPN);
 
       if (tenantType === "perpanjang tenant" && endDate) {
         // tenant lama endDate dijadikan start_date tenant baru

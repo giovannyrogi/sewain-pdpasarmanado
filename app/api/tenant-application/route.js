@@ -15,6 +15,7 @@ export async function POST(req) {
     const end_date = formData.get("end_date");
     const payment_type = formData.get("payment_type");
     const total_payment = formData.get("total_payment");
+    const total_ppn = formData.get("total_ppn");
     const down_payment = formData.get("down_payment");
     const remaining_payment = formData.get("remaining_payment");
     const approval_status = formData.get("approval_status");
@@ -139,11 +140,12 @@ export async function POST(req) {
           start_date,
           end_date,
           total_payment_room,
-          admin_fee
+          admin_fee,
+          total_ppn
         )
         VALUES (
           $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13,
-          $14, $15, $16, $17, $18, $19, $20, $21
+          $14, $15, $16, $17, $18, $19, $20, $21, $22
         )
         RETURNING *
         `,
@@ -169,6 +171,7 @@ export async function POST(req) {
           end_date,
           total_payment_room,
           admin_fee,
+          total_ppn,
         ]
       );
 
@@ -276,6 +279,8 @@ export async function GET(req) {
         ta.renewal_of,
         ta.is_fully_paid,
         ta.admin_fee,
+        ta.total_payment_room,
+        ta.total_ppn,
 
         -- identitas penyewa saat ini
         ti.full_name AS tenant_name,
@@ -340,6 +345,8 @@ export async function GET(req) {
       total_payment: row.total_payment,
       down_payment: row.down_payment,
       admin_fee: row.admin_fee,
+      total_payment_room: row.total_payment_room,
+      total_ppn: row.total_ppn,
       remaining_payment: row.remaining_payment,
       approval_status: row.approval_status,
       location_id: row.location_id,

@@ -319,8 +319,8 @@ const EditTenantApplication = ({
     e.preventDefault();
     setLoadingMessage("Loading...");
 
-    const totalPaymentWithoutAdminFee =
-      Number(totalPayment) - biayaAdministrasi;
+    // const totalPaymentWithoutAdminFee =
+    //   Number(totalPayment) - biayaAdministrasi;
     const total = Number(totalPayment) || 0;
     const minDp = Math.round(total * 0.4);
     const dp = Number(downPayment) || 0;
@@ -331,7 +331,9 @@ const EditTenantApplication = ({
       onNotify &&
         onNotify({
           open: true,
-          message: "DP minimal 40% dari total pembayaran.",
+          message: `DP minimal 40% (${formatRupiah(
+            minDp
+          )}) dari total pembayaran ${formatRupiah(total)}.`,
           severity: "error",
         });
       setIsSubmitting(false);
@@ -342,7 +344,9 @@ const EditTenantApplication = ({
       onNotify &&
         onNotify({
           open: true,
-          message: "DP tidak boleh lebih besar dari total pembayaran.",
+          message: `DP tidak boleh lebih besar dari total pembayaran ${formatRupiah(
+            total
+          )}.`,
           severity: "error",
         });
       loadingFalse && loadingFalse();
@@ -372,8 +376,9 @@ const EditTenantApplication = ({
         onNotify &&
           onNotify({
             open: true,
-            message:
-              "Total 3 cicilan tidak boleh lebih besar dari sisa pembayaran.",
+            message: `Total cicilan 1, 2 dan 3 tidak boleh lebih besar dari sisa pembayaran ${formatRupiah(
+              remainingPayment
+            )}.`,
             severity: "error",
           });
         setIsSubmitting(false);
@@ -384,7 +389,9 @@ const EditTenantApplication = ({
         onNotify &&
           onNotify({
             open: true,
-            message: "Total 3 cicilan harus sama dengan sisa pembayaran.",
+            message: `Total cicilan 1, 2 dan 3 tidak boleh lebih kecil dari sisa pembayaran ${formatRupiah(
+              remainingPayment
+            )}.`,
             severity: "error",
           });
         setIsSubmitting(false);
@@ -396,15 +403,18 @@ const EditTenantApplication = ({
       const formData = new FormData();
       formData.append("location_id", locationId);
       formData.append("room_id", roomId);
-      formData.append("tenant_identity_id", identityID);
       formData.append("payment_type", paymentType);
-      formData.append("total_payment", totalPaymentWithoutAdminFee);
+      formData.append("total_payment", totalPayment);
       formData.append("down_payment", downPayment);
       formData.append("remaining_payment", remainingPayment);
       formData.append("approval_status", approvalStatus);
       formData.append("user_id", user.id);
       formData.append("current_step", 1);
+      formData.append("tenant_type", tenantType);
+      formData.append("tenant_identity_id", identityID);
       formData.append("total_payment_room", totalSewaKontrakRuangan);
+      formData.append("admin_fee", biayaAdministrasi);
+      formData.append("total_ppn", totalPPN);
 
       // hanya kirim data cicilan kalau paymentType === 'cicilan'
       if (paymentType === "cicilan") {
@@ -630,9 +640,39 @@ const EditTenantApplication = ({
                 }
                 onChange={(event, newValue) => {
                   const selectedLocationId = newValue ? newValue.id : "";
-                  setRoomId("");
-                  setLocationId(selectedLocationId);
-                  getRoomsData(selectedLocationId); // <-- load rooms sesuai lokasi
+                  if (!selectedLocationId) {
+                    setLocationId("");
+                    setRoomId("");
+                    setStartDate(null);
+                    setEndDate(null);
+                    setPaymentType("lunas");
+                    setTotalPayment("");
+                    setDownPayment("");
+                    setRemainingPayment("");
+                    setEstimatedInstallment1("");
+                    setEstimatedInstallment2("");
+                    setEstimatedInstallment3("");
+                    setEstimatedInstallmentDate1(null);
+                    setEstimatedInstallmentDate2(null);
+                    setEstimatedInstallmentDate3(null);
+                  } else {
+                    setLocationId("");
+                    setRoomId("");
+                    setStartDate(null);
+                    setEndDate(null);
+                    setPaymentType("lunas");
+                    setTotalPayment("");
+                    setDownPayment("");
+                    setRemainingPayment("");
+                    setEstimatedInstallment1("");
+                    setEstimatedInstallment2("");
+                    setEstimatedInstallment3("");
+                    setEstimatedInstallmentDate1(null);
+                    setEstimatedInstallmentDate2(null);
+                    setEstimatedInstallmentDate3(null);
+                    setLocationId(selectedLocationId);
+                    getRoomsData(selectedLocationId); // <-- load rooms sesuai lokasi
+                  } // <-- load rooms sesuai lokasi
                 }}
                 renderInput={(params) => (
                   <TextField
