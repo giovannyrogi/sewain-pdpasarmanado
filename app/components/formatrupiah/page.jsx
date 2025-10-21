@@ -14,8 +14,8 @@ function formatRupiah(value, type = "useRp") {
 
   // Format ke string lokal Indonesia
   const formatted = number.toLocaleString("id-ID", {
-    minimumFractionDigits: hasDecimal ? 2 : 0,
-    maximumFractionDigits: hasDecimal ? 2 : 0,
+    minimumFractionDigits: hasDecimal ? 3 : 0,
+    maximumFractionDigits: hasDecimal ? 3 : 0,
   });
 
   return type === "useRp" ? `Rp. ${formatted}` : formatted;

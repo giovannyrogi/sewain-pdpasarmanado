@@ -15,68 +15,84 @@ export async function GET(request) {
       ? moment(end, ["DD-MM-YYYY", "YYYY-MM-DD"], true)
       : moment().endOf("month");
 
-    if (!startMoment.isValid() || !endMoment.isValid()) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          message: "Invalid date format. Use DD-MM-YYYY or YYYY-MM-DD",
-        }),
-        { status: 400 }
-      );
-    }
-
     const startDate = startMoment.format("YYYY-MM-DD");
     const endDate = endMoment.format("YYYY-MM-DD");
 
     const sql = `
-      WITH payments_filtered AS (
+      WITH approved_payments AS (
         SELECT
           p.id,
           p.tenant_application_id,
-          p.contract_amount::numeric AS contract_amount,
-          p.ppn_amount::numeric AS ppn_amount,
-          p.payment_date
+          p.contract_amount,
+          p.ppn_amount,
+          p.remaining_balance,
+          p.amount,
+          ta.location_id,
+          ta.payment_type,
+          ta.admin_fee,
+          ta.total_payment_room,
+          ta.total_ppn AS ta_ppn
         FROM payments p
+        JOIN tenant_application ta ON ta.id = p.tenant_application_id
         WHERE p.payment_date BETWEEN $1 AND $2
           AND EXISTS (
             SELECT 1 FROM payment_approval pa
             WHERE pa.payment_id = p.id AND pa.status = 'approved'
           )
       ),
-      income_per_location AS (
+      cicilan_summary AS (
+      SELECT
+        location_id,
+        SUM(contract_amount_sum - admin_fee) AS kontrak,
+        SUM(ppn_sum) AS ppn,
+        SUM(admin_fee) AS jtu
+      FROM (
         SELECT
+          ta.id AS tenant_application_id,
           ta.location_id,
-          SUM(pf.contract_amount)::numeric AS income_contracts,
-          SUM(pf.ppn_amount)::numeric AS total_ppn
-        FROM payments_filtered pf
-        JOIN tenant_application ta ON ta.id = pf.tenant_application_id
-        GROUP BY ta.location_id
+          ta.admin_fee,
+          SUM(p.contract_amount) AS contract_amount_sum,
+          SUM(p.ppn_amount) AS ppn_sum
+        FROM payments p
+        JOIN tenant_application ta ON ta.id = p.tenant_application_id
+        WHERE ta.payment_type = 'cicilan'
+        GROUP BY ta.id, ta.location_id, ta.admin_fee
+      ) sub
+      GROUP BY location_id
+    ),
+      lunas_summary AS (
+        SELECT
+          location_id,
+          SUM(total_payment_room) AS kontrak,
+          SUM(admin_fee) AS jtu,
+          SUM(ta_ppn) AS ppn
+        FROM approved_payments
+        WHERE payment_type = 'lunas'
+        GROUP BY location_id
       ),
-      jtu_per_location AS (
-        SELECT ta.location_id, SUM(ta.admin_fee::numeric) AS jtu
-        FROM tenant_application ta
-        WHERE ta.id IN (SELECT DISTINCT tenant_application_id FROM payments_filtered)
-        GROUP BY ta.location_id
+      combined AS (
+        SELECT
+          COALESCE(c.location_id, l.location_id) AS location_id,
+          COALESCE(c.kontrak, 0) + COALESCE(l.kontrak, 0) AS kontrak,
+          COALESCE(c.ppn, 0) + COALESCE(l.ppn, 0) AS ppn,
+          COALESCE(c.jtu, 0) + COALESCE(l.jtu, 0) AS jtu
+        FROM cicilan_summary c
+        FULL JOIN lunas_summary l ON c.location_id = l.location_id
       )
       SELECT
-        l.id AS location_id,
-        l.location_name,
-        ROUND(COALESCE(ip.income_contracts, 0) - COALESCE(j.jtu, 0), 2) AS income_contracts,
-        ROUND(COALESCE(j.jtu, 0), 2) AS jtu,
-        ROUND(COALESCE(ip.income_contracts, 0), 2) AS income_contract_without_ppn,
-        ROUND(COALESCE(ip.total_ppn, 0), 2) AS total_ppn,
-        ROUND(COALESCE(ip.income_contracts, 0) + COALESCE(ip.total_ppn, 0), 2) AS income_contract_with_ppn,
-        ROUND((COALESCE(ip.income_contracts, 0) * 0.10), 2) AS total_pph,
-        (
-          ROUND(COALESCE(ip.income_contracts, 0) + COALESCE(ip.total_ppn, 0), 2)
-          - ROUND(COALESCE(ip.total_ppn, 0), 2)
-          - ROUND((COALESCE(ip.income_contracts, 0) * 0.10), 2)
-        )::numeric(15,2) AS total_without_ppn_pph
-      FROM locations l
-      LEFT JOIN income_per_location ip ON ip.location_id = l.id
-      LEFT JOIN jtu_per_location j ON j.location_id = l.id
-      WHERE COALESCE(ip.income_contracts,0) <> 0 OR COALESCE(j.jtu,0) <> 0
-      ORDER BY l.location_name;
+        loc.id AS location_id,
+        loc.location_name,
+        ROUND(cb.kontrak, 2) AS income_contracts,
+        ROUND(cb.jtu, 2) AS jtu,
+        ROUND(cb.kontrak + cb.jtu, 2) AS income_contract_without_ppn,
+        ROUND(cb.ppn, 2) AS total_ppn,
+        ROUND(cb.kontrak + cb.jtu + cb.ppn, 2) AS income_contract_with_ppn,
+        ROUND(cb.kontrak * 0.10, 10) AS total_pph,
+        ROUND((cb.kontrak + cb.jtu) - (cb.kontrak * 0.10), 10) AS total_without_ppn_pph
+      FROM locations loc
+      LEFT JOIN combined cb ON cb.location_id = loc.id
+      WHERE COALESCE(cb.kontrak,0) <> 0 OR COALESCE(cb.jtu,0) <> 0
+      ORDER BY loc.location_name;
     `;
 
     const { rows } = await pool.query(sql, [startDate, endDate]);
@@ -116,25 +132,17 @@ export async function GET(request) {
       }
     );
 
-    // Bulatkan hasil akhir agar rapi
-    Object.keys(totals).forEach((key) => {
-      totals[key] = parseFloat(totals[key].toFixed(2));
-    });
-
     return new Response(
       JSON.stringify({
         success: true,
         data,
-        totals, 
+        totals,
         period: {
           start_date: startMoment.format("DD-MM-YYYY"),
           end_date: endMoment.format("DD-MM-YYYY"),
         },
       }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      }
+      { status: 200, headers: { "Content-Type": "application/json" } }
     );
   } catch (error) {
     console.error("Error in income-by-location:", error);

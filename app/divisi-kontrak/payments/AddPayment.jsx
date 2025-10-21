@@ -125,10 +125,6 @@ const AddPayment = ({
 
     let remainingBalanceAfterInstallment = 0;
 
-    if (selectedData?.payment_type === "cicilan") {
-      remainingBalanceAfterInstallment = remainingBalance - total;
-    }
-
     // console.log("contractAmount", contractAmount);
     // console.log("PPNAmount", ppnAmount);
     // console.log("total", total);
@@ -195,8 +191,13 @@ const AddPayment = ({
     }
 
     const formData = new FormData();
-    formData.append("tenant_application_id", selectedTenantApplicationId);
 
+    if (selectedData?.payment_type === "cicilan") {
+      remainingBalanceAfterInstallment = remainingBalance - total;
+      formData.append("contract_amount", contractAmount);
+    }
+
+    formData.append("tenant_application_id", selectedTenantApplicationId);
     formData.append("proof_file", proofFile);
     formData.append("type_pembayaran", typePembayaran);
     formData.append("payment_date", moment(paymentDate).format("YYYY-MM-DD"));
@@ -207,7 +208,6 @@ const AddPayment = ({
     formData.append("amount", amount);
     formData.append("remaining_balance", remainingBalanceAfterInstallment);
     formData.append("payment_type", typePembayaran);
-    formData.append("contract_amount", contractAmount);
 
     // cek formdata
     // for (const pair of formData.entries()) {
