@@ -7,6 +7,7 @@ import {
   FormControl,
   Grid,
   IconButton,
+  InputAdornment,
   InputLabel,
   MenuItem,
   Modal,
@@ -92,12 +93,20 @@ const AddIdentity = ({
   const [status, setStatus] = useState("active");
   const [notes, setNotes] = useState("");
 
+  const [remaining, setRemaining] = useState(16);
+
   /* panggil sekali untuk isi provinsi saat mount */
   useEffect(() => {
     if (open) {
       setListProvinsi(wilayah.provinsi);
     }
   }, [open]);
+
+  useEffect(() => {
+    const totalDigit = 16;
+    const calcRemainingDigit = totalDigit - nomorIndukKependudukan.length;
+    setRemaining(calcRemainingDigit);
+  }, [nomorIndukKependudukan, remaining]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -353,20 +362,42 @@ const AddIdentity = ({
             <Grid size={6}>
               <TextField
                 label="NIK"
-                // placeholder="Cth: 2.86"
                 variant="filled"
                 fullWidth
                 value={nomorIndukKependudukan}
                 onChange={(e) => {
-                  // simpan hanya angka dan tidak ada spasi
                   setNomorIndukKependudukan(
                     e.target.value.replace(/[^0-9]/g, "")
                   );
                 }}
-                autoFocus
                 required
-                disabled={loading}
                 color="primary"
+                inputProps={{ maxLength: 16 }}
+                InputProps={{
+                  endAdornment: nomorIndukKependudukan && (
+                    <InputAdornment
+                      position="end"
+                      sx={{
+                        fontWeight: "bold",
+                        // fontSize: "14px",
+                        letterSpacing: "1px",
+                        color: 'red',
+                      }}
+                    >
+                      {remaining === 0 ? (
+                        <Icon
+                          icon="line-md:check-all"
+                          fontSize={20}
+                          color={theme.palette.success.main}
+                        />
+                      ) : (
+                        remaining
+                      )}
+                    </InputAdornment>
+                  ),
+                }}
+                //tampilkan outline merah jika NIK belum 16 digit, tapi kalau belum diisi jangan tampilkan error outlinenya
+                error={nomorIndukKependudukan.length < 16 && nomorIndukKependudukan !== ""}
               />
             </Grid>
             <Grid size={6}>
@@ -672,6 +703,7 @@ const AddIdentity = ({
                   required
                   disabled={loading}
                   color="primary"
+                  inputProps={{ maxLength: 3 }}
                 />
               </Grid>
               <Grid size={6}>
@@ -688,6 +720,7 @@ const AddIdentity = ({
                   required
                   disabled={loading}
                   color="primary"
+                  inputProps={{ maxLength: 3 }}
                 />
               </Grid>
             </Grid>

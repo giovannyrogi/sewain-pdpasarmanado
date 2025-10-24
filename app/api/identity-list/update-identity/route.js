@@ -35,9 +35,128 @@ export async function PUT(req) {
     const notes = formData.get("notes");
     const status = formData.get("status");
 
+    // validasi field wajib
+    if (!nik) {
+      return Response.json(
+        { success: false, message: "NIK wajib diisi!" },
+        { status: 400 }
+      );
+    }
+
+    if (!full_name) {
+      return Response.json(
+        { success: false, message: "Nama Lengkap wajib diisi!" },
+        { status: 400 }
+      );
+    }
+
     if (!id) {
       return Response.json(
         { success: false, message: "ID data tidak ditemukan." },
+        { status: 400 }
+      );
+    }
+
+    if (!status) {
+      return Response.json(
+        { success: false, message: "Status wajib diisi!" },
+        { status: 400 }
+      );
+    }
+
+    if (!phone) {
+      return Response.json(
+        { success: false, message: "Nomor Telepon wajib diisi!" },
+        { status: 400 }
+      );
+    }
+
+    if (!street_address) {
+      return Response.json(
+        { success: false, message: "Alamat wajib diisi!" },
+        { status: 400 }
+      );
+    }
+
+    if (!province) {
+      return Response.json(
+        { success: false, message: "Provinsi wajib diisi!" },
+        { status: 400 }
+      );
+    }
+
+    if (!city) {
+      return Response.json(
+        { success: false, message: "Kota wajib diisi!" },
+        { status: 400 }
+      );
+    }
+
+    if (!district) {
+      return Response.json(
+        { success: false, message: "Kecamatan wajib diisi!" },
+        { status: 400 }
+      );
+    }
+
+    if (!kelurahan) {
+      return Response.json(
+        { success: false, message: "Kelurahan wajib diisi!" },
+        { status: 400 }
+      );
+    }
+
+    if (!birth_date) {
+      return Response.json(
+        { success: false, message: "Tanggal Lahir wajib diisi!" },
+        { status: 400 }
+      );
+    }
+
+    if (!birth_place) {
+      return Response.json(
+        { success: false, message: "Tempat Lahir wajib diisi!" },
+        { status: 400 }
+      );
+    }
+
+    if (!religion) {
+      return Response.json(
+        { success: false, message: "Agama wajib diisi!" },
+        { status: 400 }
+      );
+    }
+
+    if (!occupation) {
+      return Response.json(
+        { success: false, message: "Pekerjaan wajib diisi!" },
+        { status: 400 }
+      );
+    }
+
+    if (!nationality) {
+      return Response.json(
+        { success: false, message: "Warga Negara wajib diisi!" },
+        { status: 400 }
+      );
+    }
+
+    // Validasi NIK tidak boleh sama
+    const checkNIK = await pool.query(
+      `SELECT id FROM tenant_identities WHERE nik = $1 AND id != $2 LIMIT 1;`,
+      [nik, id]
+    );
+    if (checkNIK.rows.length > 0) {
+      return Response.json(
+        { success: false, message: "NIK sudah terdaftar!" },
+        { status: 400 }
+      );
+    }
+
+    // Validasi NIK harus 16 Digit
+    if (nik.length !== 16) {
+      return Response.json(
+        { success: false, message: "Nomor NIK tidak valid, harus 16 digit!" },
         { status: 400 }
       );
     }

@@ -34,19 +34,108 @@ export async function POST(req) {
 
     const ktpFile = formData.get("ktpFile");
 
-    if (
-      !nik ||
-      !full_name ||
-      !birth_place ||
-      !birth_date ||
-      !religion ||
-      !occupation ||
-      !nationality ||
-      !phone ||
-      !status
-    ) {
+    // validasi field wajib
+    if (!nik) {
       return Response.json(
-        { success: false, message: "Data wajib tidak lengkap." },
+        { success: false, message: "NIK wajib diisi!" },
+        { status: 400 }
+      );
+    }
+
+    if (!full_name) {
+      return Response.json(
+        { success: false, message: "Nama Lengkap wajib diisi!" },
+        { status: 400 }
+      );
+    }
+
+    if (!status) {
+      return Response.json(
+        { success: false, message: "Status wajib diisi!" },
+        { status: 400 }
+      );
+    }
+
+    if (!phone) {
+      return Response.json(
+        { success: false, message: "Nomor Telepon wajib diisi!" },
+        { status: 400 }
+      );
+    }
+
+    if (!street_address) {
+      return Response.json(
+        { success: false, message: "Alamat wajib diisi!" },
+        { status: 400 }
+      );
+    }
+
+    if (!province) {
+      return Response.json(
+        { success: false, message: "Provinsi wajib diisi!" },
+        { status: 400 }
+      );
+    }
+
+    if (!city) {
+      return Response.json(
+        { success: false, message: "Kota wajib diisi!" },
+        { status: 400 }
+      );
+    }
+
+    if (!district) {
+      return Response.json(
+        { success: false, message: "Kecamatan wajib diisi!" },
+        { status: 400 }
+      );
+    }
+
+    if (!kelurahan) {
+      return Response.json(
+        { success: false, message: "Kelurahan wajib diisi!" },
+        { status: 400 }
+      );
+    }
+
+    if (!ktpFile) {
+      return Response.json(
+        { success: false, message: "Silahkan upload KTP!" },
+        { status: 400 }
+      );
+    }
+
+    if (!birth_date) {
+      return Response.json(
+        { success: false, message: "Tanggal Lahir wajib diisi!" },
+        { status: 400 }
+      );
+    }
+
+    if (!birth_place) {
+      return Response.json(
+        { success: false, message: "Tempat Lahir wajib diisi!" },
+        { status: 400 }
+      );
+    }
+
+    if (!religion) {
+      return Response.json(
+        { success: false, message: "Agama wajib diisi!" },
+        { status: 400 }
+      );
+    }
+
+    if (!occupation) {
+      return Response.json(
+        { success: false, message: "Pekerjaan wajib diisi!" },
+        { status: 400 }
+      );
+    }
+
+    if (!nationality) {
+      return Response.json(
+        { success: false, message: "Warga Negara wajib diisi!" },
         { status: 400 }
       );
     }
@@ -59,6 +148,14 @@ export async function POST(req) {
     if (checkNIK.rows.length > 0) {
       return Response.json(
         { success: false, message: "NIK sudah terdaftar!" },
+        { status: 400 }
+      );
+    }
+
+    // Validasi NIK harus 16 Digit
+    if (nik.length !== 16) {
+      return Response.json(
+        { success: false, message: "Nomor NIK tidak valid, harus 16 digit!" },
         { status: 400 }
       );
     }
@@ -213,7 +310,6 @@ export async function GET(req) {
       city: row.city,
       province: row.province,
       postal_code: row.postal_code,
-      
 
       updated_at: row.updated_at
         ? moment(row.updated_at).format("YYYY-MM-DD HH:mm:ss")
