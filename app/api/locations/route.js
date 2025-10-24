@@ -7,6 +7,88 @@ export async function POST(req) {
     const body = await req.json();
     const { location_name, city, street_address, location_code, kelurahan, district, province } = body;
 
+    // Validasi field wajib
+    if (!location_name) {
+      return new Response(
+        JSON.stringify({ success: false, message: "Semua field wajib diisi!" }),
+        { status: 400 }
+      );
+    }
+
+    if (!city) {
+      return new Response(
+        JSON.stringify({ success: false, message: "Semua field wajib diisi!" }),
+        { status: 400 }
+      );
+    }
+
+    if (!street_address) {
+      return new Response(
+        JSON.stringify({ success: false, message: "Semua field wajib diisi!" }),
+        { status: 400 }
+      );
+    }
+
+    if (!location_code) {
+      return new Response(
+        JSON.stringify({ success: false, message: "Semua field wajib diisi!" }),
+        { status: 400 }
+      );
+    }
+
+    if (!kelurahan) {
+      return new Response(
+        JSON.stringify({ success: false, message: "Semua field wajib diisi!" }),
+        { status: 400 }
+      );
+    }
+
+    if (!district) {
+      return new Response(
+        JSON.stringify({ success: false, message: "Semua field wajib diisi!" }),
+        { status: 400 }
+      );
+    }
+
+    if (!province) {
+      return new Response(
+        JSON.stringify({ success: false, message: "Semua field wajib diisi!" }),
+        { status: 400 }
+      );
+    }
+
+    // Cek duplikasi Nama Lokasi
+    const checkUser = await pool.query(
+      `SELECT 1 FROM locations WHERE location_name = $1`,
+      [location_name]
+    );
+    if (checkUser.rows.length > 0) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: "Lokasi sudah terdaftar!",
+        }),
+        { status: 400 }
+      );
+    }
+
+    // Cek duplikasi Kode Lokasi
+    const checkCode = await pool.query(
+      `SELECT 1 FROM locations WHERE location_code = $1`,
+      [location_code]
+    );
+    if (checkCode.rows.length > 0) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: "Kode lokasi sudah terdaftar!",
+        }),
+        { status: 400 }
+      );
+    }
+
+
+
     const result = await pool.query(
       `INSERT INTO locations (location_name, city, street_address, location_code, kelurahan, district, province)
        VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,

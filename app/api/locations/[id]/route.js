@@ -5,11 +5,105 @@ export async function PUT(request, { params }) {
   try {
     const { id } = await params; // id dari URL
     const body = await request.json(); // data dari body
-    const { location_name, city, street_address, location_code, province, district, kelurahan } = body;
+    const {
+      location_name,
+      city,
+      street_address,
+      location_code,
+      province,
+      district,
+      kelurahan,
+    } = body;
+
+    // Validasi field wajib
+    if (!location_name) {
+      return new Response(
+        JSON.stringify({ success: false, message: "Semua field wajib diisi!" }),
+        { status: 400 }
+      );
+    }
+
+    if (!city) {
+      return new Response(
+        JSON.stringify({ success: false, message: "Semua field wajib diisi!" }),
+        { status: 400 }
+      );
+    }
+
+    if (!street_address) {
+      return new Response(
+        JSON.stringify({ success: false, message: "Semua field wajib diisi!" }),
+        { status: 400 }
+      );
+    }
+
+    if (!location_code) {
+      return new Response(
+        JSON.stringify({ success: false, message: "Semua field wajib diisi!" }),
+        { status: 400 }
+      );
+    }
+
+    if (!kelurahan) {
+      return new Response(
+        JSON.stringify({ success: false, message: "Semua field wajib diisi!" }),
+        { status: 400 }
+      );
+    }
+
+    if (!district) {
+      return new Response(
+        JSON.stringify({ success: false, message: "Semua field wajib diisi!" }),
+        { status: 400 }
+      );
+    }
+
+    if (!province) {
+      return new Response(
+        JSON.stringify({ success: false, message: "Semua field wajib diisi!" }),
+        { status: 400 }
+      );
+    }
+
+    // Cek duplikasi Nama Lokasi
+    const checkUser = await pool.query(
+      `SELECT 1 FROM locations WHERE location_name = $1 AND id != $2`,
+      [location_name, id]
+    );
+    if (checkUser.rows.length > 0) {
+      return new Response(
+        JSON.stringify({ success: false, message: "Lokasi sudah terdaftar!" }),
+        { status: 400 }
+      );
+    }
+
+    // Cek duplikasi Kode Lokasi
+    const checkCode = await pool.query(
+      `SELECT 1 FROM locations WHERE location_code = $1 AND id != $2`,
+      [location_code, id]
+    );
+    if (checkCode.rows.length > 0) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: "Kode lokasi sudah terdaftar!",
+        }),
+        { status: 400 }
+      );
+    }
 
     const result = await pool.query(
       `UPDATE locations SET location_name=$1, city=$2, street_address=$3 , location_code=$5, province=$6, district=$7, kelurahan=$8 WHERE id=$4 RETURNING *`,
-      [location_name, city, street_address, id, location_code, province, district, kelurahan]
+      [
+        location_name,
+        city,
+        street_address,
+        id,
+        location_code,
+        province,
+        district,
+        kelurahan,
+      ]
     );
 
     return new Response(

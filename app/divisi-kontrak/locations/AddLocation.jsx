@@ -155,8 +155,8 @@ const AddLocation = ({
             message: response.data.message || "Lokasi berhasil ditambahkan!",
             severity: "success",
           });
-        setTimeout(() => {
           getLocationsData();
+        setTimeout(() => {
           onClose();
           loadingFalse();
           clearForm();
@@ -177,7 +177,7 @@ const AddLocation = ({
       onNotify &&
         onNotify({
           open: true,
-          message: error.message || "Terjadi error saat menambah lokasi.",
+          message: error.response.data.message || "Terjadi error saat menambah lokasi.",
           severity: "error",
         });
       setTimeout(() => {

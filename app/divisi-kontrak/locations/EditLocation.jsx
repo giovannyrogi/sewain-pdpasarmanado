@@ -143,8 +143,8 @@ const EditLocation = ({
             message: response.data.message || "Lokasi berhasil diubah!",
             severity: "success",
           });
+        getLocationsData();
         setTimeout(() => {
-          getLocationsData();
           onClose();
           loadingFalse();
         }, 1000);
@@ -163,7 +163,9 @@ const EditLocation = ({
       onNotify &&
         onNotify({
           open: true,
-          message: error.message || "Terjadi error saat mengubah lokasi.",
+          message:
+            error.response.data.message ||
+            "Terjadi error saat mengubah lokasi.",
           severity: "error",
         });
       setTimeout(() => {
