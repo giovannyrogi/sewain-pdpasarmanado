@@ -2,7 +2,7 @@ import PeopleIcon from "@mui/icons-material/People";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import { Icon } from "@iconify/react";
 
-const menuSuperadmin = [
+const menuSuperAdmin = [
   {
     label: "Dashboard",
     value: "dashboard",
@@ -12,27 +12,20 @@ const menuSuperadmin = [
   {
     label: "Data Master",
     value: "dataMaster",
-    icon: <Icon icon="material-symbols:database" fontSize={20} />,
+    icon: <Icon icon="material-symbols:database" fontSize="20px" />,
     submenu: [
-      {
-        label: "Roles",
-        value: "roles",
-        path: "/superadmin/roles",
-        icon: <Icon icon="oui:app-users-roles" fontSize="20px" />,
-        showIcon: true,
-      },
-      {
-        label: "Users",
-        value: "users",
-        path: "/superadmin/users",
-        icon: <Icon icon="streamline-plump:user-pin" fontSize="20px" />,
-        showIcon: true,
-      },
       {
         label: "Locations",
         value: "locations",
         path: "/superadmin/locations",
         icon: <Icon icon="mdi:location-radius-outline" fontSize="20px" />,
+        showIcon: true,
+      },
+      {
+        label: "Floor",
+        value: "floor",
+        path: "/superadmin/floor",
+        icon: <Icon icon="ion:pricetags-outline" fontSize="20px" />,
         showIcon: true,
       },
       {
@@ -42,12 +35,19 @@ const menuSuperadmin = [
         icon: <Icon icon="cil:room" fontSize="20px" />,
         showIcon: true,
       },
+      {
+        label: "Identity Lists",
+        value: "identity-lists",
+        path: "/superadmin/identity-lists",
+        icon: <Icon icon="qlementine-icons:id-card-16" fontSize="20px" />,
+        showIcon: true,
+      },
     ],
   },
   {
     label: "Transactions",
     value: "transactions",
-    icon: <Icon icon="healthicons:money-bag" fontSize={22} />,
+    icon: <Icon icon="healthicons:money-bag" fontSize="20px" />,
     submenu: [
       {
         label: "Tenant Application",
@@ -57,17 +57,10 @@ const menuSuperadmin = [
         showIcon: true,
       },
       {
-        label: "Tenant Approval",
-        value: "tenant-approval",
-        path: "/superadmin/tenant-approval",
-        icon: <Icon icon="carbon:document-set" fontSize="20px" />,
-        showIcon: true,
-      },
-      {
-        label: "Documents",
-        value: "documents",
-        path: "/superadmin/documents",
-        icon: <Icon icon="f7:doc-on-doc" fontSize="20px" />,
+        label: "Tenant Terminations",
+        value: "tenant-terminations",
+        path: "/superadmin/tenant-terminations",
+        icon: <Icon icon="pepicons-pop:lock-closed-circle" fontSize="20px" />,
         showIcon: true,
       },
       {
@@ -89,27 +82,26 @@ const menuSuperadmin = [
     ],
   },
   {
-    label: "Report",
-    value: "report",
-    icon: <Icon icon="line-md:document-report-twotone" fontSize={23} />,
+    label: "Reports",
+    value: "reports",
+    icon: <Icon icon="fluent:chart-multiple-16-filled" fontSize={23} />,
     submenu: [
       {
-        label: "Laporan 1",
-        value: "laporan1",
-        path: "/superadmin/laporan1",
-        icon: <LocationOnIcon />,
-        showIcon: false,
+        label: "Report By Locations",
+        value: "locations-report",
+        path: "/superadmin/locations-report",
+        icon: <Icon icon="ant-design:pie-chart-filled" fontSize="20px" />,
+        showIcon: true,
       },
       {
-        label: "Laporan 2",
-        value: "laporan2",
-        path: "/superadmin/laporan2",
-        icon: <PeopleIcon />,
-        showIcon: false,
+        label: "Report By Tenants",
+        value: "tenants-report",
+        path: "/superadmin/tenants-report",
+        icon: <Icon icon="bi:bar-chart-fill" fontSize="18px" />,
+        showIcon: true,
       },
     ],
   },
-  // Tambahkan menu lain jika perlu
 ];
 
-export default menuSuperadmin;
+export default menuSuperAdmin;

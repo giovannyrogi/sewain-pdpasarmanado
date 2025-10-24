@@ -5,7 +5,7 @@ export async function PUT(request, { params }) {
   try {
     const { id } = await params; // id dari URL
     const body = await request.json(); // data dari body
-    const { location_id, floor, base_price } = body;
+    const { location_id, floor } = body;
 
     // validasi field wajib
     if (!location_id) {
@@ -22,12 +22,12 @@ export async function PUT(request, { params }) {
       );
     }
 
-    if (base_price < 0) {
-      return new Response(
-        JSON.stringify({ success: false, message: "Harga wajib diisi!" }),
-        { status: 200 }
-      );
-    }
+    // if (base_price < 0) {
+    //   return new Response(
+    //     JSON.stringify({ success: false, message: "Harga wajib diisi!" }),
+    //     { status: 200 }
+    //   );
+    // }
 
     // validasi apakah lantai sudah terdaftar pada lokasi yang dipilih tapi kalau datanya sama tidak perlu update
     const checkFloor = await pool.query(
@@ -47,10 +47,10 @@ export async function PUT(request, { params }) {
     // Lakukan update
     const result = await pool.query(
       `UPDATE location_floor_prices
-       SET location_id=$1, floor=$2, base_price=$3, updated_at=NOW()
-       WHERE id=$4
+       SET location_id=$1, floor=$2
+       WHERE id=$3
        RETURNING *`,
-      [location_id, floor, base_price, id]
+      [location_id, floor, id]
     );
 
     if (result.rows.length === 0) {

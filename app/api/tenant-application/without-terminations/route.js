@@ -43,7 +43,6 @@ export async function GET(req) {
         r.room_width,
         r.price_per_m2,
         r.room_area,
-        f.base_price,
         f.floor
       FROM tenant_application ta
       JOIN tenant_identities ti ON ta.tenant_identity_id = ti.id
@@ -105,7 +104,6 @@ export async function GET(req) {
       room_area: row.room_area,
       price_per_m2: row.price_per_m2,
       current_step: row.current_step,
-      base_price: row.base_price,
       floor: row.floor,
 
       created_at: moment(row.created_at).format("D MMMM YYYY"),

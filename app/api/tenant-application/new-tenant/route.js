@@ -32,11 +32,11 @@ export async function GET(req) {
       FROM tenant_identities ti
       WHERE 
         ti.status = 'active'
-        AND NOT EXISTS (
-          SELECT 1
-          FROM tenant_application ta
-          WHERE ta.tenant_identity_id = ti.id
-        )
+        // AND NOT EXISTS (
+        //   SELECT 1
+        //   FROM tenant_application ta
+        //   WHERE ta.tenant_identity_id = ti.id
+        // )
       ORDER BY ti.created_at DESC
       `
     );

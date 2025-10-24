@@ -25,8 +25,7 @@ export async function GET(req) {
           rooms.created_at,
           rooms.location_id,
           locations.location_name,
-          location_floor_prices.floor,           
-          location_floor_prices.base_price
+          location_floor_prices.floor           
         FROM rooms
         JOIN locations ON rooms.location_id = locations.id
         LEFT JOIN location_floor_prices 
@@ -54,8 +53,7 @@ export async function GET(req) {
           rooms.created_at,
           rooms.location_id,
           locations.location_name,
-          location_floor_prices.floor,            
-          location_floor_prices.base_price        
+          location_floor_prices.floor       
         FROM rooms
         JOIN locations ON rooms.location_id = locations.id
         LEFT JOIN location_floor_prices 
@@ -77,7 +75,6 @@ export async function GET(req) {
       price_per_m2: row.price_per_m2,
       floor_id: row.floor_id,
       floor: row.floor,
-      base_price: row.base_price,
       status: row.status, 
       updated_at: row.updated_at
         ? moment(row.updated_at).format("YYYY-MM-DD HH:mm:ss")

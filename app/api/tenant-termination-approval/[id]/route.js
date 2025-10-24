@@ -4,7 +4,7 @@ import moment from "moment";
 export async function PUT(request, { params }) {
   const client = await pool.connect();
   try {
-    const { id } = params; // id tenant_termination_approval
+    const { id } = await params; // id tenant_termination_approval
     const body = await request.json();
     const {
       tenant_early_termination_id,
@@ -13,6 +13,66 @@ export async function PUT(request, { params }) {
       room_id,
       tenant_identity_id,
     } = body;
+
+    console.log("id", id);
+    console.log("tenant_early_termination_id", tenant_early_termination_id);
+    console.log("status", status);
+    console.log('approver_id', approver_id);
+    console.log('room_id', room_id);
+    console.log("tenant_identity_id", tenant_identity_id);
+
+    // --- Validasi input approver_id ---
+    if (!approver_id) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: "approver_id wajib diisi",
+        }),
+        { status: 400 }
+      );
+    }
+    
+
+    // --- Validasi id tenant_termination_approval ---
+    if (!id) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: "id wajib diisi",
+        }),
+        { status: 400 }
+      );
+    }
+
+    // --- Validasi input tenant_identity_id ---
+    if (!tenant_identity_id) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: "tenant_identity_id wajib diisi",
+        }),
+        { status: 400 }
+      );
+    }
+
+    // --- Validasi input status ---
+    if (!["approved", "rejected"].includes(status)) {
+      return new Response(
+        JSON.stringify({ success: false, message: "Status tidak valid" }),
+        { status: 400 }
+      );
+    }
+
+    // --- Validasi input tenant_early_termination_id ---
+    if (!tenant_early_termination_id) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: "tenant_early_termination_id wajib diisi",
+        }),
+        { status: 400 }
+      );
+    }
 
     // --- Ambil data approval yang akan diupdate ---
     const approvalRes = await client.query(

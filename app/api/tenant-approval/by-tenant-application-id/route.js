@@ -50,8 +50,7 @@ export async function GET(req) {
         rm.room_width,
         rm.room_area,
         rm.price_per_m2,
-        lfp.floor,
-        lfp.base_price
+        lfp.floor
       FROM tenant_approval ta
       JOIN roles r ON ta.role_id = r.id
       LEFT JOIN users u ON ta.approver_id = u.id

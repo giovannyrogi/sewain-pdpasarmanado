@@ -16,6 +16,76 @@ export async function POST(req) {
       notes,
     } = body;
 
+    // Validasi field wajib
+    if (!location_id) {
+      return new Response(
+        JSON.stringify({ success: false, message: "Lokasi wajib diisi!" }),
+        { status: 400 }
+      );
+    }
+
+    if (!floor_id) {
+      return new Response(
+        JSON.stringify({ success: false, message: "Lantai wajib diisi!" }),
+        { status: 400 }
+      );
+    }
+
+    if (!room_number) {
+      return new Response(
+        JSON.stringify({ success: false, message: "Nomor kamar wajib diisi!" }),
+        { status: 400 }
+      );
+    }
+
+    if (!room_length || !room_width) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: "Panjang dan lebar kamar wajib diisi!",
+        }),
+        { status: 400 }
+      );
+    }
+
+    if (!status) {
+      return new Response(
+        JSON.stringify({ success: false, message: "Status wajib diisi!" }),
+        { status: 400 }
+      );
+    }
+
+    if (price_per_m2 < 0) {
+      return new Response(
+        JSON.stringify({ success: false, message: "Harga wajib diisi!" }),
+        { status: 400 }
+      );
+    }
+
+    if (notes) {
+      if (notes.length > 150) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            message: "Notes maksimal 150 karakter!",
+          }),
+          { status: 400 }
+        );
+      }
+    }
+
+    // Validasi apakah nomor kamar sudah terdaftar pada lokasi yang dipilih
+    const checkRoom = await pool.query(
+      `SELECT * FROM rooms WHERE location_id=$1 AND room_number=$2`,
+      [location_id, room_number]
+    );
+    if (checkRoom.rows.length > 0) {
+      return new Response(
+        JSON.stringify({ success: false, message: "Nomor ruangan sudah terdaftar pada lokasi yang dipilih!" }),
+        { status: 400 }
+      );
+    }
+
     const result = await pool.query(
       `INSERT INTO rooms 
        (location_id, room_number, floor_id, room_length, room_width, price_per_m2, status, notes)
@@ -43,7 +113,6 @@ export async function POST(req) {
     );
   } catch (err) {
     console.log(err, "err");
-
     return new Response(
       JSON.stringify({ success: false, message: err.message }),
       { status: 500 }
@@ -69,8 +138,7 @@ export async function GET(req) {
          r.notes,
          l.location_name,
          f.id AS floor_id,
-         f.floor AS room_floor,
-         f.base_price
+         f.floor AS room_floor
       FROM rooms r
       JOIN locations l ON r.location_id = l.id
       LEFT JOIN location_floor_prices f 
@@ -91,7 +159,6 @@ export async function GET(req) {
       price_per_m2: row.price_per_m2, 
       floor_id: row.floor_id,
       room_floor: row.room_floor,
-      base_price: row.base_price,
       status: row.status,
       updated_at: row.updated_at
         ? moment(row.updated_at).format("YYYY-MM-DD HH:mm:ss")

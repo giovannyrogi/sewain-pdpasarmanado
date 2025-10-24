@@ -25,6 +25,27 @@ const menuDivisiKeuangan = [
       },
     ],
   },
+  {
+    label: "Reports",
+    value: "reports",
+    icon: <Icon icon="fluent:chart-multiple-16-filled" fontSize={23} />,
+    submenu: [
+      {
+        label: "Report By Locations",
+        value: "locations-report",
+        path: "/divisi-keuangan/locations-report",
+        icon: <Icon icon="ant-design:pie-chart-filled" fontSize="20px" />,
+        showIcon: true,
+      },
+      {
+        label: "Report By Tenants",
+        value: "tenants-report",
+        path: "/divisi-keuangan/tenants-report",
+        icon: <Icon icon="bi:bar-chart-fill" fontSize="18px" />,
+        showIcon: true,
+      },
+    ],
+  },
 ];
 
 export default menuDivisiKeuangan;

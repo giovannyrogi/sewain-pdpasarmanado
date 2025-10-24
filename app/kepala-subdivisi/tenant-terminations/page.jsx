@@ -18,15 +18,16 @@ import axios from "axios";
 import formatRupiah from "@/app/components/formatrupiah/page";
 import { useUser } from "@/app/utils/useUser";
 import { useReactToPrint } from "react-to-print";
+import InformationPreviewModal from "@/app/components/informationpreviewmodal/page";
 import menuDevisiKontrak from "@/app/components/menu/MenuItemDivisiKontrak";
 import BreadcrumbPage from "@/app/components/breadcrumb/page";
-import menuKepalaSeksi from "@/app/components/menu/MenuItemKepalaSeksi";
+import TenantTerminationsModal from "./TenantTerminationsModal";
+import DetailTenantApplicationModal from "@/app/components/tenantapplicationmodal/DetailTenantApplicationModal";
 import TerminationReasonModal from "@/app/components/terminationreasonmodal/TerminationReasonModal";
 import TerminationApprovalModal from "@/app/components/approvalmodal/TerminationApprovalModal";
+import CancelTenantTermination from "./CancelTenantTermination";
 import TenantTerminationApprovalModal from "@/app/components/tenant-termination-approval-modal/TenantTerminationApprovalModal";
-import menuItemDirekturUtama from "@/app/components/menu/MenuItemDirekturUtama";
-import menuKepalaDivisi from "@/app/components/menu/MenuItemKepalaDivisi";
-import TenantRejectTerminationModal from "@/app/components/tenant-termination-approval-modal/TenantRejectTerminationModal";
+import PreviewTenantInformationModal from "@/app/components/tenant-termination-modal/PreviewTenantInformationModal";
 
 const TenantTerminations = () => {
   const user = useUser();
@@ -61,14 +62,8 @@ const TenantTerminations = () => {
   const getDataTenantTerminations = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(
-        `/api/tenant-termination-approval/by-role`,
-        {
-          params: { role_id: user.role_id },
-        }
-      );
-
-      console.log("tenant terminations approval", response);
+      const response = await axios.get("/api/tenant-terminations");
+      console.log("tenant terminations", response);
       setDataTenantTerminations(response.data.data);
       setTimeout(() => {
         setLoading(false);
@@ -87,10 +82,34 @@ const TenantTerminations = () => {
     }
   }, [user]);
 
+  const filteredData = dataTenantTerminations.filter((item) => {
+    // const isAvailableText =
+    //   item.is_available === true
+    //     ? "tersedia"
+    //     : item.is_available === false
+    //     ? "tidak tersedia"
+    //     : "";
+
+    return (
+      item.tenant_name?.toLowerCase().includes(searchText.toLowerCase()) ||
+      item.location_name?.toLowerCase().includes(searchText.toLowerCase()) ||
+      item.payment_type?.toLowerCase().includes(searchText.toLowerCase()) ||
+      item.room_number?.toLowerCase().includes(searchText.toLowerCase()) ||
+      item.down_payment?.toLowerCase().includes(searchText.toLowerCase()) ||
+      item.total_payment?.toLowerCase().includes(searchText.toLowerCase()) ||
+      item.remaining_payment?.toLowerCase().includes(searchText.toLowerCase())
+    );
+  });
+
   const onChange = (pagination, filters, sorter, extra) => {
     if (pagination.pageSize !== pageSize) {
       setPageSize(pagination.pageSize);
     }
+  };
+
+  const handleCancel = (record) => {
+    setSelectedData(record);
+    setCancelTenantTerminationsModal(true);
   };
 
   const handleViewDetailInformation = (record) => {
@@ -109,12 +128,6 @@ const TenantTerminations = () => {
     // console.log("delete record", record);
     setSelectedData(record);
     setOpenInformationModal(true);
-  };
-
-  const handleReject = (record) => {
-    // console.log("delete record", record);
-    setSelectedData(record);
-    setCancelTenantTerminationsModal(true);
   };
 
   const handleTerminationApproval = (record) => {
@@ -144,20 +157,6 @@ const TenantTerminations = () => {
     dataTenantTerminations,
     "payment_type"
   );
-
-  const approvalStatusFilters = [
-    { text: "Dalam Proses", value: "proses" },
-    { text: "Ditolak", value: "rejected" },
-    { text: "Disetujui", value: "approved" },
-  ];
-
-  const filteredData = dataTenantTerminations.filter((item) => {
-    return (
-      item.tenant_name?.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.location_name?.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.room_number?.toLowerCase().includes(searchText.toLowerCase())
-    );
-  });
 
   const columns = [
     {
@@ -195,11 +194,6 @@ const TenantTerminations = () => {
       filterSearch: true,
       sorter: (a, b) => a.location_name.localeCompare(b.location_name),
       sortDirections: ["ascend", "descend"],
-      render: (text, record) => (
-        <Typography sx={{ fontSize: "12px" }}>
-          {record.location_name}
-        </Typography>
-      ),
       width: 200,
     },
     {
@@ -207,9 +201,18 @@ const TenantTerminations = () => {
       dataIndex: "room_number",
       sorter: (a, b) => a.room_number.localeCompare(b.room_number),
       sortDirections: ["ascend", "descend"],
-      render: (text, record) => (
-        <Typography sx={{ fontSize: "12px" }}>{record.room_number}</Typography>
-      ),
+      render: (text, record) => {
+        return (
+          <Tag
+            // warna random berdasarkan angka ganjil genap
+            color={record.id % 2 === 0 ? "pink" : "geekblue"}
+            key={record.termination_id}
+            style={{ fontWeight: "bold" }}
+          >
+            {record.room_number}
+          </Tag>
+        );
+      },
       width: 120,
     },
     {
@@ -217,6 +220,7 @@ const TenantTerminations = () => {
       dataIndex: "reason",
       render: (text, record) => (
         <Tag
+          // warna random berdasarkan angka ganjil genap
           color="lime"
           key={record.termination_id}
           style={{ fontWeight: "bold", cursor: "pointer", fontSize: "12px" }}
@@ -224,6 +228,17 @@ const TenantTerminations = () => {
         >
           Lihat Alasan Non-Aktif
         </Tag>
+        // <Typography
+        //   sx={{
+        //     // fontWeight: "bold",
+        //     fontSize: "13px",
+        //     // textTransform: "capitalize",
+        //     textAlign: "justify",
+        //   }}
+        //   onClick={() => handleViewReason(record)}
+        // >
+        //   {record.reason}
+        // </Typography>
       ),
       width: 150,
     },
@@ -240,8 +255,6 @@ const TenantTerminations = () => {
     {
       title: "Status Persetujuan",
       dataIndex: "termination_approval_status",
-      filters: approvalStatusFilters,
-      onFilter: createOnFilter("termination_approval_status"),
       filterSearch: true,
       render: (text, record) => {
         return (
@@ -271,7 +284,7 @@ const TenantTerminations = () => {
           </Tag>
         );
       },
-      width: 200,
+      width: 150,
     },
     {
       title: "Actions",
@@ -299,15 +312,13 @@ const TenantTerminations = () => {
               <Icon icon="mdi:smart-card-outline" fontSize={18} />
             </Button>
           </Tooltip>
-          {record.status === "approved" || record.status === "rejected" ? (
-            ""
-          ) : (
-            <Tooltip title="Tolak Permohonan Non-Aktif">
+          {record.termination_approval_status === "rejected" && (
+            <Tooltip title="Batal Non-Aktif">
               <Button
                 size="small"
                 variant={themeMode === "dark" ? "outlined" : "contained"}
                 color="error"
-                onClick={() => handleReject(record)}
+                onClick={() => handleCancel(record)}
                 sx={{ minWidth: 0, px: 1 }}
               >
                 <Icon icon="line-md:close-circle" fontSize={18} />
@@ -322,8 +333,35 @@ const TenantTerminations = () => {
   return (
     <Box sx={{ width: "100%", height: "100%", minHeight: "100%", p: 2 }}>
       {/* Component Breadcrumbs disini */}
-      <BreadcrumbPage menuList={menuKepalaSeksi} />
-
+      <BreadcrumbPage menuList={menuDevisiKontrak} />
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "flex-end",
+          transition: "all 0.3s",
+          mb: 2,
+          mt: 4,
+        }}
+      >
+        <Button
+          variant={themeMode === "dark" ? "outlined" : "contained"}
+          onClick={() => setOpenTenantTerminationsModal(true)}
+          sx={{
+            textTransform: "none",
+            display: "flex",
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 1,
+            fontWeight: "bold",
+          }}
+        >
+          Non-Aktifkan
+          <Icon icon="pepicons-pop:lock-closed-circle" fontSize="20px" />
+        </Button>
+      </Box>
       <ConfigProvider
         theme={{
           algorithm:
@@ -347,7 +385,6 @@ const TenantTerminations = () => {
             width: "100%",
             bgcolor: "background.default",
             overflowX: "auto",
-            mt: 5,
           }}
         >
           <Input.Search
@@ -374,9 +411,19 @@ const TenantTerminations = () => {
           />
         </Paper>
       </ConfigProvider>
-      <TenantTerminationApprovalModal
-        open={openTenantApprovalInformationModal}
-        onClose={() => setOpenTenantApprovalInformationModal(false)}
+      <TenantTerminationsModal
+        open={openTenantTerminationsModal}
+        onClose={() => setOpenTenantTerminationsModal(false)}
+        loadingTrue={() => setLoading(true)}
+        loadingFalse={() => setLoading(false)}
+        loading={loading}
+        onNotify={(notif) => setSnackbar(notif)}
+        getDataTenantTerminations={getDataTenantTerminations}
+        user={user}
+      />
+      <CancelTenantTermination
+        open={cancelTenantTerminationsModal}
+        onClose={() => setCancelTenantTerminationsModal(false)}
         selectedData={selectedData}
         loadingTrue={() => setLoading(true)}
         loadingFalse={() => setLoading(false)}
@@ -386,16 +433,16 @@ const TenantTerminations = () => {
         user={user}
         onNotify={(notif) => setSnackbar(notif)}
       />
-      <TenantRejectTerminationModal
-        open={cancelTenantTerminationsModal}
-        onClose={() => setCancelTenantTerminationsModal(false)}
-        loadingTrue={() => setLoading(true)}
-        loadingFalse={() => setLoading(false)}
-        loading={loading}
-        onNotify={(notif) => setSnackbar(notif)}
+      <InformationPreviewModal
+        open={openInformationModal}
+        onClose={() => setOpenInformationModal(false)}
         selectedData={selectedData}
-        getDataApprovals={getDataTenantTerminations}
-        user={user}
+        title="Preview Informasi Pemohon"
+      />
+      <PreviewTenantInformationModal
+        open={openTenantApprovalInformationModal}
+        onClose={() => setOpenTenantApprovalInformationModal(false)}
+        selectedData={selectedData}
       />
       <TerminationReasonModal
         open={openTerminationReasonModal}

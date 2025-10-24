@@ -58,7 +58,6 @@ export async function GET(req) {
         rm.price_per_m2,
 
         lfp.floor,
-        lfp.base_price,
 
         loc.location_name,
         loc.address AS location_address,

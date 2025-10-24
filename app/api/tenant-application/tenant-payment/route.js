@@ -41,7 +41,6 @@ export async function GET() {
       rm.room_area,
       rm.price_per_m2,
       lfp.floor,
-      lfp.base_price,
       loc.location_name,
       loc.street_address AS location_address,
       loc.city AS location_city,

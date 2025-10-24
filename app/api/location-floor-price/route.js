@@ -5,7 +5,7 @@ import moment from "moment";
 export async function POST(req) {
   try {
     const body = await req.json();
-    const { location_id, floor, base_price } = body;
+    const { location_id, floor } = body;
 
     // validasi field wajib
     if (!location_id) {
@@ -22,12 +22,12 @@ export async function POST(req) {
       );
     }
 
-    if (base_price < 0) {
-      return new Response(
-        JSON.stringify({ success: false, message: "Harga wajib diisi!" }),
-        { status: 200 }
-      );
-    }
+    // if (base_price < 0) {
+    //   return new Response(
+    //     JSON.stringify({ success: false, message: "Harga wajib diisi!" }),
+    //     { status: 200 }
+    //   );
+    // }
 
     // validasi apakah lantai sudah terdaftar pada lokasi yang dipilih
     const checkFloor = await pool.query(
@@ -45,8 +45,8 @@ export async function POST(req) {
     }
 
     const result = await pool.query(
-      `INSERT INTO location_floor_prices (location_id, floor, base_price) VALUES ($1, $2, $3) RETURNING *`,
-      [location_id, floor, base_price || 0]
+      `INSERT INTO location_floor_prices (location_id, floor) VALUES ($1, $2) RETURNING *`,
+      [location_id, floor]
     );
     return new Response(
       JSON.stringify({
@@ -73,7 +73,6 @@ export async function GET(req) {
         lfp.location_id,
         loc.location_name,
         lfp.floor,
-        lfp.base_price,
         lfp.created_at,
         lfp.updated_at
       FROM location_floor_prices lfp
@@ -86,7 +85,7 @@ export async function GET(req) {
       location_id: row.location_id,
       location_name: row.location_name,
       floor: row.floor,
-      base_price: row.base_price,
+      // base_price: row.base_price,
       updated_at: row.updated_at
         ? moment(row.updated_at).format("YYYY-MM-DD HH:mm:ss")
         : null,

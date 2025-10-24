@@ -139,7 +139,6 @@ export async function GET() {
         -- location floor prices
         lfp.id AS lfp_id,
         lfp.floor,
-        lfp.base_price,
 
         -- location
         loc.id AS location_id,
@@ -256,7 +255,6 @@ export async function GET() {
           location_floor_prices: {
             id: row.lfp_id,
             floor: row.floor,
-            base_price: row.base_price,
           },
           locations: {
             id: row.location_id,

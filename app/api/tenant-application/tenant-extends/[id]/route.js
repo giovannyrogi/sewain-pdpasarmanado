@@ -91,7 +91,7 @@ export async function GET(req, { params }) {
     if (rawRoom && rawRoom.floor_id) {
       const floorSql = `
         SELECT 
-          id, location_id, floor, base_price
+          id, location_id, floor
         FROM location_floor_prices
         WHERE id = $1
         LIMIT 1
@@ -107,7 +107,6 @@ export async function GET(req, { params }) {
             ? {
                 floor_id: floorData.id,
                 floor: floorData.floor,
-                base_price: floorData.base_price,
                 floor_location_id: floorData.location_id,
               }
             : {}),

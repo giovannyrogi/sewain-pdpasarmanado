@@ -10,10 +10,52 @@ const menuKepalaSubdivisi = [
     icon: <Icon icon="svg-spinners:blocks-scale" fontSize="20px" />,
   },
   {
+    label: "Data Master",
+    value: "dataMaster",
+    icon: <Icon icon="material-symbols:database" fontSize="20px" />,
+    submenu: [
+      {
+        label: "Locations",
+        value: "locations",
+        path: "/kepala-subdivisi/locations",
+        icon: <Icon icon="mdi:location-radius-outline" fontSize="20px" />,
+        showIcon: true,
+      },
+      {
+        label: "Floor",
+        value: "floor",
+        path: "/kepala-subdivisi/floor",
+        icon: <Icon icon="ion:pricetags-outline" fontSize="20px" />,
+        showIcon: true,
+      },
+      {
+        label: "Rooms",
+        value: "rooms",
+        path: "/kepala-subdivisi/rooms",
+        icon: <Icon icon="cil:room" fontSize="20px" />,
+        showIcon: true,
+      },
+      {
+        label: "Identity Lists",
+        value: "identity-lists",
+        path: "/kepala-subdivisi/identity-lists",
+        icon: <Icon icon="qlementine-icons:id-card-16" fontSize="20px" />,
+        showIcon: true,
+      },
+    ],
+  },
+  {
     label: "Transactions",
     value: "transactions",
     icon: <Icon icon="healthicons:money-bag" fontSize={22} />,
     submenu: [
+      {
+        label: "Tenant Application",
+        value: "tenant-application",
+        path: "/kepala-subdivisi/tenant-application",
+        icon: <Icon icon="hugeicons:file-edit" fontSize="20px" />,
+        showIcon: true,
+      },
       {
         label: "Tenant Approval",
         value: "tenant-approval",
@@ -24,8 +66,24 @@ const menuKepalaSubdivisi = [
       {
         label: "Tenant Terminations",
         value: "tenant-terminations",
-        path: "/kepala-subdivisi/tenant-terminations",
+        path: "/kepala-subdivisi/tenant-termination",
         icon: <Icon icon="pepicons-pop:lock-closed-circle" fontSize="20px" />,
+        showIcon: true,
+      },
+      {
+        label: "Termination Approval",
+        value: "tenant-terminations-approval",
+        path: "/kepala-subdivisi/tenant-termination-approval",
+        icon: <Icon icon="pepicons-pop:lock-closed-circle" fontSize="20px" />,
+        showIcon: true,
+      },
+      {
+        label: "Payments",
+        value: "payments",
+        path: "/kepala-subdivisi/payments",
+        icon: (
+          <Icon icon="streamline-freehand:money-atm-withdraw" fontSize="20px" />
+        ),
         showIcon: true,
       },
       {
@@ -38,23 +96,23 @@ const menuKepalaSubdivisi = [
     ],
   },
   {
-    label: "Report",
-    value: "report",
-    icon: <Icon icon="line-md:document-report-twotone" fontSize={23} />,
+    label: "Reports",
+    value: "reports",
+    icon: <Icon icon="fluent:chart-multiple-16-filled" fontSize={23} />,
     submenu: [
       {
-        label: "Laporan 1",
-        value: "laporan1",
-        path: "/kepala-subdivisi/laporan1",
-        icon: <LocationOnIcon />,
-        showIcon: false,
+        label: "Report By Locations",
+        value: "locations-report",
+        path: "/kepala-subdivisi/locations-report",
+        icon: <Icon icon="ant-design:pie-chart-filled" fontSize="20px" />,
+        showIcon: true,
       },
       {
-        label: "Laporan 2",
-        value: "laporan2",
-        path: "/kepala-subdivisi/laporan2",
-        icon: <PeopleIcon />,
-        showIcon: false,
+        label: "Report By Tenants",
+        value: "tenants-report",
+        path: "/kepala-subdivisi/tenants-report",
+        icon: <Icon icon="bi:bar-chart-fill" fontSize="18px" />,
+        showIcon: true,
       },
     ],
   },

@@ -250,10 +250,10 @@ const EditRoom = ({
                 options={dataFloor || []}
                 getOptionLabel={(option) =>
                   option.floor
-                    ? option.floor +
-                      " " +
-                      `(${formatRupiah(option.base_price)})`
-                    : ""
+                    // ? option.floor +
+                    //   " " +
+                    //   `(${formatRupiah(option.base_price)})`
+                    // : ""
                 }
                 value={
                   dataFloor
@@ -285,6 +285,21 @@ const EditRoom = ({
                 required
                 disabled={loading}
                 color="primary"
+                // prefix = "No. "
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment
+                      position="start"
+                      sx={{
+                        whiteSpace: "nowrap",
+                        fontSize: "14px",
+                      }}
+                      align="center"
+                    >
+                      No.
+                    </InputAdornment>
+                  ),
+                }}
               />
             </Grid>
             <Grid size={6}>

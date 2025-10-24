@@ -312,7 +312,7 @@ const TenantTerminations = () => {
               <Icon icon="mdi:smart-card-outline" fontSize={18} />
             </Button>
           </Tooltip>
-          {record.termination_approval_status !== "approved" && (
+          {record.termination_approval_status === "rejected" && (
             <Tooltip title="Batal Non-Aktif">
               <Button
                 size="small"

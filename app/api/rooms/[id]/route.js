@@ -4,7 +4,7 @@ import moment from "moment";
 export async function PUT(request, { params }) {
   const client = await pool.connect();
   try {
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
     const {
       location_id,
@@ -16,6 +16,90 @@ export async function PUT(request, { params }) {
       price_per_m2,
       notes,
     } = body;
+
+    // Validasi field wajib
+    if (!location_id) {
+      return new Response(
+        JSON.stringify({ success: false, message: "Lokasi wajib diisi!" }),
+        { status: 400 }
+      );
+    }
+
+    if (!floor_id) {
+      return new Response(
+        JSON.stringify({ success: false, message: "Lantai wajib diisi!" }),
+        { status: 400 }
+      );
+    }
+
+    if (!room_number) {
+      return new Response(
+        JSON.stringify({ success: false, message: "Nomor kamar wajib diisi!" }),
+        { status: 400 }
+      );
+    }
+
+    if (!room_length || !room_width) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: "Panjang dan lebar kamar wajib diisi!",
+        }),
+        { status: 400 }
+      );
+    }
+
+    if (!status) {
+      return new Response(
+        JSON.stringify({ success: false, message: "Status wajib diisi!" }),
+        { status: 400 }
+      );
+    }
+
+    if (price_per_m2 < 0) {
+      return new Response(
+        JSON.stringify({ success: false, message: "Harga wajib diisi!" }),
+        { status: 400 }
+      );
+    }
+
+    if (notes) {
+      if (notes.length > 150) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            message: "Notes maksimal 150 karakter!",
+          }),
+          { status: 400 }
+        );
+      }
+    }
+
+    // Validasi input status
+    if (
+      !["available", "occupied", "unavailable", "maintenance"].includes(status)
+    ) {
+      return new Response(
+        JSON.stringify({ success: false, message: "Status tidak valid" }),
+        { status: 400 }
+      );
+    }
+
+    // Validasi cek apakah ruangan yang sama ada di lokasi ini
+    const checkRoom = await client.query(
+      `SELECT * FROM rooms WHERE location_id = $1 AND room_number = $2 AND id != $3`,
+      [location_id, room_number, id]
+    );
+
+    if (checkRoom.rowCount > 0) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: "Nomor ruangan sudah terdaftar pada lokasi yang dipilih!",
+        }),
+        { status: 400 }
+      );
+    }
 
     // 1. Cek data ruangan
     const roomRes = await client.query(`SELECT * FROM rooms WHERE id=$1`, [id]);
@@ -116,8 +200,6 @@ export async function PUT(request, { params }) {
               { status: 400 }
             );
           }
-
-          
         }
       }
     }

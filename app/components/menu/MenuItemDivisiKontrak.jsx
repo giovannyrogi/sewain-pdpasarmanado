@@ -22,9 +22,9 @@ const menuDevisiKontrak = [
         showIcon: true,
       },
       {
-        label: "Floor Prices",
-        value: "floor-prices",
-        path: "/divisi-kontrak/floor-prices",
+        label: "Floor",
+        value: "floor",
+        path: "/divisi-kontrak/floor",
         icon: <Icon icon="ion:pricetags-outline" fontSize="20px" />,
         showIcon: true,
       },

@@ -186,7 +186,6 @@ export async function GET(req) {
         r.room_width,
         r.price_per_m2,
         r.room_area,
-        f.base_price,
         f.floor
       FROM tenant_early_terminations tet
       JOIN tenant_application ta ON tet.tenant_application_id = ta.id
@@ -243,7 +242,6 @@ export async function GET(req) {
       room_width: row.room_width,
       room_area: row.room_area,
       price_per_m2: row.price_per_m2,
-      base_price: row.base_price,
       floor: row.floor,
     }));
 

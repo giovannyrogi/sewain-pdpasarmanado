@@ -5,6 +5,7 @@ import {
   CircularProgress,
   FormControl,
   Grid,
+  InputAdornment,
   InputLabel,
   MenuItem,
   Modal,
@@ -12,6 +13,7 @@ import {
   TextField,
   Typography,
   useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
@@ -32,6 +34,7 @@ const AddRoom = ({
   setLoadingMessage,
 }) => {
   const isMobile = useMediaQuery("(max-width:600px)");
+  const theme = useTheme();
 
   const style = {
     width: isMobile ? "90vw" : 400,
@@ -151,7 +154,7 @@ const AddRoom = ({
       onNotify &&
         onNotify({
           open: true,
-          message: error.message || "Terjadi error saat menambah Ruangan.",
+          message: error.response.data.message || "Terjadi error saat menambah Ruangan.",
           severity: "error",
         });
       setTimeout(() => {
@@ -244,10 +247,10 @@ const AddRoom = ({
                 options={dataFloor || []}
                 getOptionLabel={(option) =>
                   option.floor
-                    ? option.floor +
-                      " " +
-                      `(${formatRupiah(option.base_price)})`
-                    : ""
+                    // ? option.floor +
+                    //   " " +
+                    //   `(${formatRupiah(option.base_price)})`
+                    // : ""
                 }
                 value={
                   dataFloor
@@ -271,6 +274,7 @@ const AddRoom = ({
             <Grid size={12}>
               <TextField
                 label="Nomor Ruangan"
+                placeholder="Contoh : 21M"
                 variant="filled"
                 fullWidth
                 value={roomNumber}
@@ -279,6 +283,21 @@ const AddRoom = ({
                 required
                 disabled={loading}
                 color="primary"
+                // prefix = "No. "
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment
+                      position="start"
+                      sx={{
+                        whiteSpace: "nowrap",
+                        fontSize: "14px",
+                      }}
+                      align="center"
+                    >
+                      No.
+                    </InputAdornment>
+                  ),
+                }}
               />
             </Grid>
             <Grid size={6}>

@@ -192,7 +192,6 @@ export async function GET() {
 
         -- location floor prices
         lfp.floor,
-        lfp.base_price,
 
         -- location
         loc.location_name,
@@ -295,7 +294,6 @@ export async function GET() {
           room_area: row.room_area,
           price_per_m2: row.price_per_m2,
           floor: row.floor,
-          base_price: row.base_price,
         },
         location: {
           location_name: row.location_name,

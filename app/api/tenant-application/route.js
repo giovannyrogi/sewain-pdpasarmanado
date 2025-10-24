@@ -298,7 +298,6 @@ export async function GET(req) {
         r.room_width,
         r.price_per_m2,
         r.room_area,
-        f.base_price,
         f.floor,
 
         -- data tenant sebelumnya (1 level back)
@@ -359,7 +358,6 @@ export async function GET(req) {
       room_area: row.room_area,
       price_per_m2: row.price_per_m2,
       current_step: row.current_step,
-      base_price: row.base_price,
       floor: row.floor,
       is_fully_paid: row.is_fully_paid ?? false,
       created_at: moment(row.created_at).format("D MMMM YYYY"),

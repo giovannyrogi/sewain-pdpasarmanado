@@ -61,7 +61,7 @@ const TenantTerminationApprovalModal = ({
     setIsSubmitting(true);
     try {
       const response = await axios.put(
-        `/api/tenant-termination-approval/${selectedData.approval_id}`,
+        `/api/tenant-termination-approval/${selectedData.termination_approval_id}`,
         {
           tenant_early_termination_id: selectedData.tenant_early_termination_id,
           status: "approved", // atau "rejected"
@@ -689,8 +689,8 @@ const TenantTerminationApprovalModal = ({
           >
             <Grid
               size={
-                selectedData?.status === "approved" ||
-                selectedData?.status === "rejected"
+                selectedData?.termination_approval_status === "approved" ||
+                selectedData?.termination_approval_status === "rejected"
                   ? 12
                   : 6
               }
@@ -705,8 +705,8 @@ const TenantTerminationApprovalModal = ({
                   fontSize: 16,
                   textTransform: "none",
                   width:
-                    selectedData?.status === "approved" ||
-                    selectedData?.status === "rejected"
+                    selectedData?.termination_approval_status === "approved" ||
+                    selectedData?.termination_approval_status === "rejected"
                       ? "100%"
                       : 150,
                 }}
@@ -717,8 +717,8 @@ const TenantTerminationApprovalModal = ({
               </Button>
             </Grid>
             <Grid size={6} sx={{ textAlign: "right" }}>
-              {selectedData?.status === "approved" ||
-              selectedData?.status === "rejected" ? (
+              {selectedData?.termination_approval_status === "approved" ||
+              selectedData?.termination_approval_status === "rejected" ? (
                 ""
               ) : (
                 <Button
@@ -754,8 +754,8 @@ const TenantTerminationApprovalModal = ({
             alt="Preview Pitcure"
           />
 
-          {selectedData?.status === "approved" ||
-          selectedData?.status === "rejected" ? (
+          {selectedData?.termination_approval_status === "approved" ||
+          selectedData?.termination_approval_status === "rejected" ? (
             <ApprovedOverlay selectedData={selectedData} />
           ) : (
             ""
