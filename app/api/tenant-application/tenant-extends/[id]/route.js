@@ -33,7 +33,7 @@ export async function GET(req, { params }) {
         ta.id,
         ta.renewal_of,
         ta.user_id,
-        ti.full_name AS tenant_name, -- ambil dari tenant_identities
+        ti.full_name AS tenant_name,
         ta.document_number,
         ta.location_id,
         ta.room_id,

@@ -211,7 +211,13 @@ const TenantTerminationsModal = ({
                 <Autocomplete
                   options={dataTenantApplication || []}
                   getOptionLabel={(option) =>
-                    option.tenant_name ? option.tenant_name : ""
+                    option.tenant_name
+                      ? option.tenant_name +
+                        " - " +
+                        option.location_name +
+                        " - " +
+                        option.room_number
+                      : ""
                   }
                   value={
                     dataTenantApplication
@@ -231,7 +237,7 @@ const TenantTerminationsModal = ({
                   renderInput={(params) => (
                     <TextField
                       {...params}
-                      label="Pilih Tenant"
+                      label="Pilih Kontrak"
                       variant="filled"
                       required
                     />

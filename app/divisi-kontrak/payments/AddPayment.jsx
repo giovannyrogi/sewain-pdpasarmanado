@@ -349,7 +349,9 @@ const AddPayment = ({
             <Grid size={12}>
               <Autocomplete
                 options={dataTenantApplication}
-                getOptionLabel={(option) => option.tenant_name}
+                getOptionLabel={(option) =>
+                  option.tenant_name + " - " + option.location_name + " - " + option.room_number
+                }
                 value={
                   dataTenantApplication.find(
                     (item) =>

@@ -98,7 +98,7 @@ const DetailRoomsModal = ({
                   overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
                 }}
               >
-                {selectedDataRooms?.room_number
+                No. {selectedDataRooms?.room_number
                   ? selectedDataRooms.room_number
                   : "-"}
               </Typography>

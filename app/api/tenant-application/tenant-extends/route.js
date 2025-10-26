@@ -13,10 +13,16 @@ export async function GET(req) {
         ta.start_date,
         ta.end_date,
         ta.approval_status,
-        ti.full_name AS tenant_name
+        ti.full_name AS tenant_name,
+        l.location_name,
+        r.room_number
       FROM tenant_application ta
       LEFT JOIN tenant_identities ti 
         ON ta.tenant_identity_id = ti.id
+      LEFT JOIN rooms r
+        ON ta.room_id = r.id
+      LEFT JOIN locations l
+        ON r.location_id = l.id
       WHERE ta.approval_status = 'approved'
         AND ta.start_date IS NOT NULL
         AND ta.end_date IS NOT NULL
@@ -43,6 +49,8 @@ export async function GET(req) {
       end_date: row.end_date ? moment(row.end_date).format("YYYY-MM-DD") : null,
       approval_status: row.approval_status,
       tenant_name: row.tenant_name,
+      location_name: row.location_name,
+      room_number: row.room_number,
     }));
 
     return new Response(
