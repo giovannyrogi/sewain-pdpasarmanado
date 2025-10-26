@@ -95,18 +95,18 @@ const AddIdentity = ({
 
   const [remaining, setRemaining] = useState(16);
 
+  useEffect(() => {
+    const totalDigit = 16;
+    const calcRemainingDigit = totalDigit - nomorIndukKependudukan.length;
+    setRemaining(calcRemainingDigit);
+  }, [nomorIndukKependudukan, remaining]);
+
   /* panggil sekali untuk isi provinsi saat mount */
   useEffect(() => {
     if (open) {
       setListProvinsi(wilayah.provinsi);
     }
   }, [open]);
-
-  useEffect(() => {
-    const totalDigit = 16;
-    const calcRemainingDigit = totalDigit - nomorIndukKependudukan.length;
-    setRemaining(calcRemainingDigit);
-  }, [nomorIndukKependudukan, remaining]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -381,7 +381,7 @@ const AddIdentity = ({
                         fontWeight: "bold",
                         // fontSize: "14px",
                         letterSpacing: "1px",
-                        color: 'red',
+                        color: "red",
                       }}
                     >
                       {remaining === 0 ? (
@@ -397,7 +397,10 @@ const AddIdentity = ({
                   ),
                 }}
                 //tampilkan outline merah jika NIK belum 16 digit, tapi kalau belum diisi jangan tampilkan error outlinenya
-                error={nomorIndukKependudukan.length < 16 && nomorIndukKependudukan !== ""}
+                error={
+                  nomorIndukKependudukan.length < 16 &&
+                  nomorIndukKependudukan !== ""
+                }
               />
             </Grid>
             <Grid size={6}>
