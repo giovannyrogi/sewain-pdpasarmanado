@@ -3,7 +3,7 @@ import pool from "@/lib/dbConfig";
 // UPDATE user
 export async function PUT(request, { params }) {
   try {
-    const { id } = params; // id dari URL
+    const { id } = await params; // id dari URL
     const body = await request.json(); // data dari body
     const { username, password, email, fullName, roleId } = body;
 

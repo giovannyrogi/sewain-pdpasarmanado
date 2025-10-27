@@ -15,6 +15,20 @@ const menuSuperAdmin = [
     icon: <Icon icon="material-symbols:database" fontSize="20px" />,
     submenu: [
       {
+        label: "Roles",
+        value: "roles",
+        path: "/superadmin/roles",
+        icon: <Icon icon="oui:app-users-roles" fontSize="20px" />,
+        showIcon: true,
+      },
+      {
+        label: "Users",
+        value: "users",
+        path: "/superadmin/users",
+        icon: <Icon icon="hugeicons:location-user-03" fontSize="20px" />,
+        showIcon: true,
+      },
+      {
         label: "Locations",
         value: "locations",
         path: "/superadmin/locations",
