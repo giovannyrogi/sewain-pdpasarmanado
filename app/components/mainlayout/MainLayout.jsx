@@ -57,7 +57,7 @@ const MainLayout = ({ children }) => {
           {/* Sidebar hanya muncul di desktop */}
           {!isMobile && (
             <Grid
-              size={2}
+              size={2.2}
               sx={{
                 zIndex: 10,
                 position: "sticky",
@@ -72,7 +72,7 @@ const MainLayout = ({ children }) => {
           )}
 
           {/* Konten utama */}
-          <Grid size={isMobile ? 12 : 10}>
+          <Grid size={isMobile ? 12 : 9.8}>
             <Grid
               size={12}
               sx={{
@@ -91,7 +91,7 @@ const MainLayout = ({ children }) => {
               />
             </Grid>
 
-            {/* Drawer mobile muncul di bawah TopMenu */}
+            {/* Drawer mobile */}
             {isMobile && (
               <MobileLeftNavBar
                 menus={menus}

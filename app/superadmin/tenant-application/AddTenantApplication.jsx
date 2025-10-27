@@ -375,7 +375,7 @@ const AddTenantApplication = ({
         onNotify &&
           onNotify({
             open: true,
-            message: `Total cicilan 1, 2 dan 3 tidak boleh lebih besar dari sisa pembayaran ${formatRupiah(
+            message: `Total cicilan 1, 2 dan 3 tidak boleh lebih besar dari sisa tagihan ${formatRupiah(
               remainingPayment
             )}.`,
             severity: "error",
@@ -388,7 +388,7 @@ const AddTenantApplication = ({
         onNotify &&
           onNotify({
             open: true,
-            message: `Total cicilan 1, 2 dan 3 tidak boleh lebih kecil dari sisa pembayaran ${formatRupiah(
+            message: `Total cicilan 1, 2 dan 3 tidak boleh lebih kecil dari sisa tagihan ${formatRupiah(
               remainingPayment
             )}.`,
             severity: "error",
@@ -880,7 +880,7 @@ const AddTenantApplication = ({
                 </Grid>
                 <Grid size={6}>
                   <TextField
-                    label="Sisa Pembayaran"
+                    label="Sisa Tagihan"
                     variant="filled"
                     fullWidth
                     value={formatRupiah(remainingPayment)}
