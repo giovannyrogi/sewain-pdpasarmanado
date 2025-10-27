@@ -325,7 +325,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
             >
               :{" "}
               <span style={{ fontWeight: "bold" }}>
-                {data.room_number ? data.room_number : "-"}
+                {data.room_number ? `No. ${data.room_number}` : "-"}
               </span>
             </Typography>
           </Grid>

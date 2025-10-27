@@ -126,8 +126,6 @@ const ApprovalModal = ({
     }
   };
 
-  console.log("selectedData", selectedData);
-
   const handleCalculateTotal = () => {
     // Konversi nilai ke number
     const totalPayment = Number(
@@ -690,7 +688,7 @@ const ApprovalModal = ({
                 }}
               >
                 {selectedData?.room?.room_number
-                  ? selectedData.room?.room_number
+                  ? `No. ${selectedData.room?.room_number}`
                   : "-"}
               </Typography>
             </Grid>

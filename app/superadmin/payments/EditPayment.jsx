@@ -28,7 +28,7 @@ import ImagePreviewModal from "@/app/components/imagepreviewmodal/page";
 import DetailTenantApplicationModal from "@/app/components/tenantapplicationmodal/DetailTenantApplicationModal";
 import { calculateContractAndPPN } from "@/app/components/calc-contract-and-ppn/CaclContractAndPPN";
 
-const AddPayment = ({
+const EditPayment = ({
   open,
   onClose,
   loadingTrue,
@@ -37,6 +37,7 @@ const AddPayment = ({
   getDataPayments,
   onNotify,
   setLoadingMessage,
+  selectedCurrentData,
   user,
 }) => {
   const isMobile = useMediaQuery("(max-width:600px)");
@@ -59,8 +60,7 @@ const AddPayment = ({
     },
   };
 
-  const [selectedTenantApplicationId, setSelectedTenantApplicationId] =
-    useState(null);
+  const [dataPenyewa, setDataPenyewa] = useState("");
   const [dataTenantApplication, setDataTenantApplication] = useState([]);
   const [paymentNumber, setPaymentNumber] = useState("");
   const [amount, setAmount] = useState("");
@@ -74,31 +74,97 @@ const AddPayment = ({
   const [minPayment, setMinPayment] = useState(0);
   const [remainingBalance, setRemainingBalance] = useState(0);
 
-  const getDataTenantApplication = async () => {
-    loadingTrue();
-    try {
-      const response = await axios.get(
-        "/api/tenant-application/tenant-payment"
+  const getCurrentPaymentData = async () => {
+    if (selectedCurrentData) {
+      const FormattedData =
+        selectedCurrentData?.tenant_application?.tenant_name +
+        " - " +
+        selectedCurrentData?.location?.location_name +
+        " - " +
+        selectedCurrentData?.room?.room_number;
+
+      const parsedDate = selectedCurrentData?.payments?.payment_date
+        ? moment(selectedCurrentData.payments.payment_date, "YYYY-MM-DD")
+        : null;
+
+      const currentPayment = Number(
+        selectedCurrentData?.payments?.payment_amount || 0
       );
 
-      console.log("data tenant", response);
+      const totalPaymentRoom =
+        Number(selectedCurrentData?.tenant_application?.total_payment) || 0;
 
-      if (response.data.success) {
-        setDataTenantApplication(response.data.data);
+      const downPayment = Number(
+        selectedCurrentData?.tenant_application?.down_payment || 0
+      );
 
-        setTimeout(() => {
-          loadingFalse();
-        }, 1000);
+      const previousAmountDP =
+        Number(selectedCurrentData?.payments?.previous_payments?.[0]?.amount) ||
+        0;
+      const previousAmountCicilan1 =
+        Number(selectedCurrentData?.payments?.previous_payments?.[1]?.amount) ||
+        0;
+      const previousAmountCicilan2 =
+        Number(selectedCurrentData?.payments?.previous_payments?.[2]?.amount) ||
+        0;
+      const previousAmountCicilan3 =
+        Number(selectedCurrentData?.payments?.previous_payments?.[3]?.amount) ||
+        0;
+
+      let calcRemainingBalance = 0;
+
+      if (selectedCurrentData?.tenant_application?.payment_type === "lunas") {
+        setAmount(
+          Number(selectedCurrentData?.tenant_application?.total_payment)
+        );
+      } else {
+        if (selectedCurrentData?.payments?.payment_number === 1) {
+          calcRemainingBalance = totalPaymentRoom - amount;
+
+          setPaymentNumber(selectedCurrentData?.payments?.payment_number || 1);
+          setAmount(Number(currentPayment || 0));
+          setRemainingBalance(calcRemainingBalance);
+        } else if (selectedCurrentData?.payments?.payment_number === 2) {
+          calcRemainingBalance = totalPaymentRoom - amount - previousAmountDP;
+          setPaymentNumber(selectedCurrentData?.payments?.payment_number || 2);
+          setAmount(Number(currentPayment || 0));
+          setRemainingBalance(Number(calcRemainingBalance || 0));
+        } else if (selectedCurrentData?.payments?.payment_number === 3) {
+          calcRemainingBalance =
+            totalPaymentRoom -
+            amount -
+            previousAmountDP -
+            previousAmountCicilan1;
+          setPaymentNumber(selectedCurrentData?.payments?.payment_number || 3);
+          setAmount(Number(currentPayment || 0));
+          setRemainingBalance(Number(calcRemainingBalance || 0));
+        } else if (selectedCurrentData?.payments?.payment_number >= 4) {
+          calcRemainingBalance =
+            totalPaymentRoom -
+            amount -
+            previousAmountDP -
+            previousAmountCicilan1 -
+            previousAmountCicilan2;
+          setPaymentNumber(selectedCurrentData?.payments?.payment_number || 4);
+          setAmount(Number(currentPayment || 0));
+          setRemainingBalance(Number(calcRemainingBalance || 0));
+        }
       }
-    } catch (error) {
-      console.log("error", error);
-      loadingFalse();
+
+      setSelectedData(selectedCurrentData);
+      setDataPenyewa(FormattedData);
+      setProofFilePath(selectedCurrentData?.payments?.proof_file_path || null);
+      setProofFile(selectedCurrentData?.payments?.proof_file_path || null);
+      setTypePembayaran(
+        selectedCurrentData?.tenant_application?.payment_type || "lunas"
+      );
+      setPaymentDate(parsedDate);
     }
   };
 
   useEffect(() => {
     if (open) {
-      getDataTenantApplication();
+      getCurrentPaymentData();
     }
   }, [open]);
 
@@ -117,26 +183,14 @@ const AddPayment = ({
 
     // Hitung nilai kontrak, PPN, dan total sesuai tipe pembayaran
     const { contractAmount, ppnAmount, total } = calculateContractAndPPN(
-      selectedData?.payment_type,
+      selectedData?.tenant_application?.payment_type,
       amount,
-      selectedData?.total_payment_room
+      selectedData?.tenant_application?.total_payment_room
     );
 
     let remainingBalanceAfterInstallment = 0;
 
-    // console.log("contractAmount", contractAmount);
-    // console.log("PPNAmount", ppnAmount);
-    // console.log("total", total);
-    // console.log("remainingBalance", remainingBalance);
-    // console.log(
-    //   "remainingBalanceAfterInstallment",
-    //   remainingBalanceAfterInstallment
-    // );
-
-    // console.log("amount", amount);
-    // console.log("remainingBalance", remainingBalance);
-
-    const dp = Number(selectedData?.down_payment) || 0;
+    const dp = Number(selectedData?.tenant_application?.down_payment) || 0;
 
     if (amount < dp && paymentNumber === 1) {
       onNotify &&
@@ -191,16 +245,23 @@ const AddPayment = ({
 
     const formData = new FormData();
 
-    if (selectedData?.payment_type === "cicilan") {
-      remainingBalanceAfterInstallment = remainingBalance - total;
+    // Jika payment_type = cicilan
+    if (selectedData?.tenant_application?.payment_type === "cicilan") {
       formData.append("contract_amount", contractAmount);
+      remainingBalanceAfterInstallment = remainingBalance - amount;
     }
 
-    formData.append("tenant_application_id", selectedTenantApplicationId);
+    formData.append(
+      "payment_approval_id",
+      selectedCurrentData?.payment_approval?.id
+    );
     formData.append("proof_file", proofFile);
     formData.append("type_pembayaran", typePembayaran);
     formData.append("payment_date", moment(paymentDate).format("YYYY-MM-DD"));
-    formData.append("tenant_name", selectedData.tenant_name);
+    formData.append(
+      "tenant_name",
+      selectedData?.tenant_application?.tenant_name
+    );
     formData.append("uploaded_by", user.id || null);
     formData.append("payment_number", paymentNumber);
     formData.append("ppn_amount", ppnAmount);
@@ -214,13 +275,17 @@ const AddPayment = ({
     // }
 
     try {
-      const response = await axios.post("/api/payments", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
+      const response = await axios.put(
+        `/api/payments/${selectedCurrentData?.payments?.payment_id}`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
 
-      console.log("insert payment", response);
+      console.log("update payment", response);
 
       if (response.data.success) {
         // Notifikasi sukses
@@ -267,7 +332,6 @@ const AddPayment = ({
   };
 
   const clearForm = () => {
-    setSelectedTenantApplicationId(null);
     setDataTenantApplication([]);
     setPaymentNumber("");
     setAmount("");
@@ -332,7 +396,7 @@ const AddPayment = ({
           }}
         >
           <Typography variant="h6" component="h2" sx={{ fontWeight: "bold" }}>
-            Form Upload Bukti Pembayaran
+            Form Edit Bukti Pembayaran
           </Typography>
         </Box>
 
@@ -346,74 +410,15 @@ const AddPayment = ({
         <form onSubmit={handleSubmit}>
           <Grid container spacing={isMobile ? 3 : 2}>
             <Grid size={12}>
-              <Autocomplete
-                options={dataTenantApplication}
-                getOptionLabel={(option) =>
-                  option.tenant_name +
-                  " - " +
-                  option.location_name +
-                  " - " +
-                  option.room_number
-                }
-                value={
-                  dataTenantApplication.find(
-                    (item) =>
-                      item.tenant_application_id === selectedTenantApplicationId
-                  ) || null
-                }
-                onChange={(event, newValue) => {
-                  setSelectedTenantApplicationId(
-                    newValue ? newValue?.tenant_application_id : null
-                  );
-
-                  console.log("newvalue", newValue?.remaining_payment);
-
-                  if (newValue?.payment_type === "cicilan") {
-                    setTypePembayaran("cicilan");
-                  } else {
-                    setTypePembayaran("lunas");
-                  }
-
-                  // console.log("newvalue", newValue);
-
-                  if (newValue?.payment_type === "lunas") {
-                    setAmount(Number(newValue?.total_payment));
-                  } else {
-                    if (
-                      newValue?.payment_number === undefined ||
-                      newValue?.payment_number === null
-                    ) {
-                      setPaymentNumber(1);
-                      setAmount(Number(newValue?.down_payment));
-                      setRemainingBalance(Number(newValue?.total_payment));
-                    } else if (newValue?.payment_number === 1) {
-                      setPaymentNumber(2);
-                      setAmount(Number(newValue?.remaining_balance));
-                      setRemainingBalance(Number(newValue?.remaining_balance));
-                    } else if (newValue?.payment_number === 2) {
-                      setPaymentNumber(3);
-                      setAmount(Number(newValue?.remaining_balance));
-                      setRemainingBalance(Number(newValue?.remaining_balance));
-                    } else if (newValue?.payment_number >= 3) {
-                      setPaymentNumber(4);
-                      setAmount(Number(newValue?.remaining_balance));
-                      setRemainingBalance(Number(newValue?.remaining_balance));
-                    }
-                  }
-
-                  setSelectedData(newValue);
-                }}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label="Pilih Penyewa"
-                    variant="filled"
-                    required
-                  />
-                )}
+              <TextField
+                fullWidth
+                variant="filled"
+                label="Nama Penyewa"
+                value={dataPenyewa || ""}
+                disabled
               />
             </Grid>
-            {selectedData && (
+            {/* {selectedData && (
               <Grid
                 container
                 size={12}
@@ -438,18 +443,8 @@ const AddPayment = ({
                   </Typography>
                 </Grid>
               </Grid>
-            )}
-            <Grid
-              size={12}
-              sx={{
-                mt:
-                  selectedData && isMobile
-                    ? -2
-                    : selectedData && !isMobile
-                    ? -1
-                    : 0,
-              }}
-            >
+            )} */}
+            <Grid size={12}>
               {" "}
               <FormControl fullWidth variant="filled" required>
                 <InputLabel id="demo-simple-select-filled-label">
@@ -521,72 +516,76 @@ const AddPayment = ({
                 autoFocus
                 required
                 disabled={
-                  selectedData?.payment_number >= 3 ||
-                  selectedData?.payment_type === "lunas"
+                  selectedData?.payments?.payment_number > 3 ||
+                  selectedData?.tenant_application?.payment_type === "lunas"
                 }
                 color="primary"
               />
             </Grid>
-            {selectedData && selectedData?.payment_type === "cicilan" && (
-              <Grid
-                container
-                size={12}
-                sx={{
-                  p: 1,
-                  bgcolor:
-                    themeMode === "dark"
-                      ? alpha(theme.palette.primary.main, 0.12)
-                      : alpha(theme.palette.primary.main, 0.12),
-                  borderRadius: 1,
-                  // mt: -1,
-                  mb: -1,
-                }}
-              >
-                {!selectedData?.payment_number ? (
-                  <Grid size={12}>
-                    <Typography
-                      sx={{
-                        fontSize: "12px",
-                        fontWeight: "bold",
-                        color: "primary.main",
-                      }}
-                    >
-                      Pembayaran Uang Muka(DP) atas nama "
-                      {selectedData?.tenant_name}" sesuai persetujuan awal
-                      Adalah {formatRupiah(selectedData?.down_payment)}
-                    </Typography>
-                  </Grid>
-                ) : selectedData?.payment_number >= 3 ? (
-                  <Grid size={12}>
-                    <Typography
-                      sx={{
-                        fontSize: "12px",
-                        fontWeight: "bold",
-                        color: "primary.main",
-                      }}
-                    >
-                      Pembayaran Cicilan terakhir sebesar{" "}
-                      {formatRupiah(minPayment)}
-                    </Typography>
-                  </Grid>
-                ) : (
-                  <Grid size={12}>
-                    <Typography
-                      sx={{
-                        fontSize: "12px",
-                        fontWeight: "bold",
-                        color: "primary.main",
-                        textAlign: "justify",
-                      }}
-                    >
-                      Minimal melakukan pembayaran sebesar{" "}
-                      {formatRupiah(minPayment)} (20%) dari sisa pembayaran{" "}
-                      {formatRupiah(remainingBalance)}
-                    </Typography>
-                  </Grid>
-                )}
-              </Grid>
-            )}
+            {selectedData &&
+              selectedData?.tenant_application?.payment_type === "cicilan" && (
+                <Grid
+                  container
+                  size={12}
+                  sx={{
+                    p: 1,
+                    bgcolor:
+                      themeMode === "dark"
+                        ? alpha(theme.palette.primary.main, 0.12)
+                        : alpha(theme.palette.primary.main, 0.12),
+                    borderRadius: 1,
+                    // mt: -1,
+                    mb: -1,
+                  }}
+                >
+                  {selectedData?.payments?.payment_number === 1 ? (
+                    <Grid size={12}>
+                      <Typography
+                        sx={{
+                          fontSize: "12px",
+                          fontWeight: "bold",
+                          color: "primary.main",
+                        }}
+                      >
+                        Pembayaran Uang Muka(DP) atas nama "
+                        {selectedData?.tenant_application?.tenant_name}" sesuai
+                        persetujuan awal Adalah{" "}
+                        {formatRupiah(
+                          selectedData?.tenant_application?.down_payment
+                        )}
+                      </Typography>
+                    </Grid>
+                  ) : selectedData?.payments?.payment_number  >= 4 ? (
+                    <Grid size={12}>
+                      <Typography
+                        sx={{
+                          fontSize: "12px",
+                          fontWeight: "bold",
+                          color: "primary.main",
+                        }}
+                      >
+                        Pembayaran Cicilan terakhir sebesar{" "}
+                        {formatRupiah(minPayment)}
+                      </Typography>
+                    </Grid>
+                  ) : (
+                    <Grid size={12}>
+                      <Typography
+                        sx={{
+                          fontSize: "12px",
+                          fontWeight: "bold",
+                          color: "primary.main",
+                          textAlign: "justify",
+                        }}
+                      >
+                        Minimal melakukan pembayaran sebesar{" "}
+                        {formatRupiah(minPayment)} (20%) dari sisa pembayaran{" "}
+                        {formatRupiah(remainingBalance)}
+                      </Typography>
+                    </Grid>
+                  )}
+                </Grid>
+              )}
             <Grid
               size={12}
               sx={{
@@ -683,11 +682,6 @@ const AddPayment = ({
             </Grid>
           </Grid>
         </form>
-        <DetailTenantApplicationModal
-          open={openDetailTenant}
-          onClose={() => setOpenDetailTenant(false)}
-          selectedData={selectedData}
-        />
         {/* Modal Preview Gambar */}
         <ImagePreviewModal
           open={openPreview}
@@ -700,4 +694,4 @@ const AddPayment = ({
   );
 };
 
-export default AddPayment;
+export default EditPayment;

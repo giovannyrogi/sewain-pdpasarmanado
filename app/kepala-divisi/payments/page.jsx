@@ -26,6 +26,7 @@ import DeletePayment from "./DeletePayment";
 import ApprovalModal from "@/app/divisi-keuangan/payments/ApprovalModal";
 import { useReactToPrint } from "react-to-print";
 import BuktiPembayaran from "@/app/components/documents/BuktiPembayaran";
+import EditPayment from "./EditPayment";
 
 const Payments = () => {
   // Ref untuk dokumen print
@@ -422,8 +423,20 @@ const Payments = () => {
               </Button>
             </Tooltip>
           )}
-          {record.payments?.approval_status === "approved" ||
-            (record.payments?.approval_status === "proses" && (
+          {(record.payments?.approval_status === "rejected" ||
+            record.payments?.approval_status === "proses") && (
+            <>
+              <Tooltip title="Edit Pembayaran">
+                <Button
+                  size="small"
+                  variant={themeMode === "dark" ? "outlined" : "contained"}
+                  color="info"
+                  onClick={() => handleEdit(record)}
+                  sx={{ minWidth: 0, px: 1 }}
+                >
+                  <Icon icon="line-md:edit" fontSize={18} />
+                </Button>
+              </Tooltip>
               <Tooltip title="Tolak Pembayaran">
                 <Button
                   size="small"
@@ -435,7 +448,8 @@ const Payments = () => {
                   <Icon icon="line-md:close-circle" fontSize={18} />
                 </Button>
               </Tooltip>
-            ))}
+            </>
+          )}
         </Box>
       ),
     },
@@ -533,17 +547,17 @@ const Payments = () => {
         setLoadingMessage={setLoadingMessage}
         user={user}
       />
-      {/* <EditPayment
+      <EditPayment
         open={openEditModal}
         onClose={() => setOpenEditModal(false)}
-        selectedData={selectedData}
+        selectedCurrentData={selectedData}
         getDataPayments={getDataPayments}
         onNotify={(notify) => setSnackbar(notify)}
         loadingTrue={() => setLoading(true)}
         loadingFalse={() => setLoading(false)}
         setLoadingMessage={setLoadingMessage}
         user={user}
-      /> */}
+      />
       <DeletePayment
         open={openDeleteModal}
         onClose={() => setOpenDeleteModal(false)}

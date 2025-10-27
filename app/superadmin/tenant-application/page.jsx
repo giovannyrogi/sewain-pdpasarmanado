@@ -1,6 +1,13 @@
 "use client";
-import { Box, Button, Paper, Typography, useTheme } from "@mui/material";
-import React, { useEffect, useState } from "react";
+import {
+  Box,
+  Button,
+  Paper,
+  Tooltip,
+  Typography,
+  useTheme,
+} from "@mui/material";
+import React, { useEffect, useRef, useState } from "react";
 import { Table, ConfigProvider, theme as antdTheme, Input, Tag } from "antd";
 import { useThemeMode } from "../../components/themeprovider/ThemeContext";
 import moment from "moment";
@@ -17,8 +24,16 @@ import EditTenantApplication from "./EditTenantApplication";
 import DeleteTenantApplication from "./DeleteTenantApplication";
 import ApprovalModal from "@/app/components/approvalmodal/page";
 import { useUser } from "@/app/utils/useUser";
+import PersetujuanSewaRuangan from "@/app/components/documents/PersetujuanSewaRuangan";
+import { useReactToPrint } from "react-to-print";
+import TenantApprovalModal from "@/app/components/tenantapprovalmodal/TenantApprovalModal";
+import DetailTenantApplicationModal from "@/app/components/tenantapplicationmodal/DetailTenantApplicationModal";
+import menuDevisiKontrak from "@/app/components/menu/MenuItemDivisiKontrak";
+import UpdateDocumentDate from "./UpdateDocumentDate";
 
 const Applications = () => {
+  // Ref untuk dokumen print
+  const printRef = useRef();
   const user = useUser();
   const [dataTenantApplication, setDataTenantApplication] = useState([]);
   const [dataLocations, setDataLocations] = useState([]);
@@ -27,8 +42,10 @@ const Applications = () => {
   const theme = useTheme();
   const [searchText, setSearchText] = useState("");
   const [loading, setLoading] = useState(false);
+  const [openPrintModal, setOpenPrintModal] = useState(false);
   const [openAddModal, setOpenAddModal] = useState(false);
   const [openEditModal, setOpenEditModal] = useState(false);
+  const [openNonAktif, setOpenNonAktif] = useState(false);
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
   const [selectedData, setSelectedData] = useState(null);
   const [pageSize, setPageSize] = useState(5);
@@ -38,8 +55,15 @@ const Applications = () => {
     severity: "success",
   });
   const [loadingMessage, setLoadingMessage] = useState("Loading...");
-  const [openInformationModal, setOpenInformationModal] = useState(false);
   const [openApprovalModal, setOpenApprovalModal] = useState(false);
+  const [
+    openTenantApprovalInformationModal,
+    setOpenTenantApprovalInformationModal,
+  ] = useState(false);
+
+  const [openUpdateDateModal, setOpenUpdateDateModal] = useState(false);
+
+  const [printData, setPrintData] = useState(null);
 
   const getDataTenantApplication = async () => {
     setLoading(true);
@@ -77,29 +101,39 @@ const Applications = () => {
     }
   }, [user]);
 
-  const filteredData = dataTenantApplication.filter((item) => {
-    // const isAvailableText =
-    //   item.is_available === true
-    //     ? "tersedia"
-    //     : item.is_available === false
-    //     ? "tidak tersedia"
-    //     : "";
-
-    return (
-      item.tenant_name?.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.location_name?.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.payment_type?.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.room_number?.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.down_payment?.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.total_payment?.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.remaining_payment?.toLowerCase().includes(searchText.toLowerCase())
-    );
-  });
-
   const onChange = (pagination, filters, sorter, extra) => {
     if (pagination.pageSize !== pageSize) {
       setPageSize(pagination.pageSize);
     }
+  };
+
+  // useReactToPrint di level atas
+  const handlePrintAction = useReactToPrint({
+    contentRef: printRef, // langsung ref
+    documentTitle: "Persetujuan Sewa Ruangan",
+    onAfterPrint: () => setTimeout(() => setPrintData(null), 200),
+  });
+
+  // panggil print setelah ref sudah render
+  useEffect(() => {
+    if (!printData) return;
+
+    // beri jeda supaya komponen PersetujuanSewaRuangan ter-render dulu
+    const timeout = setTimeout(() => {
+      if (printRef.current) {
+        handlePrintAction();
+      } else {
+        console.error("Belum ada ref untuk print");
+      }
+    }, 200); // jeda 200ms
+
+    return () => clearTimeout(timeout);
+  }, [printData]);
+
+  // handlers
+  const handlePrint = (record) => {
+    // cukup set selectedData — useEffect akan menangani memanggil printAction
+    setPrintData(record);
   };
 
   const handleEdit = (record) => {
@@ -114,15 +148,21 @@ const Applications = () => {
     setOpenDeleteModal(true);
   };
 
-  const handleInformation = (record) => {
-    // console.log("delete record", record);
-    setSelectedData(record);
-    setOpenInformationModal(true);
-  };
-
   const handleApproval = (record) => {
     setSelectedData(record);
     setOpenApprovalModal(true);
+  };
+
+  const handleTenantApprove = (record) => {
+    // console.log("handleTenantApprove record", record);
+    setSelectedData(record);
+    setOpenTenantApprovalInformationModal(true);
+  };
+
+  const handleUpdateDate = (record) => {
+    // console.log("handleTenantApprove record", record);
+    setSelectedData(record);
+    setOpenUpdateDateModal(true);
   };
 
   // Utility untuk filter dinamis
@@ -147,6 +187,32 @@ const Applications = () => {
     "payment_type"
   );
 
+  const documentNumberFilters = generateFilters(
+    dataTenantApplication,
+    "document_number"
+  );
+
+  const approvalStatusFilters = [
+    { text: "Dalam Proses", value: "proses" },
+    { text: "Ditolak", value: "rejected" },
+    { text: "Disetujui", value: "approved" },
+  ];
+
+  const filteredData = dataTenantApplication.filter((item) => {
+    return (
+      item.tenant_name?.toLowerCase().includes(searchText.toLowerCase()) ||
+      item.location_name?.toLowerCase().includes(searchText.toLowerCase()) ||
+      item.payment_type?.toLowerCase().includes(searchText.toLowerCase()) ||
+      item.room_number?.toLowerCase().includes(searchText.toLowerCase()) ||
+      item.down_payment?.toLowerCase().includes(searchText.toLowerCase()) ||
+      item.total_payment?.toLowerCase().includes(searchText.toLowerCase()) ||
+      item.remaining_payment
+        ?.toLowerCase()
+        .includes(searchText.toLowerCase()) ||
+      item.document_number?.toLowerCase().includes(searchText.toLowerCase())
+    );
+  });
+
   const columns = [
     {
       title: "Nama Penyewa",
@@ -156,24 +222,28 @@ const Applications = () => {
       filterSearch: true,
       sorter: (a, b) => a.tenant_name.localeCompare(b.tenant_name),
       sortDirections: ["ascend", "descend"],
-      render: (text, record) => (
-        <Typography
-          sx={{
-            fontWeight: "bold",
-            fontSize: "12px",
-            textTransform: "capitalize",
-            cursor: "pointer",
-            "&:hover": {
-              color: theme.palette.primary.main,
-              textDecoration: "underline",
-            },
-          }}
-          onClick={() => handleInformation(record)}
-        >
-          {record.tenant_name}
-        </Typography>
-      ),
       width: 200,
+    },
+    {
+      title: "Nomor Dokumen",
+      dataIndex: "document_numnber",
+      filters: documentNumberFilters,
+      onFilter: createOnFilter("document_numnber"),
+      filterSearch: true,
+      render: (text, record) => {
+        // Ambil hanya angka dokumen di depan sebelum tanda "/"
+        const documentNumberRaw = record?.document_number || "-";
+        const documentNumberOnly = documentNumberRaw.split("/")[0].trim(); // hasil: "001"
+        return (
+          <Typography
+            sx={{ fontWeight: "bold", fontSize: "12px", textAlign: "center" }}
+          >
+            {documentNumberOnly}
+          </Typography>
+        );
+      },
+      width: 180,
+      align: "left",
     },
     {
       title: "Lokasi",
@@ -192,17 +262,12 @@ const Applications = () => {
       sortDirections: ["ascend", "descend"],
       render: (text, record) => {
         return (
-          <Tag
-            // warna random berdasarkan angka ganjil genap
-            color={record.id % 2 === 0 ? "pink" : "geekblue"}
-            key={record.tenant_application_id}
-            style={{ fontWeight: "bold" }}
-          >
-            {record.room_number}
-          </Tag>
+          <Typography sx={{ fontSize: "12px" }}>
+            No. {record.room_number}
+          </Typography>
         );
       },
-      width: 120,
+      width: 150,
     },
     {
       title: "Lantai",
@@ -212,59 +277,19 @@ const Applications = () => {
       filterSearch: true,
       sorter: (a, b) => a.floor.localeCompare(b.floor),
       sortDirections: ["ascend", "descend"],
-      render: (text, record) => {
-        return (
-          <Tag
-            // warna random berdasarkan angka ganjil genap
-            color={themeMode === "dark" ? "orange" : "red"}
-            key={record.tenant_application_id}
-            style={{ fontWeight: "bold" }}
-          >
-            L{record.floor}
-          </Tag>
-        );
-      },
+      // render: (text, record) => {
+      //   return (
+      //     <Tag
+      //       // warna random berdasarkan angka ganjil genap
+      //       color={themeMode === "dark" ? "orange" : "red"}
+      //       key={record.tenant_application_id}
+      //       style={{ fontWeight: "bold" }}
+      //     >
+      //       {record.floor}
+      //     </Tag>
+      //   );
+      // },
       width: 110,
-    },
-    {
-      title: "Panjang (m)",
-      dataIndex: "room_length",
-      render: (text, record) => (
-        <Typography sx={{ fontWeight: "bold", fontSize: "12px" }}>
-          {record.room_length} M
-        </Typography>
-      ),
-      width: 110,
-    },
-    {
-      title: "Lebar (m)",
-      dataIndex: "room_width",
-      width: 110,
-      render: (text, record) => (
-        <Typography sx={{ fontWeight: "bold", fontSize: "12px" }}>
-          {record.room_width} M
-        </Typography>
-      ),
-    },
-    {
-      title: "Tanggal Mulai",
-      dataIndex: "start_date",
-      width: 150,
-      render: (text, record) => (
-        <Typography sx={{ fontWeight: "bold", fontSize: "12px" }}>
-          {moment(record.start_date).format("D MMMM YYYY")}
-        </Typography>
-      ),
-    },
-    {
-      title: "Tanggal Selesai",
-      dataIndex: "end_date",
-      width: 150,
-      render: (text, record) => (
-        <Typography sx={{ fontWeight: "bold", fontSize: "12px" }}>
-          {moment(record.end_date).format("D MMMM YYYY")}
-        </Typography>
-      ),
     },
     {
       title: "Tipe Pembayaran",
@@ -287,52 +312,21 @@ const Applications = () => {
       width: 160,
     },
     {
-      title: "Uang Muka(DP)",
-      dataIndex: "down_payment",
-      filterSearch: true,
-      render: (text, record) => (
-        <Typography sx={{ fontWeight: "bold", fontSize: "12px" }}>
-          {formatRupiah(record.down_payment)}
-        </Typography>
-      ),
-      width: 150,
-    },
-    {
-      title: "Sisa Pembayaran",
-      dataIndex: "remaining_payment",
-      filterSearch: true,
-      render: (text, record) => (
-        <Typography sx={{ fontWeight: "bold", fontSize: "12px" }}>
-          {formatRupiah(record.remaining_payment)}
-        </Typography>
-      ),
-      width: 150,
-    },
-    {
-      title: "Total Pembayaran",
-      dataIndex: "total_payment",
-      filterSearch: true,
-      render: (text, record) => (
-        <Typography sx={{ fontWeight: "bold", fontSize: "12px" }}>
-          {formatRupiah(record.total_payment)}
-        </Typography>
-      ),
-      width: 150,
-    },
-    {
       title: "Status Persetujuan",
       dataIndex: "approval_status",
+      filters: approvalStatusFilters,
+      onFilter: createOnFilter("approval_status"),
       filterSearch: true,
       render: (text, record) => {
         return (
           <Tag
             // warna random berdasarkan angka ganjil genap
             color={
-              record.approval_status === "proses" && themeMode === "dark"
+              record.approval_status === "proses"
                 ? "yellow"
-                : record.approval_status === "proses" && themeMode === "light"
-                ? "orange"
-                : "green"
+                : record.approval_status === "approved"
+                ? "green"
+                : "red"
             }
             key={record.tenant_application_id}
             style={{
@@ -343,10 +337,53 @@ const Applications = () => {
           >
             {record.approval_status === "proses"
               ? `Dalam Proses ${record.current_step}/5`
-              : "Disetujui"}
+              : record.approval_status === "approved"
+              ? "Disetujui"
+              : record.approval_status === "rejected"
+              ? "Tidak Disetujui"
+              : "Dibatalkan"}
           </Tag>
         );
       },
+      width: 170,
+    },
+    {
+      title: "Uang Muka(DP)",
+      dataIndex: "down_payment",
+      filterSearch: true,
+      render: (text, record) => (
+        <Typography
+          sx={{ fontWeight: "bold", fontSize: "12px", textAlign: "end" }}
+        >
+          {formatRupiah(record.down_payment)}
+        </Typography>
+      ),
+      width: 150,
+    },
+    {
+      title: "Sisa Pembayaran",
+      dataIndex: "remaining_payment",
+      filterSearch: true,
+      render: (text, record) => (
+        <Typography
+          sx={{ fontWeight: "bold", fontSize: "12px", textAlign: "end" }}
+        >
+          {formatRupiah(record.remaining_payment)}
+        </Typography>
+      ),
+      width: 150,
+    },
+    {
+      title: "Total Pembayaran",
+      dataIndex: "total_payment",
+      filterSearch: true,
+      render: (text, record) => (
+        <Typography
+          sx={{ fontWeight: "bold", fontSize: "12px", textAlign: "end" }}
+        >
+          {formatRupiah(Number(record.total_payment))}
+        </Typography>
+      ),
       width: 150,
     },
     {
@@ -355,35 +392,102 @@ const Applications = () => {
       align: "center",
       width: 100,
       fixed: "right",
-      render: (text, record) => (
-        <Box sx={{ display: "flex", gap: 1, justifyContent: "center" }}>
-          <Button
-            size="small"
-            variant={themeMode === "dark" ? "outlined" : "contained"}
-            color="info"
-            onClick={() => handleEdit(record)}
-            sx={{ minWidth: 0, px: 1 }}
-          >
-            <Icon icon="line-md:edit" fontSize={18} />
-          </Button>
-          <Button
-            size="small"
-            variant={themeMode === "dark" ? "outlined" : "contained"}
-            color="error"
-            onClick={() => handleDelete(record)}
-            sx={{ minWidth: 0, px: 1 }}
-          >
-            <Icon icon="line-md:close-circle" fontSize={18} />
-          </Button>
-        </Box>
-      ),
+      render: (text, record) =>
+        record.approval_status === "approved" ? (
+          <Box sx={{ display: "flex", gap: 1, justifyContent: "center" }}>
+            {!record?.document_number ? (
+              <Tooltip title="Update Masa Berlaku Dokumen">
+                <Button
+                  size="small"
+                  variant={themeMode === "dark" ? "outlined" : "contained"}
+                  color="success"
+                  onClick={() => handleUpdateDate(record)}
+                  sx={{ minWidth: 0, px: 1 }}
+                >
+                  <Icon
+                    icon="line-md:calendar"
+                    fontSize={18}
+                    style={{ color: themeMode === "dark" ? "green" : "white" }}
+                  />
+                </Button>
+              </Tooltip>
+            ) : (
+              <Tooltip title="Print Dokumen">
+                <Button
+                  size="small"
+                  variant={themeMode === "dark" ? "outlined" : "contained"}
+                  color="primary"
+                  onClick={() => handlePrint(record)}
+                  sx={{ minWidth: 0, px: 1 }}
+                >
+                  <Icon icon="streamline-ultimate:print-text" fontSize={18} />
+                </Button>
+              </Tooltip>
+            )}
+            <Tooltip title="Detail Data Pemohon">
+              <Button
+                size="small"
+                variant={themeMode === "dark" ? "outlined" : "contained"}
+                color={themeMode === "dark" ? "inherit" : "success"}
+                onClick={() => handleTenantApprove(record)}
+                sx={{ minWidth: 0, px: 1 }}
+              >
+                <Icon
+                  icon="mdi:smart-card-outline"
+                  color={themeMode === "dark" ? "inherit" : "white"}
+                  fontSize={18}
+                />
+              </Button>
+            </Tooltip>
+          </Box>
+        ) : (
+          <Box sx={{ display: "flex", gap: 1, justifyContent: "center" }}>
+            <Tooltip title="Edit Data">
+              <Button
+                size="small"
+                variant={themeMode === "dark" ? "outlined" : "contained"}
+                color="info"
+                onClick={() => handleEdit(record)}
+                sx={{ minWidth: 0, px: 1 }}
+              >
+                <Icon icon="line-md:edit" fontSize={18} />
+              </Button>
+            </Tooltip>
+            <Tooltip title="Detail Data Pemohon">
+              <Button
+                size="small"
+                variant={themeMode === "dark" ? "outlined" : "contained"}
+                color={themeMode === "dark" ? "inherit" : "success"}
+                onClick={() => handleTenantApprove(record)}
+                sx={{ minWidth: 0, px: 1 }}
+              >
+                <Icon
+                  icon="mdi:smart-card-outline"
+                  color={themeMode === "dark" ? "inherit" : "white"}
+                  fontSize={18}
+                />
+              </Button>
+            </Tooltip>
+            <Tooltip title="Hapus Data">
+              <Button
+                size="small"
+                variant={themeMode === "dark" ? "outlined" : "contained"}
+                color="error"
+                onClick={() => handleDelete(record)}
+                sx={{ minWidth: 0, px: 1 }}
+              >
+                <Icon icon="line-md:close-circle" fontSize={18} />
+              </Button>
+            </Tooltip>
+          </Box>
+        ),
     },
   ];
 
   return (
     <Box sx={{ width: "100%", height: "100%", minHeight: "100%", p: 2 }}>
       {/* Component Breadcrumbs disini */}
-      <BreadcrumbPage menuList={menuSuperadmin} />
+      <BreadcrumbPage menuList={menuDevisiKontrak} />
 
       <Box
         sx={{
@@ -459,6 +563,15 @@ const Applications = () => {
               showTotal: (total, range) =>
                 `${range[0]}-${range[1]} dari ${total} data`,
             }}
+            // rowClassName={(record) => {
+            //   if (record.is_tenant_application_terminated) return styles.rowTerminated;
+            //   if (record.is_fully_paid) return styles.rowFullyPaid;
+            //   return "";
+            // }}
+            rowClassName={(record) => {
+              if (record.is_fully_paid) return "rowFullyPaid";
+              return "";
+            }}
           />
         </Paper>
       </ConfigProvider>
@@ -503,11 +616,17 @@ const Applications = () => {
         setLoadingMessage={setLoadingMessage}
         selectedData={selectedData}
       />
-      <InformationPreviewModal
-        open={openInformationModal}
-        onClose={() => setOpenInformationModal(false)}
+      <UpdateDocumentDate
+        open={openUpdateDateModal}
+        onClose={() => setOpenUpdateDateModal(false)}
+        loadingTrue={() => setLoading(true)}
+        loadingFalse={() => setLoading(false)}
+        loading={loading}
+        getDataTenantApplication={getDataTenantApplication}
+        getLocationsData={getLocationsData}
+        onNotify={(notif) => setSnackbar(notif)}
         selectedData={selectedData}
-        title="Preview Informasi Pemohon"
+        user={user}
       />
       <ApprovalModal
         open={openApprovalModal}
@@ -518,6 +637,18 @@ const Applications = () => {
         loading={loading}
         setLoadingMessage={setLoadingMessage}
       />
+      <DetailTenantApplicationModal
+        open={openTenantApprovalInformationModal}
+        onClose={() => setOpenTenantApprovalInformationModal(false)}
+        selectedData={selectedData}
+        loadingTrue={() => setLoading(true)}
+        loadingFalse={() => setLoading(false)}
+        loading={loading}
+        setLoadingMessage={setLoadingMessage}
+        // getDataApprovals={getDataApprovals}
+        user={user}
+        onNotify={(notif) => setSnackbar(notif)}
+      />
       <LoadingBackdrop message={loadingMessage} open={loading} />
       {/* Snackbar notification */}
       <Notification
@@ -526,6 +657,12 @@ const Applications = () => {
         severity={snackbar.severity}
         onClose={() => setSnackbar({ ...snackbar, open: false })}
       />
+      {/* Dokumen tersembunyi (untuk print) */}
+      <div style={{ display: "none" }}>
+        {printData && (
+          <PersetujuanSewaRuangan ref={printRef} data={printData} />
+        )}
+      </div>
     </Box>
   );
 };

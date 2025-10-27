@@ -25,6 +25,9 @@ import dayjs from "dayjs";
 import formatRupiah from "@/app/components/formatrupiah/page";
 import { Icon } from "@iconify/react";
 import ImagePreviewModal from "@/app/components/imagepreviewmodal/page";
+import DetailRoomsModal from "@/app/components/detailroomsmodal/page";
+import ViewCalcPPNModal from "@/app/components/view-calc-ppn-modal/ViewCalcPPNModal";
+import InformationPreviewModal from "@/app/components/informationpreviewmodal/page";
 
 const EditTenantApplication = ({
   open,
@@ -38,12 +41,14 @@ const EditTenantApplication = ({
   onNotify,
   setLoadingMessage,
   selectedData,
-  user
+  user,
 }) => {
   const isMobile = useMediaQuery("(max-width:600px)");
 
   const { themeMode } = useThemeMode();
   const theme = useTheme();
+
+  // console.log('selectedData', selectedData);
 
   const style = {
     width: isMobile ? "90vw" : 600,
@@ -65,20 +70,78 @@ const EditTenantApplication = ({
   const [ktpFilePath, setKtpFilePath] = useState("");
   const [ktpFile, setKtpFile] = useState(null);
   const [locationId, setLocationId] = useState("");
-  const [tenantName, setTenantName] = useState("");
-  const [tenantNIK, setTenantNIK] = useState("");
-  const [tenantPhone, setTenantPhone] = useState("");
   const [roomId, setRoomId] = useState("");
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
-  const [paymentType, setPaymentType] = useState("");
+  const [paymentType, setPaymentType] = useState("lunas");
   const [totalPayment, setTotalPayment] = useState("");
+  const [totalSewaKontrakRuangan, setTotalSewaKontrakRuangan] = useState("");
+  const [totalPPN, setTotalPPN] = useState("");
   const [downPayment, setDownPayment] = useState("");
   const [remainingPayment, setRemainingPayment] = useState("");
   const [approvalStatus, setApprovalStatus] = useState("proses");
   const [openPreview, setOpenPreview] = useState(false);
   const [dataAvailableRooms, setDataAvailableRooms] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [openViewDetailRoomModal, setOpenViewDetailRoomModal] = useState(false);
+  const [openViewDetailCalculatePPNModal, setOpenViewDetailCalculatePPNModal] =
+    useState(false);
+  const [selectedDataRooms, setSelectedDataRooms] = useState({});
+  const [estimatedInstallment1, setEstimatedInstallment1] = useState("");
+  const [estimatedInstallment2, setEstimatedInstallment2] = useState("");
+  const [estimatedInstallment3, setEstimatedInstallment3] = useState("");
+  const [estimatedInstallmentDate1, setEstimatedInstallmentDate1] =
+    useState(null);
+  const [estimatedInstallmentDate2, setEstimatedInstallmentDate2] =
+    useState(null);
+  const [estimatedInstallmentDate3, setEstimatedInstallmentDate3] =
+    useState(null);
+  const [tenantType, setTenantType] = useState("permohonan baru");
+  const [listDataTenantExtends, setListDataTenantExtends] = useState([]);
+  const [selectedDataTenantExtends, setSelectedDataTenantExtends] =
+    useState(null);
+
+  const [biayaAdministrasi, setBiayaAdministrasi] = useState(50000);
+  const [totalPPNDownPayment, setTotalPPNDownPayment] = useState(0);
+  const [totalSewaKontrakDownPayment, setTotalSewaKontrakDownPayment] =
+    useState(0);
+  const [totalPaymentDownPayment, setTotalPaymentDownPayment] = useState(0);
+  const [totalInstallment, setTotalInstallment] = useState(0);
+
+  const [listDataIdentity, setListDataIdentity] = useState([]);
+  const [identityID, setIdentityID] = useState(null);
+  const [selectedDataIdentity, setSelectedDataIdentity] = useState("");
+  const [openViewInformationModal, setOpenViewInformationModal] =
+    useState(false);
+
+  const getListIdentities = async () => {
+    // console.log("tenant_identity_id");
+
+    loadingTrue();
+    setLoadingMessage("Mengambil data penyewa...");
+    try {
+      const response = await axios.get(
+        `/api/identity-list/${selectedData?.tenant_identity_id}`
+      );
+
+      console.log("response identity-list", response);
+      if (response.data.success) {
+        setListDataIdentity(response.data.data);
+        setIdentityID(selectedData?.tenant_identity_id);
+        setSelectedDataIdentity(response.data.data[0]);
+        setTimeout(() => {
+          loadingFalse();
+          setLoadingMessage("");
+        }, 1000);
+      }
+    } catch (error) {
+      console.log("error", error);
+      setTimeout(() => {
+        loadingFalse();
+        setLoadingMessage("");
+      }, 1000);
+    }
+  };
 
   const getRoomsData = async (locationId) => {
     if (!locationId) {
@@ -93,6 +156,9 @@ const EditTenantApplication = ({
       const response = await axios.get(
         `/api/rooms/available-rooms?location_id=${locationId}`
       );
+      console.log("response rooms", response.data);
+      // console.log("selectedData", selectedData);
+
       let rooms = response.data.data || [];
 
       // Tambahkan room lama dari selectedData kalau belum ada di list
@@ -107,13 +173,19 @@ const EditTenantApplication = ({
               room_number: selectedData.room_number,
               room_length: selectedData.room_length,
               room_width: selectedData.room_width,
+              room_area: selectedData.room_area,
+              price_per_m2: selectedData.price_per_m2,
+              floor_id: selectedData.floor_id,
               floor: selectedData.floor,
+              base_price: selectedData.base_price,
               is_available: false,
             },
             ...rooms,
           ];
         }
       }
+
+      // console.log("rooms test", rooms);
 
       setDataAvailableRooms(rooms);
 
@@ -135,21 +207,37 @@ const EditTenantApplication = ({
     if (open) {
       setLocationId(selectedData.location_id || "");
       setRoomId(selectedData.room_id || "");
-      setTenantName(selectedData.tenant_name || "");
-      setTenantNIK(selectedData.tenant_nik || "");
-      setTenantPhone(selectedData.tenant_phone || "");
-      setStartDate(
-        selectedData.start_date ? moment(selectedData.start_date) : null
-      );
-      setEndDate(selectedData.end_date ? moment(selectedData.end_date) : null);
+      // setStartDate(
+      //   selectedData.start_date ? moment(selectedData.start_date) : null
+      // );
+      // setEndDate(selectedData.end_date ? moment(selectedData.end_date) : null);
       setPaymentType(selectedData.payment_type || "");
       setTotalPayment(selectedData.total_payment || "");
       setDownPayment(selectedData.down_payment || "");
       setRemainingPayment(selectedData.remaining_payment || "");
-      setApprovalStatus(selectedData.approval_status || "proses");
-      setKtpFilePath(selectedData.ktp_file_path || "");
 
       getRoomsData(selectedData.location_id);
+      handleViewDetailRooms(selectedData);
+      setEstimatedInstallment1(selectedData.estimated_installment_1 || "");
+      setEstimatedInstallment2(selectedData.estimated_installment_2 || "");
+      setEstimatedInstallment3(selectedData.estimated_installment_3 || "");
+      setEstimatedInstallmentDate1(
+        selectedData.estimated_installment_1_date
+          ? moment(selectedData.estimated_installment_1_date)
+          : null
+      );
+      setEstimatedInstallmentDate2(
+        selectedData.estimated_installment_2_date
+          ? moment(selectedData.estimated_installment_2_date)
+          : null
+      );
+      setEstimatedInstallmentDate3(
+        selectedData.estimated_installment_3_date
+          ? moment(selectedData.estimated_installment_3_date)
+          : null
+      );
+
+      getListIdentities();
     }
   }, [open]);
 
@@ -166,24 +254,99 @@ const EditTenantApplication = ({
     }
   }, [totalPayment, paymentType]);
 
+  // Hitung total payment otomatis saat pilih ruangan
+  useEffect(() => {
+    if (
+      selectedDataRooms &&
+      selectedDataRooms.room_area &&
+      selectedDataRooms.price_per_m2
+    ) {
+      const total =
+        parseFloat(selectedDataRooms.room_area) * // luas dari room_length * room_width
+        parseInt(selectedDataRooms.price_per_m2); // harga dari price_per_m2
+
+      const totalPPN = total * 0.11; // tambahkan PPN 11%
+      const grandTotal = total + totalPPN + biayaAdministrasi;
+
+      setTotalSewaKontrakRuangan(total);
+      setTotalPPN(totalPPN);
+      setTotalPayment(grandTotal); // simpan ke state totalPayment
+    }
+  }, [selectedDataRooms]);
+
   // Sinkronisasi Sisa saat DP diubah manual
   useEffect(() => {
     if (paymentType === "cicilan") {
       const total = Number(totalPayment) || 0;
       const dp = Number(downPayment) || 0;
+      const SewaKontrakRuangan = dp / 1.11;
+      const totalPPN = SewaKontrakRuangan * 0.11;
+      const grandTotal = SewaKontrakRuangan + totalPPN;
+
+      setTotalPaymentDownPayment(grandTotal);
+      setTotalPPNDownPayment(totalPPN);
+      setTotalSewaKontrakDownPayment(SewaKontrakRuangan);
       setRemainingPayment(total - dp);
     }
   }, [downPayment, paymentType, totalPayment]);
 
+  // Hitung cicilan otomatis saat remainingPayment berubah
+  useEffect(() => {
+    if (paymentType === "cicilan") {
+      const sisa = Number(remainingPayment) || 0;
+
+      // bagi rata, bulatkan ke rupiah terdekat
+      const perCicilan = Math.round(sisa / 3);
+
+      // hitung ulang cicilan terakhir agar pas
+      const cicilanTerakhir = sisa - perCicilan * 2;
+
+      // total cicilan
+      const totalCicilan = perCicilan * 2 + cicilanTerakhir;
+
+      setTotalInstallment(totalCicilan);
+      setEstimatedInstallment1(perCicilan);
+      setEstimatedInstallment2(perCicilan);
+      setEstimatedInstallment3(cicilanTerakhir);
+    } else {
+      setEstimatedInstallment1("");
+      setEstimatedInstallment2("");
+      setEstimatedInstallment3("");
+    }
+  }, [remainingPayment, paymentType]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoadingMessage("Loading...");
 
-    // Validasi KTP
-    if (!ktpFile && !ktpFilePath) {
+    // const totalPaymentWithoutAdminFee =
+    //   Number(totalPayment) - biayaAdministrasi;
+    const total = Number(totalPayment) || 0;
+    const minDp = Math.round(total * 0.4);
+    const dp = Number(downPayment) || 0;
+
+    setIsSubmitting(true);
+
+    if (paymentType === "cicilan" && dp < minDp) {
       onNotify &&
         onNotify({
           open: true,
-          message: "Silakan upload gambar KTP terlebih dahulu.",
+          message: `DP minimal 40% (${formatRupiah(
+            minDp
+          )}) dari total pembayaran ${formatRupiah(total)}.`,
+          severity: "error",
+        });
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (dp > total) {
+      onNotify &&
+        onNotify({
+          open: true,
+          message: `DP tidak boleh lebih besar dari total pembayaran ${formatRupiah(
+            total
+          )}.`,
           severity: "error",
         });
       loadingFalse && loadingFalse();
@@ -191,9 +354,7 @@ const EditTenantApplication = ({
       return;
     }
 
-    setIsSubmitting(true);
-
-    if (!totalPayment || totalPayment === 0) {
+    if (!total || total === 0) {
       onNotify &&
         onNotify({
           open: true,
@@ -205,21 +366,43 @@ const EditTenantApplication = ({
       return;
     }
 
+    if (paymentType === "cicilan") {
+      const totalCicilan =
+        (Number(estimatedInstallment1) || 0) +
+        (Number(estimatedInstallment2) || 0) +
+        (Number(estimatedInstallment3) || 0);
+
+      if (totalCicilan > Number(remainingPayment)) {
+        onNotify &&
+          onNotify({
+            open: true,
+            message: `Total cicilan 1, 2 dan 3 tidak boleh lebih besar dari sisa pembayaran ${formatRupiah(
+              remainingPayment
+            )}.`,
+            severity: "error",
+          });
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (totalCicilan < Number(remainingPayment)) {
+        onNotify &&
+          onNotify({
+            open: true,
+            message: `Total cicilan 1, 2 dan 3 tidak boleh lebih kecil dari sisa pembayaran ${formatRupiah(
+              remainingPayment
+            )}.`,
+            severity: "error",
+          });
+        setIsSubmitting(false);
+        return;
+      }
+    }
+
     try {
       const formData = new FormData();
       formData.append("location_id", locationId);
       formData.append("room_id", roomId);
-      formData.append("tenant_name", tenantName);
-      formData.append("tenant_nik", tenantNIK);
-      formData.append("tenant_phone", tenantPhone);
-      formData.append(
-        "start_date",
-        startDate ? moment(startDate).format("YYYY-MM-DD") : ""
-      );
-      formData.append(
-        "end_date",
-        endDate ? moment(endDate).format("YYYY-MM-DD") : ""
-      );
       formData.append("payment_type", paymentType);
       formData.append("total_payment", totalPayment);
       formData.append("down_payment", downPayment);
@@ -227,14 +410,39 @@ const EditTenantApplication = ({
       formData.append("approval_status", approvalStatus);
       formData.append("user_id", user.id);
       formData.append("current_step", 1);
+      formData.append("tenant_type", tenantType);
+      formData.append("tenant_identity_id", identityID);
+      formData.append("total_payment_room", totalSewaKontrakRuangan);
+      formData.append("admin_fee", biayaAdministrasi);
+      formData.append("total_ppn", totalPPN);
 
-      // Cek file lama vs file baru
-      if (ktpFile instanceof File) {
-        // User upload file baru
-        formData.append("ktp_file", ktpFile);
-      } else if (ktpFilePath) {
-        // Tidak ada file baru, gunakan file lama (URL/relative path)
-        formData.append("ktp_file_path", ktpFilePath);
+      // hanya kirim data cicilan kalau paymentType === 'cicilan'
+      if (paymentType === "cicilan") {
+        formData.append("down_payment", downPayment);
+        formData.append("remaining_payment", remainingPayment);
+
+        formData.append("estimated_installment_1", estimatedInstallment1 || 0);
+        formData.append("estimated_installment_2", estimatedInstallment2 || 0);
+        formData.append("estimated_installment_3", estimatedInstallment3 || 0);
+
+        if (estimatedInstallmentDate1) {
+          formData.append(
+            "estimated_installment_date_1",
+            moment(estimatedInstallmentDate1).format("YYYY-MM-DD")
+          );
+        }
+        if (estimatedInstallmentDate2) {
+          formData.append(
+            "estimated_installment_date_2",
+            moment(estimatedInstallmentDate2).format("YYYY-MM-DD")
+          );
+        }
+        if (estimatedInstallmentDate3) {
+          formData.append(
+            "estimated_installment_date_3",
+            moment(estimatedInstallmentDate3).format("YYYY-MM-DD")
+          );
+        }
       }
 
       // for (let pair of formData.entries()) {
@@ -259,10 +467,10 @@ const EditTenantApplication = ({
               response?.data?.message || "Form Permohonan berhasil dibuat!",
             severity: "success",
           });
+        getDataTenantApplication();
+        getLocationsData();
+        getRoomsData();
         setTimeout(() => {
-          getDataTenantApplication();
-          getLocationsData();
-          getRoomsData();
           onClose();
           setIsSubmitting(false);
         }, 1000);
@@ -293,6 +501,11 @@ const EditTenantApplication = ({
         setIsSubmitting(false);
       }, 1000);
     }
+  };
+
+  const handleViewDetailRooms = (newValue) => {
+    // console.log("newValue", newValue);
+    setSelectedDataRooms(newValue);
   };
 
   const handleKtpChange = (e) => {
@@ -361,69 +574,38 @@ const EditTenantApplication = ({
         <form onSubmit={handleSubmit}>
           <Grid container spacing={isMobile ? 3 : 2}>
             <Grid size={12}>
-              <TextField
-                label="Nama Lengkap(sesuai KTP)"
-                // placeholder="Cth: 2.86"
-                variant="filled"
-                fullWidth
-                value={tenantName}
-                onChange={(e) => setTenantName(e.target.value)}
-                autoFocus
-                required
-                disabled={loading}
-                color="primary"
-              />
-            </Grid>
-            <Grid size={6}>
-              <TextField
-                label="NIK"
-                // placeholder="Cth: 2.86"
-                variant="filled"
-                fullWidth
-                value={tenantNIK}
-                onChange={(e) => {
-                  // simpan hanya angka dan tidak ada spasi
-                  setTenantNIK(e.target.value.replace(/[^0-9]/g, ""));
+              <Autocomplete
+                options={listDataIdentity || []}
+                getOptionLabel={(option) => option.full_name || ""}
+                value={
+                  listDataIdentity.find((item) => item.id === identityID) ||
+                  null
+                }
+                onChange={(event, newValue) => {
+                  // console.log("newValue", newValue);
+                  setIdentityID(newValue ? newValue.id : null);
+                  setSelectedDataIdentity(newValue ?? "");
                 }}
-                autoFocus
-                required
-                disabled={loading}
-                color="primary"
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Pilih Data Penyewa"
+                    variant="filled"
+                    required
+                  />
+                )}
+                disabled
               />
             </Grid>
-            <Grid size={6}>
-              <TextField
-                label="No HP"
-                // placeholder="Cth: 2.86"
-                variant="filled"
-                fullWidth
-                value={tenantPhone}
-                onChange={(e) => {
-                  // simpan hanya angka dan tidak ada spasi
-                  setTenantPhone(e.target.value.replace(/[^0-9]/g, ""));
+            {identityID && (
+              <Grid
+                container
+                size={12}
+                sx={{
+                  mt: isMobile ? -2 : -1.2,
                 }}
-                autoFocus
-                required
-                disabled={loading}
-                color="primary"
-              />
-            </Grid>
-            <Grid
-              size={12}
-              sx={{
-                border: `1px solid ${theme.palette.primary.main}`,
-                borderRadius: 2,
-              }}
-            >
-              {ktpFilePath ? (
-                <Box
-                  sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    p: 0.8,
-                  }}
-                >
+              >
+                <Grid size={isMobile ? 12 : 6}>
                   <Typography
                     sx={{
                       fontWeight: "bold",
@@ -434,52 +616,13 @@ const EditTenantApplication = ({
                         textDecoration: "underline",
                       },
                     }}
-                    onClick={() => setOpenPreview(true)}
+                    onClick={() => setOpenViewInformationModal(true)}
                   >
-                    Lihat KTP
+                    Lihat Data Penyewa
                   </Typography>
-                  <IconButton
-                    size="small"
-                    variant={themeMode === "dark" ? "outlined" : "contained"}
-                    color="error"
-                    sx={{ minWidth: 0, p: 0 }}
-                  >
-                    <Icon
-                      icon="line-md:trash"
-                      fontSize={18}
-                      color="error"
-                      onClick={() => setKtpFilePath("")}
-                    />
-                  </IconButton>
-                </Box>
-              ) : (
-                <Button
-                  variant="text"
-                  component="label"
-                  color="primary"
-                  fullWidth
-                  sx={{
-                    textTransform: "none",
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    fontWeight: "bold",
-                  }}
-                  disabled={loading}
-                >
-                  <Typography sx={{ fontWeight: "bold", fontSize: "12px" }}>
-                    Upload KTP
-                  </Typography>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    hidden
-                    onChange={handleKtpChange}
-                    disabled={loading}
-                  />
-                </Button>
-              )}
-            </Grid>
+                </Grid>
+              </Grid>
+            )}
             <Grid size={isMobile ? 12 : 6}>
               <Autocomplete
                 options={dataLocations || []}
@@ -497,8 +640,39 @@ const EditTenantApplication = ({
                 }
                 onChange={(event, newValue) => {
                   const selectedLocationId = newValue ? newValue.id : "";
-                  setLocationId(selectedLocationId);
-                  getRoomsData(selectedLocationId); // <-- load rooms sesuai lokasi
+                  if (!selectedLocationId) {
+                    setLocationId("");
+                    setRoomId("");
+                    setStartDate(null);
+                    setEndDate(null);
+                    setPaymentType("lunas");
+                    setTotalPayment("");
+                    setDownPayment("");
+                    setRemainingPayment("");
+                    setEstimatedInstallment1("");
+                    setEstimatedInstallment2("");
+                    setEstimatedInstallment3("");
+                    setEstimatedInstallmentDate1(null);
+                    setEstimatedInstallmentDate2(null);
+                    setEstimatedInstallmentDate3(null);
+                  } else {
+                    setLocationId("");
+                    setRoomId("");
+                    setStartDate(null);
+                    setEndDate(null);
+                    setPaymentType("lunas");
+                    setTotalPayment("");
+                    setDownPayment("");
+                    setRemainingPayment("");
+                    setEstimatedInstallment1("");
+                    setEstimatedInstallment2("");
+                    setEstimatedInstallment3("");
+                    setEstimatedInstallmentDate1(null);
+                    setEstimatedInstallmentDate2(null);
+                    setEstimatedInstallmentDate3(null);
+                    setLocationId(selectedLocationId);
+                    getRoomsData(selectedLocationId); // <-- load rooms sesuai lokasi
+                  } // <-- load rooms sesuai lokasi
                 }}
                 renderInput={(params) => (
                   <TextField
@@ -520,6 +694,7 @@ const EditTenantApplication = ({
                 }
                 onChange={(event, newValue) => {
                   setRoomId(newValue ? newValue.id : "");
+                  handleViewDetailRooms(newValue);
                 }}
                 renderInput={(params) => (
                   <TextField
@@ -531,7 +706,36 @@ const EditTenantApplication = ({
                 )}
               />
             </Grid>
-            <Grid size={6}>
+
+            {roomId && (
+              <Grid container size={12}>
+                {!isMobile && <Grid size={6}></Grid>}
+                <Grid
+                  size={isMobile ? 12 : 6}
+                  sx={{
+                    mt: isMobile ? -1.5 : -1,
+                    mb: isMobile ? -2 : -1,
+                  }}
+                >
+                  <Typography
+                    sx={{
+                      fontWeight: "bold",
+                      fontSize: "12px",
+                      cursor: "pointer",
+                      color: theme.palette.primary.main,
+                      "&:hover": {
+                        textDecoration: "underline",
+                      },
+                    }}
+                    onClick={() => setOpenViewDetailRoomModal(true)}
+                  >
+                    Lihat Detail Ruangan
+                  </Typography>
+                </Grid>
+              </Grid>
+            )}
+
+            {/* <Grid size={6}>
               <DatePicker
                 label="Tanggal Mulai"
                 value={startDate}
@@ -573,7 +777,8 @@ const EditTenantApplication = ({
                   },
                 }}
               />
-            </Grid>
+            </Grid> */}
+
             <Grid size={isMobile ? 12 : 6}>
               <FormControl fullWidth variant="filled" required>
                 <InputLabel id="demo-simple-select-filled-label">
@@ -584,6 +789,9 @@ const EditTenantApplication = ({
                   defaultValue={true}
                   onChange={(e) => {
                     setPaymentType(e.target.value);
+                    if (e.target.value === "lunas") {
+                      setDownPayment(0);
+                    }
                   }}
                 >
                   <MenuItem value={"cicilan"}>Cicilan</MenuItem>
@@ -601,6 +809,7 @@ const EditTenantApplication = ({
                   setTotalPayment(e.target.value.replace(/[^0-9]/g, ""));
                 }}
                 required
+                disabled
                 color="primary"
               />
             </Grid>
@@ -630,7 +839,145 @@ const EditTenantApplication = ({
                     color="primary"
                   />
                 </Grid>
+                <Grid size={6}>
+                  <TextField
+                    label="Cicilan 1"
+                    variant="filled"
+                    fullWidth
+                    value={formatRupiah(estimatedInstallment1)}
+                    onChange={(e) => {
+                      setEstimatedInstallment1(
+                        e.target.value.replace(/[^0-9]/g, "")
+                      );
+                    }}
+                    required
+                    disabled
+                    color="primary"
+                  />
+                </Grid>
+                <Grid size={6}>
+                  <DatePicker
+                    label="Tanggal Cicilan 1"
+                    // value harus dayjs, bukan string
+                    value={estimatedInstallmentDate1}
+                    onChange={(newValue) => {
+                      // langsung simpan dayjs object
+                      setEstimatedInstallmentDate1(newValue);
+                    }}
+                    views={["year", "month"]} // hanya bulan & tahun
+                    minDate={dayjs()} // bulan sekarang ke atas
+                    slotProps={{
+                      textField: {
+                        variant: "filled",
+                        fullWidth: true,
+                        required: true,
+                        disabled: loading,
+                        color: "primary",
+                      },
+                    }}
+                  />
+                </Grid>
+                <Grid size={6}>
+                  <TextField
+                    label="Cicilan 2"
+                    variant="filled"
+                    fullWidth
+                    value={formatRupiah(estimatedInstallment2)}
+                    onChange={(e) => {
+                      setEstimatedInstallment2(
+                        e.target.value.replace(/[^0-9]/g, "")
+                      );
+                    }}
+                    required
+                    disabled
+                    color="primary"
+                  />
+                </Grid>
+                <Grid size={6}>
+                  <DatePicker
+                    label="Tanggal Cicilan 2"
+                    // value harus dayjs, bukan string
+                    value={estimatedInstallmentDate2}
+                    onChange={(newValue) => {
+                      // langsung simpan dayjs object
+                      setEstimatedInstallmentDate2(newValue);
+                    }}
+                    views={["year", "month"]} // hanya bulan & tahun
+                    minDate={dayjs()} // bulan sekarang ke atas
+                    slotProps={{
+                      textField: {
+                        variant: "filled",
+                        fullWidth: true,
+                        required: true,
+                        disabled: loading,
+                        color: "primary",
+                      },
+                    }}
+                  />
+                </Grid>
+                <Grid size={6}>
+                  <TextField
+                    label="Cicilan 3"
+                    variant="filled"
+                    fullWidth
+                    value={formatRupiah(estimatedInstallment3)}
+                    onChange={(e) => {
+                      setEstimatedInstallment3(
+                        e.target.value.replace(/[^0-9]/g, "")
+                      );
+                    }}
+                    required
+                    disabled
+                    color="primary"
+                  />
+                </Grid>
+                <Grid size={6}>
+                  <DatePicker
+                    label="Tanggal Cicilan 3"
+                    // value harus dayjs, bukan string
+                    value={estimatedInstallmentDate3}
+                    onChange={(newValue) => {
+                      // langsung simpan dayjs object
+                      setEstimatedInstallmentDate3(newValue);
+                    }}
+                    views={["year", "month"]} // hanya bulan & tahun
+                    minDate={dayjs()} // bulan sekarang ke atas
+                    slotProps={{
+                      textField: {
+                        variant: "filled",
+                        fullWidth: true,
+                        required: true,
+                        disabled: loading,
+                        color: "primary",
+                      },
+                    }}
+                  />
+                </Grid>
               </>
+            )}
+            {totalPayment > 0 && (
+              <Grid
+                size={12}
+                sx={{
+                  mt: isMobile ? -1.5 : -1,
+                  mb: isMobile ? -2 : -1,
+                }}
+              >
+                <Typography
+                  sx={{
+                    fontWeight: "bold",
+                    fontSize: "12px",
+                    cursor: "pointer",
+                    color: theme.palette.primary.main,
+                    "&:hover": {
+                      textDecoration: "underline",
+                    },
+                  }}
+                  onClick={() => setOpenViewDetailCalculatePPNModal(true)}
+                >
+                  Lihat detail perhitungan biaya dan PPN
+                </Typography>
+              </Grid>
             )}
             <Grid size={12}>
               <Button
@@ -654,6 +1001,45 @@ const EditTenantApplication = ({
             </Grid>
           </Grid>
         </form>
+        <DetailRoomsModal
+          open={openViewDetailRoomModal}
+          onClose={() => setOpenViewDetailRoomModal(false)}
+          loading={loading}
+          loadingFalse={loadingFalse}
+          loadingTrue={loadingTrue}
+          setLoadingMessage={setLoadingMessage}
+          selectedDataRooms={selectedDataRooms}
+        />
+        <ViewCalcPPNModal
+          open={openViewDetailCalculatePPNModal}
+          onClose={() => setOpenViewDetailCalculatePPNModal(false)}
+          loading={loading}
+          loadingFalse={loadingFalse}
+          loadingTrue={loadingTrue}
+          setLoadingMessage={setLoadingMessage}
+          totalPayment={totalPayment}
+          downPayment={downPayment}
+          estimatedInstallment1={estimatedInstallment1}
+          estimatedInstallment2={estimatedInstallment2}
+          estimatedInstallment3={estimatedInstallment3}
+          remainingPayment={remainingPayment}
+          paymentType={paymentType}
+          totalSewaKontrakRuangan={totalSewaKontrakRuangan}
+          totalPPN={totalPPN}
+          estimatedInstallmentDate1={estimatedInstallmentDate1}
+          estimatedInstallmentDate2={estimatedInstallmentDate2}
+          estimatedInstallmentDate3={estimatedInstallmentDate3}
+          biayaAdministrasi={biayaAdministrasi}
+          totalPPNDownPayment={totalPPNDownPayment}
+          totalSewaKontrakDownPayment={totalSewaKontrakDownPayment}
+          totalPaymentDownPayment={totalPaymentDownPayment}
+          totalInstallment={totalInstallment}
+        />
+        <InformationPreviewModal
+          open={openViewInformationModal}
+          onClose={() => setOpenViewInformationModal(false)}
+          selectedData={selectedDataIdentity}
+        />
         {/* Modal Preview Gambar */}
         <ImagePreviewModal
           open={openPreview}

@@ -12,7 +12,7 @@ import React, { useEffect, useState } from "react";
 import { Icon } from "@iconify/react";
 import axios from "axios";
 
-const DeleteTenantApplication = ({
+const DeletePayment = ({
   open,
   onClose,
   loadingTrue,
@@ -20,8 +20,7 @@ const DeleteTenantApplication = ({
   loading,
   onNotify,
   selectedData,
-  getDataTenantApplication,
-  getLocationsData,
+  getDataPayments,
 }) => {
   const isMobile = useMediaQuery("(max-width:600px)");
   const theme = useTheme();
@@ -31,7 +30,7 @@ const DeleteTenantApplication = ({
     loadingTrue();
     try {
       const response = await axios.delete(
-        `/api/tenant-application/${selectedData.tenant_application_id}`
+        `/api/payments/${selectedData.payments?.payment_id}`
       );
 
       console.log("response", response.data);
@@ -40,12 +39,11 @@ const DeleteTenantApplication = ({
         onNotify &&
           onNotify({
             open: true,
-            message: response.data.message || "Tenant berhasil dihapus!",
+            message: response.data.message || "Bukti pembayaran berhasil dihapus!",
             severity: "success",
           });
-        getDataTenantApplication();
-        getLocationsData();
 
+        getDataPayments();
         setTimeout(() => {
           onClose();
           loadingFalse();
@@ -54,7 +52,7 @@ const DeleteTenantApplication = ({
         onNotify &&
           onNotify({
             open: true,
-            message: response?.data.message || "Gagal menghapus Tenant.",
+            message: response?.data.message || "Gagal menghapus bukti pembayaran.",
             severity: "error",
           });
         setTimeout(() => {
@@ -66,7 +64,7 @@ const DeleteTenantApplication = ({
       onNotify &&
         onNotify({
           open: true,
-          message: error.response.data.message || "Gagal menghapus Tenant.",
+          message: error.response.data.message || "Gagal menghapus bukti pembayaran.",
           severity: "error",
         });
       setTimeout(() => {
@@ -132,7 +130,7 @@ const DeleteTenantApplication = ({
               }}
             >
               <Icon
-                icon="mi:delete"
+                icon="mdi:receipt-text-remove-outline"
                 fontSize="60px"
                 color={theme.palette.error.contrastText}
               />
@@ -146,7 +144,7 @@ const DeleteTenantApplication = ({
                 letterSpacing: 0.5,
               }}
             >
-              Hapus Data
+              Hapus Bukti Pembayaran
             </Typography>
             <Typography
               sx={{
@@ -157,7 +155,7 @@ const DeleteTenantApplication = ({
               }}
             >
               Tindakan ini tidak dapat di batalkan, Anda yakin ingin menghapus
-              Data Penyewa atas nama{" "}
+              Bukti Pembayaran penyewa atas nama{" "}
               <span
                 style={{
                   fontWeight: "bold",
@@ -167,38 +165,10 @@ const DeleteTenantApplication = ({
                   fontSize: 14,
                 }}
               >
-                {selectedData && selectedData.tenant_name
-                  ? selectedData.tenant_name
+                {selectedData && selectedData?.tenant_application?.tenant_name
+                  ? selectedData?.tenant_application?.tenant_name
                   : ""}
               </span>
-              , Lokasi{" "}
-              <span
-                style={{
-                  fontWeight: "bold",
-                  color: theme.palette.primary.main,
-                  //   border: `1px solid ${theme.palette.primary.main}`,
-                  //   borderRadius: 4,
-                  fontSize: 14,
-                }}
-              >
-                {selectedData && selectedData.location_name
-                  ? selectedData.location_name
-                  : ""}
-              </span>{" "}
-              dan dari{" "}
-              <span
-                style={{
-                  fontWeight: "bold",
-                  color: theme.palette.primary.main,
-                  //   border: `1px solid ${theme.palette.primary.main}`,
-                  //   borderRadius: 4,
-                  fontSize: 14,
-                }}
-              >
-                {selectedData && selectedData.room_number
-                  ? selectedData.room_number
-                  : ""}
-              </span>{" "}
               ?
             </Typography>
           </Box>
@@ -235,4 +205,4 @@ const DeleteTenantApplication = ({
   );
 };
 
-export default DeleteTenantApplication;
+export default DeletePayment;

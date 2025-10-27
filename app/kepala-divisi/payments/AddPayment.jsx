@@ -26,7 +26,6 @@ import { useThemeMode } from "@/app/components/themeprovider/ThemeContext";
 import { Icon } from "@iconify/react";
 import ImagePreviewModal from "@/app/components/imagepreviewmodal/page";
 import DetailTenantApplicationModal from "@/app/components/tenantapplicationmodal/DetailTenantApplicationModal";
-import dayjs from "dayjs";
 import { calculateContractAndPPN } from "@/app/components/calc-contract-and-ppn/CaclContractAndPPN";
 
 const AddPayment = ({
@@ -157,9 +156,9 @@ const AddPayment = ({
       onNotify &&
         onNotify({
           open: true,
-          message: `Total pembayaran tidak boleh dibawah 20% dari sisa pembayaran ${formatRupiah(
-            remainingBalance
-          )}.`,
+          message: `Total pembayaran minimal ${formatRupiah(
+            minPayment
+          )} (20%) dari sisa tagihan ${formatRupiah(remainingBalance)}.`,
           severity: "error",
         });
       loadingFalse();
@@ -170,7 +169,7 @@ const AddPayment = ({
       onNotify &&
         onNotify({
           open: true,
-          message: `Total pembayaran tidak boleh melebihi sisa pembayaran ${formatRupiah(
+          message: `Total pembayaran tidak boleh melebihi sisa tagihan ${formatRupiah(
             remainingBalance
           )}.`,
           severity: "error",
@@ -349,7 +348,13 @@ const AddPayment = ({
             <Grid size={12}>
               <Autocomplete
                 options={dataTenantApplication}
-                getOptionLabel={(option) => option.tenant_name}
+                getOptionLabel={(option) =>
+                  option.tenant_name +
+                  " - " +
+                  option.location_name +
+                  " - " +
+                  option.room_number
+                }
                 value={
                   dataTenantApplication.find(
                     (item) =>
@@ -369,7 +374,7 @@ const AddPayment = ({
                     setTypePembayaran("lunas");
                   }
 
-                  console.log("newvalue", newValue);
+                  // console.log("newvalue", newValue);
 
                   if (newValue?.payment_type === "lunas") {
                     setAmount(Number(newValue?.total_payment));
@@ -389,7 +394,7 @@ const AddPayment = ({
                       setPaymentNumber(3);
                       setAmount(Number(newValue?.remaining_balance));
                       setRemainingBalance(Number(newValue?.remaining_balance));
-                    } else if (newValue?.payment_number === 3) {
+                    } else if (newValue?.payment_number >= 3) {
                       setPaymentNumber(4);
                       setAmount(Number(newValue?.remaining_balance));
                       setRemainingBalance(Number(newValue?.remaining_balance));
@@ -489,14 +494,9 @@ const AddPayment = ({
             <Grid size={12}>
               <DatePicker
                 label="Tanggal Pembayaran"
-                // value harus dayjs, bukan string
                 value={paymentDate}
-                onChange={(newValue) => {
-                  // langsung simpan dayjs object
-                  setPaymentDate(newValue);
-                }}
-                // minDate={dayjs()} // bulan sekarang ke atas
-                maxDate={dayjs()}
+                onChange={(newValue) => setPaymentDate(newValue)}
+                maxDate={moment()}
                 slotProps={{
                   textField: {
                     variant: "filled",
@@ -521,7 +521,7 @@ const AddPayment = ({
                 autoFocus
                 required
                 disabled={
-                  selectedData?.payment_number === 3 ||
+                  selectedData?.payment_number >= 3 ||
                   selectedData?.payment_type === "lunas"
                 }
                 color="primary"
@@ -556,7 +556,7 @@ const AddPayment = ({
                       Adalah {formatRupiah(selectedData?.down_payment)}
                     </Typography>
                   </Grid>
-                ) : selectedData?.payment_number === 3 ? (
+                ) : selectedData?.payment_number >= 3 ? (
                   <Grid size={12}>
                     <Typography
                       sx={{
@@ -565,7 +565,8 @@ const AddPayment = ({
                         color: "primary.main",
                       }}
                     >
-                      Pembayaran Terakhir sebesar {formatRupiah(minPayment)}
+                      Pembayaran Cicilan terakhir sebesar{" "}
+                      {formatRupiah(minPayment)}
                     </Typography>
                   </Grid>
                 ) : (

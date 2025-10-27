@@ -630,7 +630,13 @@ const AddTenantApplication = ({
                 <Autocomplete
                   disabled={!tenantType || tenantType === "permohonan baru"}
                   options={listDataTenantExtends || []}
-                  getOptionLabel={(option) => option?.tenant_name || ""}
+                  getOptionLabel={(option) =>
+                    option?.tenant_name +
+                      " - " +
+                      option?.location_name +
+                      " - " +
+                      option?.room_number || ""
+                  }
                   value={selectedDataTenantExtends}
                   onChange={(event, newValue) => {
                     setSelectedDataTenantExtends(newValue ?? null);
@@ -770,7 +776,9 @@ const AddTenantApplication = ({
             <Grid size={isMobile ? 12 : 6}>
               <Autocomplete
                 options={dataAvailableRooms}
-                getOptionLabel={(option) => option?.room_number || ""}
+                getOptionLabel={(option) =>
+                  "Ruangan No. " + option?.room_number || ""
+                }
                 value={
                   dataAvailableRooms.find((room) => room.id === roomId) || null
                 }
@@ -931,7 +939,8 @@ const AddTenantApplication = ({
                       setEstimatedInstallmentDate1(newValue);
                     }}
                     views={["year", "month"]} // hanya bulan & tahun
-                    // minDate={dayjs()} // bulan sekarang ke atas
+                    minDate={dayjs()} // bulan sekarang ke atas
+                    // maxDate={dayjs()} // bulan sekarang ke bawah
                     slotProps={{
                       textField: {
                         variant: "filled",
@@ -969,7 +978,7 @@ const AddTenantApplication = ({
                       setEstimatedInstallmentDate2(newValue);
                     }}
                     views={["year", "month"]} // hanya bulan & tahun
-                    // minDate={dayjs()} // bulan sekarang ke atas
+                    minDate={dayjs()} // bulan sekarang ke atas
                     slotProps={{
                       textField: {
                         variant: "filled",
@@ -1007,7 +1016,7 @@ const AddTenantApplication = ({
                       setEstimatedInstallmentDate3(newValue);
                     }}
                     views={["year", "month"]} // hanya bulan & tahun
-                    // minDate={dayjs()} // bulan sekarang ke atas
+                    minDate={dayjs()} // bulan sekarang ke atas
                     slotProps={{
                       textField: {
                         variant: "filled",

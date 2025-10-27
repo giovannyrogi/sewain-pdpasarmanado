@@ -370,285 +370,222 @@ const TenantApprovalModal = ({
             }}
           />
 
-          <Grid container spacing={2}>
-            {/* Col 1 */}
-            <Grid container size={isMobile ? 12 : 6} spacing={1}>
-              <Grid
-                size={isMobile ? 6 : 12}
-                sx={{ display: "flex", flexDirection: "column" }}
+          <Grid container spacing={1}>
+            <Grid size={6} sx={{ display: "flex", flexDirection: "column" }}>
+              <Typography
+                sx={{
+                  fontWeight: "bold",
+                  fontSize: "14px",
+                  color: theme.palette.primary.main,
+                }}
               >
-                <Typography
-                  sx={{
-                    fontWeight: "bold",
-                    fontSize: "14px",
-                    color: theme.palette.primary.main,
-                  }}
-                >
-                  Nama Lokasi
-                </Typography>
-                <Typography
-                  sx={{
-                    fontWeight: "bold",
-                    fontSize: "13px",
-                    wordBreak: "break-word", // <-- biar kata panjang pecah
-                    whiteSpace: "normal", // <-- biar bisa turun baris
-                    overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
-                  }}
-                >
-                  {selectedData?.location_name
-                    ? selectedData.location_name
-                    : "-"}
-                </Typography>
-              </Grid>
-
-              <Grid
-                size={isMobile ? 6 : 12}
-                sx={{ display: "flex", flexDirection: "column" }}
+                Nama Lokasi
+              </Typography>
+              <Typography
+                sx={{
+                  fontWeight: "bold",
+                  fontSize: "13px",
+                  wordBreak: "break-word", // <-- biar kata panjang pecah
+                  whiteSpace: "normal", // <-- biar bisa turun baris
+                  overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
+                }}
               >
-                <Typography
-                  sx={{
-                    fontWeight: "bold",
-                    fontSize: "14px",
-                    color: theme.palette.primary.main,
-                  }}
-                >
-                  Lantai
-                </Typography>
-                <Typography
-                  sx={{
-                    fontWeight: "bold",
-                    fontSize: "13px",
-                    wordBreak: "break-word", // <-- biar kata panjang pecah
-                    whiteSpace: "normal", // <-- biar bisa turun baris
-                    overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
-                  }}
-                >
-                  {selectedData?.floor ? selectedData.floor : "-"}
-                </Typography>
-              </Grid>
-
-              <Grid
-                size={isMobile ? 6 : 12}
-                sx={{ display: "flex", flexDirection: "column" }}
-              >
-                <Typography
-                  sx={{
-                    fontWeight: "bold",
-                    fontSize: "14px",
-                    color: theme.palette.primary.main,
-                  }}
-                >
-                  Panjang (m)
-                </Typography>
-                <Typography
-                  sx={{
-                    fontWeight: "bold",
-                    fontSize: "13px",
-                    wordBreak: "break-word", // <-- biar kata panjang pecah
-                    whiteSpace: "normal", // <-- biar bisa turun baris
-                    overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
-                  }}
-                >
-                  {selectedData?.room_length ? selectedData.room_length : "-"} M
-                </Typography>
-              </Grid>
-
-              <Grid
-                size={isMobile ? 6 : 12}
-                sx={{ display: "flex", flexDirection: "column" }}
-              >
-                <Typography
-                  sx={{
-                    fontWeight: "bold",
-                    fontSize: "14px",
-                    color: theme.palette.primary.main,
-                  }}
-                >
-                  Luas (m)
-                </Typography>
-                <Typography
-                  sx={{
-                    fontWeight: "bold",
-                    fontSize: "13px",
-                    wordBreak: "break-word", // <-- biar kata panjang pecah
-                    whiteSpace: "normal", // <-- biar bisa turun baris
-                    overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
-                  }}
-                >
-                  {selectedData?.room_area
-                    ? selectedData.room_area + " M"
-                    : "-"}
-                </Typography>
-              </Grid>
-
-              <Grid
-                size={isMobile ? 6 : 12}
-                sx={{ display: "flex", flexDirection: "column" }}
-              >
-                <Typography
-                  sx={{
-                    fontWeight: "bold",
-                    fontSize: "14px",
-                    color: theme.palette.primary.main,
-                  }}
-                >
-                  Masa Berlaku
-                </Typography>
-                <Typography
-                  sx={{
-                    fontWeight: "bold",
-                    fontSize: "13px",
-                    wordBreak: "break-word", // <-- biar kata panjang pecah
-                    whiteSpace: "normal", // <-- biar bisa turun baris
-                    overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
-                  }}
-                >
-                  {selectedData?.start_date && selectedData?.end_date
-                    ? moment(selectedData.start_date).format("YYYY/MM/DD") +
-                      " s/d " +
-                      moment(selectedData.end_date).format("YYYY/MM/DD")
-                    : "Pendaftaran Baru"}
-                </Typography>
-              </Grid>
+                {selectedData?.location_name ? selectedData.location_name : "-"}
+              </Typography>
             </Grid>
 
-            {/* Col 2 */}
-            <Grid container size={isMobile ? 12 : 6} spacing={1}>
-              <Grid
-                size={isMobile ? 6 : 12}
-                sx={{ display: "flex", flexDirection: "column" }}
+            <Grid size={6} sx={{ display: "flex", flexDirection: "column" }}>
+              <Typography
+                sx={{
+                  fontWeight: "bold",
+                  fontSize: "14px",
+                  color: theme.palette.primary.main,
+                }}
               >
-                <Typography
-                  sx={{
-                    fontWeight: "bold",
-                    fontSize: "14px",
-                    color: theme.palette.primary.main,
-                  }}
-                >
-                  Ruangan
-                </Typography>
-                <Typography
-                  sx={{
-                    fontWeight: "bold",
-                    fontSize: "13px",
-                    wordBreak: "break-word", // <-- biar kata panjang pecah
-                    whiteSpace: "normal", // <-- biar bisa turun baris
-                    overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
-                  }}
-                >
-                  {selectedData?.room_number ? selectedData.room_number : "-"}
-                </Typography>
-              </Grid>
+                Lantai
+              </Typography>
+              <Typography
+                sx={{
+                  fontWeight: "bold",
+                  fontSize: "13px",
+                  wordBreak: "break-word", // <-- biar kata panjang pecah
+                  whiteSpace: "normal", // <-- biar bisa turun baris
+                  overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
+                }}
+              >
+                {selectedData?.floor ? selectedData.floor : "-"}
+              </Typography>
+            </Grid>
 
-              <Grid
-                size={isMobile ? 6 : 12}
-                sx={{ display: "flex", flexDirection: "column" }}
+            <Grid size={6} sx={{ display: "flex", flexDirection: "column" }}>
+              <Typography
+                sx={{
+                  fontWeight: "bold",
+                  fontSize: "14px",
+                  color: theme.palette.primary.main,
+                }}
               >
-                <Typography
-                  sx={{
-                    fontWeight: "bold",
-                    fontSize: "14px",
-                    color: theme.palette.primary.main,
-                  }}
-                >
-                  Harga Lantai
-                </Typography>
-                <Typography
-                  sx={{
-                    fontWeight: "bold",
-                    fontSize: "13px",
-                    wordBreak: "break-word", // <-- biar kata panjang pecah
-                    whiteSpace: "normal", // <-- biar bisa turun baris
-                    overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
-                  }}
-                >
-                  {selectedData?.base_price
-                    ? formatRupiah(selectedData.base_price)
-                    : "-"}
-                </Typography>
-              </Grid>
+                Ruangan
+              </Typography>
+              <Typography
+                sx={{
+                  fontWeight: "bold",
+                  fontSize: "13px",
+                  wordBreak: "break-word", // <-- biar kata panjang pecah
+                  whiteSpace: "normal", // <-- biar bisa turun baris
+                  overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
+                }}
+              >
+                {selectedData?.room_number
+                  ? `No. ${selectedData.room_number}`
+                  : "-"}
+              </Typography>
+            </Grid>
 
-              <Grid
-                size={isMobile ? 6 : 12}
-                sx={{ display: "flex", flexDirection: "column" }}
+            <Grid size={6} sx={{ display: "flex", flexDirection: "column" }}>
+              <Typography
+                sx={{
+                  fontWeight: "bold",
+                  fontSize: "14px",
+                  color: theme.palette.primary.main,
+                }}
               >
-                <Typography
-                  sx={{
-                    fontWeight: "bold",
-                    fontSize: "14px",
-                    color: theme.palette.primary.main,
-                  }}
-                >
-                  Lebar (m)
-                </Typography>
-                <Typography
-                  sx={{
-                    fontWeight: "bold",
-                    fontSize: "13px",
-                    wordBreak: "break-word", // <-- biar kata panjang pecah
-                    whiteSpace: "normal", // <-- biar bisa turun baris
-                    overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
-                  }}
-                >
-                  {selectedData?.room_width ? selectedData.room_width : "-"} M
-                </Typography>
-              </Grid>
+                Panjang (m)
+              </Typography>
+              <Typography
+                sx={{
+                  fontWeight: "bold",
+                  fontSize: "13px",
+                  wordBreak: "break-word", // <-- biar kata panjang pecah
+                  whiteSpace: "normal", // <-- biar bisa turun baris
+                  overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
+                }}
+              >
+                {selectedData?.room_length ? selectedData.room_length : "-"} M
+              </Typography>
+            </Grid>
 
-              <Grid
-                size={isMobile ? 6 : 12}
-                sx={{ display: "flex", flexDirection: "column" }}
+            <Grid size={6} sx={{ display: "flex", flexDirection: "column" }}>
+              <Typography
+                sx={{
+                  fontWeight: "bold",
+                  fontSize: "14px",
+                  color: theme.palette.primary.main,
+                }}
               >
-                <Typography
-                  sx={{
-                    fontWeight: "bold",
-                    fontSize: "14px",
-                    color: theme.palette.primary.main,
-                  }}
-                >
-                  Harga Ruangan (m)
-                </Typography>
-                <Typography
-                  sx={{
-                    fontWeight: "bold",
-                    fontSize: "13px",
-                    wordBreak: "break-word", // <-- biar kata panjang pecah
-                    whiteSpace: "normal", // <-- biar bisa turun baris
-                    overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
-                  }}
-                >
-                  {selectedData?.price_per_m2
-                    ? formatRupiah(selectedData.price_per_m2)
-                    : "-"}
-                </Typography>
-              </Grid>
+                Lebar (m)
+              </Typography>
+              <Typography
+                sx={{
+                  fontWeight: "bold",
+                  fontSize: "13px",
+                  wordBreak: "break-word", // <-- biar kata panjang pecah
+                  whiteSpace: "normal", // <-- biar bisa turun baris
+                  overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
+                }}
+              >
+                {selectedData?.room_width ? selectedData.room_width : "-"} M
+              </Typography>
+            </Grid>
 
-              <Grid
-                size={isMobile ? 6 : 12}
-                sx={{ display: "flex", flexDirection: "column" }}
+            <Grid size={6} sx={{ display: "flex", flexDirection: "column" }}>
+              <Typography
+                sx={{
+                  fontWeight: "bold",
+                  fontSize: "14px",
+                  color: theme.palette.primary.main,
+                }}
               >
-                <Typography
-                  sx={{
-                    fontWeight: "bold",
-                    fontSize: "14px",
-                    color: theme.palette.primary.main,
-                  }}
-                >
-                  Tanggal Dibuat
-                </Typography>
-                <Typography
-                  sx={{
-                    fontWeight: "bold",
-                    fontSize: "13px",
-                    wordBreak: "break-word", // <-- biar kata panjang pecah
-                    whiteSpace: "normal", // <-- biar bisa turun baris
-                    overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
-                  }}
-                >
-                  {selectedData?.created_at
-                    ? moment(selectedData.created_at).format("YYYY/MM/DD")
-                    : "-"}
-                </Typography>
-              </Grid>
+                Luas (m²)
+              </Typography>
+              <Typography
+                sx={{
+                  fontWeight: "bold",
+                  fontSize: "13px",
+                  wordBreak: "break-word", // <-- biar kata panjang pecah
+                  whiteSpace: "normal", // <-- biar bisa turun baris
+                  overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
+                }}
+              >
+                {selectedData?.room_area ? selectedData.room_area + " M" : "-"}
+              </Typography>
+            </Grid>
+
+            <Grid size={6} sx={{ display: "flex", flexDirection: "column" }}>
+              <Typography
+                sx={{
+                  fontWeight: "bold",
+                  fontSize: "14px",
+                  color: theme.palette.primary.main,
+                }}
+              >
+                Harga Ruangan (m)
+              </Typography>
+              <Typography
+                sx={{
+                  fontWeight: "bold",
+                  fontSize: "13px",
+                  wordBreak: "break-word", // <-- biar kata panjang pecah
+                  whiteSpace: "normal", // <-- biar bisa turun baris
+                  overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
+                }}
+              >
+                {selectedData?.price_per_m2
+                  ? formatRupiah(selectedData.price_per_m2)
+                  : "-"}
+              </Typography>
+            </Grid>
+
+            <Grid size={6} sx={{ display: "flex", flexDirection: "column" }}>
+              <Typography
+                sx={{
+                  fontWeight: "bold",
+                  fontSize: "14px",
+                  color: theme.palette.primary.main,
+                }}
+              >
+                Tanggal Dibuat
+              </Typography>
+              <Typography
+                sx={{
+                  fontWeight: "bold",
+                  fontSize: "13px",
+                  wordBreak: "break-word", // <-- biar kata panjang pecah
+                  whiteSpace: "normal", // <-- biar bisa turun baris
+                  overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
+                }}
+              >
+                {selectedData?.created_at
+                  ? moment(selectedData.created_at).format("YYYY/MM/DD")
+                  : "-"}
+              </Typography>
+            </Grid>
+
+            <Grid size={12} sx={{ display: "flex", flexDirection: "column" }}>
+              <Typography
+                sx={{
+                  fontWeight: "bold",
+                  fontSize: "14px",
+                  color: theme.palette.primary.main,
+                }}
+              >
+                Masa Berlaku
+              </Typography>
+              <Typography
+                sx={{
+                  fontWeight: "bold",
+                  fontSize: "13px",
+                  wordBreak: "break-word", // <-- biar kata panjang pecah
+                  whiteSpace: "normal", // <-- biar bisa turun baris
+                  overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
+                }}
+              >
+                {selectedData?.start_date && selectedData?.end_date
+                  ? moment(selectedData.start_date).format("YYYY/MM/DD") +
+                    " s/d " +
+                    moment(selectedData.end_date).format("YYYY/MM/DD")
+                  : "Pendaftaran Baru"}
+              </Typography>
             </Grid>
           </Grid>
 

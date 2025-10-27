@@ -260,18 +260,13 @@ const Applications = () => {
       dataIndex: "room_number",
       sorter: (a, b) => a.room_number.localeCompare(b.room_number),
       sortDirections: ["ascend", "descend"],
-      // render: (text, record) => {
-      //   return (
-      //     <Tag
-      //       // warna random berdasarkan angka ganjil genap
-      //       color={record.id % 2 === 0 ? "pink" : "geekblue"}
-      //       key={record.tenant_application_id}
-      //       style={{ fontWeight: "bold" }}
-      //     >
-      //       {record.room_number}
-      //     </Tag>
-      //   );
-      // },
+      render: (text, record) => {
+        return (
+          <Typography sx={{ fontSize: "12px" }}>
+            No. {record.room_number}
+          </Typography>
+        );
+      },
       width: 150,
     },
     {

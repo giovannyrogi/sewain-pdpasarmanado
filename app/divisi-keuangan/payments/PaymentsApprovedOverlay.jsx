@@ -33,9 +33,9 @@ const PaymentApprovedOverlay = ({ selectedData }) => {
           fontWeight: "bold",
           color:
             selectedData?.payments?.approval_status === "approved"
-              ? "green"
+              ? "rgba(40, 167, 69, 0.4)"
               : selectedData?.payments?.approval_status === "rejected"
-              ? "red"
+              ? "rgba(255, 0, 0, 0.5)"
               : "",
           textTransform: "uppercase",
           letterSpacing: "6px",

@@ -502,7 +502,7 @@ const BuktiPembayaran = forwardRef(({ data }, ref) => {
                 width: "100px",
               }}
             >
-              {data?.room?.room_number ?? "-"}
+              No. {data?.room?.room_number ?? "-"}
             </td>
             <td
               style={{

@@ -16,16 +16,15 @@ import LoadingBackdrop from "../../components/loading/Backdrop";
 import Notification from "../../components/Notification";
 import axios from "axios";
 import BreadcrumbPage from "@/app/components/breadcrumb/page";
+import menuDevisiKontrak from "@/app/components/menu/MenuItemDivisiKontrak";
 import { useUser } from "@/app/utils/useUser";
 import { useReactToPrint } from "react-to-print";
 import PizZip from "pizzip";
 import Docxtemplater from "docxtemplater";
 import { saveAs } from "file-saver";
+import UpdateDocumentContract from "./UpdateDocumentContract";
+import AddContract from "./AddContract";
 import formatRupiah from "@/app/components/formatrupiah/page";
-import menuItemDirekturUtama from "@/app/components/menu/MenuItemDirekturUtama";
-import menuKepalaDivisi from "@/app/components/menu/MenuItemKepalaDivisi";
-import menuKepalaSeksi from "@/app/components/menu/MenuItemKepalaSeksi";
-import menuKepalaSubdivisi from "@/app/components/menu/MenuItemKepalaSubdivisi";
 
 const Contract = () => {
   // Ref untuk dokumen print
@@ -222,6 +221,9 @@ const Contract = () => {
     {
       title: "Nomor Ruangan",
       dataIndex: ["rooms", "room_number"],
+      render: (text, record) => (
+        <Typography sx={{ fontSize: "12px" }}>No. {record?.rooms?.room_number}</Typography>
+      ),
       width: 150,
     },
     {
@@ -515,7 +517,7 @@ const Contract = () => {
   return (
     <Box sx={{ width: "100%", height: "100%", minHeight: "100%", p: 2 }}>
       {/* Component Breadcrumbs disini */}
-      <BreadcrumbPage menuList={menuKepalaSubdivisi} />
+      <BreadcrumbPage menuList={menuDevisiKontrak} />
 
       <ConfigProvider
         theme={{
@@ -530,7 +532,7 @@ const Contract = () => {
           },
         }}
       >
-        {/* <Box
+        <Box
           sx={{
             display: "flex",
             flexDirection: "row",
@@ -560,7 +562,7 @@ const Contract = () => {
               fontSize="20px"
             />
           </Button>
-        </Box> */}
+        </Box>
 
         <Paper
           elevation={6}
@@ -572,7 +574,6 @@ const Contract = () => {
             width: "100%",
             bgcolor: "background.default",
             overflowX: "auto",
-            mt: 6,
           }}
         >
           <Input.Search
@@ -599,6 +600,28 @@ const Contract = () => {
           />
         </Paper>
       </ConfigProvider>
+
+      <AddContract
+        open={openAddModal}
+        onClose={() => setOpenAddModal(false)}
+        getDataContract={getDataContract}
+        loading={loading}
+        loadingTrue={() => setLoading(true)}
+        loadingFalse={() => setLoading(false)}
+        loadingMessage={loadingMessage}
+        setLoadingMessage={setLoadingMessage}
+        onNotify={(notify) => setSnackbar(notify)}
+      />
+
+      <UpdateDocumentContract
+        open={openUpdateModal}
+        onClose={() => setOpenUpdateModal(false)}
+        getDataContract={getDataContract}
+        loading={loading}
+        setLoading={setLoading}
+        loadingMessage={loadingMessage}
+        onNotify={(notify) => setSnackbar(notify)}
+      />
 
       <LoadingBackdrop message={loadingMessage} open={loading} />
       {/* Snackbar notification */}
