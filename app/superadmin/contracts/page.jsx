@@ -222,7 +222,9 @@ const Contract = () => {
       title: "Nomor Ruangan",
       dataIndex: ["rooms", "room_number"],
       render: (text, record) => (
-        <Typography sx={{ fontSize: "12px" }}>No. {record?.rooms?.room_number}</Typography>
+        <Typography sx={{ fontSize: "12px" }}>
+          No. {record?.rooms?.room_number}
+        </Typography>
       ),
       width: 150,
     },
@@ -506,7 +508,10 @@ const Contract = () => {
       });
 
       setTimeout(() => {
-        saveAs(out, `Contract_${record.tenant_identities?.full_name}.docx`);
+        saveAs(
+          out,
+          `Contract_${record?.tenant_identities?.full_name}_${record?.locations?.location_name}_${record?.rooms?.room_number}.docx`
+        );
         setLoading(false);
       }, 1000);
     } catch (err) {

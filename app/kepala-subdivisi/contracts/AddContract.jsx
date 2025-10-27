@@ -102,6 +102,8 @@ const AddContract = ({
             item.contracts.latest_contract_number_only,
           status: item.tenant_identities.status,
           notes: item.tenant_identities.notes,
+          room_number: item.rooms.room_number,
+          location_name: item.locations.location_name,
         }));
 
         setListAvailableTenant(mapped);
@@ -294,7 +296,13 @@ const AddContract = ({
             <Grid size={12}>
               <Autocomplete
                 options={listAvailableTenant || []}
-                getOptionLabel={(option) => option.full_name || ""}
+                getOptionLabel={(option) =>
+                  option.full_name +
+                    " - " +
+                    option.location_name +
+                    " - " +
+                    option.room_number || ""
+                }
                 value={
                   listAvailableTenant.find(
                     (item) => item.tenant_application_id === selectedTenantId
