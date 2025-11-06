@@ -20,7 +20,7 @@ import formatRupiah from "../../components/formatrupiah/page";
 import moment from "moment";
 import PaymentApprovedOverlay from "./PaymentsApprovedOverlay";
 import InstallmentDetail from "@/app/components/installment-detail/InstallmentDetail";
-import PaymentProof from "@/app/components/installment-detail/paymentProof";
+import PaymentProof from "../../components/installment-detail/PaymentProof";
 
 const ApprovalModal = ({
   open,
