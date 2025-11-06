@@ -26,6 +26,7 @@ import { useThemeMode } from "../themeprovider/ThemeContext";
 import LoadingBackdrop from "../loading/Backdrop";
 import axios from "axios";
 import { redirect } from "next/navigation";
+import StorageIcon from "@mui/icons-material/Storage";
 
 const TopMenu = ({ user, onBurgerClick, onShowLoading, onHideLoading }) => {
   const theme = useTheme();
@@ -42,13 +43,20 @@ const TopMenu = ({ user, onBurgerClick, onShowLoading, onHideLoading }) => {
     try {
       await axios.post("/api/logout");
       setTimeout(() => {
-        // window.location.href = "/login"; // middleware akan handle redirect
         redirect("/login");
       }, 1000);
     } catch (err) {
       console.log("error logout", err);
       onHideLoading?.();
     }
+  };
+
+  const HandleDatabase = () => {
+    onShowLoading?.();
+    setTimeout(() => {
+      redirect("/settings/database");
+    }, 1000);
+    onHideLoading?.();
   };
 
   return (
@@ -91,7 +99,7 @@ const TopMenu = ({ user, onBurgerClick, onShowLoading, onHideLoading }) => {
 
       {/* Right: Theme Toggle + Avatar */}
       <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-        <Tooltip title={themeMode === "dark" ? "Light Mode" : "Dark Mode"}>
+        <Tooltip title={themeMode === "dark" ? "Dark Mode" : "Light Mode"}>
           <IconButton
             onClick={() => {
               setThemeMode(themeMode === "dark" ? "light" : "dark");
@@ -123,9 +131,9 @@ const TopMenu = ({ user, onBurgerClick, onShowLoading, onHideLoading }) => {
             )}
           </IconButton>
         </Tooltip>
-        <Tooltip title="Setting">
+        <Tooltip title="Notifikasi">
           <IconButton
-            onClick={handleAvatarClick}
+            // onClick={handleAvatarClick}
             size="small"
             sx={{
               color: theme.palette.primary.main,
@@ -136,13 +144,13 @@ const TopMenu = ({ user, onBurgerClick, onShowLoading, onHideLoading }) => {
             }}
           >
             <Icon
-              icon="line-md:cog-filled-loop"
+              icon="line-md:bell-filled-loop"
               color={theme.palette.primary.main}
               fontSize="25px"
             />
           </IconButton>
         </Tooltip>
-        <Menu
+        {/* <Menu
           anchorEl={anchorEl}
           open={open}
           onClose={handleMenuClose}
@@ -167,13 +175,20 @@ const TopMenu = ({ user, onBurgerClick, onShowLoading, onHideLoading }) => {
             Profil
           </MenuItem>
           <Divider />
+          <MenuItem onClick={HandleDatabase}>
+            <ListItemIcon>
+              <StorageIcon fontSize="small" />
+            </ListItemIcon>
+            Database
+          </MenuItem>
+          <Divider />
           <MenuItem onClick={handleLogout}>
             <ListItemIcon>
               <LogoutIcon fontSize="small" />
             </ListItemIcon>
             Logout
           </MenuItem>
-        </Menu>
+        </Menu> */}
       </Box>
     </Paper>
   );

@@ -64,6 +64,7 @@ const UpdateDocumentDate = ({
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
   const [documentNumber, setDocumentNumber] = useState("");
+  const [durasiKontrak, setDurasiKontrak] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [highestDocumentNumber, setHighestDocumentNumber] = useState(null);
 
@@ -104,6 +105,13 @@ const UpdateDocumentDate = ({
       setEndDate(moment(selectedData?.end_date));
     }
   }, [open]);
+
+  useEffect(() => {
+    if (startDate && endDate) {
+      const duration = endDate.diff(startDate, "days");
+      setDurasiKontrak(duration + 1);
+    }
+  }, [startDate, endDate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -266,61 +274,70 @@ const UpdateDocumentDate = ({
 
         <form onSubmit={handleSubmit}>
           <Grid container spacing={isMobile ? 3 : 2}>
-            <>
-              <Grid size={12}>
-                <DatePicker
-                  label="Tanggal Mulai"
-                  // value harus dayjs, bukan string
-                  value={startDate}
-                  onChange={(newValue) => {
-                    // langsung simpan dayjs object
-                    setStartDate(newValue);
+            <Grid size={6}>
+              <DatePicker
+                label="Tanggal Mulai"
+                value={startDate}
+                onChange={(newValue) => {
+                  setStartDate(newValue);
 
-                    if (newValue) {
-                      // Tambahkan 365 hari ke tanggal mulai
-                      const end = moment(newValue).add(365, "days");
+                  // if (newValue) {
+                  //   // Tambahkan 365 hari ke tanggal mulai
+                  //   const end = moment(newValue).add(365, "days");
 
-                      setEndDate(end);
-                    } else {
-                      setEndDate(null);
-                    }
-                  }}
-                  disabled={selectedData?.start_date}
-                  // minDate={moment().startOf("day")}
-                  slotProps={{
-                    textField: {
-                      variant: "filled",
-                      fullWidth: true,
-                      required: true,
-                      disabled: selectedData?.start_date,
-                      color: "primary",
-                    },
-                  }}
-                />
-              </Grid>
-              <Grid size={12}>
-                <DatePicker
-                  label="Tanggal Selesai"
-                  // value harus dayjs, bukan string
-                  value={endDate}
-                  onChange={(newValue) => {
-                    // langsung simpan dayjs object
-                    setEndDate(newValue);
-                  }}
-                  // minDate={moment().startOf("day")}
-                  disabled
-                  slotProps={{
-                    textField: {
-                      variant: "filled",
-                      fullWidth: true,
-                      required: true,
-                      color: "primary",
-                      disabled: true,
-                    },
-                  }}
-                />
-              </Grid>
-            </>
+                  //   setEndDate(end);
+                  // } else {
+                  //   setEndDate(null);
+                  // }
+                }}
+                minDate={moment()}
+                disabled={selectedData?.start_date}
+                slotProps={{
+                  textField: {
+                    variant: "filled",
+                    fullWidth: true,
+                    required: true,
+                    disabled: selectedData?.start_date,
+                    color: "primary",
+                  },
+                }}
+              />
+            </Grid>
+            <Grid size={6}>
+              <DatePicker
+                label="Tanggal Berakhir"
+                value={endDate}
+                onChange={(newValue) => {
+                  setEndDate(newValue);
+                }}
+                minDate={moment()}
+                // disabled
+                slotProps={{
+                  textField: {
+                    variant: "filled",
+                    fullWidth: true,
+                    required: true,
+                    color: "primary",
+                    // disabled: true,
+                  },
+                }}
+              />
+            </Grid>
+
+            <Grid size={12}>
+              <TextField
+                label="Durasi Kontrak (hari)"
+                variant="filled"
+                fullWidth
+                value={`${durasiKontrak} hari`}
+                // onChange={(e) => {
+                // }}
+                disabled
+                required
+                color="primary"
+              />
+            </Grid>
+
             <Grid size={12}>
               <TextField
                 label="Nomor Dokumen"

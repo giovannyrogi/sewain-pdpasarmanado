@@ -65,12 +65,13 @@ const LocationsReport = () => {
   const [loadingMessage, setLoadingMessage] = useState("Loading...");
   const [openApprovalModal, setOpenApprovalModal] = useState(false);
   const [totals, setTotals] = useState(null);
+  const [summeryData, setSummeryData] = useState(null);
 
   const [openDatePicker, setOpenDatePicker] = useState(false);
   const [range, setRange] = useState([
     {
-      startDate: new Date(),
-      endDate: new Date(),
+      startDate: moment().format("YYYY-MM-DD"),
+      endDate: moment().format("YYYY-MM-DD"),
       key: "selection",
     },
   ]);
@@ -87,20 +88,45 @@ const LocationsReport = () => {
   };
 
   const handleRangeChange = (item) => {
-    setRange([item.selection]);
+    setRange([
+      {
+        startDate: moment(item?.selection?.startDate).format("YYYY-MM-DD"),
+        endDate: moment(item?.selection?.endDate).format("YYYY-MM-DD"),
+        key: "selection",
+      },
+    ]);
   };
 
   const getDataIncomeLocations = async () => {
-    setLoading(true);
-    const startDate = moment(range[0].startDate).format("YYYY-MM-DD");
-    const endDate = moment(range[0].endDate).format("YYYY-MM-DD");
     try {
       const response = await axios.get(
-        `/api/report/income-by-locations?start_date=${startDate}&end_date=${endDate}`
+        `/api/report/income-by-locations?start_date=${range[0].startDate}&end_date=${range[0].endDate}`
       );
       console.log("locations", response);
       setDataLocations(response.data.data);
       setTotals(response.data.totals);
+    } catch (error) {
+      console.log("error", error);
+    }
+  };
+
+  const getSummeryData = async () => {
+    try {
+      const response = await axios.get(
+        `/api/report/accounting-summary?start_date=${range[0].startDate}&end_date=${range[0].endDate}`
+      );
+      console.log("summary reports", response);
+      setSummeryData(response.data.data);
+    } catch (error) {
+      console.log("error", error);
+    }
+  };
+
+  const getAllData = async () => {
+    setLoading(true);
+    try {
+      await getDataIncomeLocations();
+      await getSummeryData();
       setLoading(false);
     } catch (error) {
       console.log("error", error);
@@ -110,22 +136,17 @@ const LocationsReport = () => {
 
   useEffect(() => {
     if (user) {
-      getDataIncomeLocations();
+      getAllData();
     }
   }, [user]);
 
   const handleSubmit = async () => {
-    const startDate = moment(range[0].startDate).format("YYYY-MM-DD");
-    const endDate = moment(range[0].endDate).format("YYYY-MM-DD");
-
-    console.log("startDate", startDate);
-    console.log("endDate", endDate);
-
     setLoading(true);
     setIsSubmitting(true);
+
     try {
       const response = await axios.get(
-        `/api/report/income-by-locations?start_date=${startDate}&end_date=${endDate}`
+        `/api/report/income-by-locations?start_date=${range[0].startDate}&end_date=${range[0].endDate}`
       );
       console.log("locations report", response);
       const data = response.data.data;
@@ -133,7 +154,7 @@ const LocationsReport = () => {
       if (data.length === 0) {
         setSnackbar({
           open: true,
-          message: `Tidak ada data dari tanggal "${startDate}" sampai "${endDate}"`,
+          message: `Tidak ada data dari tanggal "${range[0].startDate}" sampai "${range[0].endDate}"`,
           severity: "error",
         });
         setTimeout(() => {
@@ -147,6 +168,7 @@ const LocationsReport = () => {
       if (response.data.success) {
         setDataLocations(response.data.data);
         setTotals(response.data.totals);
+        await getSummeryData();
         setTimeout(() => {
           setIsSubmitting(false);
           setLoading(false);
@@ -1011,58 +1033,137 @@ const LocationsReport = () => {
           </ConfigProvider>
         </Grid>
 
-        {/* <Grid size={12}>
-          <Paper
-            elevation={6}
-            sx={{
-              p: 2,
-              bgcolor: "background.default",
-              mb: 6,
-              mt: 6,
-            }}
-          >
-            <Grid container spacing={1}>
-              <Grid
-                size={12}
-                display={"flex"}
-                flexDirection={"row"}
-                justifyContent={"flex-start"}
-                alignItems={"center"}
-                gap={1}
-              >
-                <Icon icon="ic:baseline-attach-money" />
-                <Typography
+        {/* Summery */}
+        {dataLocations.length > 0 && (
+          <Grid size={12}>
+            <Paper
+              elevation={6}
+              sx={{
+                p: 2,
+                bgcolor: "background.default",
+                mb: 6,
+                mt: 4,
+              }}
+            >
+              <Grid container spacing={1}>
+                <Grid
+                  size={12}
+                  display="flex"
+                  flexDirection="row"
+                  justifyContent="flex-start"
+                  alignItems="center"
+                  gap={1}
+                >
+                  <Icon icon="ic:baseline-attach-money" />
+                  <Typography
+                    sx={{
+                      color: "text.primary",
+                      fontSize: "16px",
+                      fontFamily: "poppins",
+                      fontWeight: 600,
+                    }}
+                  >
+                    Summary
+                  </Typography>
+                </Grid>
+
+                <Divider
                   sx={{
-                    color: "text.primary",
-                    fontSize: "16px",
-                    fontFamily: "poppins",
+                    mb: 1,
+                    mt: -0.5,
+                    borderColor: theme.palette.primary.main,
+                    width: "100%",
+                  }}
+                />
+
+                <Grid
+                  container
+                  spacing={1}
+                  size={12}
+                  sx={{
+                    padding: "0px 10px 5px 10px",
                   }}
                 >
-                  Summery
-                </Typography>
+                  {summeryData && (
+                    <>
+                      {[
+                        {
+                          label: "Piutang Kontraktual",
+                          value: summeryData.piutang_kontraktual,
+                        },
+                        {
+                          label: "Pendapatan Diterima Dimuka",
+                          value: summeryData.pendapatan_diterima_dimuka,
+                        },
+                        {
+                          label: "Pengakuan Kontrak Diterima Dimuka",
+                          value: summeryData.pengakuan_kontrak_diterima_dimuka,
+                        },
+                        {
+                          label: "JTU",
+                          value: summeryData.total_jtu,
+                        },
+                        {
+                          label: "PPN",
+                          value: summeryData.total_ppn,
+                        },
+                        {
+                          label: "Total",
+                          value: summeryData.total_keseluruhan,
+                        },
+                      ].map((item, index) => (
+                        <Grid
+                          key={index}
+                          container
+                          size={12}
+                          sx={{
+                            p: 1.5,
+                            borderRadius: 2,
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            mb: 0.5,
+                            bgcolor:
+                              theme.palette.mode === "dark"
+                                ? index % 2 === 0
+                                  ? "rgba(255,255,255,0.05)"
+                                  : "rgba(255,255,255,0.1)"
+                                : index % 2 === 0
+                                ? "rgba(0, 0, 0, 0.07)"
+                                : "rgba(18, 17, 17, 0.15)",
+                          }}
+                        >
+                          <Typography
+                            sx={{
+                              fontFamily: "poppins",
+                              fontSize: "14px",
+                              color: theme.palette.text.primary,
+                              fontWeight: "bold",
+                            }}
+                          >
+                            {item.label}
+                          </Typography>
+                          <Typography
+                            sx={{
+                              fontFamily: "poppins",
+                              fontSize: "14px",
+                              fontWeight: "bold",
+                              color:
+                                item.value >= 0
+                                  ? theme.palette.success.main
+                                  : theme.palette.error.main,
+                            }}
+                          >
+                            {formatRupiah(item.value)}
+                          </Typography>
+                        </Grid>
+                      ))}
+                    </>
+                  )}
+                </Grid>
               </Grid>
-
-              <Divider
-                sx={{
-                  mb: 1,
-                  mt: -0.5,
-                  borderColor: theme.palette.primary.main,
-                  width: "100%",
-                }}
-              />
-
-              <Grid
-                container
-                spacing={1}
-                sx={{
-                  padding: "0px 10px 5px 10px",
-                }}
-              >
-                asdsadsad
-              </Grid>
-            </Grid>
-          </Paper>
-        </Grid> */}
+            </Paper>
+          </Grid>
+        )}
       </Grid>
 
       {/* Popup Date Range */}

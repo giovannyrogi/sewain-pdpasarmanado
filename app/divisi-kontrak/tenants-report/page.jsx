@@ -80,16 +80,19 @@ const TenantsReport = () => {
   };
 
   const handleRangeChange = (item) => {
-    setRange([item.selection]);
+    setRange([
+      {
+        startDate: moment(item?.selection?.startDate).format("YYYY-MM-DD"),
+        endDate: moment(item?.selection?.endDate).format("YYYY-MM-DD"),
+        key: "selection",
+      },
+    ]);
   };
-
   const getDataIncomeTenants = async () => {
     setLoading(true);
-    const startDate = moment(range[0].startDate).format("YYYY-MM-DD");
-    const endDate = moment(range[0].endDate).format("YYYY-MM-DD");
     try {
       const response = await axios.get(
-        `/api/report/income-by-tenants?start_date=${startDate}&end_date=${endDate}`
+        `/api/report/income-by-tenants?start_date=${range[0].startDate}&end_date=${range[0].endDate}`
       );
       console.log("tenants report", response);
       setDataIncomeTenants(response.data.data);
@@ -108,17 +111,15 @@ const TenantsReport = () => {
   }, [user]);
 
   const handleSubmit = async () => {
-    const startDate = moment(range[0].startDate).format("YYYY-MM-DD");
-    const endDate = moment(range[0].endDate).format("YYYY-MM-DD");
 
-    console.log("startDate", startDate);
-    console.log("endDate", endDate);
+    // console.log("startDate", startDate);
+    // console.log("endDate", endDate);
 
     setLoading(true);
     setIsSubmitting(true);
     try {
       const response = await axios.get(
-        `/api/report/income-by-tenants?start_date=${startDate}&end_date=${endDate}`
+        `/api/report/income-by-tenants?start_date=${range[0].startDate}&end_date=${range[0].endDate}`
       );
       console.log("tenants report", response);
       const data = response.data.data;
@@ -126,7 +127,7 @@ const TenantsReport = () => {
       if (data.length === 0) {
         setSnackbar({
           open: true,
-          message: `Tidak ada data dari tanggal "${startDate}" sampai "${endDate}"`,
+          message: `Tidak ada data dari tanggal "${range[0].startDate}" sampai "${range[0].endDate}"`,
           severity: "error",
         });
         setTimeout(() => {

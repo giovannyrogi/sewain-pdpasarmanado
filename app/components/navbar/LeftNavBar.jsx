@@ -183,7 +183,7 @@ const LeftNavBar = ({ menus, activeMenu, onMenuClick, user }) => {
           </Box> */}
         </Box>
 
-        {/* Profile */}
+        {/* LOGO */}
         <Box
           sx={{
             mt: 4,
@@ -248,7 +248,7 @@ const LeftNavBar = ({ menus, activeMenu, onMenuClick, user }) => {
           </Box>
         </Box>
 
-        {/* Menu */}
+        {/* Main Menu */}
         <List>
           {menus.map((menu) =>
             menu.submenu ? (
@@ -416,269 +416,175 @@ const LeftNavBar = ({ menus, activeMenu, onMenuClick, user }) => {
           )}
         </List>
 
-        {/* <Divider
+        <Divider
           sx={{
-            mt: 2,
+            mt: 1,
           }}
-        /> */}
+        />
 
-        {/* Settings Menu*/}
-        {/* <List sx={{ mt: 2 }}>
-          <ListItem disablePadding>
-            <ListItemButton
-              onClick={() =>
-                setOpenDropdown(openDropdown === "settings" ? null : "settings")
-              }
-              selected={
-                openDropdown === "settings" ||
-                settingsMenu.submenu.some((sub) => activeMenu === sub.value)
-              }
-              sx={{
-                ml: -1.2,
-                color:
-                  openDropdown === "settings" ||
-                  settingsMenu.submenu.some((sub) => activeMenu === sub.value)
-                    ? theme.palette.primary.main
-                    : theme.palette.text.primary,
-                "& .MuiListItemIcon-root": {
-                  color:
-                    openDropdown === "settings" ||
-                    settingsMenu.submenu.some((sub) => activeMenu === sub.value)
-                      ? theme.palette.primary.main
-                      : theme.palette.text.primary,
-                },
-                bgcolor: "transparent !important",
-                "&.Mui-selected, &.Mui-selected:hover, &:hover": {
-                  bgcolor: "transparent !important",
-                  color: theme.palette.primary.main,
-                  "& .MuiListItemIcon-root": {
-                    color: theme.palette.primary.main,
-                  },
-                },
-              }}
-            >
-              <ListItemIcon sx={{ mr: -2 }}>{settingsMenu.icon}</ListItemIcon>
-              <ListItemText
-                primary={
-                  <Typography sx={{ fontSize: "14px" }}>
-                    {settingsMenu.label}
-                  </Typography>
-                }
-              />
-              {openDropdown === "settings" ? (
-                <ExpandLess sx={{ fontSize: "18px" }} />
-              ) : (
-                <ExpandMore sx={{ fontSize: "18px" }} />
-              )}
-            </ListItemButton>
-          </ListItem>
-          <Collapse
-            in={openDropdown === "settings"}
-            timeout="auto"
-            unmountOnExit
-          >
-            <List component="div" disablePadding>
-              {settingsMenu.submenu.map((sub) => (
-                <ListItem disablePadding key={sub.value} sx={{ pl: 2.2 }}>
+        {/* Settings Menu */}
+        <List sx={{ mt: 1 }}>
+          {settingsMenu.map((menu) =>
+            menu.submenu ? (
+              <React.Fragment key={menu.value}>
+                <ListItem disablePadding>
                   <ListItemButton
+                    onClick={() =>
+                      setOpenDropdown(
+                        openDropdown === menu.value ? null : menu.value
+                      )
+                    }
+                    selected={isMenuActive(menu)}
                     sx={{
                       ml: -1.2,
-                      color:
-                        activeMenu === sub.value && sub.value !== "theme"
+                      color: isMenuActive(menu)
+                        ? theme.palette.primary.main
+                        : theme.palette.text.primary,
+                      "& .MuiListItemIcon-root": {
+                        color: isMenuActive(menu)
                           ? theme.palette.primary.main
                           : theme.palette.text.primary,
-                      borderLeft:
-                        activeMenu === sub.value && sub.value !== "theme"
-                          ? `5px solid ${theme.palette.primary.main}`
-                          : "none",
-                      bgcolor:
-                        activeMenu === sub.value && sub.value !== "theme"
-                          ? alpha(theme.palette.primary.main, 0.12)
-                          : "transparent !important",
-                      "& .MuiListItemIcon-root": {
-                        color:
-                          activeMenu === sub.value && sub.value !== "theme"
-                            ? theme.palette.primary.main
-                            : theme.palette.text.primary,
                       },
+                      bgcolor: "transparent !important",
                       "&.Mui-selected, &.Mui-selected:hover, &:hover": {
-                        bgcolor:
-                          activeMenu === sub.value && sub.value !== "theme"
-                            ? alpha(theme.palette.primary.main, 0.12)
-                            : "transparent !important",
-                        color:
-                          activeMenu === sub.value && sub.value !== "theme"
-                            ? theme.palette.primary.main
-                            : theme.palette.text.primary,
+                        bgcolor: "transparent !important",
+                        color: theme.palette.primary.main,
                         "& .MuiListItemIcon-root": {
-                          color:
-                            activeMenu === sub.value && sub.value !== "theme"
-                              ? theme.palette.primary.main
-                              : theme.palette.text.primary,
+                          color: theme.palette.primary.main,
                         },
                       },
-                      "&:hover": {
-                        bgcolor:
-                          activeMenu === sub.value && sub.value !== "theme"
-                            ? alpha(theme.palette.primary.main, 0.12)
-                            : "transparent !important",
-                        color:
-                          activeMenu === sub.value && sub.value !== "theme"
-                            ? theme.palette.primary.main
-                            : theme.palette.text.primary,
-                      },
-                    }}
-                    selected={pathname === sub.value}
-                    onClick={() => {
-                      if (sub.value !== "theme") {
-                        // onMenuClick(sub.value);
-                        handleMenuClick(sub);
-                      }
-                      // setOpenDropdown(null);
                     }}
                   >
-                    {sub.showIcon ? (
-                      <ListItemIcon sx={{ mr: -2.5, ml: -1 }}>
-                        {sub.icon}
-                      </ListItemIcon>
-                    ) : null}
-                    {sub.label !== "Theme" ? (
-                      <ListItemText
-                        primary={
-                          <Typography sx={{ fontSize: "13px" }}>
-                            {sub.label}
-                          </Typography>
-                        }
-                      />
+                    <ListItemIcon sx={{ mr: -1.6 }}>{menu.icon}</ListItemIcon>
+                    <ListItemText
+                      primary={
+                        <Typography
+                          sx={{
+                            fontSize: "13px",
+                            fontWeight: isMenuActive(menu) ? "bold" : "normal",
+                          }}
+                        >
+                          {menu.label}
+                        </Typography>
+                      }
+                    />
+                    {openDropdown === menu.value ? (
+                      <ExpandLess sx={{ fontSize: "18px" }} />
                     ) : (
-                      // Theme Tonggle Light/Dark
-                      <Box
-                        sx={{
-                          display: "flex",
-                          flexDirection: "row",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                          width: "100%",
-                        }}
-                      >
-                        <Box
-                          sx={{
-                            display: "flex",
-                            flexDirection: "row",
-                            alignItems: "center",
-                            justifyContent: "flex-start",
-                            width: "50%",
-                          }}
-                        >
-                          <ListItemText
-                            primary={
-                              themeMode === "light" ? (
-                                <Typography sx={{ fontSize: "14px" }}>
-                                  {sub.label} Light
-                                </Typography>
-                              ) : (
-                                <Typography sx={{ fontSize: "14px" }}>
-                                  {sub.label} Dark
-                                </Typography>
-                              )
-                            }
-                          />
-                        </Box>
-                        <Box
-                          sx={{
-                            display: "flex",
-                            flexDirection: "row",
-                            alignItems: "center",
-                            justifyContent: "space-between",
-                            bgcolor: themeMode === "dark" ? "black" : "#F9F3EE",
-                            // border: `1px solid ${theme.palette.primary.main}`,
-                            borderRadius: 2,
-                            // boxShadow: "0px 4px 4px rgba(0, 0, 0, 0.25)",
-                            width: "50%",
-                            overflow: "hidden",
-                          }}
-                        >
-                          <Button
-                            sx={{
-                              flex: 1,
-                              minWidth: 0,
-                              color:
-                                themeMode === "light"
-                                  ? theme.palette.primary.main
-                                  : "unset",
-                              textTransform: "none",
-                              borderRadius: 0,
-                              bgcolor:
-                                themeMode === "light"
-                                  ? alpha(theme.palette.primary.main, 0.2)
-                                  : "transparent",
-                              "&:hover": {
-                                bgcolor: alpha(theme.palette.primary.main, 0.1),
-                              },
-                              transition: "background-color 0.2s",
-                            }}
-                            onClick={() => {
-                              setThemeMode("light");
-                              localStorage.setItem(
-                                "currentTheme",
-                                JSON.stringify({
-                                  currentThemeMode: "light",
-                                })
-                              );
-                            }}
-                          >
-                            <Icon
-                              icon="line-md:moon-filled-alt-to-sunny-filled-loop-transition"
-                              fontSize="20px"
-                            />
-                          </Button>
-                          <Button
-                            sx={{
-                              flex: 1,
-                              minWidth: 0,
-                              color:
-                                themeMode === "dark"
-                                  ? theme.palette.primary.main
-                                  : "unset",
-                              textTransform: "none",
-                              borderRadius: 0,
-                              bgcolor:
-                                themeMode === "dark"
-                                  ? alpha(theme.palette.primary.main, 0.2)
-                                  : "transparent",
-                              "&:hover": {
-                                bgcolor: alpha(theme.palette.primary.main, 0.1),
-                              },
-                              transition: "background-color 0.2s",
-                            }}
-                            onClick={() => {
-                              setThemeMode("dark");
-                              localStorage.setItem(
-                                "currentTheme",
-                                JSON.stringify({
-                                  currentThemeMode: "dark",
-                                })
-                              );
-                            }}
-                          >
-                            <Icon
-                              icon="line-md:moon-rising-filled-loop"
-                              fontSize="20px"
-                            />
-                          </Button>
-                        </Box>
-                      </Box>
+                      <ExpandMore sx={{ fontSize: "18px" }} />
                     )}
                   </ListItemButton>
                 </ListItem>
-              ))}
-            </List>
-          </Collapse>
-        </List> */}
+
+                {/* Submenu Settings */}
+                <Collapse
+                  in={openDropdown === menu.value}
+                  timeout="auto"
+                  unmountOnExit
+                >
+                  <List component="div" disablePadding>
+                    {menu.submenu.map((sub) => (
+                      <ListItem disablePadding key={sub.value} sx={{ pl: 2.2 }}>
+                        <ListItemButton
+                          selected={isSubMenuActive(sub)}
+                          onClick={() => handleMenuClick(sub)}
+                          sx={{
+                            ml: -1.2,
+                            color: isSubMenuActive(sub)
+                              ? theme.palette.primary.main
+                              : theme.palette.text.primary,
+                            borderLeft: isSubMenuActive(sub)
+                              ? `5px solid ${theme.palette.primary.main}`
+                              : "none",
+                            bgcolor: isSubMenuActive(sub)
+                              ? alpha(theme.palette.primary.main, 0.12)
+                              : "transparent !important",
+                            "& .MuiListItemIcon-root": {
+                              color: isSubMenuActive(sub)
+                                ? theme.palette.primary.main
+                                : theme.palette.text.primary,
+                            },
+                            "&.Mui-selected, &.Mui-selected:hover, &:hover": {
+                              bgcolor: alpha(theme.palette.primary.main, 0.12),
+                              color: theme.palette.primary.main,
+                              "& .MuiListItemIcon-root": {
+                                color: theme.palette.primary.main,
+                              },
+                            },
+                          }}
+                        >
+                          {sub.showIcon ? (
+                            <ListItemIcon sx={{ mr: -2.5, ml: -1 }}>
+                              {sub.icon}
+                            </ListItemIcon>
+                          ) : null}
+                          <ListItemText
+                            primary={
+                              <Typography
+                                sx={{
+                                  fontSize: "13px",
+                                  fontWeight: isSubMenuActive(sub)
+                                    ? "bold"
+                                    : "normal",
+                                }}
+                              >
+                                {sub.label}
+                              </Typography>
+                            }
+                          />
+                        </ListItemButton>
+                      </ListItem>
+                    ))}
+                  </List>
+                </Collapse>
+              </React.Fragment>
+            ) : (
+              // Menu tanpa submenu
+              <ListItem disablePadding key={menu.value}>
+                <ListItemButton
+                  selected={pathname === menu.path}
+                  onClick={() => handleMenuClick(menu)}
+                  sx={{
+                    ml: -1.2,
+                    color: isMenuActive(menu)
+                      ? theme.palette.primary.main
+                      : theme.palette.text.primary,
+                    "& .MuiListItemIcon-root": {
+                      color: isMenuActive(menu)
+                        ? theme.palette.primary.main
+                        : theme.palette.text.primary,
+                    },
+                    bgcolor: "transparent !important",
+                    "&.Mui-selected, &.Mui-selected:hover, &:hover": {
+                      color: theme.palette.primary.main,
+                      "& .MuiListItemIcon-root": {
+                        color: theme.palette.primary.main,
+                      },
+                    },
+                  }}
+                >
+                  <ListItemIcon sx={{ mr: -1.6 }}>{menu.icon}</ListItemIcon>
+                  <ListItemText
+                    primary={
+                      <Typography
+                        sx={{
+                          fontSize: "14px",
+                          fontWeight: isMenuActive(menu) ? "bold" : "normal",
+                        }}
+                      >
+                        {menu.label}
+                      </Typography>
+                    }
+                  />
+                </ListItemButton>
+              </ListItem>
+            )
+          )}
+        </List>
       </Box>
 
       {/* Logout Button - Always at Bottom */}
-      {/* <Box sx={{ flexShrink: 0, mt: 2 }}>
+      <Box sx={{ flexShrink: 0, mt: 2 }}>
         <List>
           <ListItem disablePadding>
             <ListItemButton
@@ -711,7 +617,7 @@ const LeftNavBar = ({ menus, activeMenu, onMenuClick, user }) => {
             </ListItemButton>
           </ListItem>
         </List>
-      </Box> */}
+      </Box>
       {/* Spinner full screen saat redirect */}
       <LoadingBackdrop open={loading} message="Logging out..." />
     </Paper>

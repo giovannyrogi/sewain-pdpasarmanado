@@ -549,11 +549,14 @@ const AddPayment = ({
                         fontSize: "12px",
                         fontWeight: "bold",
                         color: "primary.main",
+                        textAlign: "justify",
                       }}
                     >
                       Pembayaran Uang Muka(DP) atas nama "
                       {selectedData?.tenant_name}" sesuai persetujuan awal
-                      Adalah {formatRupiah(selectedData?.down_payment)}
+                      Adalah {formatRupiah(selectedData?.down_payment)} (40%)
+                      dari total tagihan{" "}
+                      {formatRupiah(selectedData?.total_payment)}
                     </Typography>
                   </Grid>
                 ) : selectedData?.payment_number >= 3 ? (
@@ -563,6 +566,7 @@ const AddPayment = ({
                         fontSize: "12px",
                         fontWeight: "bold",
                         color: "primary.main",
+                        textAlign: "justify",
                       }}
                     >
                       Pembayaran Cicilan terakhir sebesar{" "}

@@ -4,28 +4,39 @@ import moment from "moment";
 export async function GET(request) {
   try {
     const url = new URL(request.url);
-    const start = url.searchParams.get("start_date");
-    const end = url.searchParams.get("end_date");
+    const startDate = url.searchParams.get("start_date");
+    const endDate = url.searchParams.get("end_date");
 
-    const startMoment = start
-      ? moment(start, ["DD-MM-YYYY", "YYYY-MM-DD"], true)
-      : moment().startOf("month");
-    const endMoment = end
-      ? moment(end, ["DD-MM-YYYY", "YYYY-MM-DD"], true)
-      : moment().endOf("month");
-
-    if (!startMoment.isValid() || !endMoment.isValid()) {
+    // validasi range tanggal
+    if (moment(startDate).isAfter(endDate)) {
       return new Response(
         JSON.stringify({
           success: false,
-          message: "Invalid date format. Use DD-MM-YYYY or YYYY-MM-DD",
+          message: "Start date must be before end date",
         }),
         { status: 400 }
       );
     }
 
-    const startDate = startMoment.format("YYYY-MM-DD");
-    const endDate = endMoment.format("YYYY-MM-DD");
+    if (!startDate) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: "Start date are required",
+        }),
+        { status: 400 }
+      );
+    }
+
+    if (!endDate) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: "End date are required",
+        }),
+        { status: 400 }
+      );
+    }
 
     const sql = `
     WITH approved_payments AS (
@@ -229,8 +240,8 @@ export async function GET(request) {
         data,
         totals,
         period: {
-          start_date: startMoment.format("DD-MM-YYYY"),
-          end_date: endMoment.format("DD-MM-YYYY"),
+          start_date: startDate,
+          end_date: endDate,
         },
       }),
       { status: 200, headers: { "Content-Type": "application/json" } }

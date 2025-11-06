@@ -5,18 +5,8 @@ import moment from "moment";
 export async function GET(request) {
   try {
     const url = new URL(request.url);
-    const start = url.searchParams.get("start_date");
-    const end = url.searchParams.get("end_date");
-
-    const startMoment = start
-      ? moment(start, ["DD-MM-YYYY", "YYYY-MM-DD"], true)
-      : moment().startOf("month");
-    const endMoment = end
-      ? moment(end, ["DD-MM-YYYY", "YYYY-MM-DD"], true)
-      : moment().endOf("month");
-
-    const startDate = startMoment.format("YYYY-MM-DD");
-    const endDate = endMoment.format("YYYY-MM-DD");
+    const startDate = url.searchParams.get("start_date");
+    const endDate = url.searchParams.get("end_date");
 
     const sql = `
       WITH approved_payments AS (
@@ -56,6 +46,11 @@ export async function GET(request) {
         FROM payments p
         JOIN tenant_application ta ON ta.id = p.tenant_application_id
         WHERE ta.payment_type = 'cicilan'
+        AND p.payment_date BETWEEN $1 AND $2
+          AND EXISTS (
+            SELECT 1 FROM payment_approval pa
+            WHERE pa.payment_id = p.id AND pa.status = 'approved'
+          )
         GROUP BY ta.id, ta.location_id, ta.admin_fee
       ) sub
       GROUP BY location_id
@@ -138,8 +133,8 @@ export async function GET(request) {
         data,
         totals,
         period: {
-          start_date: startMoment.format("DD-MM-YYYY"),
-          end_date: endMoment.format("DD-MM-YYYY"),
+          start_date: startDate,
+          end_date: endDate,
         },
       }),
       { status: 200, headers: { "Content-Type": "application/json" } }
