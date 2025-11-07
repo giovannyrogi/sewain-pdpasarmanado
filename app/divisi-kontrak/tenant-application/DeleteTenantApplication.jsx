@@ -195,6 +195,7 @@ const DeleteTenantApplication = ({
                   fontSize: 14,
                 }}
               >
+                Ruangan No.{" "}
                 {selectedData && selectedData.room_number
                   ? selectedData.room_number
                   : ""}

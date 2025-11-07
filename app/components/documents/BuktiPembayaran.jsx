@@ -13,6 +13,7 @@ import {
 import moment from "moment";
 import React, { forwardRef } from "react";
 import formatRupiah from "../formatrupiah/page";
+import Image from "next/image";
 
 const BuktiPembayaran = forwardRef(({ data }, ref) => {
   if (!data) return null;
@@ -355,7 +356,6 @@ const BuktiPembayaran = forwardRef(({ data }, ref) => {
           mb: 5,
         }}
       />
-
       <Grid container spacing={2} mb={0.3}>
         <Grid
           size={12}
@@ -373,7 +373,6 @@ const BuktiPembayaran = forwardRef(({ data }, ref) => {
           </Typography>
         </Grid>
       </Grid>
-
       {/* Tabel Rincian Tagihan */}
       <table
         style={{
@@ -632,7 +631,6 @@ const BuktiPembayaran = forwardRef(({ data }, ref) => {
           </tr>
         </tbody>
       </table>
-
       {/* Pembayaran Cicilan */}
       {data?.tenant_application?.payment_type === "cicilan" ? (
         <table
@@ -856,7 +854,6 @@ const BuktiPembayaran = forwardRef(({ data }, ref) => {
           </tbody>
         </table>
       )}
-
       {/* Bagian KTP & Bukti Pembayaran */}
       <Grid container mt={3} spacing={1}>
         {/* Foto KTP - hanya tampil sekali */}
@@ -874,16 +871,26 @@ const BuktiPembayaran = forwardRef(({ data }, ref) => {
         </Grid>
 
         <Grid size={12}>
-          <img
-            src={data?.tenant_application?.ktp_file_path}
-            alt={`foto-ktp-${data?.tenant_application?.tenant_name}`}
-            width="450px"
-            height="250px"
-          />
+          <Box
+            sx={{
+              width: "100%",
+              maxWidth: 450,
+              aspectRatio: "16/9",
+              position: "relative",
+            }}
+          >
+            <Image
+              src={data?.tenant_application?.ktp_file_path}
+              alt={`foto-ktp-${data?.tenant_application?.tenant_name}`}
+              fill
+              style={{ objectFit: "contain", borderRadius: "8px" }}
+              priority
+            />
+          </Box>
         </Grid>
 
         {data?.tenant_application?.payment_type === "cicilan" ? (
-          <Grid container>
+          <Grid size={12} container>
             <Grid
               size={12}
               sx={{
@@ -906,7 +913,7 @@ const BuktiPembayaran = forwardRef(({ data }, ref) => {
               </Typography>
             </Grid>
 
-            {/* Mapping semua bukti bayar dari previous_payments + current payment */}
+            {/* Mapping semua bukti bayar dari previous_payments  current payment */}
             {[...(data?.payments?.previous_payments || []), data?.payments]
               .filter((p) => p && p.proof_file_path) // hanya tampil jika ada file
               .map((payment, index) => (
@@ -931,7 +938,6 @@ const BuktiPembayaran = forwardRef(({ data }, ref) => {
                       fontSize: "14px",
                       fontWeight: "bold",
                       fontFamily: "calibri",
-                      mb: 1,
                     }}
                   >
                     {payment.payment_number === 1
@@ -940,21 +946,31 @@ const BuktiPembayaran = forwardRef(({ data }, ref) => {
                     — Tanggal:{" "}
                     {moment(payment.payment_date).format("D MMMM YYYY")}
                   </Typography>
-                  <img
-                    src={payment.proof_file_path}
-                    alt={`bukti-pembayaran-${payment.payment_number}-${data?.tenant_application?.tenant_name}`}
-                    width="700px"
-                    height="300px"
-                    style={{
-                      border: "1px solid #ddd",
-                      borderRadius: "8px",
+                  <Box
+                    sx={{
+                      width: "100%",
+                      maxWidth: 700,
+                      aspectRatio: "21/9",
+                      position: "relative",
+                      mx: "auto",
                     }}
-                  />
+                  >
+                    <Image
+                      src={payment.proof_file_path}
+                      alt={`bukti-pembayaran-${payment.payment_number}-${data?.tenant_application?.tenant_name}`}
+                      fill
+                      style={{
+                        objectFit: "contain",
+                        borderRadius: "8px",
+                      }}
+                      priority
+                    />
+                  </Box>
                 </Grid>
               ))}
           </Grid>
         ) : (
-          <Grid container>
+          <Grid size={12} container>
             <Grid
               size={12}
               sx={{
@@ -991,28 +1007,34 @@ const BuktiPembayaran = forwardRef(({ data }, ref) => {
                   fontSize: "14px",
                   fontFamily: "calibri",
                   fontWeight: "bold",
-                  mb: 1,
                 }}
               >
                 Pembayaran Lunas -{" "}
                 {moment(data?.payments?.payment_date).format("D MMMM YYYY")}
               </Typography>
-              <img
-                src={data?.payments?.proof_file_path}
-                alt={`bukti-pembayaran-pembayaran-lunas`}
-                width="700px"
-                height="300px"
-                style={{
-                  border: "1px solid #ccc",
-                  borderRadius: "8px",
-                  objectFit: "contain",
+              <Box
+                sx={{
+                  width: "100%",
+                  maxWidth: 700,
+                  aspectRatio: "21/9",
+                  position: "relative",
+                  mx: "auto",
                 }}
-              />
+              >
+                <Image
+                  src={data?.payments?.proof_file_path}
+                  alt={`bukti-pembayaran-pembayaran-lunas`}
+                  fill
+                  style={{
+                    objectFit: "contain",
+                  }}
+                  priority
+                />
+              </Box>
             </Grid>
           </Grid>
         )}
       </Grid>
-
       <Grid container mt={4} spacing={2}>
         <Grid size={12} textAlign={"right"}>
           <Typography
@@ -1037,28 +1059,30 @@ const BuktiPembayaran = forwardRef(({ data }, ref) => {
       </Grid>
 
       {/* Logo Pemerintah Kota Manado */}
-      <img
+      <Image
         src="/logo-pemerintah-kota-manado.png"
         alt="logo-pemerintah-kota-manado"
+        width={150}
+        height={100}
         style={{
-          width: "150px",
-          height: "100px",
           position: "absolute",
           top: 30,
           left: 5,
         }}
+        priority
       />
       {/* Logo Perumda Pasar Manado */}
-      <img
+      <Image
         src="/logo-perumda-pasar-manado.png"
         alt="logo-perumda-pasar-manado"
+        width={110}
+        height={100}
         style={{
-          width: "110px",
-          height: "100px",
           position: "absolute",
           top: 30,
           left: 660,
         }}
+        priority
       />
     </Box>
   );

@@ -21,6 +21,7 @@ import moment from "moment";
 import PaymentApprovedOverlay from "./PaymentsApprovedOverlay";
 import InstallmentDetail from "@/app/components/installment-detail/InstallmentDetail";
 import PaymentProof from "../../components/installment-detail/PaymentProof";
+import Image from "next/image";
 
 const ApprovalModal = ({
   open,
@@ -567,38 +568,46 @@ const ApprovalModal = ({
                   Foto KTP
                 </Typography>
 
-                {/* Container dengan tinggi tetap */}
                 <Box
                   sx={{
                     width: "100%",
-                    height: 150, // tinggi konsisten
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    overflow: "hidden",
+                    maxWidth: 300, // batas maksimal biar tidak terlalu besar
+                    position: "relative",
                     borderRadius: 2,
-                    // bgcolor: "#f8f8f8",
+                    overflow: "hidden",
+                    aspectRatio: "16/9", // bentuk rasio KTP (bisa ubah ke 4/3 kalau butuh)
+                    mx: "auto",
                   }}
                 >
-                  <img
-                    src={
-                      selectedData?.tenant_application?.ktp_file_path
-                        ? selectedData.tenant_application?.ktp_file_path
-                        : ""
-                    }
-                    alt="ktp"
-                    style={{
-                      maxWidth: "100%",
-                      maxHeight: "100%",
-                      objectFit: "contain", // biar tetap proporsional
-                    }}
-                    onClick={() =>
-                      handleSwitchImage(
-                        "KTP",
+                  {selectedData?.tenant_application?.ktp_file_path ? (
+                    <Image
+                      src={
                         selectedData?.tenant_application?.ktp_file_path
-                      )
-                    }
-                  />
+                          ? selectedData.tenant_application?.ktp_file_path
+                          : ""
+                      }
+                      alt="ktp"
+                      fill // penuh mengikuti container
+                      style={{
+                        objectFit: "contain", // gambar penuh, proporsional
+                      }}
+                      onClick={() => setOpenPreview(true)}
+                    />
+                  ) : (
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        height: "100%",
+                        bgcolor: "#f8f8f8",
+                        color: "#aaa",
+                        fontSize: "12px",
+                      }}
+                    >
+                      Tidak ada gambar
+                    </Box>
+                  )}
                 </Box>
 
                 <Box

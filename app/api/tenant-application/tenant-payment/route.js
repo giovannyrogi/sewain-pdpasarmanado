@@ -135,7 +135,7 @@ export async function GET() {
     return new Response(
       JSON.stringify({
         success: true,
-        message: "Berhasil mengambil data tenant application sesuai filter",
+        message: "Berhasil mengambil data tenant application",
         data: rows,
       }),
       { status: 200 }

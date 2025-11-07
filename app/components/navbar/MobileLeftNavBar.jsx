@@ -35,7 +35,7 @@ const MobileLeftNavBar = ({
   onCloseDrawer,
   onShowLoading,
   onHideLoading,
-  setLoadingMessage
+  setLoadingMessage,
 }) => {
   const theme = useTheme();
   const router = useRouter();
@@ -134,15 +134,16 @@ const MobileLeftNavBar = ({
         sx={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}
       >
         {/* Logo & Brand */}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <img
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 1 }}>
+          <Image
             src={
               themeMode === "dark"
                 ? "/logo-darkmode.png"
                 : "/logo-lightmode.png"
             }
             alt="logo-sewain"
-            style={{ height: 50, width: 160 }}
+            width={160}
+            height={60}
           />
           {/* <Typography
               sx={{

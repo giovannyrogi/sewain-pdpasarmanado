@@ -975,28 +975,30 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
         </Grid>
       </Box>
       {/* Logo Pemerintah Kota Manado */}
-      <img
+      <Image
         src="/logo-pemerintah-kota-manado.png"
         alt="logo-pemerintah-kota-manado"
+        width={150}
+        height={100}
         style={{
-          width: "150px",
-          height: "100px",
           position: "absolute",
           top: 30,
           left: 5,
         }}
+        priority
       />
       {/* Logo Perumda Pasar Manado */}
-      <img
+      <Image
         src="/logo-perumda-pasar-manado.png"
         alt="logo-perumda-pasar-manado"
+        width={110}
+        height={100}
         style={{
-          width: "110px",
-          height: "100px",
           position: "absolute",
           top: 30,
           left: 660,
         }}
+        priority
       />
     </Box>
   );

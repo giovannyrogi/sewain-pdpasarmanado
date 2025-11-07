@@ -507,6 +507,7 @@ const InformationPreviewModal = ({ open, onClose, selectedData }) => {
                   borderRadius: 2,
                   overflow: "hidden",
                   aspectRatio: "16/9", // bentuk rasio KTP (bisa ubah ke 4/3 kalau butuh)
+                  mx: "auto",
                 }}
               >
                 {selectedData?.ktp_file_path ? (

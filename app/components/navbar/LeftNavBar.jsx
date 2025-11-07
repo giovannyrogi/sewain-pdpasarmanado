@@ -146,15 +146,16 @@ const LeftNavBar = ({
             gap: 1,
           }}
         >
-          <Box sx={{ display: "flex", alignItems: "center", gap: "2px" }}>
-            <img
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "2px" }}>
+            <Image
               src={
                 themeMode === "dark"
                   ? "/logo-darkmode.png"
                   : "/logo-lightmode.png"
               }
               alt="logo-sewain"
-              style={{ height: 60, width: 160 }}
+              width={160}
+              height={60}
             />
             {/* <Typography
               sx={{

@@ -66,7 +66,7 @@ const menuKepalaSubdivisi = [
       {
         label: "Tenant Terminations",
         value: "tenant-terminations",
-        path: "/kepala-subdivisi/tenant-termination",
+        path: "/kepala-subdivisi/tenant-terminations",
         icon: <Icon icon="pepicons-pop:lock-closed-circle" fontSize="20px" />,
         showIcon: true,
       },
