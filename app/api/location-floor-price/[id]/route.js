@@ -22,13 +22,6 @@ export async function PUT(request, { params }) {
       );
     }
 
-    // if (base_price < 0) {
-    //   return new Response(
-    //     JSON.stringify({ success: false, message: "Harga wajib diisi!" }),
-    //     { status: 200 }
-    //   );
-    // }
-
     // validasi apakah lantai sudah terdaftar pada lokasi yang dipilih tapi kalau datanya sama tidak perlu update
     const checkFloor = await pool.query(
       `SELECT * FROM location_floor_prices WHERE location_id = $1 AND floor = $2 AND id != $3`,

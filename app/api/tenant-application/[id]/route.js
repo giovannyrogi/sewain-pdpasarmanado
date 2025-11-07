@@ -163,14 +163,13 @@ export async function PUT(req, { params }) {
       // Format catatan/notes
       const notes = `Ruangan ini sedang digunakan oleh ${tenantName}`;
 
-      // Jika ruangan berubah → perbarui status dan occupied_by
+      // Jika ruangan berubah → perbarui status 
       if (oldRoomId !== room_id) {
         // Ruangan lama jadi available kembali
         await client.query(
           `
           UPDATE rooms 
           SET status = 'available',
-              occupied_by = NULL,
               notes = NULL
           WHERE id = $1
           `,
@@ -183,11 +182,10 @@ export async function PUT(req, { params }) {
         `
         UPDATE rooms 
         SET status = 'occupied',
-            occupied_by = $2,
-            notes = $3
+            notes = $2
         WHERE id = $1
         `,
-        [room_id, tenantApp.id, notes]
+        [room_id, notes]
       );
 
       // Update tenant_approval: reset hanya yang belum approve
@@ -262,7 +260,6 @@ export async function DELETE(request, context) {
       `
       UPDATE rooms 
       SET status = 'available', 
-          occupied_by = NULL, 
           notes = NULL 
       WHERE id = $1
       `,

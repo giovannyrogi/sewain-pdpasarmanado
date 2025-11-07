@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
+    "dev": "cross-env NODE_ENV=development next dev",
+    "build": "cross-env NODE_ENV=production next build",
+    "start": "cross-env NODE_ENV=production next start",
     "lint": "eslint"
   },
   "dependencies": {
@@ -24,6 +24,7 @@
     "daftar-wilayah-indonesia": "^4.0.3",
     "dayjs": "^1.11.15",
     "docxtemplater": "^3.66.3",
+    "dotenv": "^17.2.3",
     "file-saver": "^2.0.5",
     "formidable": "^3.5.4",
     "install": "^0.13.0",
@@ -46,6 +47,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "cross-env": "^10.1.0",
     "eslint": "^9",
     "eslint-config-next": "15.5.2"
   }

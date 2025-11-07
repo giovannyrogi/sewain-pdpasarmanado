@@ -201,13 +201,12 @@ export async function PUT(request, { params }) {
           );
         }
 
-        // Update rooms: ubah status ke 'available', kosongkan occupied_by dan notes
+        // Update rooms: ubah status ke 'available', kosongkan notes
         if (room_id) {
           await client.query(
             `
             UPDATE rooms 
-            SET status = 'available', 
-                occupied_by = NULL,
+            SET status = 'available',
                 notes = NULL
             WHERE id = $1
             `,
