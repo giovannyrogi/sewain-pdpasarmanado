@@ -35,15 +35,16 @@ const MainLayout = ({ children }) => {
   // Pusatkan kontrol Drawer di MainLayout
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [loadingBackdropOpen, setLoadingBackdropOpen] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState("Loading...");
 
-  // Contoh: aktifkan backdrop saat logout dipanggil dari TopMenu
+  // aktifkan backdrop
   const handleShowLoading = () => setLoadingBackdropOpen(true);
   const handleHideLoading = () => setLoadingBackdropOpen(false);
 
   return (
     <>
       {/* === GLOBAL BACKDROP === */}
-      <LoadingBackdrop open={loadingBackdropOpen} message="Loading..." />
+      <LoadingBackdrop open={loadingBackdropOpen} message={loadingMessage} />
       <Box
         sx={{
           minHeight: "100vh",
@@ -67,7 +68,13 @@ const MainLayout = ({ children }) => {
                 overflowY: "auto",
               }}
             >
-              <LeftNavBar menus={menus} user={user} />
+              <LeftNavBar
+                menus={menus}
+                user={user}
+                onShowLoading={handleShowLoading}
+                onHideLoading={handleHideLoading}
+                setLoadingMessage={(message) => setLoadingMessage(message)}
+              />
             </Grid>
           )}
 
@@ -98,6 +105,9 @@ const MainLayout = ({ children }) => {
                 user={user}
                 drawerOpen={drawerOpen}
                 onCloseDrawer={() => setDrawerOpen(false)}
+                onShowLoading={handleShowLoading}
+                onHideLoading={handleHideLoading}
+                setLoadingMessage={(message) => setLoadingMessage(message)}
               />
             )}
 

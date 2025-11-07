@@ -26,7 +26,15 @@ import { redirect, usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
 import axios from "axios";
 
-const LeftNavBar = ({ menus, activeMenu, onMenuClick, user }) => {
+const LeftNavBar = ({
+  menus,
+  activeMenu,
+  onMenuClick,
+  user,
+  onHideLoading,
+  onShowLoading,
+  setLoadingMessage,
+}) => {
   const theme = useTheme();
   const { themeMode, setThemeMode } = useThemeMode();
   const [openDropdown, setOpenDropdown] = useState(null);
@@ -59,17 +67,50 @@ const LeftNavBar = ({ menus, activeMenu, onMenuClick, user }) => {
 
   // Handler untuk menu click
   const handleMenuClick = useCallback(
-    (menu) => {
-      let path = menu.path;
-      if (!path && menu.submenu) {
-        setOpenDropdown((prev) => (prev === menu.value ? null : menu.value));
-        return;
+    async (menu) => {
+      setLoadingMessage("Navigating...");
+      onShowLoading?.();
+
+      try {
+        let path = menu.path;
+
+        // Jika menu punya submenu (tidak punya path langsung)
+        if (!path && menu.submenu) {
+          setOpenDropdown((prev) => (prev === menu.value ? null : menu.value));
+
+          // Tutup drawer setelah sedikit delay
+          setTimeout(() => {
+            onHideLoading?.();
+          }, 300);
+          return;
+        }
+
+        if (!path) {
+          onHideLoading?.();
+          return;
+        }
+
+        // Simpan path sekarang
+        // const currentPath = pathname;
+
+        // Jalankan navigasi
+        router.push(path);
+
+        // Tunggu hingga path benar-benar berubah
+        const checkRouteChange = setInterval(() => {
+          if (window.location.pathname === path) {
+            clearInterval(checkRouteChange);
+            // halaman sudah berpindah, baru hide loading
+            onHideLoading?.();
+            if (onMenuClick) onMenuClick(menu.value);
+          }
+        }, 100);
+      } catch (err) {
+        console.error("Navigation error:", err);
+        onHideLoading?.();
       }
-      if (!path) return;
-      router.push(path);
-      if (onMenuClick) onMenuClick(menu.value);
     },
-    [router, onMenuClick]
+    [router, pathname, onMenuClick, onShowLoading, onHideLoading]
   );
 
   return (
@@ -416,14 +457,14 @@ const LeftNavBar = ({ menus, activeMenu, onMenuClick, user }) => {
           )}
         </List>
 
-        <Divider
+        {/* <Divider
           sx={{
             mt: 1,
           }}
-        />
+        /> */}
 
         {/* Settings Menu */}
-        <List sx={{ mt: 1 }}>
+        {/* <List sx={{ mt: 1 }}>
           {settingsMenu.map((menu) =>
             menu.submenu ? (
               <React.Fragment key={menu.value}>
@@ -476,7 +517,6 @@ const LeftNavBar = ({ menus, activeMenu, onMenuClick, user }) => {
                   </ListItemButton>
                 </ListItem>
 
-                {/* Submenu Settings */}
                 <Collapse
                   in={openDropdown === menu.value}
                   timeout="auto"
@@ -580,11 +620,11 @@ const LeftNavBar = ({ menus, activeMenu, onMenuClick, user }) => {
               </ListItem>
             )
           )}
-        </List>
+        </List> */}
       </Box>
 
       {/* Logout Button - Always at Bottom */}
-      <Box sx={{ flexShrink: 0, mt: 2 }}>
+      {/* <Box sx={{ flexShrink: 0, mt: 2 }}>
         <List>
           <ListItem disablePadding>
             <ListItemButton
@@ -617,7 +657,7 @@ const LeftNavBar = ({ menus, activeMenu, onMenuClick, user }) => {
             </ListItemButton>
           </ListItem>
         </List>
-      </Box>
+      </Box> */}
       {/* Spinner full screen saat redirect */}
       <LoadingBackdrop open={loading} message="Logging out..." />
     </Paper>

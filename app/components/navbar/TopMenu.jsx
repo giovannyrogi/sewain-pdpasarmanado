@@ -13,6 +13,7 @@ import {
   alpha,
   Paper,
   useMediaQuery,
+  Button,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu"; // <-- Tambahkan ini
 import LightModeIcon from "@mui/icons-material/LightMode";
@@ -27,6 +28,7 @@ import LoadingBackdrop from "../loading/Backdrop";
 import axios from "axios";
 import { redirect } from "next/navigation";
 import StorageIcon from "@mui/icons-material/Storage";
+import { useRouter } from "next/navigation";
 
 const TopMenu = ({ user, onBurgerClick, onShowLoading, onHideLoading }) => {
   const theme = useTheme();
@@ -34,6 +36,7 @@ const TopMenu = ({ user, onBurgerClick, onShowLoading, onHideLoading }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
   const { themeMode, setThemeMode } = useThemeMode();
+  const router = useRouter();
 
   const handleAvatarClick = (event) => setAnchorEl(event.currentTarget);
   const handleMenuClose = () => setAnchorEl(null);
@@ -49,6 +52,14 @@ const TopMenu = ({ user, onBurgerClick, onShowLoading, onHideLoading }) => {
       console.log("error logout", err);
       onHideLoading?.();
     }
+  };
+
+  const handleProfile = () => {
+    onShowLoading?.();
+    setTimeout(() => {
+      router.push("/settings/account");
+      onHideLoading?.();
+    }, 1000);
   };
 
   const HandleDatabase = () => {
@@ -77,23 +88,25 @@ const TopMenu = ({ user, onBurgerClick, onShowLoading, onHideLoading }) => {
       {/* Left: Burger Icon */}
       {isMobile && (
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <IconButton
+          <Button
             onClick={onBurgerClick}
             edge="start"
             aria-label="open drawer"
             sx={{
-              mr: 1,
+              m: 0,
+              p: 0,
               color: theme.palette.primary.main,
               display: "flex",
               alignItems: "center",
               gap: 1,
+              textTransform: "capitalize",
             }}
           >
             <MenuIcon />
             <Typography sx={{ fontFamily: "poppins", fontWeight: "bold" }}>
               Menu
             </Typography>
-          </IconButton>
+          </Button>
         </Box>
       )}
 
@@ -150,7 +163,26 @@ const TopMenu = ({ user, onBurgerClick, onShowLoading, onHideLoading }) => {
             />
           </IconButton>
         </Tooltip>
-        {/* <Menu
+        <Tooltip title="Settings">
+          <IconButton
+            onClick={handleAvatarClick}
+            size="small"
+            sx={{
+              color: theme.palette.primary.main,
+              bgcolor: alpha(theme.palette.primary.main, 0.1),
+              "&:hover": {
+                bgcolor: alpha(theme.palette.primary.main, 0.2),
+              },
+            }}
+          >
+            <Icon
+              icon="line-md:cog-filled-loop"
+              color={theme.palette.primary.main}
+              fontSize="25px"
+            />
+          </IconButton>
+        </Tooltip>
+        <Menu
           anchorEl={anchorEl}
           open={open}
           onClose={handleMenuClose}
@@ -168,27 +200,27 @@ const TopMenu = ({ user, onBurgerClick, onShowLoading, onHideLoading }) => {
             horizontal: "right",
           }}
         >
-          <MenuItem>
+          <MenuItem onClick={handleProfile}>
             <ListItemIcon>
               <PersonIcon fontSize="small" />
             </ListItemIcon>
             Profil
           </MenuItem>
           <Divider />
-          <MenuItem onClick={HandleDatabase}>
-            <ListItemIcon>
-              <StorageIcon fontSize="small" />
-            </ListItemIcon>
-            Database
-          </MenuItem>
-          <Divider />
+          {/* <MenuItem onClick={HandleDatabase}>
+              <ListItemIcon>
+                <StorageIcon fontSize="small" />
+              </ListItemIcon>
+              Database
+            </MenuItem>
+            <Divider /> */}
           <MenuItem onClick={handleLogout}>
             <ListItemIcon>
               <LogoutIcon fontSize="small" />
             </ListItemIcon>
             Logout
           </MenuItem>
-        </Menu> */}
+        </Menu>
       </Box>
     </Paper>
   );

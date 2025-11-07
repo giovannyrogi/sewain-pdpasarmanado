@@ -33,6 +33,9 @@ const MobileLeftNavBar = ({
   user,
   drawerOpen,
   onCloseDrawer,
+  onShowLoading,
+  onHideLoading,
+  setLoadingMessage
 }) => {
   const theme = useTheme();
   const router = useRouter();
@@ -51,17 +54,52 @@ const MobileLeftNavBar = ({
 
   // Handler untuk menu click
   const handleMenuClick = useCallback(
-    (menu) => {
-      let path = menu.path;
-      if (!path && menu.submenu) {
-        setOpenDropdown((prev) => (prev === menu.value ? null : menu.value));
-        return;
+    async (menu) => {
+      setLoadingMessage("Navigating...");
+      onShowLoading?.();
+
+      try {
+        let path = menu.path;
+
+        // Jika menu punya submenu (tidak punya path langsung)
+        if (!path && menu.submenu) {
+          setOpenDropdown((prev) => (prev === menu.value ? null : menu.value));
+
+          // Tutup drawer setelah sedikit delay
+          setTimeout(() => {
+            onHideLoading?.();
+            onCloseDrawer();
+          }, 300);
+          return;
+        }
+
+        if (!path) {
+          onHideLoading?.();
+          return;
+        }
+
+        // Simpan path sekarang
+        // const currentPath = pathname;
+
+        // Jalankan navigasi
+        router.push(path);
+
+        // Tunggu hingga path benar-benar berubah
+        const checkRouteChange = setInterval(() => {
+          if (window.location.pathname === path) {
+            clearInterval(checkRouteChange);
+            // halaman sudah berpindah, baru hide loading
+            onHideLoading?.();
+            onCloseDrawer();
+            if (onMenuClick) onMenuClick(menu.value);
+          }
+        }, 100);
+      } catch (err) {
+        console.error("Navigation error:", err);
+        onHideLoading?.();
       }
-      if (!path) return;
-      router.push(path);
-      if (onMenuClick) onMenuClick(menu.value);
     },
-    [router, onMenuClick]
+    [router, pathname, onMenuClick, onShowLoading, onHideLoading, onCloseDrawer]
   );
 
   const handleLogout = async () => {
@@ -305,7 +343,6 @@ const MobileLeftNavBar = ({
                           selected={isSubMenuActive(sub)}
                           onClick={() => {
                             handleMenuClick(sub);
-                            onCloseDrawer();
                           }}
                         >
                           {sub.showIcon ? (
@@ -338,7 +375,9 @@ const MobileLeftNavBar = ({
               <ListItem disablePadding key={menu.value}>
                 <ListItemButton
                   selected={pathname === menu.path}
-                  onClick={() => handleMenuClick(menu)}
+                  onClick={() => {
+                    handleMenuClick(menu);
+                  }}
                   sx={{
                     ml: -1.2,
                     color:
@@ -379,10 +418,10 @@ const MobileLeftNavBar = ({
           )}
         </List>
 
-        <Divider sx={{ mt: 1 }} />
+        {/* <Divider sx={{ mt: 1 }} /> */}
 
         {/* Settings Menu */}
-        <List sx={{ mt: 1 }}>
+        {/* <List sx={{ mt: 1 }}>
           {settingsMenu.map((menu) =>
             menu.submenu ? (
               <React.Fragment key={menu.value}>
@@ -434,7 +473,7 @@ const MobileLeftNavBar = ({
                     )}{" "}
                   </ListItemButton>{" "}
                 </ListItem>
-                {/* Submenu Settings */}
+
                 <Collapse
                   in={openDropdown === menu.value}
                   timeout="auto"
@@ -538,11 +577,11 @@ const MobileLeftNavBar = ({
               </ListItem>
             )
           )}
-        </List>
+        </List> */}
       </Box>
 
       {/* Logout Button - Always at Bottom */}
-      <Box sx={{ flexShrink: 0, mt: 2 }}>
+      {/* <Box sx={{ flexShrink: 0, mt: 2 }}>
         <List>
           <ListItem disablePadding>
             <ListItemButton
@@ -575,7 +614,7 @@ const MobileLeftNavBar = ({
             </ListItemButton>
           </ListItem>
         </List>
-      </Box>
+      </Box> */}
     </Paper>
   );
 
