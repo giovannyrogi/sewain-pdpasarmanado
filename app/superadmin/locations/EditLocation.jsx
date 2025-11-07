@@ -1,4 +1,5 @@
 import {
+  Autocomplete,
   Box,
   Button,
   CircularProgress,
@@ -12,6 +13,7 @@ import React, { useEffect, useState } from "react";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import moment from "moment";
 import axios from "axios";
+import wilayah from "daftar-wilayah-indonesia";
 
 const EditLocation = ({
   open,
@@ -43,17 +45,78 @@ const EditLocation = ({
   };
 
   const [locatioName, setLocatioName] = useState("");
-  const [city, setCity] = useState("");
   const [address, setAddress] = useState("");
+  const [locationCode, setLocationCode] = useState("");
+
+  const [provinsi, setProvinsi] = useState("");
+  const [kelurahan, setKelurahan] = useState("");
+  const [kecamatan, setKecamatan] = useState("");
+  const [kabupaten, setKabupaten] = useState("");
+
+  // List options
+  const [listProvinsi, setListProvinsi] = useState([]);
+  const [listKabupaten, setListKabupaten] = useState([]);
+  const [listKecamatan, setListKecamatan] = useState([]);
+  const [listKelurahan, setListKelurahan] = useState([]);
+
+  const [provinsiCode, setProvinsiCode] = useState("");
+  const [kabupatenCode, setKabupatenCode] = useState("");
+  const [kecamatanCode, setKecamatanCode] = useState("");
+  const [kelurahanCode, setKelurahanCode] = useState("");
 
   // Setiap kali selectedData atau open berubah, update form
   useEffect(() => {
-    if (selectedData && open) {
+    if (open) {
       setLocatioName(selectedData.location_name || "");
-      setCity(selectedData.city || "");
-      setAddress(selectedData.address || "");
+      setLocationCode(selectedData.location_code || "");
+      setAddress(selectedData.street_address || "");
+
+      // isi list provinsi
+      const allProv = wilayah.provinsi();
+      setListProvinsi(allProv);
+
+      // cari provinsi by nama (kalau di DB simpan nama)
+      const prov = allProv.find((p) => p.nama === selectedData?.province);
+      //   console.log("prov", prov);
+
+      if (prov) {
+        setProvinsiCode(prov.kode);
+        setProvinsi(prov.nama);
+
+        // isi kabupaten sesuai provinsi
+        const allKab = wilayah.kabupaten(prov.kode);
+
+        setListKabupaten(allKab);
+
+        const kab = allKab.find((k) => k.nama === selectedData?.city);
+
+        if (kab) {
+          setKabupatenCode(kab.kode);
+          setKabupaten(kab.nama);
+
+          // isi kecamatan sesuai kabupaten
+          const allKec = wilayah.kecamatan(kab.kode);
+          setListKecamatan(allKec);
+
+          const kec = allKec.find((c) => c.nama === selectedData?.district);
+          if (kec) {
+            setKecamatanCode(kec.kode);
+            setKecamatan(kec.nama);
+
+            // isi kelurahan sesuai kecamatan
+            const allKel = wilayah.desa(kec.kode);
+            setListKelurahan(allKel);
+
+            const kel = allKel.find((d) => d.nama === selectedData?.kelurahan);
+            if (kel) {
+              setKelurahanCode(kel.kode);
+              setKelurahan(kel.nama);
+            }
+          }
+        }
+      }
     }
-  }, [selectedData, open]);
+  }, [open]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -64,8 +127,12 @@ const EditLocation = ({
     try {
       const response = await axios.put(`/api/locations/${selectedData.id}`, {
         location_name: locatioName,
-        city: city,
-        address,
+        city: kabupaten,
+        street_address: address,
+        location_code: locationCode,
+        province: provinsi,
+        district: kecamatan,
+        kelurahan: kelurahan,
       });
       console.log("response update", response);
 
@@ -76,8 +143,8 @@ const EditLocation = ({
             message: response.data.message || "Lokasi berhasil diubah!",
             severity: "success",
           });
+        getLocationsData();
         setTimeout(() => {
-          getLocationsData();
           onClose();
           loadingFalse();
         }, 1000);
@@ -96,13 +163,75 @@ const EditLocation = ({
       onNotify &&
         onNotify({
           open: true,
-          message: error.message || "Terjadi error saat mengubah lokasi.",
+          message:
+            error.response.data.message ||
+            "Terjadi error saat mengubah lokasi.",
           severity: "error",
         });
       setTimeout(() => {
         loadingFalse();
       }, 1000);
     }
+  };
+
+  /* Handler saat provinsi dipilih */
+  const handleProvinsiChange = (newValue) => {
+    const kodeProv = newValue?.kode || "";
+    setProvinsiCode(kodeProv);
+    setProvinsi(newValue?.nama || "");
+    setKabupatenCode("");
+    setKecamatanCode("");
+    setKelurahanCode("");
+    setListKabupaten([]);
+    setListKecamatan([]);
+    setListKelurahan([]);
+
+    if (!kodeProv) return;
+
+    // ambil kabupaten yang sesuai kode_provinsi
+    const allKab = wilayah.kabupaten(kodeProv);
+    // console.log("kabupaten", allKab);
+
+    setListKabupaten(allKab);
+  };
+
+  /* Handler saat kecamatan dipilih */
+  const handleKabupatenChange = (newValue) => {
+    const kodeKab = newValue?.kode || "";
+    setKabupatenCode(kodeKab);
+    setKabupaten(newValue?.nama || "");
+    setKecamatanCode("");
+    setKelurahanCode("");
+    setListKecamatan([]);
+    setListKelurahan([]);
+
+    // ambil kecamatan yang sesuai kode_kabupaten
+    const allKec = wilayah.kecamatan(kodeKab);
+    // console.log("kecamatan", allKec);
+
+    setListKecamatan(allKec);
+  };
+
+  /* Handler saat Kecamatan dipilih */
+  const handleKecamatanChange = (newValue) => {
+    const kodeKec = newValue?.kode || "";
+    setKecamatanCode(kodeKec);
+    setKecamatan(newValue?.nama || "");
+    setKelurahanCode("");
+    setListKelurahan([]);
+
+    // ambil kecamatan yang sesuai kode_kabupaten
+    const allKel = wilayah.desa(kodeKec);
+    // console.log("kelurahan", allKel);
+
+    setListKelurahan(allKel);
+  };
+
+  /* Handler saat kelurahan dipilih */
+  const handleKelurahanChange = (newValue) => {
+    const kodeKel = newValue?.kode || "";
+    setKelurahanCode(kodeKel);
+    setKelurahan(newValue?.nama || "");
   };
 
   return (
@@ -154,11 +283,11 @@ const EditLocation = ({
             </Grid>
             <Grid size={12}>
               <TextField
-                label="Nama Kota"
+                label="Kode Lokasi"
                 variant="filled"
                 fullWidth
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
+                value={locationCode}
+                onChange={(e) => setLocationCode(e.target.value)}
                 autoFocus
                 required
                 disabled={loading}
@@ -166,8 +295,110 @@ const EditLocation = ({
               />
             </Grid>
             <Grid size={12}>
+              <Autocomplete
+                options={listProvinsi}
+                getOptionLabel={(option) => option.nama || ""}
+                value={
+                  listProvinsi.find((item) => item.kode === provinsiCode) ||
+                  null
+                }
+                onChange={(event, newValue) => {
+                  handleProvinsiChange(newValue);
+                }}
+                isOptionEqualToValue={(option, value) =>
+                  option.kode === value.kode
+                }
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Provinsi"
+                    variant="filled"
+                    required
+                  />
+                )}
+              />
+            </Grid>
+
+            <Grid size={12}>
+              <Autocomplete
+                options={listKabupaten}
+                getOptionLabel={(option) => option.nama || ""}
+                value={
+                  listKabupaten.find((item) => item.kode === kabupatenCode) ||
+                  null
+                }
+                onChange={(event, newValue) => {
+                  handleKabupatenChange(newValue);
+                }}
+                isOptionEqualToValue={(option, value) =>
+                  option.kode === value.kode
+                }
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Kabupaten/Kota"
+                    variant="filled"
+                    required
+                  />
+                )}
+                disabled={!provinsiCode}
+              />
+            </Grid>
+
+            <Grid size={12}>
+              <Autocomplete
+                options={listKecamatan}
+                getOptionLabel={(option) => option.nama || ""}
+                value={
+                  listKecamatan.find((item) => item.kode === kecamatanCode) ||
+                  null
+                }
+                onChange={(event, newValue) => {
+                  handleKecamatanChange(newValue);
+                }}
+                isOptionEqualToValue={(option, value) =>
+                  option.kode === value.kode
+                }
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Kecamatan"
+                    variant="filled"
+                    required
+                  />
+                )}
+                disabled={!kabupatenCode}
+              />
+            </Grid>
+
+            <Grid size={12}>
+              <Autocomplete
+                options={listKelurahan}
+                getOptionLabel={(option) => option.nama || ""}
+                value={
+                  listKelurahan.find((item) => item.kode === kelurahanCode) ||
+                  null
+                }
+                onChange={(event, newValue) => {
+                  handleKelurahanChange(newValue);
+                }}
+                isOptionEqualToValue={(option, value) =>
+                  option.kode === value.kode
+                }
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Kelurahan/Desa"
+                    variant="filled"
+                    required
+                  />
+                )}
+                disabled={!kecamatanCode}
+              />
+            </Grid>
+            <Grid size={12}>
               <TextField
-                label="Alamat Lokasi"
+                label="Nama Jalan"
                 variant="filled"
                 fullWidth
                 value={address}

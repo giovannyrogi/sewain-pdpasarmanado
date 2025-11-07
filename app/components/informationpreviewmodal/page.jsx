@@ -18,6 +18,7 @@ import axios from "axios";
 import ImagePreviewModal from "../imagepreviewmodal/page";
 import moment from "moment";
 import { Tag } from "antd";
+import Image from "next/image";
 
 const InformationPreviewModal = ({ open, onClose, selectedData }) => {
   const isMobile = useMediaQuery("(max-width:600px)");
@@ -498,31 +499,41 @@ const InformationPreviewModal = ({ open, onClose, selectedData }) => {
                 }}
               />
 
-              {/* Container dengan tinggi tetap */}
               <Box
                 sx={{
                   width: "100%",
-                  height: 150, // tinggi konsisten
-                  display: "flex",
-                  overflow: "hidden",
+                  maxWidth: 300, // batas maksimal biar tidak terlalu besar
+                  position: "relative",
                   borderRadius: 2,
-                  // bgcolor: "#f8f8f8",
+                  overflow: "hidden",
+                  aspectRatio: "16/9", // bentuk rasio KTP (bisa ubah ke 4/3 kalau butuh)
                 }}
               >
-                <img
-                  src={
-                    selectedData?.ktp_file_path
-                      ? selectedData.ktp_file_path
-                      : ""
-                  }
-                  alt="ktp"
-                  style={{
-                    maxWidth: "100%",
-                    maxHeight: "100%",
-                    objectFit: "contain", // biar tetap proporsional
-                  }}
-                  onClick={() => setOpenPreview(true)}
-                />
+                {selectedData?.ktp_file_path ? (
+                  <Image
+                    src={selectedData.ktp_file_path}
+                    alt="ktp"
+                    fill // penuh mengikuti container
+                    style={{
+                      objectFit: "contain", // gambar penuh, proporsional
+                    }}
+                    onClick={() => setOpenPreview(true)}
+                  />
+                ) : (
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      height: "100%",
+                      bgcolor: "#f8f8f8",
+                      color: "#aaa",
+                      fontSize: "12px",
+                    }}
+                  >
+                    Tidak ada gambar
+                  </Box>
+                )}
               </Box>
             </Grid>
 

@@ -46,8 +46,8 @@ const DeleteLocation = ({
             message: response.data?.message || "Lokasi berhasil dihapus!",
             severity: "success",
           });
+        getLocationsData();
         setTimeout(() => {
-          getLocationsData();
           loadingFalse();
           onClose();
         }, 1000);

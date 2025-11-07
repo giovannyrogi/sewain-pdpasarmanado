@@ -13,6 +13,7 @@ import DeleteLocation from "./DeleteLocation";
 import axios from "axios";
 import BreadcrumbPage from "@/app/components/breadcrumb/page";
 import menuSuperadmin from "@/app/components/menu/MenuItemSuperadmin";
+import menuDevisiKontrak from "@/app/components/menu/MenuItemDivisiKontrak";
 
 const Locations = () => {
   const [dataLocations, setDataLocations] = useState([]);
@@ -90,6 +91,9 @@ const Locations = () => {
 
   const nameFilters = generateFilters(dataLocations, "location_name");
   const cityFilters = generateFilters(dataLocations, "city");
+  const provinceFilters = generateFilters(dataLocations, "province");
+  const districtFilters = generateFilters(dataLocations, "district");
+  const kelurahanFilters = generateFilters(dataLocations, "kelurahan");
 
   const columns = [
     {
@@ -105,37 +109,52 @@ const Locations = () => {
           {record.location_name}
         </Typography>
       ),
+      width: 200,
+    },
+    {
+      title: "Kode Lokasi",
+      dataIndex: "location_code",
+      width: 130,
+    },
+    {
+      title: "Provinsi",
+      dataIndex: "province",
+      filters: provinceFilters,
+      onFilter: createOnFilter("province"),
+      filterSearch: true,
       width: 150,
     },
     {
-      title: "Kota",
+      title: "Kelurahan/Desa",
+      dataIndex: "kelurahan",
+      filters: kelurahanFilters,
+      onFilter: createOnFilter("kelurahan"),
+      filterSearch: true,
+      width: 150,
+    },
+    {
+      title: "Kabupaten/Kota",
       dataIndex: "city",
       filters: cityFilters,
       onFilter: createOnFilter("city"),
       filterSearch: true,
-      width: 100,
+      width: 200,
+    },
+    {
+      title: "Kecamatan",
+      dataIndex: "district",
+      filters: districtFilters,
+      onFilter: createOnFilter("district"),
+      filterSearch: true,
+      width: 130,
     },
     {
       title: "Alamat",
-      dataIndex: "address",
+      dataIndex: "street_address",
       // onFilter: (value, record) => record.address === value,
       // sorter: (a, b) => a.address.localeCompare(b.address),
       // sortDirections: ["ascend", "descend"],
       width: 150,
-    },
-    {
-      title: "Diubah Tanggal",
-      dataIndex: "updated_at",
-      render: (text, record) =>
-        moment(record.updated_at).format("DD-MM-YYYY HH:mm:ss"),
-      width: 100,
-    },
-    {
-      title: "Dibuat Tanggal",
-      dataIndex: "created_at",
-      render: (text, record) =>
-        moment(record.created_at).format("DD-MM-YYYY HH:mm:ss"),
-      width: 100,
     },
     {
       title: "Actions",
@@ -171,7 +190,7 @@ const Locations = () => {
   return (
     <Box sx={{ width: "100%", height: "100%", minHeight: "100%", p: 2 }}>
       {/* Component Breadcrumbs disini */}
-      <BreadcrumbPage menuList={menuSuperadmin} />
+      <BreadcrumbPage menuList={menuDevisiKontrak} />
 
       <Box
         sx={{
