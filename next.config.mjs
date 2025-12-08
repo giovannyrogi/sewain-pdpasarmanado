@@ -1,4 +1,17 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {};
+const nextConfig = {
+  // Aktifkan pemeriksaan React agar bug mudah ditemukan
+  reactStrictMode: true,
+
+  // Hapus header X-Powered-By (mencegah fingerprint)
+  poweredByHeader: false,
+
+  // Hardening keamanan bawaan Next.js
+  compress: true, // gzip compress
+  cleanDistDir: true, // hapus folder .next lama saat build
+
+  // Standar untuk runtime modern
+  output: "standalone", // terbaik untuk deployment VPS
+};
 
 export default nextConfig;
