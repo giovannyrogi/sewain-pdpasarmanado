@@ -102,7 +102,7 @@ const LocationsReport = () => {
       const response = await axios.get(
         `/api/report/income-by-locations?start_date=${range[0].startDate}&end_date=${range[0].endDate}`
       );
-      console.log("locations", response);
+      // console.log("locations", response);
       setDataLocations(response.data.data);
       setTotals(response.data.totals);
     } catch (error) {
@@ -115,7 +115,7 @@ const LocationsReport = () => {
       const response = await axios.get(
         `/api/report/accounting-summary?start_date=${range[0].startDate}&end_date=${range[0].endDate}`
       );
-      console.log("summary reports", response);
+      // console.log("summary reports", response);
       setSummeryData(response.data.data);
     } catch (error) {
       console.log("error", error);
@@ -148,7 +148,7 @@ const LocationsReport = () => {
       const response = await axios.get(
         `/api/report/income-by-locations?start_date=${range[0].startDate}&end_date=${range[0].endDate}`
       );
-      console.log("locations report", response);
+      // console.log("locations report", response);
       const data = response.data.data;
 
       if (data.length === 0) {
@@ -174,7 +174,7 @@ const LocationsReport = () => {
           setLoading(false);
         }, 1000);
       } else {
-        console.log("response", response);
+        // console.log("response", response);
         setSnackbar({
           open: true,
           message: data.message || "Gagal mengambil data",

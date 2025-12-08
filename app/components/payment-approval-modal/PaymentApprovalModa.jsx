@@ -53,7 +53,7 @@ const PaymentApprovalModal = ({
       const res = await axios.get(`/api/payment-approval/`, {
         params: { id: selectedData?.payments?.payment_id }, // pakai tenant_early_termination_id
       });
-      console.log("data payment approval", res);
+      // console.log("data payment approval", res);
 
       if (res.data.success) {
         setApprovalList(res.data.data);

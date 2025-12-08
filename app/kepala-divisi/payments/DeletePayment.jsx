@@ -33,7 +33,7 @@ const DeletePayment = ({
         `/api/payments/${selectedData.payments?.payment_id}`
       );
 
-      console.log("response", response.data);
+      // console.log("response", response.data);
 
       if (response?.data.success) {
         onNotify &&

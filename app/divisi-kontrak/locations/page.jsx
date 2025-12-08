@@ -36,7 +36,7 @@ const Locations = () => {
     setLoading(true);
     try {
       const response = await axios.get("/api/locations");
-      console.log("locations", response);
+      // console.log("locations", response);
       setDataLocations(response.data.data);
       setTimeout(() => {
         setLoading(false);

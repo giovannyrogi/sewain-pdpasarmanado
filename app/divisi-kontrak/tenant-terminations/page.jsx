@@ -63,7 +63,7 @@ const TenantTerminations = () => {
     setLoading(true);
     try {
       const response = await axios.get("/api/tenant-terminations");
-      console.log("tenant terminations", response);
+      // console.log("tenant terminations", response);
       setDataTenantTerminations(response.data.data);
       setTimeout(() => {
         setLoading(false);

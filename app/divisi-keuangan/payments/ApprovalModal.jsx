@@ -78,7 +78,7 @@ const ApprovalModal = ({
           payment_type: selectedData?.tenant_application?.payment_type,
         }
       );
-      console.log("response", response.data);
+      // console.log("response", response.data);
 
       if (response.data.success) {
         onNotify?.({

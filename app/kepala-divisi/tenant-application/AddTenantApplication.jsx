@@ -129,7 +129,7 @@ const AddTenantApplication = ({
         `/api/rooms/available-rooms?location_id=${locationId}`
       );
 
-      console.log("response rooms", response.data);
+      // console.log("response rooms", response.data);
 
       if (response.data.data.length === 0) {
         onNotify &&
@@ -161,7 +161,7 @@ const AddTenantApplication = ({
       const response = await axios.get(
         "/api/tenant-application/tenant-extends"
       );
-      console.log("response tenant-extends", response);
+      // console.log("response tenant-extends", response);
 
       setStartDate(response?.data?.data?.[0]?.start_date);
       setEndDate(response?.data?.data?.[0]?.end_date);
@@ -189,7 +189,7 @@ const AddTenantApplication = ({
       const response = await axios.get(
         `/api/tenant-application/tenant-extends/${id}`
       );
-      console.log("response previous data", response);
+      // console.log("response previous data", response);
       setLocationId(response.data?.data?.locations?.id);
 
       await getRoomsData(response.data?.data?.locations?.id);
@@ -218,7 +218,7 @@ const AddTenantApplication = ({
     setLoadingMessage("Mengambil data penyewa baru...");
     try {
       const response = await axios.get("/api/tenant-application/new-tenant");
-      console.log("response identity-list", response);
+      // console.log("response identity-list", response);
       if (response.data.success) {
         setListDataIdentity(response.data.data);
         setTimeout(() => {
@@ -473,7 +473,7 @@ const AddTenantApplication = ({
         },
       });
 
-      console.log("response", response);
+      // console.log("response", response);
 
       if (response?.data?.success) {
         onNotify &&

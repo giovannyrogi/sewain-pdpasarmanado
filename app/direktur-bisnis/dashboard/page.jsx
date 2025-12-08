@@ -49,7 +49,7 @@ const Dashboard = () => {
     try {
       const response = await axios.get("/api/dashboard/current-month-income");
 
-      console.log("response monthly income", response);
+      // console.log("response monthly income", response);
 
       if (response.data.success) {
         const data = response.data.data;
@@ -104,7 +104,7 @@ const Dashboard = () => {
     try {
       const response = await axios.get("/api/dashboard/yearly-income");
 
-      console.log("response yearly income", response);
+      // console.log("response yearly income", response);
 
       if (response.data.success) {
         setYearlyIncomeData(response.data.data);
@@ -120,7 +120,7 @@ const Dashboard = () => {
     try {
       const response = await axios.get("/api/dashboard/current-rooms-status");
 
-      console.log("response room status", response);
+      // console.log("response room status", response);
 
       if (response.data.success) {
         setDataRoomStatus(response.data.data);

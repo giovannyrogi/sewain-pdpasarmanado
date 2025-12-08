@@ -68,7 +68,7 @@ const TenantTerminations = () => {
         }
       );
 
-      console.log("tenant terminations approval", response);
+      // console.log("tenant terminations approval", response);
       setDataTenantTerminations(response.data.data);
       setTimeout(() => {
         setLoading(false);

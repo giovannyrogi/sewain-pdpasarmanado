@@ -53,7 +53,7 @@ const ApprovalModal = ({
       const res = await axios.get(`/api/tenant-approval/`, {
         params: { id: selectedData.tenant_application_id },
       });
-      console.log("data approval", res);
+      // console.log("data approval", res);
 
       if (res.data.success) {
         setApprovalList(res.data.data);

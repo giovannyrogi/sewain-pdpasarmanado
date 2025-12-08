@@ -34,7 +34,7 @@ const DeleteTenantApplication = ({
         `/api/tenant-application/${selectedData.tenant_application_id}`
       );
 
-      console.log("response", response.data);
+      // console.log("response", response.data);
 
       if (response?.data.success) {
         onNotify &&

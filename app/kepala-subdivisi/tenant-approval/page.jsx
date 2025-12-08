@@ -26,6 +26,7 @@ import TenantApprovalModal from "@/app/components/tenantapprovalmodal/TenantAppr
 import menuItemDirekturUtama from "@/app/components/menu/MenuItemDirekturUtama";
 import menuKepalaDivisi from "@/app/components/menu/MenuItemKepalaDivisi";
 import menuKepalaSeksi from "@/app/components/menu/MenuItemKepalaSeksi";
+import menuKepalaSubdivisi from "@/app/components/menu/MenuItemKepalaSubdivisi";
 
 const TenantApproval = () => {
   const user = useUser();
@@ -67,7 +68,7 @@ const TenantApproval = () => {
       });
 
       if (res.data.success) {
-        console.log("data approval", res.data);
+        // console.log("data approval", res.data);
 
         setTimeout(() => {
           setApprovalList(res.data.data);
@@ -302,7 +303,7 @@ const TenantApproval = () => {
   return (
     <Box sx={{ width: "100%", height: "100%", minHeight: "100%", p: 2 }}>
       {/* Component Breadcrumbs disini */}
-      <BreadcrumbPage menuList={menuKepalaSeksi} />
+      <BreadcrumbPage menuList={menuKepalaSubdivisi} />
 
       {/* <Box
         sx={{

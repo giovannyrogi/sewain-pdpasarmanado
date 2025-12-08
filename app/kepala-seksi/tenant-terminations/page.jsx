@@ -28,6 +28,7 @@ import TerminationApprovalModal from "@/app/components/approvalmodal/Termination
 import CancelTenantTermination from "./CancelTenantTermination";
 import TenantTerminationApprovalModal from "@/app/components/tenant-termination-approval-modal/TenantTerminationApprovalModal";
 import PreviewTenantInformationModal from "@/app/components/tenant-termination-modal/PreviewTenantInformationModal";
+import menuKepalaSeksi from "@/app/components/menu/MenuItemKepalaSeksi";
 
 const TenantTerminations = () => {
   const user = useUser();
@@ -63,7 +64,7 @@ const TenantTerminations = () => {
     setLoading(true);
     try {
       const response = await axios.get("/api/tenant-terminations");
-      console.log("tenant terminations", response);
+      // console.log("tenant terminations", response);
       setDataTenantTerminations(response.data.data);
       setTimeout(() => {
         setLoading(false);
@@ -333,7 +334,7 @@ const TenantTerminations = () => {
   return (
     <Box sx={{ width: "100%", height: "100%", minHeight: "100%", p: 2 }}>
       {/* Component Breadcrumbs disini */}
-      <BreadcrumbPage menuList={menuDevisiKontrak} />
+      <BreadcrumbPage menuList={menuKepalaSeksi} />
       <Box
         sx={{
           display: "flex",

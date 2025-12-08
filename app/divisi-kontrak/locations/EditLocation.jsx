@@ -134,7 +134,7 @@ const EditLocation = ({
         district: kecamatan,
         kelurahan: kelurahan,
       });
-      console.log("response update", response);
+      // console.log("response update", response);
 
       if (response.data.success) {
         onNotify &&

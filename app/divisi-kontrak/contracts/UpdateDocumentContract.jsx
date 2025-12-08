@@ -87,7 +87,7 @@ const UpdateDocumentContract = ({
           document_number: finalDocNumber,
         }
       );
-      console.log("response", response);
+      // console.log("response", response);
 
       if (response.data.success) {
         getDataContract();

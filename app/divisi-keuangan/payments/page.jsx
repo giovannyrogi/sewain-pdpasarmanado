@@ -57,7 +57,7 @@ const Payments = () => {
     setLoading(true);
     try {
       const response = await axios.get(`/api/payments?role_id=${user.role_id}`);
-      console.log("data payments", response);
+      // console.log("data payments", response);
       if (response.data.success) {
         setDataPayments(response.data.data);
         setTimeout(() => {

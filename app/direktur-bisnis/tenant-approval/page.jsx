@@ -67,7 +67,7 @@ const TenantApproval = () => {
       });
 
       if (res.data.success) {
-        console.log("data approval", res.data);
+        // console.log("data approval", res.data);
 
         setTimeout(() => {
           setApprovalList(res.data.data);
@@ -302,7 +302,7 @@ const TenantApproval = () => {
   return (
     <Box sx={{ width: "100%", height: "100%", minHeight: "100%", p: 2 }}>
       {/* Component Breadcrumbs disini */}
-      <BreadcrumbPage menuList={menuKepalaSeksi} />
+      <BreadcrumbPage menuList={menuDirekturBisnis} />
 
       {/* <Box
         sx={{

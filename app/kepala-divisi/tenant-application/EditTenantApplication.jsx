@@ -124,7 +124,7 @@ const EditTenantApplication = ({
         `/api/identity-list/${selectedData?.tenant_identity_id}`
       );
 
-      console.log("response identity-list", response);
+      // console.log("response identity-list", response);
       if (response.data.success) {
         setListDataIdentity(response.data.data);
         setIdentityID(selectedData?.tenant_identity_id);
@@ -156,7 +156,7 @@ const EditTenantApplication = ({
       const response = await axios.get(
         `/api/rooms/available-rooms?location_id=${locationId}`
       );
-      console.log("response rooms", response.data);
+      // console.log("response rooms", response.data);
       // console.log("selectedData", selectedData);
 
       let rooms = response.data.data || [];
@@ -457,7 +457,7 @@ const EditTenantApplication = ({
         }
       );
 
-      console.log("response", response);
+      // console.log("response", response);
 
       if (response?.data?.success) {
         onNotify &&

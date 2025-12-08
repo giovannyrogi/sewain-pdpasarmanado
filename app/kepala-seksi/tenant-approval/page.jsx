@@ -67,7 +67,7 @@ const TenantApproval = () => {
       });
 
       if (res.data.success) {
-        console.log("data approval", res.data);
+        // console.log("data approval", res.data);
 
         setTimeout(() => {
           setApprovalList(res.data.data);

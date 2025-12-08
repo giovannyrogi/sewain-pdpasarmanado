@@ -53,7 +53,7 @@ const TerminationApprovalModal = ({
       const res = await axios.get(`/api/tenant-termination-approval/`, {
         params: { id: selectedData?.tenant_early_termination_id }, // pakai tenant_early_termination_id
       });
-      console.log("data termination approval", res);
+      // console.log("data termination approval", res);
 
       if (res.data.success) {
         setApprovalList(res.data.data);

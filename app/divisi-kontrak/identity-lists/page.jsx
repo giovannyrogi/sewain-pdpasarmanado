@@ -40,7 +40,7 @@ const IdentityList = () => {
     setLoading(true);
     try {
       const response = await axios.get("/api/identity-list");
-      console.log("data identitas", response);
+      // console.log("data identitas", response);
       setDataIdentities(response.data.data);
       setTimeout(() => {
         setLoading(false);

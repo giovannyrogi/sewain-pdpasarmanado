@@ -41,7 +41,7 @@ const Rooms = () => {
     setLoading(true);
     try {
       const response = await axios.get("/api/rooms");
-      console.log("rooms", response);
+      // console.log("rooms", response);
       setDataRooms(response.data.data);
       setTimeout(() => {
         setLoading(false);
@@ -58,7 +58,7 @@ const Rooms = () => {
     setLoading(true);
     try {
       const response = await axios.get("/api/locations");
-      console.log("locations", response);
+      // console.log("locations", response);
       setTimeout(() => {
         setDataLocations(response.data.data);
         setLoading(false);

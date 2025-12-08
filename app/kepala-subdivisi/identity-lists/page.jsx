@@ -15,6 +15,8 @@ import AddIdentity from "./AddIdentity";
 import EditIdentity from "./EditIdentity";
 import DeleteIdentity from "./DeleteIdentity";
 import InformationPreviewModal from "@/app/components/informationpreviewmodal/page";
+import menuKepalaSeksi from "@/app/components/menu/MenuItemKepalaSeksi";
+import menuKepalaSubdivisi from "@/app/components/menu/MenuItemKepalaSubdivisi";
 
 const IdentityList = () => {
   const [dataIdentities, setDataIdentities] = useState([]);
@@ -40,7 +42,7 @@ const IdentityList = () => {
     setLoading(true);
     try {
       const response = await axios.get("/api/identity-list");
-      console.log("data identitas", response);
+      // console.log("data identitas", response);
       setDataIdentities(response.data.data);
       setTimeout(() => {
         setLoading(false);
@@ -244,7 +246,7 @@ const IdentityList = () => {
   return (
     <Box sx={{ width: "100%", height: "100%", minHeight: "100%", p: 2 }}>
       {/* Component Breadcrumbs disini */}
-      <BreadcrumbPage menuList={menuDevisiKontrak} />
+      <BreadcrumbPage menuList={menuKepalaSubdivisi} />
 
       <Box
         sx={{

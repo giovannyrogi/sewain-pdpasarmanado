@@ -14,6 +14,8 @@ import axios from "axios";
 import BreadcrumbPage from "@/app/components/breadcrumb/page";
 import menuSuperadmin from "@/app/components/menu/MenuItemSuperadmin";
 import menuDevisiKontrak from "@/app/components/menu/MenuItemDivisiKontrak";
+import menuKepalaSeksi from "@/app/components/menu/MenuItemKepalaSeksi";
+import menuKepalaSubdivisi from "@/app/components/menu/MenuItemKepalaSubdivisi";
 
 const Locations = () => {
   const [dataLocations, setDataLocations] = useState([]);
@@ -36,7 +38,7 @@ const Locations = () => {
     setLoading(true);
     try {
       const response = await axios.get("/api/locations");
-      console.log("locations", response);
+      // console.log("locations", response);
       setDataLocations(response.data.data);
       setTimeout(() => {
         setLoading(false);
@@ -190,7 +192,7 @@ const Locations = () => {
   return (
     <Box sx={{ width: "100%", height: "100%", minHeight: "100%", p: 2 }}>
       {/* Component Breadcrumbs disini */}
-      <BreadcrumbPage menuList={menuDevisiKontrak} />
+      <BreadcrumbPage menuList={menuKepalaSubdivisi} />
 
       <Box
         sx={{

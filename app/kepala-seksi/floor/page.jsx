@@ -15,6 +15,7 @@ import menuDevisiKontrak from "@/app/components/menu/MenuItemDivisiKontrak";
 import AddFloorPrice from "./AddFloorPrice";
 import EditFloorPrice from "./EditFloorPrice";
 import DeleteFloor from "./DeleteFloor";
+import menuKepalaSeksi from "@/app/components/menu/MenuItemKepalaSeksi";
 
 const FloorPrices = () => {
   const [dataLocations, setDataLocations] = useState([]);
@@ -38,7 +39,7 @@ const FloorPrices = () => {
     setLoading(true);
     try {
       const response = await axios.get("/api/locations");
-      console.log("locations", response);
+      // console.log("locations", response);
       setDataLocations(response.data.data);
       setTimeout(() => {
         setLoading(false);
@@ -55,7 +56,7 @@ const FloorPrices = () => {
     setLoading(true);
     try {
       const response = await axios.get("/api/location-floor-price");
-      console.log("data floor", response);
+      // console.log("data floor", response);
       setDataFloor(response.data.data);
       setTimeout(() => {
         setLoading(false);
@@ -209,7 +210,7 @@ const FloorPrices = () => {
   return (
     <Box sx={{ width: "100%", height: "100%", minHeight: "100%", p: 2 }}>
       {/* Component Breadcrumbs disini */}
-      <BreadcrumbPage menuList={menuDevisiKontrak} />
+      <BreadcrumbPage menuList={menuKepalaSeksi} />
 
       <Box
         sx={{

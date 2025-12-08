@@ -25,6 +25,7 @@ import { saveAs } from "file-saver";
 import UpdateDocumentContract from "./UpdateDocumentContract";
 import AddContract from "./AddContract";
 import formatRupiah from "@/app/components/formatrupiah/page";
+import menuKepalaDivisi from "@/app/components/menu/MenuItemKepalaDivisi";
 
 const Contract = () => {
   // Ref untuk dokumen print
@@ -58,7 +59,7 @@ const Contract = () => {
     setLoading(true);
     try {
       const response = await axios.get("/api/contracts");
-      console.log("data contract", response);
+      // console.log("data contract", response);
       if (response.data.success) {
         setDataPayments(response.data.data);
         setTimeout(() => {
@@ -522,7 +523,7 @@ const Contract = () => {
   return (
     <Box sx={{ width: "100%", height: "100%", minHeight: "100%", p: 2 }}>
       {/* Component Breadcrumbs disini */}
-      <BreadcrumbPage menuList={menuDevisiKontrak} />
+      <BreadcrumbPage menuList={menuKepalaDivisi} />
 
       <ConfigProvider
         theme={{

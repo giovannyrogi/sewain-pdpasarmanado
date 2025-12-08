@@ -27,6 +27,7 @@ import TenantTerminationApprovalModal from "@/app/components/tenant-termination-
 import menuItemDirekturUtama from "@/app/components/menu/MenuItemDirekturUtama";
 import menuKepalaDivisi from "@/app/components/menu/MenuItemKepalaDivisi";
 import TenantRejectTerminationModal from "@/app/components/tenant-termination-approval-modal/TenantRejectTerminationModal";
+import menuKepalaSubdivisi from "@/app/components/menu/MenuItemKepalaSubdivisi";
 
 const TenantTerminations = () => {
   const user = useUser();
@@ -68,7 +69,7 @@ const TenantTerminations = () => {
         }
       );
 
-      console.log("tenant terminations approval", response);
+      // console.log("tenant terminations approval", response);
       setDataTenantTerminations(response.data.data);
       setTimeout(() => {
         setLoading(false);
@@ -254,7 +255,7 @@ const TenantTerminations = () => {
                 ? "green"
                 : "red"
             }
-            key={record.tenant_early_termination_id}
+            key={record.termination_id}
             style={{
               fontWeight: "bold",
               cursor: "pointer",
@@ -322,7 +323,7 @@ const TenantTerminations = () => {
   return (
     <Box sx={{ width: "100%", height: "100%", minHeight: "100%", p: 2 }}>
       {/* Component Breadcrumbs disini */}
-      <BreadcrumbPage menuList={menuKepalaSeksi} />
+      <BreadcrumbPage menuList={menuKepalaSubdivisi} />
 
       <ConfigProvider
         theme={{

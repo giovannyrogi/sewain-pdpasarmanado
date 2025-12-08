@@ -33,7 +33,7 @@ const DeleteIdentity = ({
         `/api/identity-list/${selectedData.id}`
       );
 
-      console.log("response", response.data);
+      // console.log("response", response.data);
 
       if (response?.data.success) {
         onNotify &&

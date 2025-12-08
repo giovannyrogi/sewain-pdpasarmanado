@@ -81,7 +81,7 @@ const AddPayment = ({
         "/api/tenant-application/tenant-payment"
       );
 
-      console.log("data tenant", response);
+      // console.log("data tenant", response);
 
       if (response.data.success) {
         setDataTenantApplication(response.data.data);
@@ -220,7 +220,7 @@ const AddPayment = ({
         },
       });
 
-      console.log("insert payment", response);
+      // console.log("insert payment", response);
 
       if (response.data.success) {
         // Notifikasi sukses
@@ -366,7 +366,7 @@ const AddPayment = ({
                     newValue ? newValue?.tenant_application_id : null
                   );
 
-                  console.log("newvalue", newValue?.remaining_payment);
+                  // console.log("newvalue", newValue?.remaining_payment);
 
                   if (newValue?.payment_type === "cicilan") {
                     setTypePembayaran("cicilan");

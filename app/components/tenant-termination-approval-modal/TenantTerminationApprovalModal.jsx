@@ -71,7 +71,7 @@ const TenantTerminationApprovalModal = ({
           tenant_identity_id: selectedData?.tenant_identity_id,
         }
       );
-      console.log("response", response.data);
+      // console.log("response", response.data);
 
       if (response.data.success) {
         onNotify?.({

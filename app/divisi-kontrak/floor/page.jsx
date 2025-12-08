@@ -38,7 +38,7 @@ const FloorPrices = () => {
     setLoading(true);
     try {
       const response = await axios.get("/api/locations");
-      console.log("locations", response);
+      // console.log("locations", response);
       setDataLocations(response.data.data);
       setTimeout(() => {
         setLoading(false);
@@ -55,7 +55,7 @@ const FloorPrices = () => {
     setLoading(true);
     try {
       const response = await axios.get("/api/location-floor-price");
-      console.log("data floor", response);
+      // console.log("data floor", response);
       setDataFloor(response.data.data);
       setTimeout(() => {
         setLoading(false);

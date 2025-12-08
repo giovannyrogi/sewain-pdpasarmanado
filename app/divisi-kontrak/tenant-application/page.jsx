@@ -69,7 +69,7 @@ const Applications = () => {
     setLoading(true);
     try {
       const response = await axios.get("/api/tenant-application");
-      console.log("tenant application", response);
+      // console.log("tenant application", response);
       setDataTenantApplication(response.data.data);
       setTimeout(() => {
         setLoading(false);
@@ -86,7 +86,7 @@ const Applications = () => {
     setLoading(true);
     try {
       const response = await axios.get("/api/locations");
-      console.log("locations", response);
+      // console.log("locations", response);
       setDataLocations(response.data.data);
       setLoading(false);
     } catch (error) {

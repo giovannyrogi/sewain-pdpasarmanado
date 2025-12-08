@@ -94,7 +94,7 @@ const TenantsReport = () => {
       const response = await axios.get(
         `/api/report/income-by-tenants?start_date=${range[0].startDate}&end_date=${range[0].endDate}`
       );
-      console.log("tenants report", response);
+      // console.log("tenants report", response);
       setDataIncomeTenants(response.data.data);
       setTotals(response.data.totals);
       setLoading(false);
@@ -121,7 +121,7 @@ const TenantsReport = () => {
       const response = await axios.get(
         `/api/report/income-by-tenants?start_date=${range[0].startDate}&end_date=${range[0].endDate}`
       );
-      console.log("tenants report", response);
+      // console.log("tenants report", response);
       const data = response.data.data;
 
       if (data.length === 0) {
@@ -146,7 +146,7 @@ const TenantsReport = () => {
           setLoading(false);
         }, 1000);
       } else {
-        console.log("response", response);
+        // console.log("response", response);
         setSnackbar({
           open: true,
           message: data.message || "Gagal mengambil data",

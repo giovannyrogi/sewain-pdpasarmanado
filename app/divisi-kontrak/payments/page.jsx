@@ -58,7 +58,7 @@ const Payments = () => {
     setLoading(true);
     try {
       const response = await axios.get("/api/payments");
-      console.log("data payments", response);
+      // console.log("data payments", response);
       if (response.data.success) {
         setDataPayments(response.data.data);
         setTimeout(() => {

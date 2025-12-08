@@ -76,7 +76,7 @@ const AddRoom = ({
       const response = await axios.get(
         `/api/location-floor-price/floor-by-location-id?location_id=${locationId}`
       );
-      console.log("data floor", response);
+      // console.log("data floor", response);
 
       setDataFloor(response.data.data);
       setTimeout(() => {

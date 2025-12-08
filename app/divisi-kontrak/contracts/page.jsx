@@ -58,7 +58,7 @@ const Contract = () => {
     setLoading(true);
     try {
       const response = await axios.get("/api/contracts");
-      console.log("data contract", response);
+      // console.log("data contract", response);
       if (response.data.success) {
         setDataPayments(response.data.data);
         setTimeout(() => {

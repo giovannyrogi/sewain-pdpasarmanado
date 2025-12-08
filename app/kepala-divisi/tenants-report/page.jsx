@@ -38,6 +38,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import moment from "moment";
 import "moment/locale/id";
+import menuKepalaDivisi from "@/app/components/menu/MenuItemKepalaDivisi";
 moment.locale("id");
 
 const TenantsReport = () => {
@@ -91,7 +92,7 @@ const TenantsReport = () => {
       const response = await axios.get(
         `/api/report/income-by-tenants?start_date=${startDate}&end_date=${endDate}`
       );
-      console.log("tenants report", response);
+      // console.log("tenants report", response);
       setDataIncomeTenants(response.data.data);
       setTotals(response.data.totals);
       setLoading(false);
@@ -111,8 +112,8 @@ const TenantsReport = () => {
     const startDate = moment(range[0].startDate).format("YYYY-MM-DD");
     const endDate = moment(range[0].endDate).format("YYYY-MM-DD");
 
-    console.log("startDate", startDate);
-    console.log("endDate", endDate);
+    // console.log("startDate", startDate);
+    // console.log("endDate", endDate);
 
     setLoading(true);
     setIsSubmitting(true);
@@ -120,7 +121,7 @@ const TenantsReport = () => {
       const response = await axios.get(
         `/api/report/income-by-tenants?start_date=${startDate}&end_date=${endDate}`
       );
-      console.log("tenants report", response);
+      // console.log("tenants report", response);
       const data = response.data.data;
 
       if (data.length === 0) {
@@ -629,7 +630,7 @@ const TenantsReport = () => {
 
   return (
     <Box sx={{ width: "100%", height: "100%", minHeight: "100%", p: 2 }}>
-      <BreadcrumbPage menuList={menuDevisiKontrak} />
+      <BreadcrumbPage menuList={menuKepalaDivisi} />
 
       <Grid container spacing={1}>
         <Grid size={12}>

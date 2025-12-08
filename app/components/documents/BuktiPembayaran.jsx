@@ -19,7 +19,7 @@ const BuktiPembayaran = forwardRef(({ data }, ref) => {
   if (!data) return null;
 
   const handleCalculateTotal = () => {
-    console.log("data", data);
+    // console.log("data", data);
 
     // Konversi nilai ke number
     const paymentAmount = Number(data?.payments?.payment_amount || 0);

@@ -76,7 +76,7 @@ const AddFloorPrice = ({
         // base_price: basePrice || 0,
       });
 
-      console.log("response", response);
+      // console.log("response", response);
 
       if (response.data.success) {
         // Notifikasi sukses
@@ -194,7 +194,7 @@ const AddFloorPrice = ({
                   value={floor}
                   onChange={(e) => {
                     setFloor(e.target.value);
-                    console.log(e.target.value);
+                    // console.log(e.target.value);
                     
                   }}
                 >

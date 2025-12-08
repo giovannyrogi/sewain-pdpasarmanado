@@ -64,7 +64,7 @@ const TenantTerminationsModal = ({
       const response = await axios.get(
         "/api/tenant-application/without-terminations"
       );
-      console.log("tenant application", response);
+      // console.log("tenant application", response);
       setDataTenantApplication(response.data.data);
       setTimeout(() => {
         loadingFalse();
@@ -113,7 +113,7 @@ const TenantTerminationsModal = ({
         },
       });
 
-      console.log("response", response);
+      // console.log("response", response);
       if (response.data.success) {
         onNotify &&
           onNotify({

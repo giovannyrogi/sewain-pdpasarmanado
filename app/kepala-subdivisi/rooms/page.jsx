@@ -16,6 +16,8 @@ import DeleteRoom from "./DeleteRoom";
 import formatRupiah from "@/app/components/formatrupiah/page";
 import menuDevisiKontrak from "@/app/components/menu/MenuItemDivisiKontrak";
 import NotesModal from "./NotesModal";
+import menuKepalaSeksi from "@/app/components/menu/MenuItemKepalaSeksi";
+import menuKepalaSubdivisi from "@/app/components/menu/MenuItemKepalaSubdivisi";
 
 const Rooms = () => {
   const [dataRooms, setDataRooms] = useState([]);
@@ -41,7 +43,7 @@ const Rooms = () => {
     setLoading(true);
     try {
       const response = await axios.get("/api/rooms");
-      console.log("rooms", response);
+      // console.log("rooms", response);
       setDataRooms(response.data.data);
       setTimeout(() => {
         setLoading(false);
@@ -58,7 +60,7 @@ const Rooms = () => {
     setLoading(true);
     try {
       const response = await axios.get("/api/locations");
-      console.log("locations", response);
+      // console.log("locations", response);
       setTimeout(() => {
         setDataLocations(response.data.data);
         setLoading(false);
@@ -327,7 +329,7 @@ const Rooms = () => {
   return (
     <Box sx={{ width: "100%", height: "100%", minHeight: "100%", p: 2 }}>
       {/* Component Breadcrumbs disini */}
-      <BreadcrumbPage menuList={menuDevisiKontrak} />
+      <BreadcrumbPage menuList={menuKepalaSubdivisi} />
 
       <Box
         sx={{

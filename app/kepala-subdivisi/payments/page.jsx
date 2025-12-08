@@ -27,6 +27,8 @@ import ApprovalModal from "@/app/divisi-keuangan/payments/ApprovalModal";
 import { useReactToPrint } from "react-to-print";
 import BuktiPembayaran from "@/app/components/documents/BuktiPembayaran";
 import EditPayment from "./EditPayment";
+import menuKepalaSeksi from "@/app/components/menu/MenuItemKepalaSeksi";
+import menuKepalaSubdivisi from "@/app/components/menu/MenuItemKepalaSubdivisi";
 
 const Payments = () => {
   // Ref untuk dokumen print
@@ -58,7 +60,7 @@ const Payments = () => {
     setLoading(true);
     try {
       const response = await axios.get("/api/payments");
-      console.log("data payments", response);
+      // console.log("data payments", response);
       if (response.data.success) {
         setDataPayments(response.data.data);
         setTimeout(() => {
@@ -458,7 +460,7 @@ const Payments = () => {
   return (
     <Box sx={{ width: "100%", height: "100%", minHeight: "100%", p: 2 }}>
       {/* Component Breadcrumbs disini */}
-      <BreadcrumbPage menuList={menuDevisiKontrak} />
+      <BreadcrumbPage menuList={menuKepalaSubdivisi} />
 
       <Box
         sx={{

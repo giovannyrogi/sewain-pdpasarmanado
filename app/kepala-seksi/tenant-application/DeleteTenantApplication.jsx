@@ -34,7 +34,7 @@ const DeleteTenantApplication = ({
         `/api/tenant-application/${selectedData.tenant_application_id}`
       );
 
-      console.log("response", response.data);
+      // console.log("response", response.data);
 
       if (response?.data.success) {
         onNotify &&
@@ -195,7 +195,7 @@ const DeleteTenantApplication = ({
                   fontSize: 14,
                 }}
               >
-                Ruangan No.{""}
+                Ruangan No.{" "}
                 {selectedData && selectedData.room_number
                   ? selectedData.room_number
                   : ""}

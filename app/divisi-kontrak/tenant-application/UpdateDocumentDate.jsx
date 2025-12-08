@@ -76,7 +76,7 @@ const UpdateDocumentDate = ({
       const response = await axios.get(
         `/api/tenant-application/update-document`
       );
-      console.log("response update document", response);
+      // console.log("response update document", response);
       if (response.data.success) {
         setHighestDocumentNumber(response.data.data);
         setTimeout(() => {
@@ -134,7 +134,7 @@ const UpdateDocumentDate = ({
           document_number: finalDocNumber,
         }
       );
-      console.log("response", response);
+      // console.log("response", response);
 
       if (response.data.success) {
         getDataTenantApplication();

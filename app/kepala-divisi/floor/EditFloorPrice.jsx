@@ -196,7 +196,7 @@ const EditFloorPrice = ({
                   value={floor}
                   onChange={(e) => {
                     setFloor(e.target.value);
-                    console.log(e.target.value);
+                    // console.log(e.target.value);
                   }}
                 >
                   {floors &&

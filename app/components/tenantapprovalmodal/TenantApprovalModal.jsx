@@ -131,7 +131,7 @@ const TenantApprovalModal = ({
           approver_id: user.id,
         }
       );
-      console.log("response", response.data);
+      // console.log("response", response.data);
 
       if (response.data.success) {
         onNotify?.({

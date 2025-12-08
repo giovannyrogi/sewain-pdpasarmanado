@@ -73,7 +73,7 @@ const AddContract = ({
     loadingTrue();
     try {
       const response = await axios.get(`/api/contracts/tenants-fully-paid`);
-      console.log("response", response);
+      // console.log("response", response);
 
       if (response.data.success) {
         // mapping biar gampang dipakai di Autocomplete
@@ -152,7 +152,7 @@ const AddContract = ({
         tenant_application_id: selectedTenantId,
         contract_number: finalContractNumber,
       });
-      console.log("response", response);
+      // console.log("response", response);
 
       if (response.data.success) {
         getDataContract();

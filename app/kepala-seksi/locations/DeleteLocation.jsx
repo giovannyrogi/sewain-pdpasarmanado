@@ -37,7 +37,7 @@ const DeleteLocation = ({
     loadingTrue();
     try {
       const response = await axios.delete(`/api/locations/${locationId}`);
-      console.log("response delete", response);
+      // console.log("response delete", response);
 
       if (response?.data?.success) {
         onNotify &&

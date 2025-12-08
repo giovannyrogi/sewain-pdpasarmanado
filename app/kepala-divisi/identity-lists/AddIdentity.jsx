@@ -212,7 +212,7 @@ const AddIdentity = ({
 
     // ambil kabupaten yang sesuai kode_provinsi
     const allKab = wilayah.kabupaten(kodeProv);
-    console.log("kabupaten", allKab);
+    // console.log("kabupaten", allKab);
 
     setListKabupaten(allKab);
   };
@@ -229,7 +229,7 @@ const AddIdentity = ({
 
     // ambil kecamatan yang sesuai kode_kabupaten
     const allKec = wilayah.kecamatan(kodeKab);
-    console.log("kecamatan", allKec);
+    // console.log("kecamatan", allKec);
 
     setListKecamatan(allKec);
   };
@@ -244,7 +244,7 @@ const AddIdentity = ({
 
     // ambil kecamatan yang sesuai kode_kabupaten
     const allKel = wilayah.desa(kodeKec);
-    console.log("kelurahan", allKel);
+    // console.log("kelurahan", allKel);
 
     setListKelurahan(allKel);
   };

@@ -285,7 +285,7 @@ const EditPayment = ({
         }
       );
 
-      console.log("update payment", response);
+      // console.log("update payment", response);
 
       if (response.data.success) {
         // Notifikasi sukses
