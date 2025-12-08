@@ -73,7 +73,7 @@ const menuKepalaSubdivisi = [
       {
         label: "Termination Approval",
         value: "tenant-terminations-approval",
-        path: "/kepala-subdivisi/tenant-termination-approval",
+        path: "/kepala-subdivisi/tenant-terminations-approval",
         icon: <Icon icon="pepicons-pop:lock-closed-circle" fontSize="20px" />,
         showIcon: true,
       },
