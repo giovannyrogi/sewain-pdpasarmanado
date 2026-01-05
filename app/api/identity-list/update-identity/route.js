@@ -3,7 +3,7 @@ import path from "path";
 import pool from "@/lib/dbConfig";
 import moment from "moment";
 
-const uploadDir = path.join(process.cwd(), "public/uploads/ktp");
+const uploadDir = path.join(process.cwd(), "uploads/ktp");
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
@@ -181,12 +181,25 @@ export async function PUT(req) {
       filename = `ktp_${full_name}_${moment().format(
         "YYYY_MM_DD_HH_mm_ss"
       )}${ext}`;
-      ktp_file_path = `/uploads/ktp/${filename}`;
+      ktp_file_path = `/api/uploads/ktp/${filename}`;
     }
 
     const client = await pool.connect();
     try {
       await client.query("BEGIN");
+
+      const oldData = await client.query(
+        `SELECT ktp_file_path FROM tenant_identities WHERE id = $1`,
+        [id]
+      );
+
+      const dbOldKtpPath = oldData.rows[0]?.ktp_file_path || null;
+
+      // Simpan file baru dulu
+      if (fileBuffer && filename) {
+        const filepath = path.join(uploadDir, filename);
+        await fs.promises.writeFile(filepath, fileBuffer);
+      }
 
       const result = await client.query(
         `
@@ -237,10 +250,20 @@ export async function PUT(req) {
 
       await client.query("COMMIT");
 
-      // simpan file baru kalau ada
-      if (fileBuffer && filename) {
-        const filepath = path.join(uploadDir, filename);
-        await fs.promises.writeFile(filepath, fileBuffer);
+      // lalu hapus file lama
+      if (fileBuffer && filename && dbOldKtpPath) {
+        try {
+          const relativePath = dbOldKtpPath.replace("/api/uploads/", "");
+          const oldFilePath = path.normalize(
+            path.join(process.cwd(), "uploads", relativePath)
+          );
+
+          if (oldFilePath.startsWith(uploadDir) && fs.existsSync(oldFilePath)) {
+            await fs.promises.unlink(oldFilePath);
+          }
+        } catch (err) {
+          console.warn("Gagal hapus file lama:", err.message);
+        }
       }
 
       return Response.json(

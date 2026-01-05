@@ -7,6 +7,9 @@ export async function POST(req) {
     const body = await req.json();
     const { username, password } = body;
 
+    console.log("username", username);
+    console.log("password", password);
+
     // 1. Cek user di database
     const userResult = await pool.query(
       `SELECT 

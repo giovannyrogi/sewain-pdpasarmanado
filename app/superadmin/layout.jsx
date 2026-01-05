@@ -1,7 +1,0 @@
-import MainLayout from "../components/mainlayout/MainLayout";
-
-const SuperadminLayout = ({ children }) => {
-  return <MainLayout>{children}</MainLayout>;
-};
-
-export default SuperadminLayout;

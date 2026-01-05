@@ -1,97 +1,105 @@
+// middleware.js
 import { NextResponse } from "next/server";
+import { ROLES } from "./app/components/menu/ConstantRoles";
+
+const roleAccessMap = {
+  "/dashboard": Object.values(ROLES),
+
+  floor: [ROLES.DIVISI_KONTRAK],
+  "/identity-list": [ROLES.DIVISI_KONTRAK],
+  "/rooms": [ROLES.DIVISI_KONTRAK],
+  "/locations": [ROLES.DIVISI_KONTRAK],
+  "/contracts": [ROLES.DIVISI_KONTRAK],
+  "/tenant-approval": [ROLES.DIREKTUR_BISNIS, ROLES.DIREKTUR_UTAMA],
+  "/tenant-terminations": [
+    ROLES.DIVISI_KONTRAK,
+    ROLES.DIREKTUR_BISNIS,
+    ROLES.DIREKTUR_UTAMA,
+  ],
+  "/tenant-terminations-approval": [
+    ROLES.DIVISI_KONTRAK,
+    ROLES.DIREKTUR_BISNIS,
+    ROLES.DIREKTUR_UTAMA,
+  ],
+  "/transactions": [ROLES.DIVISI_KONTRAK],
+  "/tenant-application": [ROLES.DIVISI_KONTRAK],
+  "/payments": [ROLES.DIVISI_KONTRAK, ROLES.DIVISI_KEUANGAN],
+  "/tenants-report": [
+    ROLES.DIVISI_KONTRAK,
+    ROLES.KEPALA_DIVISI,
+    ROLES.DIREKTUR_BISNIS,
+    ROLES.DIREKTUR_UTAMA,
+    ROLES.DIVISI_KEUANGAN,
+  ],
+  "/locations-report": [
+    ROLES.DIVISI_KONTRAK,
+    ROLES.KEPALA_DIVISI,
+    ROLES.DIREKTUR_BISNIS,
+    ROLES.DIREKTUR_UTAMA,
+    ROLES.DIVISI_KEUANGAN,
+  ],
+};
 
 export function middleware(req) {
   const { pathname } = req.nextUrl;
   const loggedInUser = req.cookies.get("loggedInUser");
 
-  const protectedPaths = [
-    "/superadmin",
-    "/divisi-kontrak",
-    "/kepala-seksi",
-    "/kepala-subdivisi",
-    "/kepala-divisi",
-    "/direktur-bisnis",
-    "/direktur-utama",
-    "/divisi-keuangan"
-  ];
-
-  // --- Kalau belum login & akses protected page → redirect login
-  if (!loggedInUser && protectedPaths.some((p) => pathname.startsWith(p))) {
+  // BELUM LOGIN → paksa ke /login
+  if (!loggedInUser && pathname !== "/login") {
     return NextResponse.redirect(new URL("/login", req.url));
   }
 
+  // SUDAH LOGIN
   if (loggedInUser) {
-    const user = JSON.parse(loggedInUser.value);
+    let user;
 
-    // --- Kalau sudah login & buka /login → redirect ke dashboard sesuai role
-    if (pathname === "/login") {
-      let redirectPath = "/login";
-
-      switch (user.role_id) {
-        case 1:
-          redirectPath = "/superadmin/dashboard";
-          break;
-        case 2:
-          redirectPath = "/divisi-kontrak/dashboard";
-          break;
-        case 3:
-          redirectPath = "/kepala-seksi/dashboard";
-          break;
-        case 4:
-          redirectPath = "/kepala-subdivisi/dashboard";
-          break;
-        case 5:
-          redirectPath = "/kepala-divisi/dashboard";
-          break;
-        case 6:
-          redirectPath = "/direktur-bisnis/dashboard";
-          break;
-        case 7:
-          redirectPath = "/direktur-utama/dashboard";
-          break;
-        case 8:
-          redirectPath = "/divisi-keuangan/dashboard";
-          break;
-      }
-
-      return NextResponse.redirect(new URL(redirectPath, req.url));
+    try {
+      user = JSON.parse(loggedInUser.value);
+    } catch {
+      return NextResponse.redirect(new URL("/login", req.url));
     }
 
-    // --- Tambahkan cek role_id vs path
-    const rolePathMap = {
-      1: "/superadmin",
-      2: "/divisi-kontrak",
-      3: "/kepala-seksi",
-      4: "/kepala-subdivisi",
-      5: "/kepala-divisi",
-      6: "/direktur-bisnis",
-      7: "/direktur-utama",
-      8: "/divisi-keuangan",
-    };
+    // CEK EXPIRED SESSION
+    // if (Date.now() > user.expiresAt) {
+    //   const res = NextResponse.redirect(new URL("/login", req.url));
+    //   res.cookies.delete("loggedInUser");
+    //   return res;
+    // }
 
-    // Jika path diawali dengan protected path tapi bukan sesuai role → redirect ke dashboard sendiri
-    for (const path of protectedPaths) {
-      if (pathname.startsWith(path) && path !== rolePathMap[user.role_id]) {
-        return NextResponse.redirect(
-          new URL(rolePathMap[user.role_id] + "/dashboard", req.url)
-        );
+    // SUDAH LOGIN → TIDAK BOLEH KE /login
+    if (pathname === "/login") {
+      return NextResponse.redirect(new URL("/dashboard", req.url));
+    }
+
+    // CEK AKSES ROLE
+    for (const path in roleAccessMap) {
+      if (pathname.startsWith(path)) {
+        if (!roleAccessMap[path].includes(user.role_id)) {
+          return NextResponse.redirect(new URL("/dashboard", req.url));
+        }
       }
     }
   }
 
   return NextResponse.next();
 }
-
 export const config = {
   matcher: [
     "/login",
-    "/superadmin/:path*",
-    "/divisi-kontrak/:path*",
-    "/kepala-seksi/:path*",
-    "/kepala-subdivisi/:path*",
-    "/kepala-divisi/:path*",
-    "/direktur-bisnis/:path*",
-    "/direktur-utama/:path*",
-    "/divisi-keuangan/:path*",
+    "/dashboard",
+    "/reports/:path*",
+    "/floor",
+    "/contracts",
+    "/tenant-approval",
+    "/tenant-terminations",
+    "/payments",
+    "/transactions",
+    "/tenant-terminations-approval",
+    "/tenant-application",
+    "/identity-list",
+    "/rooms",
+    "/locations",
+    "/tenants-report",
+    "/locations-report",
   ],
 };

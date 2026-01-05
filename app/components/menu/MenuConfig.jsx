@@ -1,0 +1,152 @@
+import PeopleIcon from "@mui/icons-material/People";
+import LocationOnIcon from "@mui/icons-material/LocationOn";
+import { Icon } from "@iconify/react";
+import { ROLES } from "./ConstantRoles";
+
+const MENU_CONFIG = [
+  {
+    label: "Dashboard",
+    value: "dashboard",
+    path: "/dashboard",
+    icon: <Icon icon="svg-spinners:blocks-scale" fontSize="20px" />,
+    roles: Object.values(ROLES),
+  },
+  {
+    label: "Data Master",
+    value: "dataMaster",
+    icon: <Icon icon="material-symbols:database" fontSize="20px" />,
+    roles: [
+      ROLES.DIVISI_KONTRAK,
+      ROLES.DIREKTUR_BISNIS,
+      ROLES.DIREKTUR_UTAMA,
+      ROLES.SUPERADMIN,
+    ],
+    submenu: [
+      {
+        label: "Roles",
+        value: "roles",
+        path: "/roles",
+        icon: <Icon icon="oui:app-users-roles" fontSize="20px" />,
+        roles: [ROLES.SUPERADMIN],
+        showIcon: true,
+      },
+      {
+        label: "Locations",
+        value: "locations",
+        path: "/locations",
+        icon: <Icon icon="mdi:location-radius-outline" fontSize="20px" />,
+        roles: [ROLES.DIVISI_KONTRAK],
+        showIcon: true,
+      },
+      {
+        label: "Floor",
+        value: "floor",
+        path: "/floor",
+        icon: <Icon icon="ion:pricetags-outline" fontSize="20px" />,
+        roles: [ROLES.DIVISI_KONTRAK],
+        showIcon: true,
+      },
+      {
+        label: "Rooms",
+        value: "rooms",
+        path: "/rooms",
+        icon: <Icon icon="cil:room" fontSize="20px" />,
+        roles: [ROLES.DIVISI_KONTRAK],
+        showIcon: true,
+      },
+      {
+        label: "Identity Lists",
+        value: "identity-lists",
+        path: "/identity-lists",
+        icon: <Icon icon="qlementine-icons:id-card-16" fontSize="20px" />,
+        roles: [ROLES.DIVISI_KONTRAK],
+        showIcon: true,
+      },
+    ],
+  },
+  {
+    label: "Transactions",
+    value: "transactions",
+    icon: <Icon icon="healthicons:money-bag" fontSize={22} />,
+    roles: [ROLES.DIVISI_KONTRAK],
+    submenu: [
+      {
+        label: "Tenant Application",
+        value: "tenant-application",
+        path: "/tenant-application",
+        icon: <Icon icon="hugeicons:file-edit" fontSize="20px" />,
+        roles: [ROLES.DIVISI_KONTRAK],
+        showIcon: true,
+      },
+      {
+        label: "Tenant Approval",
+        value: "tenant-approval",
+        path: "/tenant-approval",
+        icon: <Icon icon="carbon:document-set" fontSize="20px" />,
+        roles: [ROLES.DIVISI_KONTRAK],
+        showIcon: true,
+      },
+      {
+        label: "Tenant Terminations",
+        value: "tenant-terminations",
+        path: "/tenant-terminations",
+        icon: <Icon icon="pepicons-pop:lock-closed-circle" fontSize="20px" />,
+        roles: [ROLES.DIVISI_KONTRAK],
+        showIcon: true,
+      },
+      {
+        label: "Termination Approval",
+        value: "tenant-terminations-approval",
+        path: "/tenant-terminations-approval",
+        icon: <Icon icon="pepicons-pop:lock-closed-circle" fontSize="20px" />,
+        roles: [ROLES.DIVISI_KONTRAK],
+        showIcon: true,
+      },
+      {
+        label: "Payments",
+        value: "payments",
+        path: "/payments",
+        icon: (
+          <Icon icon="streamline-freehand:money-atm-withdraw" fontSize="20px" />
+        ),
+        roles: [ROLES.DIVISI_KONTRAK],
+        showIcon: true,
+      },
+      {
+        label: "Contracts",
+        value: "contracts",
+        path: "/contracts",
+        icon: <Icon icon="clarity:contract-line" fontSize="20px" />,
+        roles: [ROLES.DIVISI_KONTRAK],
+        showIcon: true,
+      },
+    ],
+  },
+  {
+    label: "Reports",
+    value: "reports",
+    icon: <Icon icon="fluent:chart-multiple-16-filled" fontSize={23} />,
+    roles: [ROLES.DIVISI_KONTRAK],
+    submenu: [
+      {
+        label: "Report By Locations",
+        value: "locations-report",
+        path: "/locations-report",
+        icon: <Icon icon="ant-design:pie-chart-filled" fontSize="20px" />,
+        roles: [ROLES.DIVISI_KONTRAK],
+        showIcon: true,
+      },
+      {
+        label: "Report By Tenants",
+        value: "tenants-report",
+        path: "/tenants-report",
+        icon: <Icon icon="bi:bar-chart-fill" fontSize="18px" />,
+        roles: [ROLES.DIVISI_KONTRAK],
+        showIcon: true,
+      },
+    ],
+  },
+  // Tambahkan menu lain jika perlu
+];
+
+export default MENU_CONFIG;
