@@ -22,11 +22,12 @@ import { useUser } from "@/app/utils/useUser";
 import ImagePreviewModal from "@/app/components/imagepreviewmodal/page";
 import PaymentApprovalModal from "@/app/components/payment-approval-modal/PaymentApprovalModa";
 import DeletePayment from "./DeletePayment";
-import ApprovalModal from "@/app/divisi-keuangan/payments/ApprovalModal";
 import { useReactToPrint } from "react-to-print";
 import BuktiPembayaran from "@/app/components/documents/BuktiPembayaran";
 import EditPayment from "./EditPayment";
 import MENU_CONFIG from "@/app/components/menu/MenuConfig";
+import ApprovalModal from "./ApprovalModal";
+import RejectedModal from "./RejectedModal";
 
 const Payments = () => {
   // Ref untuk dokumen print
@@ -52,6 +53,7 @@ const Payments = () => {
     useState(false);
   const [openVerificationModal, setOpenVerificationModal] = useState(false);
   const [openApprovalModal, setOpenApprovalModal] = useState(false);
+  const [openRejectedModal, setOpenRejectedModal] = useState(false);
   const [printData, setPrintData] = useState(null);
 
   const getDataPayments = async () => {
@@ -95,6 +97,12 @@ const Payments = () => {
     // console.log("delete record", record);
     setSelectedData(record);
     setOpenDeleteModal(true);
+  };
+
+  const handleReject = (record) => {
+    // console.log("delete record", record);
+    setSelectedData(record);
+    setOpenRejectedModal(true);
   };
 
   const handleVerification = (record) => {
@@ -423,33 +431,48 @@ const Payments = () => {
               </Button>
             </Tooltip>
           )}
-          {(record.payments?.approval_status === "rejected" ||
-            record.payments?.approval_status === "proses") && (
-            <>
-              <Tooltip title="Edit Pembayaran">
-                <Button
-                  size="small"
-                  variant={themeMode === "dark" ? "outlined" : "contained"}
-                  color="info"
-                  onClick={() => handleEdit(record)}
-                  sx={{ minWidth: 0, px: 1 }}
-                >
-                  <Icon icon="line-md:edit" fontSize={18} />
-                </Button>
-              </Tooltip>
+          {user?.role_id !== 8 &&
+            (record.payments?.approval_status === "rejected" ||
+              record.payments?.approval_status === "proses") && (
+              <>
+                <Tooltip title="Edit Pembayaran">
+                  <Button
+                    size="small"
+                    variant={themeMode === "dark" ? "outlined" : "contained"}
+                    color="info"
+                    onClick={() => handleEdit(record)}
+                    sx={{ minWidth: 0, px: 1 }}
+                  >
+                    <Icon icon="line-md:edit" fontSize={18} />
+                  </Button>
+                </Tooltip>
+                <Tooltip title="Tolak Pembayaran">
+                  <Button
+                    size="small"
+                    variant={themeMode === "dark" ? "outlined" : "contained"}
+                    color="error"
+                    onClick={() => handleDelete(record)}
+                    sx={{ minWidth: 0, px: 1 }}
+                  >
+                    <Icon icon="line-md:close-circle" fontSize={18} />
+                  </Button>
+                </Tooltip>
+              </>
+            )}
+          {user?.role_id === 8 &&
+            record.payments?.approval_status === "proses" && (
               <Tooltip title="Tolak Pembayaran">
                 <Button
                   size="small"
                   variant={themeMode === "dark" ? "outlined" : "contained"}
                   color="error"
-                  onClick={() => handleDelete(record)}
+                  onClick={() => handleReject(record)}
                   sx={{ minWidth: 0, px: 1 }}
                 >
                   <Icon icon="line-md:close-circle" fontSize={18} />
                 </Button>
               </Tooltip>
-            </>
-          )}
+            )}
         </Box>
       ),
     },
@@ -570,6 +593,18 @@ const Payments = () => {
       <ApprovalModal
         open={openApprovalModal}
         onClose={() => setOpenApprovalModal(false)}
+        selectedData={selectedData}
+        loading={loading}
+        loadingTrue={() => setLoading(true)}
+        loadingFalse={() => setLoading(false)}
+        setLoadingMessage={setLoadingMessage}
+        user={user}
+        getDataPayments={getDataPayments}
+        onNotify={(notify) => setSnackbar(notify)}
+      />
+      <RejectedModal
+        open={openRejectedModal}
+        onClose={() => setOpenRejectedModal(false)}
         selectedData={selectedData}
         loading={loading}
         loadingTrue={() => setLoading(true)}

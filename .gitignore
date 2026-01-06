@@ -24,6 +24,8 @@
 .DS_Store
 *.pem
 /public/uploads
+/uploads/bukti_transfer/
+/uploads/ktp/
 
 # debug
 npm-debug.log*

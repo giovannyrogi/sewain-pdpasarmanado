@@ -169,7 +169,14 @@ const MENU_CONFIG = [
         icon: (
           <Icon icon="streamline-freehand:money-atm-withdraw" fontSize="20px" />
         ),
-        roles: [ROLES.SUPERADMIN, ROLES.DIVISI_KONTRAK, ROLES.DIVISI_KEUANGAN],
+        roles: [
+          ROLES.SUPERADMIN,
+          ROLES.DIVISI_KONTRAK,
+          ROLES.KEPALA_SEKSI,
+          ROLES.KEPALA_SUBDIVISI,
+          ROLES.KEPALA_DIVISI,
+          ROLES.DIVISI_KEUANGAN,
+        ],
         showIcon: true,
       },
       {
