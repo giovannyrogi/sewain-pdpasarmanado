@@ -1,105 +1,71 @@
 // middleware.js
 import { NextResponse } from "next/server";
-import { ROLES } from "./app/components/menu/ConstantRoles";
+import MENU_CONFIG from "./app/components/menu/MenuConfig";
 
-const roleAccessMap = {
-  "/dashboard": Object.values(ROLES),
+// build access map dari MENU_CONFIG
+const buildAccessMap = (menus) => {
+  const map = {};
 
-  floor: [ROLES.DIVISI_KONTRAK],
-  "/identity-list": [ROLES.DIVISI_KONTRAK],
-  "/rooms": [ROLES.DIVISI_KONTRAK],
-  "/locations": [ROLES.DIVISI_KONTRAK],
-  "/contracts": [ROLES.DIVISI_KONTRAK],
-  "/tenant-approval": [ROLES.DIREKTUR_BISNIS, ROLES.DIREKTUR_UTAMA],
-  "/tenant-terminations": [
-    ROLES.DIVISI_KONTRAK,
-    ROLES.DIREKTUR_BISNIS,
-    ROLES.DIREKTUR_UTAMA,
-  ],
-  "/tenant-terminations-approval": [
-    ROLES.DIVISI_KONTRAK,
-    ROLES.DIREKTUR_BISNIS,
-    ROLES.DIREKTUR_UTAMA,
-  ],
-  "/transactions": [ROLES.DIVISI_KONTRAK],
-  "/tenant-application": [ROLES.DIVISI_KONTRAK],
-  "/payments": [ROLES.DIVISI_KONTRAK, ROLES.DIVISI_KEUANGAN],
-  "/tenants-report": [
-    ROLES.DIVISI_KONTRAK,
-    ROLES.KEPALA_DIVISI,
-    ROLES.DIREKTUR_BISNIS,
-    ROLES.DIREKTUR_UTAMA,
-    ROLES.DIVISI_KEUANGAN,
-  ],
-  "/locations-report": [
-    ROLES.DIVISI_KONTRAK,
-    ROLES.KEPALA_DIVISI,
-    ROLES.DIREKTUR_BISNIS,
-    ROLES.DIREKTUR_UTAMA,
-    ROLES.DIVISI_KEUANGAN,
-  ],
+  const traverse = (items) => {
+    items.forEach((item) => {
+      if (item.path) {
+        map[item.path] = item.roles;
+      }
+      if (item.submenu) {
+        traverse(item.submenu);
+      }
+    });
+  };
+
+  traverse(menus);
+  return map;
 };
+
+const ACCESS_MAP = buildAccessMap(MENU_CONFIG);
 
 export function middleware(req) {
   const { pathname } = req.nextUrl;
   const loggedInUser = req.cookies.get("loggedInUser");
 
-  // BELUM LOGIN → paksa ke /login
+  // BELUM LOGIN
   if (!loggedInUser && pathname !== "/login") {
     return NextResponse.redirect(new URL("/login", req.url));
   }
 
-  // SUDAH LOGIN
   if (loggedInUser) {
     let user;
-
     try {
       user = JSON.parse(loggedInUser.value);
     } catch {
       return NextResponse.redirect(new URL("/login", req.url));
     }
 
-    // CEK EXPIRED SESSION
-    // if (Date.now() > user.expiresAt) {
-    //   const res = NextResponse.redirect(new URL("/login", req.url));
-    //   res.cookies.delete("loggedInUser");
-    //   return res;
-    // }
-
-    // SUDAH LOGIN → TIDAK BOLEH KE /login
+    // SUDAH LOGIN → BLOCK /login
     if (pathname === "/login") {
       return NextResponse.redirect(new URL("/dashboard", req.url));
     }
 
-    // CEK AKSES ROLE
-    for (const path in roleAccessMap) {
-      if (pathname.startsWith(path)) {
-        if (!roleAccessMap[path].includes(user.role_id)) {
-          return NextResponse.redirect(new URL("/dashboard", req.url));
-        }
-      }
+    // CEK AKSES ROUTE
+    const matchedPath = Object.keys(ACCESS_MAP).find(
+      (route) => pathname === route || pathname.startsWith(route + "/")
+    );
+
+    // route tidak terdaftar → BLOCK
+    if (!matchedPath) {
+      return NextResponse.redirect(new URL("/dashboard", req.url));
+    }
+
+    // role tidak punya akses → BLOCK
+    if (!ACCESS_MAP[matchedPath].includes(user.role_id)) {
+      return NextResponse.redirect(new URL("/dashboard", req.url));
     }
   }
 
   return NextResponse.next();
 }
+
 export const config = {
   matcher: [
-    "/login",
-    "/dashboard",
-    "/reports/:path*",
-    "/floor",
-    "/contracts",
-    "/tenant-approval",
-    "/tenant-terminations",
-    "/payments",
-    "/transactions",
-    "/tenant-terminations-approval",
-    "/tenant-application",
-    "/identity-list",
-    "/rooms",
-    "/locations",
-    "/tenants-report",
-    "/locations-report",
+    "/((?!_next|api|favicon.ico|.*\\.(?:png|jpg|jpeg|svg|webp|ico|css|js)).*)",
   ],
 };

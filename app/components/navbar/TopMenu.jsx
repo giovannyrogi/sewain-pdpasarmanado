@@ -46,7 +46,7 @@ const TopMenu = ({ user, onBurgerClick, onShowLoading, onHideLoading }) => {
     try {
       await axios.post("/api/logout");
       setTimeout(() => {
-        redirect("/login");
+        router.push("/login");
       }, 1000);
     } catch (err) {
       console.log("error logout", err);
@@ -57,7 +57,7 @@ const TopMenu = ({ user, onBurgerClick, onShowLoading, onHideLoading }) => {
   const handleProfile = () => {
     onShowLoading?.();
     setTimeout(() => {
-      router.push("/settings/account");
+      router.push("/account");
       onHideLoading?.();
     }, 1000);
   };
@@ -65,7 +65,7 @@ const TopMenu = ({ user, onBurgerClick, onShowLoading, onHideLoading }) => {
   const HandleDatabase = () => {
     onShowLoading?.();
     setTimeout(() => {
-      redirect("/settings/database");
+      router.push("/database");
     }, 1000);
     onHideLoading?.();
   };

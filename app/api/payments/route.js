@@ -6,7 +6,6 @@ import moment from "moment";
 // Konfigurasi upload folder
 const uploadDir = path.join(
   process.cwd(),
-  "public",
   "uploads",
   "bukti_transfer"
 );
@@ -54,7 +53,7 @@ export async function POST(req) {
       "_"
     )}_${moment().format("YYYY_MM_DD_HH_mm_ss")}${ext}`;
     const filePath = path.join(uploadDir, filename);
-    const proofFilePath = `/uploads/bukti_transfer/${filename}`;
+    const proofFilePath = `/api/uploads/bukti_transfer/${filename}`;
 
     // --- Transaksi supaya konsisten
     await client.query("BEGIN");

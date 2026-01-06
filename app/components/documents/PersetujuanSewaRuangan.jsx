@@ -3,6 +3,7 @@ import { Box, Divider, Grid, Typography } from "@mui/material";
 import moment from "moment";
 import React, { forwardRef } from "react";
 import formatRupiah from "../formatrupiah/page";
+import Image from "next/image";
 
 const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
   if (!data) return null;

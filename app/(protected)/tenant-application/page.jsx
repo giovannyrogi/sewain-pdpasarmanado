@@ -26,6 +26,8 @@ import PersetujuanSewaRuangan from "@/app/components/documents/PersetujuanSewaRu
 import { useReactToPrint } from "react-to-print";
 import UpdateDocumentDate from "./UpdateDocumentDate";
 import MENU_CONFIG from "@/app/components/menu/MenuConfig";
+import DetailTenantApplicationModal from "@/app/components/tenantapplicationmodal/DetailTenantApplicationModal";
+import Image from "next/image";
 
 const Applications = () => {
   // Ref untuk dokumen print
