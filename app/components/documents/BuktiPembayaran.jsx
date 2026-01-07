@@ -880,7 +880,7 @@ const BuktiPembayaran = forwardRef(({ data }, ref) => {
             }}
           >
             <Image
-              src={data?.tenant_application?.ktp_file_path}
+              src={`/api${data?.tenant_application?.ktp_file_path}`}
               alt={`foto-ktp-${data?.tenant_application?.tenant_name}`}
               fill
               style={{ objectFit: "contain", borderRadius: "8px" }}
@@ -956,7 +956,7 @@ const BuktiPembayaran = forwardRef(({ data }, ref) => {
                     }}
                   >
                     <Image
-                      src={payment.proof_file_path}
+                      src={`/api${payment.proof_file_path}`}
                       alt={`bukti-pembayaran-${payment.payment_number}-${data?.tenant_application?.tenant_name}`}
                       fill
                       style={{
@@ -1022,7 +1022,7 @@ const BuktiPembayaran = forwardRef(({ data }, ref) => {
                 }}
               >
                 <Image
-                  src={data?.payments?.proof_file_path}
+                  src={`/api${data?.payments?.proof_file_path}`}
                   alt={`bukti-pembayaran-pembayaran-lunas`}
                   fill
                   style={{

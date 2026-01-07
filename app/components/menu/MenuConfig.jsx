@@ -32,6 +32,14 @@ const MENU_CONFIG = [
         showIcon: true,
       },
       {
+        label: "Users",
+        value: "users",
+        path: "/users",
+        icon: <Icon icon="hugeicons:location-user-03" fontSize="20px" />,
+        roles: [ROLES.SUPERADMIN],
+        showIcon: true,
+      },
+      {
         label: "Locations",
         value: "locations",
         path: "/locations",

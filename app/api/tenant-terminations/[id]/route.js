@@ -49,14 +49,11 @@ export async function DELETE(request, context) {
       // Ambil nama file saja
       const fileName = path.basename(statement_file_path);
 
+      console.log('fileName', fileName);
+      
+
       // Path fisik file
-      const filePath = path.join(
-        process.cwd(),
-        "public",
-        "uploads",
-        "surat_pernyataan",
-        fileName
-      );
+      const filePath = path.join(process.cwd(), "uploads/surat_pernyataan", fileName.replace(/^\/+/, ""));
 
       if (fs.existsSync(filePath)) {
         fs.unlinkSync(filePath);

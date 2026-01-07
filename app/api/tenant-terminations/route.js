@@ -3,7 +3,7 @@ import moment from "moment";
 import path from "path";
 import fs from "fs";
 
-const uploadDir = path.join(process.cwd(), "public/uploads/surat_pernyataan");
+const uploadDir = path.join(process.cwd(), "uploads/surat_pernyataan");
 // Pastikan folder upload ada
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
@@ -71,7 +71,7 @@ export async function POST(req) {
         );
       }
 
-      // Buat nama file aman
+      // Buat nama file
       const safeTenantName = tenantName
         .replace(/\s+/g, "_")
         .replace(/[^\w\-]/g, "");

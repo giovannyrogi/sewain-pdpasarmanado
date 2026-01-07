@@ -153,7 +153,7 @@ const EditPayment = ({
 
       setSelectedData(selectedCurrentData);
       setDataPenyewa(FormattedData);
-      setProofFilePath(selectedCurrentData?.payments?.proof_file_path || null);
+      setProofFilePath(`/api${selectedCurrentData?.payments?.proof_file_path}` || null);
       setProofFile(selectedCurrentData?.payments?.proof_file_path || null);
       setTypePembayaran(
         selectedCurrentData?.tenant_application?.payment_type || "lunas"

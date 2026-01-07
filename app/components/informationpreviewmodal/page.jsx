@@ -512,7 +512,7 @@ const InformationPreviewModal = ({ open, onClose, selectedData }) => {
               >
                 {selectedData?.ktp_file_path ? (
                   <Image
-                    src={selectedData.ktp_file_path}
+                    src={`/api${selectedData.ktp_file_path}`}
                     alt="ktp"
                     fill // penuh mengikuti container
                     style={{
@@ -562,7 +562,7 @@ const InformationPreviewModal = ({ open, onClose, selectedData }) => {
             open={openPreview}
             onClose={() => setOpenPreview(false)}
             imageUrl={
-              selectedData?.ktp_file_path ? selectedData.ktp_file_path : ""
+              selectedData?.ktp_file_path ? `/api${selectedData.ktp_file_path}` : ""
             }
             alt="Preview KTP"
           />

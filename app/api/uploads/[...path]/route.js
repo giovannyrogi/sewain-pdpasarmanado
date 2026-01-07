@@ -35,6 +35,9 @@ export async function GET(request, context) {
       ".jpg": "image/jpeg",
       ".jpeg": "image/jpeg",
       ".webp": "image/webp",
+      ".pdf": "application/pdf",
+      ".docx":
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     };
 
     if (!contentTypeMap[ext]) {

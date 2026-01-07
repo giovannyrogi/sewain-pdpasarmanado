@@ -115,16 +115,9 @@ const ApprovalModal = ({
     }
   };
 
-  const handleSwitchImage = (image, imageUrl) => {
-    // console.log("imageurl", image);
-
-    if (image === "bukti_pembayaran") {
-      setSwitchImage(imageUrl);
-      setOpenPreview(true);
-    } else if (image === "KTP") {
-      setSwitchImage(imageUrl);
-      setOpenPreview(true);
-    }
+  const handleSwitchImage = (imageUrl) => {
+    setSwitchImage(`/api${imageUrl}`);
+    setOpenPreview(true);
   };
 
   const handleCalculateTotal = () => {
@@ -583,7 +576,7 @@ const ApprovalModal = ({
                     <Image
                       src={
                         selectedData?.tenant_application?.ktp_file_path
-                          ? selectedData.tenant_application?.ktp_file_path
+                          ? `/api${selectedData.tenant_application?.ktp_file_path}`
                           : ""
                       }
                       alt="ktp"
@@ -591,7 +584,11 @@ const ApprovalModal = ({
                       style={{
                         objectFit: "contain", // gambar penuh, proporsional
                       }}
-                      onClick={() => setOpenPreview(true)}
+                      onClick={() =>
+                        handleSwitchImage(
+                          selectedData?.tenant_application?.ktp_file_path
+                        )
+                      }
                     />
                   ) : (
                     <Box
@@ -1063,7 +1060,6 @@ const ApprovalModal = ({
                       label="Uang Muka (DP)"
                       handleSwitchImage={() =>
                         handleSwitchImage(
-                          "bukti_pembayaran",
                           selectedData?.payments?.proof_file_path
                         )
                       }
@@ -1114,10 +1110,7 @@ const ApprovalModal = ({
                       <PaymentProof
                         label="Uang Muka (DP)"
                         handleSwitchImage={() =>
-                          handleSwitchImage(
-                            "bukti_pembayaran",
-                            previousProofFilePathDP
-                          )
+                          handleSwitchImage(previousProofFilePathDP)
                         }
                       />
 
@@ -1125,7 +1118,6 @@ const ApprovalModal = ({
                         label="Cicilan (1)"
                         handleSwitchImage={() =>
                           handleSwitchImage(
-                            "bukti_pembayaran",
                             selectedData?.payments?.proof_file_path
                           )
                         }
@@ -1185,20 +1177,14 @@ const ApprovalModal = ({
                       <PaymentProof
                         label="Uang Muka (DP)"
                         handleSwitchImage={() =>
-                          handleSwitchImage(
-                            "bukti_pembayaran",
-                            previousProofFilePathDP
-                          )
+                          handleSwitchImage(previousProofFilePathDP)
                         }
                       />
 
                       <PaymentProof
                         label="Cicilan (1)"
                         handleSwitchImage={() =>
-                          handleSwitchImage(
-                            "bukti_pembayaran",
-                            previousProofFilePath1
-                          )
+                          handleSwitchImage(previousProofFilePath1)
                         }
                       />
 
@@ -1206,7 +1192,6 @@ const ApprovalModal = ({
                         label="Cicilan (2)"
                         handleSwitchImage={() =>
                           handleSwitchImage(
-                            "bukti_pembayaran",
                             selectedData?.payments?.proof_file_path
                           )
                         }
@@ -1274,30 +1259,21 @@ const ApprovalModal = ({
                       <PaymentProof
                         label="Uang Muka (DP)"
                         handleSwitchImage={() =>
-                          handleSwitchImage(
-                            "bukti_pembayaran",
-                            previousProofFilePathDP
-                          )
+                          handleSwitchImage(previousProofFilePathDP)
                         }
                       />
 
                       <PaymentProof
                         label="Cicilan (1)"
                         handleSwitchImage={() =>
-                          handleSwitchImage(
-                            "bukti_pembayaran",
-                            previousProofFilePath1
-                          )
+                          handleSwitchImage(previousProofFilePath1)
                         }
                       />
 
                       <PaymentProof
                         label="Cicilan (2)"
                         handleSwitchImage={() =>
-                          handleSwitchImage(
-                            "bukti_pembayaran",
-                            previousProofFilePath2
-                          )
+                          handleSwitchImage(previousProofFilePath2)
                         }
                       />
 
@@ -1305,7 +1281,6 @@ const ApprovalModal = ({
                         label="Cicilan (3)"
                         handleSwitchImage={() =>
                           handleSwitchImage(
-                            "bukti_pembayaran",
                             selectedData?.payments?.proof_file_path
                           )
                         }
@@ -1340,10 +1315,7 @@ const ApprovalModal = ({
                 <PaymentProof
                   label="Pembayaran Lunas"
                   handleSwitchImage={() =>
-                    handleSwitchImage(
-                      "bukti_pembayaran",
-                      selectedData?.payments?.proof_file_path
-                    )
+                    handleSwitchImage(selectedData?.payments?.proof_file_path)
                   }
                 />
               </Grid>

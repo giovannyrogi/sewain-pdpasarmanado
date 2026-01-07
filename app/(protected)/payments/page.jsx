@@ -626,7 +626,7 @@ const Payments = () => {
       <ImagePreviewModal
         open={openBuktiPembayaranModal}
         onClose={() => setOpenBuktiPembayaranModal(false)}
-        imageUrl={selectedData?.payments?.proof_file_path}
+        imageUrl={`/api${selectedData?.payments?.proof_file_path}`}
       />
       <LoadingBackdrop message={loadingMessage} open={loading} />
       {/* Snackbar notification */}

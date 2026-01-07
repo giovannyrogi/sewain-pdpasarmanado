@@ -181,7 +181,7 @@ export async function PUT(req) {
       filename = `ktp_${full_name}_${moment().format(
         "YYYY_MM_DD_HH_mm_ss"
       )}${ext}`;
-      ktp_file_path = `/api/uploads/ktp/${filename}`;
+      ktp_file_path = `/uploads/ktp/${filename}`;
     }
 
     const client = await pool.connect();
@@ -253,9 +253,8 @@ export async function PUT(req) {
       // lalu hapus file lama
       if (fileBuffer && filename && dbOldKtpPath) {
         try {
-          const relativePath = dbOldKtpPath.replace("/api/uploads/", "");
           const oldFilePath = path.normalize(
-            path.join(process.cwd(), "uploads", relativePath)
+            path.join(process.cwd(), dbOldKtpPath.replace(/^\/+/, ""))
           );
 
           if (oldFilePath.startsWith(uploadDir) && fs.existsSync(oldFilePath)) {

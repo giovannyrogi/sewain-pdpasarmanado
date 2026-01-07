@@ -3,12 +3,7 @@ import path from "path";
 import fs from "fs";
 import moment from "moment";
 
-const uploadDir = path.join(
-  process.cwd(),
-  "public",
-  "uploads",
-  "bukti_transfer"
-);
+const uploadDir = path.join(process.cwd(), "uploads", "bukti_transfer");
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
@@ -121,11 +116,12 @@ export async function PUT(req, { params }) {
       )}_${moment().format("YYYY_MM_DD_HH_mm_ss")}${ext}`;
       newFilePath = path.join(uploadDir, filename);
       proofFilePath = `/uploads/bukti_transfer/${filename}`;
+
       oldFilePathToDelete = path.join(
         process.cwd(),
-        "public",
-        oldData.proof_file_path
+        oldData.proof_file_path.replace(/^\/+/, "")
       );
+
       const arrayBuffer = await proofFile.arrayBuffer();
       fileBuffer = Buffer.from(arrayBuffer);
     }
@@ -240,9 +236,11 @@ export async function DELETE(req, { params }) {
 
     // Hapus file bukti transfer jika ada
     if (proofFilePath) {
-      // proofFilePath contoh: /uploads/bukti_transfer/nama_file.jpg
-      // kita ambil path absolut di server
-      const absolutePath = path.join(process.cwd(), "public", proofFilePath);
+      const absolutePath = path.join(
+        process.cwd(),
+        proofFilePath.replace(/^\/+/, "")
+      );
+
       if (fs.existsSync(absolutePath)) {
         fs.unlinkSync(absolutePath);
       }

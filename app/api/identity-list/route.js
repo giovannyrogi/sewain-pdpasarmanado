@@ -179,7 +179,7 @@ export async function POST(req) {
       filename = `ktp_${full_name}_${moment().format(
         "YYYY_MM_DD_HH_mm_ss"
       )}${ext}`;
-      ktp_file_path = `/api/uploads/ktp/${filename}`;
+      ktp_file_path = `/uploads/ktp/${filename}`;
     }
 
     const client = await pool.connect();

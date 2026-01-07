@@ -175,7 +175,10 @@ export async function DELETE(req, { params }) {
     // === 4. Hapus file KTP ===
     if (ktpFilePath) {
       try {
-        const filePath = path.join(process.cwd(), "public", ktpFilePath);
+        const filePath = path.join(
+          process.cwd(),
+          ktpFilePath.replace(/^\/+/, "")
+        );
         if (fs.existsSync(filePath)) {
           fs.unlinkSync(filePath);
         }

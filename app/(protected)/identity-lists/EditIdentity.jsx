@@ -115,7 +115,7 @@ const EditIdentity = ({
       setAgama(selectedData?.religion || "");
       setPekerjaan(selectedData?.occupation || "");
       setPhone(selectedData?.phone || "");
-      setKtpFilePath(selectedData?.ktp_file_path || "");
+      setKtpFilePath(`/api${selectedData?.ktp_file_path}` || "");
       setAlamatJalan(selectedData?.street_address || "");
       setRt(selectedData?.rt || "");
       setRw(selectedData?.rw || "");

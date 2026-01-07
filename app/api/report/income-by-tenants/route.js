@@ -7,6 +7,9 @@ export async function GET(request) {
     const startDate = url.searchParams.get("start_date");
     const endDate = url.searchParams.get("end_date");
 
+    const startDateFormatted = moment(startDate).format("YYYY-MM-DD");
+    const endDateFormatted = moment(endDate).format("YYYY-MM-DD");
+
     // validasi range tanggal
     if (moment(startDate).isAfter(endDate)) {
       return new Response(
@@ -178,7 +181,7 @@ export async function GET(request) {
     ORDER BY pf.tenant_name, pf.payment_date;
     `;
 
-    const { rows } = await pool.query(sql, [startDate, endDate]);
+    const { rows } = await pool.query(sql, [startDateFormatted, endDateFormatted]);
 
     const data = rows.map((r) => ({
       payment_id: r.payment_id,

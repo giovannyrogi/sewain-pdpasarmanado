@@ -194,7 +194,7 @@ const PreviewTenantInformationModal = ({ open, onClose, selectedData }) => {
                     <Image
                       src={
                         selectedData?.ktp_file_path
-                          ? selectedData.ktp_file_path
+                          ? `/api${selectedData.ktp_file_path}`
                           : ""
                       }
                       alt="ktp"
@@ -612,7 +612,7 @@ const PreviewTenantInformationModal = ({ open, onClose, selectedData }) => {
                     },
                   }}
                   onClick={() =>
-                    window.open(selectedData.statement_file_path, "_blank")
+                    window.open(`/api${selectedData.statement_file_path}`, "_blank")
                   }
                 >
                   Lihat Surat
@@ -663,7 +663,7 @@ const PreviewTenantInformationModal = ({ open, onClose, selectedData }) => {
           <ImagePreviewModal
             open={openPreview}
             onClose={() => setOpenPreview(false)}
-            imageUrl={selectedData?.ktp_file_path}
+            imageUrl={`/api${selectedData?.ktp_file_path}`}
             alt="Preview Pitcure"
           />
 
