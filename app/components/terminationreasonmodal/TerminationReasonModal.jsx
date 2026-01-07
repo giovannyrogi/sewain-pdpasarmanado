@@ -148,7 +148,7 @@ const TerminationReasonModal = ({
             open={openPreview}
             onClose={() => setOpenPreview(false)}
             imageUrl={
-              selectedData?.ktp_file_path ? selectedData.ktp_file_path : ""
+              selectedData?.ktp_file_path ? `/api${selectedData.ktp_file_path}` : ""
             }
             alt="Preview KTP"
           />
