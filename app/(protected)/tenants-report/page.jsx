@@ -41,7 +41,7 @@ import MENU_CONFIG from "@/app/components/menu/MenuConfig";
 moment.locale("id");
 
 const TenantsReport = () => {
-  const user = useUser();
+  const { user } = useUser();
   const isMobile = useMediaQuery("(max-width:750px)");
   const isTablet = useMediaQuery("(max-width:1350px)");
   const [dataIncomeTenants, setDataIncomeTenants] = useState([]);
@@ -111,7 +111,6 @@ const TenantsReport = () => {
   }, [user]);
 
   const handleSubmit = async () => {
-
     // console.log("startDate", startDate);
     // console.log("endDate", endDate);
 

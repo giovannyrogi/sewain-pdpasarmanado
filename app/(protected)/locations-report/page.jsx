@@ -41,7 +41,7 @@ import MENU_CONFIG from "@/app/components/menu/MenuConfig";
 moment.locale("id");
 
 const LocationsReport = () => {
-  const user = useUser();
+  const { user } = useUser();
   const isMobile = useMediaQuery("(max-width:750px)");
   const isTablet = useMediaQuery("(max-width:1350px)");
   const [dataLocations, setDataLocations] = useState([]);

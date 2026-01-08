@@ -28,7 +28,7 @@ import PreviewTenantInformationModal from "@/app/components/tenant-termination-m
 import MENU_CONFIG from "@/app/components/menu/MenuConfig";
 
 const TenantTerminations = () => {
-  const user = useUser();
+  const { user } = useUser();
   const [dataTenantTerminations, setDataTenantTerminations] = useState([]);
   const { themeMode } = useThemeMode();
   const theme = useTheme();

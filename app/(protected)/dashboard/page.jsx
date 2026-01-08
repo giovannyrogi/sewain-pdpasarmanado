@@ -28,7 +28,7 @@ import WelcomeCard from "./WelcomeCard";
 import { useUser } from "@/app/utils/useUser";
 
 const Dashboard = () => {
-  const user = useUser();
+  const { user } = useUser();
   const isTablet = useMediaQuery("(max-width:1300px)");
   const isMobile = useMediaQuery("(max-width:750px)");
   const { themeMode, setThemeMode } = useThemeMode();
@@ -175,7 +175,12 @@ const Dashboard = () => {
     >
       <Grid container size={12}>
         <Grid size={12}>
-          <WelcomeCard user={user} loading={loading} isMobile={isMobile} isTablet={isTablet} />
+          <WelcomeCard
+            user={user}
+            loading={loading}
+            isMobile={isMobile}
+            isTablet={isTablet}
+          />
         </Grid>
       </Grid>
 

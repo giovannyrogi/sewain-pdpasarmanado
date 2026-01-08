@@ -32,7 +32,7 @@ import Image from "next/image";
 const Applications = () => {
   // Ref untuk dokumen print
   const printRef = useRef();
-  const user = useUser();
+  const { user } = useUser();
   const [dataTenantApplication, setDataTenantApplication] = useState([]);
   const [dataLocations, setDataLocations] = useState([]);
   const [dataAvailableRooms, setDataAvailableRooms] = useState([]);

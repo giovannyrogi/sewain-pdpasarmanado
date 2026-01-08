@@ -24,7 +24,7 @@ import TenantApprovalModal from "@/app/components/tenantapprovalmodal/TenantAppr
 import MENU_CONFIG from "@/app/components/menu/MenuConfig";
 
 const TenantApproval = () => {
-  const user = useUser();
+  const { user } = useUser();
   const [approvalList, setApprovalList] = useState([]);
   const { themeMode } = useThemeMode();
   const theme = useTheme();

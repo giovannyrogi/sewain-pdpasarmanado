@@ -33,7 +33,7 @@ const Users = () => {
     severity: "success",
   });
   const [currentRole, setCurrentRole] = useState("");
-  const user = useUser();
+  const { user } = useUser();
 
   const getUsersData = async () => {
     setLoading(true);

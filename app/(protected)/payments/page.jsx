@@ -32,7 +32,7 @@ import RejectedModal from "./RejectedModal";
 const Payments = () => {
   // Ref untuk dokumen print
   const printRef = useRef();
-  const user = useUser();
+  const { user } = useUser();
   const [dataPayments, setDataPayments] = useState([]);
   const { themeMode } = useThemeMode();
   const theme = useTheme();

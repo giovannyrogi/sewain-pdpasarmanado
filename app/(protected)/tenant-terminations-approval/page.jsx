@@ -26,7 +26,7 @@ import TenantRejectTerminationModal from "@/app/components/tenant-termination-ap
 import MENU_CONFIG from "@/app/components/menu/MenuConfig";
 
 const TenantTerminations = () => {
-  const user = useUser();
+  const { user } = useUser();
   const [dataTenantTerminations, setDataTenantTerminations] = useState([]);
   const { themeMode } = useThemeMode();
   const theme = useTheme();
@@ -296,7 +296,8 @@ const TenantTerminations = () => {
               <Icon icon="mdi:smart-card-outline" fontSize={18} />
             </Button>
           </Tooltip>
-          {record.termination_approval_status === "approved" || record.termination_approval_status === "rejected" ? (
+          {record.termination_approval_status === "approved" ||
+          record.termination_approval_status === "rejected" ? (
             ""
           ) : (
             <Tooltip title="Tolak Permohonan Non-Aktif">
