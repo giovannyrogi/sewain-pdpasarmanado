@@ -110,7 +110,9 @@ const AddFloorPrice = ({
       onNotify &&
         onNotify({
           open: true,
-          message: error.response.data.message || "Terjadi error saat menambah Lantai.",
+          message:
+            error.response.data.message ||
+            "Terjadi error saat menambah Lantai.",
           severity: "error",
         });
       setTimeout(() => {
@@ -120,7 +122,10 @@ const AddFloorPrice = ({
   };
 
   // daftar lantai 1 - 10 contoh "Lt. 1"
-  const floors = Array.from({ length: 10 }, (_, index) => `Lt. ${index + 1}`);
+  const floors = [
+    "Basement",
+    ...Array.from({ length: 10 }, (_, index) => `Lt. ${index + 1}`),
+  ];
 
   const clearForm = () => {
     setLocationId("");
@@ -195,7 +200,6 @@ const AddFloorPrice = ({
                   onChange={(e) => {
                     setFloor(e.target.value);
                     // console.log(e.target.value);
-                    
                   }}
                 >
                   {floors &&

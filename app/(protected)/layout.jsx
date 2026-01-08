@@ -11,7 +11,7 @@ import MobileLeftNavBar from "../components/navbar/MobileLeftNavBar";
 
 const MainLayout = ({ children }) => {
   const isMobile = useMediaQuery("(max-width:1300px)");
-  const user = useUser();
+  const { user } = useUser();
   const menus = getMenusByRole(MENU_CONFIG, user?.role_id);
 
   // Pusatkan kontrol Drawer di MainLayout
