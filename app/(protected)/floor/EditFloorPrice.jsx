@@ -119,7 +119,8 @@ const EditFloorPrice = ({
       onNotify &&
         onNotify({
           open: true,
-          message: error.response.datamessage || "Terjadi error saat menambah Lantai.",
+          message:
+            error.response.datamessage || "Terjadi error saat menambah Lantai.",
           severity: "error",
         });
       setTimeout(() => {
@@ -129,7 +130,10 @@ const EditFloorPrice = ({
   };
 
   // daftar lantai 1 - 10 contoh "Lt. 1"
-  const floors = Array.from({ length: 10 }, (_, index) => `Lt. ${index + 1}`);
+  const floors = [
+    "Basement",
+    ...Array.from({ length: 10 }, (_, index) => `Lt. ${index + 1}`),
+  ];
 
   return (
     <Modal
