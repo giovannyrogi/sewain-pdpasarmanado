@@ -163,6 +163,7 @@ const LeftNavBar = ({
               alt="logo-sewain"
               width={160}
               height={60}
+              priority
             />
             {/* <Typography
               sx={{

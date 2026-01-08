@@ -2,6 +2,19 @@
 import pool from "@/lib/dbConfig";
 import { NextResponse } from "next/server";
 
+const APPROVAL_STEPS = [
+  { role_id: 3, step_order: 1 }, // kasie
+  { role_id: 4, step_order: 2 }, // kasubdiv
+  { role_id: 5, step_order: 3 }, // kadiv
+  { role_id: 6, step_order: 4 }, // dirbis
+  { role_id: 7, step_order: 5 }, // dirut
+];
+
+const getStepOrderByRole = (role_id) => {
+  const found = APPROVAL_STEPS.find((a) => a.role_id === role_id);
+  return found ? found.step_order : null;
+};
+
 export async function POST(req) {
   try {
     const body = await req.json();
@@ -32,24 +45,29 @@ export async function POST(req) {
       return NextResponse.json({ message: "Password salah" }, { status: 401 });
     }
 
-    // 3. Hapus password sebelum dikirim ke frontend
+    // 3. Tambahkan step_order berdasarkan role
+    const step_order = getStepOrderByRole(user.role_id);
+
+    // 4. Hapus password sebelum dikirim ke frontend
     delete user.password;
 
     const SESSION_DURATION_MINUTES = 60; // durasi session dalam menit
     const expiresAt = Date.now() + SESSION_DURATION_MINUTES * 60 * 1000; // timestamp expired
 
-    // 4. Simpan user ke cookie
+    // 5. Simpan user ke cookie
+    const userPayload = {
+      ...user,
+      step_order,
+      expiresAt,
+    };
+
     const response = NextResponse.json(user, { status: 200 });
-    response.cookies.set(
-      "loggedInUser",
-      JSON.stringify({ ...user, expiresAt }),
-      {
-        httpOnly: false,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-        path: "/",
-      }
-    );
+    response.cookies.set("loggedInUser", JSON.stringify(userPayload), {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      path: "/",
+    });
 
     return response;
   } catch (err) {

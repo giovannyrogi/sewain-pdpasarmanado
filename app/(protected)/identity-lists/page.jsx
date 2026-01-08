@@ -129,7 +129,7 @@ const IdentityList = () => {
           {record.full_name}
         </Typography>
       ),
-      width: 150,
+      width: 200,
     },
     {
       title: "NIK",
@@ -150,7 +150,7 @@ const IdentityList = () => {
           {moment(record.birth_date).format("D MMMM YYYY")}
         </Typography>
       ),
-      width: 150,
+      width: 200,
     },
     {
       title: "Pekerjaan",

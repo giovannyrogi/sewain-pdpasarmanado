@@ -164,14 +164,14 @@ const FloorPrices = () => {
       dataIndex: "updated_at",
       render: (text, record) =>
         moment(record.updated_at).format("DD-MM-YYYY HH:mm:ss"),
-      width: 100,
+      width: 150,
     },
     {
       title: "Dibuat Tanggal",
       dataIndex: "created_at",
       render: (text, record) =>
         moment(record.created_at).format("DD-MM-YYYY HH:mm:ss"),
-      width: 100,
+      width: 150,
     },
     {
       title: "Actions",

@@ -134,7 +134,14 @@ const MobileLeftNavBar = ({
         sx={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}
       >
         {/* Logo & Brand */}
-        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 1 }}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 1,
+          }}
+        >
           <Image
             src={
               themeMode === "dark"
@@ -144,6 +151,7 @@ const MobileLeftNavBar = ({
             alt="logo-sewain"
             width={160}
             height={60}
+            priority
           />
           {/* <Typography
               sx={{
@@ -257,30 +265,153 @@ const MobileLeftNavBar = ({
 
         {/* Main Menu */}
         <List>
-          {menus.map((menu) =>
-            menu.submenu ? (
-              <React.Fragment key={menu.value}>
-                <ListItem disablePadding>
-                  <ListItemButton
-                    onClick={() =>
-                      setOpenDropdown(
-                        openDropdown === menu.value ? null : menu.value
-                      )
-                    }
-                    selected={isMenuActive(menu)}
-                    sx={{
-                      ml: -1.2,
-                      color: isMenuActive(menu)
-                        ? theme.palette.primary.main
-                        : theme.palette.text.primary,
-                      "& .MuiListItemIcon-root": {
+          {menus
+            .filter((menu) => !menu.hidden)
+            .map((menu) =>
+              menu.submenu ? (
+                <React.Fragment key={menu.value}>
+                  <ListItem disablePadding>
+                    <ListItemButton
+                      onClick={() =>
+                        setOpenDropdown(
+                          openDropdown === menu.value ? null : menu.value
+                        )
+                      }
+                      selected={isMenuActive(menu)}
+                      sx={{
+                        ml: -1.2,
                         color: isMenuActive(menu)
                           ? theme.palette.primary.main
                           : theme.palette.text.primary,
+                        "& .MuiListItemIcon-root": {
+                          color: isMenuActive(menu)
+                            ? theme.palette.primary.main
+                            : theme.palette.text.primary,
+                        },
+                        bgcolor: "transparent !important",
+                        "&.Mui-selected, &.Mui-selected:hover, &:hover": {
+                          bgcolor: "transparent !important",
+                          color: theme.palette.primary.main,
+                          "& .MuiListItemIcon-root": {
+                            color: theme.palette.primary.main,
+                          },
+                        },
+                      }}
+                    >
+                      <ListItemIcon sx={{ mr: -1.6 }}>{menu.icon}</ListItemIcon>
+                      <ListItemText
+                        primary={
+                          <Typography
+                            sx={{
+                              fontSize: "13px",
+                              fontWeight: isMenuActive(menu)
+                                ? "bold"
+                                : "normal",
+                            }}
+                          >
+                            {menu.label}
+                          </Typography>
+                        }
+                      />
+                      {openDropdown === menu.value ? (
+                        <ExpandLess sx={{ fontSize: "18px" }} />
+                      ) : (
+                        <ExpandMore sx={{ fontSize: "18px" }} />
+                      )}
+                    </ListItemButton>
+                  </ListItem>
+                  <Collapse
+                    in={openDropdown === menu.value}
+                    timeout="auto"
+                    unmountOnExit
+                  >
+                    <List component="div" disablePadding>
+                      {menu.submenu.map((sub) => (
+                        <ListItem
+                          disablePadding
+                          key={sub.value}
+                          sx={{ pl: 2.2 }}
+                        >
+                          <ListItemButton
+                            sx={{
+                              ml: -1.2,
+                              color: isSubMenuActive(sub)
+                                ? theme.palette.primary.main
+                                : theme.palette.text.primary,
+                              borderLeft: isSubMenuActive(sub)
+                                ? `5px solid ${theme.palette.primary.main}`
+                                : "none",
+                              bgcolor: isSubMenuActive(sub)
+                                ? alpha(theme.palette.primary.main, 0.12)
+                                : "transparent !important",
+                              "& .MuiListItemIcon-root": {
+                                color: isSubMenuActive(sub)
+                                  ? theme.palette.primary.main
+                                  : theme.palette.text.primary,
+                              },
+                              "&.Mui-selected, &.Mui-selected:hover, &:hover": {
+                                bgcolor: alpha(
+                                  theme.palette.primary.main,
+                                  0.12
+                                ),
+                                color: theme.palette.primary.main,
+                                "& .MuiListItemIcon-root": {
+                                  color: theme.palette.primary.main,
+                                },
+                              },
+                            }}
+                            selected={isSubMenuActive(sub)}
+                            onClick={() => {
+                              handleMenuClick(sub);
+                            }}
+                          >
+                            {sub.showIcon ? (
+                              <ListItemIcon sx={{ mr: -2.5, ml: -1 }}>
+                                {sub.icon}
+                              </ListItemIcon>
+                            ) : null}
+                            <ListItemText
+                              primary={
+                                <Typography
+                                  sx={{
+                                    fontSize: "13px",
+                                    fontWeight: isSubMenuActive(sub)
+                                      ? "bold"
+                                      : "normal",
+                                  }}
+                                >
+                                  {sub.label}
+                                </Typography>
+                              }
+                            />
+                          </ListItemButton>
+                        </ListItem>
+                      ))}
+                    </List>
+                  </Collapse>
+                </React.Fragment>
+              ) : (
+                // Menu tanpa submenu
+                <ListItem disablePadding key={menu.value}>
+                  <ListItemButton
+                    selected={pathname === menu.path}
+                    onClick={() => {
+                      handleMenuClick(menu);
+                    }}
+                    sx={{
+                      ml: -1.2,
+                      color:
+                        activeMenu === menu.value
+                          ? theme.palette.primary.main
+                          : theme.palette.text.primary,
+                      "& .MuiListItemIcon-root": {
+                        color:
+                          activeMenu === menu.value
+                            ? theme.palette.primary.main
+                            : theme.palette.text.primary,
                       },
                       bgcolor: "transparent !important",
                       "&.Mui-selected, &.Mui-selected:hover, &:hover": {
-                        bgcolor: "transparent !important",
                         color: theme.palette.primary.main,
                         "& .MuiListItemIcon-root": {
                           color: theme.palette.primary.main,
@@ -293,7 +424,7 @@ const MobileLeftNavBar = ({
                       primary={
                         <Typography
                           sx={{
-                            fontSize: "13px",
+                            fontSize: "14px",
                             fontWeight: isMenuActive(menu) ? "bold" : "normal",
                           }}
                         >
@@ -301,122 +432,10 @@ const MobileLeftNavBar = ({
                         </Typography>
                       }
                     />
-                    {openDropdown === menu.value ? (
-                      <ExpandLess sx={{ fontSize: "18px" }} />
-                    ) : (
-                      <ExpandMore sx={{ fontSize: "18px" }} />
-                    )}
                   </ListItemButton>
                 </ListItem>
-                <Collapse
-                  in={openDropdown === menu.value}
-                  timeout="auto"
-                  unmountOnExit
-                >
-                  <List component="div" disablePadding>
-                    {menu.submenu.map((sub) => (
-                      <ListItem disablePadding key={sub.value} sx={{ pl: 2.2 }}>
-                        <ListItemButton
-                          sx={{
-                            ml: -1.2,
-                            color: isSubMenuActive(sub)
-                              ? theme.palette.primary.main
-                              : theme.palette.text.primary,
-                            borderLeft: isSubMenuActive(sub)
-                              ? `5px solid ${theme.palette.primary.main}`
-                              : "none",
-                            bgcolor: isSubMenuActive(sub)
-                              ? alpha(theme.palette.primary.main, 0.12)
-                              : "transparent !important",
-                            "& .MuiListItemIcon-root": {
-                              color: isSubMenuActive(sub)
-                                ? theme.palette.primary.main
-                                : theme.palette.text.primary,
-                            },
-                            "&.Mui-selected, &.Mui-selected:hover, &:hover": {
-                              bgcolor: alpha(theme.palette.primary.main, 0.12),
-                              color: theme.palette.primary.main,
-                              "& .MuiListItemIcon-root": {
-                                color: theme.palette.primary.main,
-                              },
-                            },
-                          }}
-                          selected={isSubMenuActive(sub)}
-                          onClick={() => {
-                            handleMenuClick(sub);
-                          }}
-                        >
-                          {sub.showIcon ? (
-                            <ListItemIcon sx={{ mr: -2.5, ml: -1 }}>
-                              {sub.icon}
-                            </ListItemIcon>
-                          ) : null}
-                          <ListItemText
-                            primary={
-                              <Typography
-                                sx={{
-                                  fontSize: "13px",
-                                  fontWeight: isSubMenuActive(sub)
-                                    ? "bold"
-                                    : "normal",
-                                }}
-                              >
-                                {sub.label}
-                              </Typography>
-                            }
-                          />
-                        </ListItemButton>
-                      </ListItem>
-                    ))}
-                  </List>
-                </Collapse>
-              </React.Fragment>
-            ) : (
-              // Menu tanpa submenu
-              <ListItem disablePadding key={menu.value}>
-                <ListItemButton
-                  selected={pathname === menu.path}
-                  onClick={() => {
-                    handleMenuClick(menu);
-                  }}
-                  sx={{
-                    ml: -1.2,
-                    color:
-                      activeMenu === menu.value
-                        ? theme.palette.primary.main
-                        : theme.palette.text.primary,
-                    "& .MuiListItemIcon-root": {
-                      color:
-                        activeMenu === menu.value
-                          ? theme.palette.primary.main
-                          : theme.palette.text.primary,
-                    },
-                    bgcolor: "transparent !important",
-                    "&.Mui-selected, &.Mui-selected:hover, &:hover": {
-                      color: theme.palette.primary.main,
-                      "& .MuiListItemIcon-root": {
-                        color: theme.palette.primary.main,
-                      },
-                    },
-                  }}
-                >
-                  <ListItemIcon sx={{ mr: -1.6 }}>{menu.icon}</ListItemIcon>
-                  <ListItemText
-                    primary={
-                      <Typography
-                        sx={{
-                          fontSize: "14px",
-                          fontWeight: isMenuActive(menu) ? "bold" : "normal",
-                        }}
-                      >
-                        {menu.label}
-                      </Typography>
-                    }
-                  />
-                </ListItemButton>
-              </ListItem>
-            )
-          )}
+              )
+            )}
         </List>
 
         {/* <Divider sx={{ mt: 1 }} /> */}

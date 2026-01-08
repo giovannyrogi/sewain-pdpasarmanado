@@ -1,5 +1,6 @@
 "use client";
 import {
+  alpha,
   Box,
   Button,
   Paper,
@@ -63,6 +64,8 @@ const TenantApproval = () => {
       });
 
       if (res.data.success) {
+        // console.log("user", user);
+
         // console.log("data approval", res.data);
 
         setTimeout(() => {
@@ -122,7 +125,7 @@ const TenantApproval = () => {
 
   const approvalStatusFilters = [
     { text: "Dalam Proses", value: "proses" },
-    { text: "Ditolak", value: "rejected" },
+    { text: "Tidak Disetujui", value: "rejected" },
     { text: "Disetujui", value: "approved" },
   ];
 
@@ -226,6 +229,10 @@ const TenantApproval = () => {
             style={{
               fontWeight: "bold",
               cursor: "pointer",
+              display: "flex",
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "center",
             }}
             onClick={() => handleApproval(record)}
           >
@@ -236,6 +243,50 @@ const TenantApproval = () => {
               : record.approval_status === "rejected"
               ? "Tidak Disetujui"
               : "Dibatalkan"}
+
+            {record?.role_id === user?.role_id &&
+            record?.current_step === user?.step_order &&
+            record?.approval_status === "proses" ? (
+              <Tooltip title="Menunggu Approval Anda">
+                <Icon
+                  icon={"icon-park-twotone:info"}
+                  fontSize={18}
+                  color={theme.palette.error.main}
+                  style={{ marginLeft: 5 }}
+                />
+              </Tooltip>
+            ) : record?.role_id === user?.role_id &&
+              record?.current_step > user?.step_order &&
+              record?.approval_status === "proses" ? (
+              <Tooltip title="Sudah Approve">
+                <Icon
+                  icon={"ph:seal-check-duotone"}
+                  fontSize={18}
+                  color={theme.palette.success.main}
+                  style={{ marginLeft: 5 }}
+                />
+              </Tooltip>
+            ) : record?.role_id === user?.role_id &&
+              record?.current_step < user?.step_order &&
+              record?.approval_status === "proses" ? (
+              <Tooltip title="Menunggu Giliran">
+                <Icon
+                  icon="svg-spinners:ring-resize"
+                  fontSize={18}
+                  color={"yellow"}
+                  style={{ marginLeft: 5 }}
+                />
+              </Tooltip>
+            ) : (
+              <Tooltip title="Permintaan Ditolak">
+                <Icon
+                  icon="line-md:close-circle-twotone"
+                  fontSize={18}
+                  color={theme.palette.error.main}
+                  style={{ marginLeft: 5 }}
+                />
+              </Tooltip>
+            )}
           </Tag>
         );
       },
