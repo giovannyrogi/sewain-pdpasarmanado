@@ -176,7 +176,7 @@ const TopMenu = ({ user, onBurgerClick, onShowLoading, onHideLoading }) => {
             }}
           >
             <Icon
-              icon="line-md:cog-filled-loop"
+              icon="line-md:cog-loop"
               color={theme.palette.primary.main}
               fontSize="25px"
             />
