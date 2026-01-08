@@ -250,14 +250,14 @@ const MENU_CONFIG = [
   {
     label: "Settings",
     value: "settings",
-    icon: <Icon icon="fluent:chart-multiple-16-filled" fontSize={23} />,
+    icon: <Icon icon="line-md:cog-loop" fontSize={23} />,
     roles: [ROLES.SUPERADMIN, ROLES.DIVISI_KONTRAK],
     submenu: [
       {
         label: "Account",
         value: "account",
         path: "/account",
-        icon: <Icon icon="line-md:cog-loop" fontSize="20px" />,
+        icon: <Icon icon="mdi:account-edit" fontSize="20px" />,
         roles: Object.values(ROLES),
         hidden: true,
       },
