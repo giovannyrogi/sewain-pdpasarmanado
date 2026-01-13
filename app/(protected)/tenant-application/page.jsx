@@ -28,10 +28,12 @@ import UpdateDocumentDate from "./UpdateDocumentDate";
 import MENU_CONFIG from "@/app/components/menu/MenuConfig";
 import DetailTenantApplicationModal from "@/app/components/tenantapplicationmodal/DetailTenantApplicationModal";
 import Image from "next/image";
+import SuratPernyataanPenyewa from "@/app/components/documents/SuratPernyataanPenyewa";
 
 const Applications = () => {
   // Ref untuk dokumen print
   const printRef = useRef();
+  const printRefSuratPernyataanPenyewa = useRef();
   const { user } = useUser();
   const [dataTenantApplication, setDataTenantApplication] = useState([]);
   const [dataLocations, setDataLocations] = useState([]);
@@ -112,14 +114,21 @@ const Applications = () => {
     onAfterPrint: () => setTimeout(() => setPrintData(null), 200),
   });
 
+  const handlePrintActionSuratPernyataanPenyewa = useReactToPrint({
+    contentRef: printRefSuratPernyataanPenyewa, // langsung ref
+    documentTitle: "Persetujuan Pernyataan Penyewa",
+    onAfterPrint: () => setTimeout(() => setPrintData(null), 200),
+  });
+
   // panggil print setelah ref sudah render
   useEffect(() => {
     if (!printData) return;
 
     // beri jeda supaya komponen PersetujuanSewaRuangan ter-render dulu
     const timeout = setTimeout(() => {
-      if (printRef.current) {
+      if (printRef.current || printRefSuratPernyataanPenyewa.current) {
         handlePrintAction();
+        handlePrintActionSuratPernyataanPenyewa();
       } else {
         console.error("Belum ada ref untuk print");
       }
@@ -131,6 +140,10 @@ const Applications = () => {
   // handlers
   const handlePrint = (record) => {
     // cukup set selectedData — useEffect akan menangani memanggil printAction
+    setPrintData(record);
+  };
+
+  const handlePrintSuratPernyataan = (record) => {
     setPrintData(record);
   };
 
@@ -451,6 +464,17 @@ const Applications = () => {
                 <Icon icon="line-md:edit" fontSize={18} />
               </Button>
             </Tooltip>
+            <Tooltip title="Print Dokumen">
+              <Button
+                size="small"
+                variant={themeMode === "dark" ? "outlined" : "contained"}
+                color="primary"
+                onClick={() => handlePrintSuratPernyataan(record)}
+                sx={{ minWidth: 0, px: 1 }}
+              >
+                <Icon icon="streamline-ultimate:print-text" fontSize={18} />
+              </Button>
+            </Tooltip>
             <Tooltip title="Detail Data Pemohon">
               <Button
                 size="small"
@@ -658,7 +682,13 @@ const Applications = () => {
       {/* Dokumen tersembunyi (untuk print) */}
       <div style={{ display: "none" }}>
         {printData && (
-          <PersetujuanSewaRuangan ref={printRef} data={printData} />
+          <>
+            <PersetujuanSewaRuangan ref={printRef} data={printData} />
+            <SuratPernyataanPenyewa
+              ref={printRefSuratPernyataanPenyewa}
+              data={printData}
+            />
+          </>
         )}
       </div>
     </Box>
