@@ -43,26 +43,24 @@ export async function GET() {
     const months = Array.from({ length: 12 }, (_, i) => i + 1);
 
     // Mapping hasil ke bentuk array JSON per bulan
-    const monthlyData = months
-      .filter((m) => m <= currentMonth) // hanya sampai bulan saat ini
-      .map((m) => {
-        const withTax =
-          withTaxResult.rows.find(
-            (r) => parseInt(r.month) === m && parseInt(r.year) === currentYear
-          )?.total_with_tax || 0;
+    const monthlyData = months.map((m) => {
+      const withTax =
+        withTaxResult.rows.find(
+          (r) => parseInt(r.month) === m && parseInt(r.year) === currentYear
+        )?.total_with_tax || 0;
 
-        const withoutTax =
-          withoutTaxResult.rows.find(
-            (r) => parseInt(r.month) === m && parseInt(r.year) === currentYear
-          )?.total_without_tax || 0;
+      const withoutTax =
+        withoutTaxResult.rows.find(
+          (r) => parseInt(r.month) === m && parseInt(r.year) === currentYear
+        )?.total_without_tax || 0;
 
-        return {
-          month_number: m,
-          month_name: moment(`${currentYear}-${m}`, "YYYY-M").format("MMM"),
-          total_with_tax: parseFloat(withTax),
-          total_without_tax: parseFloat(withoutTax),
-        };
-      });
+      return {
+        month_number: m,
+        month_name: moment(`${currentYear}-${m}`, "YYYY-M").format("MMM"),
+        total_with_tax: parseFloat(withTax),
+        total_without_tax: parseFloat(withoutTax),
+      };
+    });
 
     // === Response ===
     return new Response(
