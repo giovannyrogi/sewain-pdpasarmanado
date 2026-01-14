@@ -146,6 +146,7 @@ const SuratPernyataanPenyewa = forwardRef(({ data }, ref) => {
           <Typography
             sx={{
               fontFamily: "calibri",
+              textAlign: "justify",
             }}
           >
             Dengan ini kami mengajukan permohonan pembayaran{" "}
@@ -216,6 +217,7 @@ const SuratPernyataanPenyewa = forwardRef(({ data }, ref) => {
           <Typography
             sx={{
               fontFamily: "calibri",
+              textAlign: "justify",
             }}
           >
             Demikian permohonan ini kami sampaikan, kiranya dapat disetujui.
