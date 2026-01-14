@@ -78,19 +78,19 @@ export async function PUT(request, { params }) {
     }
 
     // Cek duplikasi Kode Lokasi
-    const checkCode = await pool.query(
-      `SELECT 1 FROM locations WHERE location_code = $1 AND id != $2`,
-      [location_code, id]
-    );
-    if (checkCode.rows.length > 0) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          message: "Kode lokasi sudah terdaftar!",
-        }),
-        { status: 400 }
-      );
-    }
+    // const checkCode = await pool.query(
+    //   `SELECT 1 FROM locations WHERE location_code = $1 AND id != $2`,
+    //   [location_code, id]
+    // );
+    // if (checkCode.rows.length > 0) {
+    //   return new Response(
+    //     JSON.stringify({
+    //       success: false,
+    //       message: "Kode lokasi sudah terdaftar!",
+    //     }),
+    //     { status: 400 }
+    //   );
+    // }
 
     const result = await pool.query(
       `UPDATE locations SET location_name=$1, city=$2, street_address=$3 , location_code=$5, province=$6, district=$7, kelurahan=$8 WHERE id=$4 RETURNING *`,

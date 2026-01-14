@@ -73,19 +73,19 @@ export async function POST(req) {
     }
 
     // Cek duplikasi Kode Lokasi
-    const checkCode = await pool.query(
-      `SELECT 1 FROM locations WHERE location_code = $1`,
-      [location_code]
-    );
-    if (checkCode.rows.length > 0) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          message: "Kode lokasi sudah terdaftar!",
-        }),
-        { status: 400 }
-      );
-    }
+    // const checkCode = await pool.query(
+    //   `SELECT 1 FROM locations WHERE location_code = $1`,
+    //   [location_code]
+    // );
+    // if (checkCode.rows.length > 0) {
+    //   return new Response(
+    //     JSON.stringify({
+    //       success: false,
+    //       message: "Kode lokasi sudah terdaftar!",
+    //     }),
+    //     { status: 400 }
+    //   );
+    // }
 
 
 
