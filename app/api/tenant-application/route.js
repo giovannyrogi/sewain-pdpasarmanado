@@ -37,6 +37,7 @@ export async function POST(req) {
     const tenant_type = formData.get("tenant_type");
     const total_payment_room = formData.get("total_payment_room");
     const admin_fee = formData.get("admin_fee");
+    const choose_tenor = Number(formData.get("choose_tenor")) || 1;
 
     const total = Number(total_payment) || 0;
     const minDp = Math.round(total * 0.4);
@@ -59,6 +60,27 @@ export async function POST(req) {
         },
         { status: 400 }
       );
+    }
+
+    if (payment_type === "cicilan") {
+      const cicilan = [
+        Number(estimated_installment_1) || 0,
+        Number(estimated_installment_2) || 0,
+        Number(estimated_installment_3) || 0,
+      ];
+
+      const usedCicilan = cicilan.slice(0, choose_tenor);
+      const totalCicilan = usedCicilan.reduce((a, b) => a + b, 0);
+
+      if (totalCicilan !== Number(remaining_payment)) {
+        return Response.json(
+          {
+            success: false,
+            message: "Total cicilan tidak sesuai dengan sisa pembayaran.",
+          },
+          { status: 200 }
+        );
+      }
     }
 
     // Validasi wajib
