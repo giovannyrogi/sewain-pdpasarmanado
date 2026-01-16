@@ -1,7 +1,7 @@
 import { Inter, Poppins, Roboto } from "next/font/google";
 import "./globals.css";
 import "antd/dist/reset.css";
-import "@ant-design/v5-patch-for-react-19";
+// import "@ant-design/v5-patch-for-react-19";
 import AppProviders from "./components/appprovider/AppProviders";
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";

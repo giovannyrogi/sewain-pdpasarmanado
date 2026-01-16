@@ -62,7 +62,7 @@ const Applications = () => {
   ] = useState(false);
 
   const [openUpdateDateModal, setOpenUpdateDateModal] = useState(false);
-
+  const [printType, setPrintType] = useState(null);
   const [printData, setPrintData] = useState(null);
 
   const getDataTenantApplication = async () => {
@@ -120,31 +120,16 @@ const Applications = () => {
     onAfterPrint: () => setTimeout(() => setPrintData(null), 200),
   });
 
-  // panggil print setelah ref sudah render
-  useEffect(() => {
-    if (!printData) return;
-
-    // beri jeda supaya komponen PersetujuanSewaRuangan ter-render dulu
-    const timeout = setTimeout(() => {
-      if (printRef.current || printRefSuratPernyataanPenyewa.current) {
-        handlePrintAction();
-        handlePrintActionSuratPernyataanPenyewa();
-      } else {
-        console.error("Belum ada ref untuk print");
-      }
-    }, 200); // jeda 200ms
-
-    return () => clearTimeout(timeout);
-  }, [printData]);
-
-  // handlers
-  const handlePrint = (record) => {
-    // cukup set selectedData — useEffect akan menangani memanggil printAction
+  // handlers print
+  const handlePrintDoc = (record, type) => {
+    setPrintType(type);
     setPrintData(record);
-  };
 
-  const handlePrintSuratPernyataan = (record) => {
-    setPrintData(record);
+    setTimeout(() => {
+      type === "persetujuan_sewa_ruangan"
+        ? handlePrintAction()
+        : handlePrintActionSuratPernyataanPenyewa();
+    }, 500);
   };
 
   const handleEdit = (record) => {
@@ -428,7 +413,9 @@ const Applications = () => {
                   size="small"
                   variant={themeMode === "dark" ? "outlined" : "contained"}
                   color="primary"
-                  onClick={() => handlePrint(record)}
+                  onClick={() =>
+                    handlePrintDoc(record, "persetujuan_sewa_ruangan")
+                  }
                   sx={{ minWidth: 0, px: 1 }}
                 >
                   <Icon icon="streamline-ultimate:print-text" fontSize={18} />
@@ -469,7 +456,9 @@ const Applications = () => {
                 size="small"
                 variant={themeMode === "dark" ? "outlined" : "contained"}
                 color="primary"
-                onClick={() => handlePrintSuratPernyataan(record)}
+                onClick={() =>
+                  handlePrintDoc(record, "surat_pernyataan_penyewa")
+                }
                 sx={{ minWidth: 0, px: 1 }}
               >
                 <Icon icon="streamline-ultimate:print-text" fontSize={18} />
@@ -681,14 +670,15 @@ const Applications = () => {
       />
       {/* Dokumen tersembunyi (untuk print) */}
       <div style={{ display: "none" }}>
-        {printData && (
-          <>
-            <PersetujuanSewaRuangan ref={printRef} data={printData} />
-            <SuratPernyataanPenyewa
-              ref={printRefSuratPernyataanPenyewa}
-              data={printData}
-            />
-          </>
+        {printData && printType === "persetujuan_sewa_ruangan" && (
+          <PersetujuanSewaRuangan ref={printRef} data={printData} />
+        )}
+
+        {printData && printType === "surat_pernyataan_penyewa" && (
+          <SuratPernyataanPenyewa
+            ref={printRefSuratPernyataanPenyewa}
+            data={printData}
+          />
         )}
       </div>
     </Box>

@@ -54,6 +54,7 @@ export async function GET(req) {
         tapp.estimated_installment_2_date,
         tapp.estimated_installment_3_date,
         tapp.document_number,
+        tapp.current_tenor,
 
         -- lokasi & ruangan
         l.location_name,

@@ -31,6 +31,7 @@ export async function PUT(req, { params }) {
     const estimated_installment_3_date = formData.get(
       "estimated_installment_date_3"
     );
+    const choose_tenor = Number(formData.get("choose_tenor")) || 1;
     const total_payment_room = formData.get("total_payment_room");
 
     // Validasi wajib
@@ -60,6 +61,27 @@ export async function PUT(req, { params }) {
         { success: false, message: "Total pembayaran wajib diisi." },
         { status: 400 }
       );
+    }
+
+    if (payment_type === "cicilan") {
+      const cicilan = [
+        Number(estimated_installment_1) || 0,
+        Number(estimated_installment_2) || 0,
+        Number(estimated_installment_3) || 0,
+      ];
+
+      const usedCicilan = cicilan.slice(0, choose_tenor);
+      const totalCicilan = usedCicilan.reduce((a, b) => a + b, 0);
+
+      if (totalCicilan !== Number(remaining_payment)) {
+        return Response.json(
+          {
+            success: false,
+            message: "Total cicilan tidak sesuai dengan sisa pembayaran.",
+          },
+          { status: 200 }
+        );
+      }
     }
 
     // Ambil data lama tenant
@@ -94,6 +116,30 @@ export async function PUT(req, { params }) {
       );
     }
 
+    let formated_estimated_installment_1 = null;
+    let formated_estimated_installment_2 = null;
+    let formated_estimated_installment_3 = null;
+    let formated_estimated_installment_1_date = null;
+    let formated_estimated_installment_2_date = null;
+    let formated_estimated_installment_3_date = null;
+
+    if (choose_tenor === 1) {
+      formated_estimated_installment_1 = estimated_installment_1;
+      formated_estimated_installment_1_date = estimated_installment_1_date;
+    } else if (choose_tenor === 2) {
+      formated_estimated_installment_1 = estimated_installment_1;
+      formated_estimated_installment_2 = estimated_installment_2;
+      formated_estimated_installment_1_date = estimated_installment_1_date;
+      formated_estimated_installment_2_date = estimated_installment_2_date;
+    } else if (choose_tenor === 3) {
+      formated_estimated_installment_1 = estimated_installment_1;
+      formated_estimated_installment_2 = estimated_installment_2;
+      formated_estimated_installment_3 = estimated_installment_3;
+      formated_estimated_installment_1_date = estimated_installment_1_date;
+      formated_estimated_installment_2_date = estimated_installment_2_date;
+      formated_estimated_installment_3_date = estimated_installment_3_date;
+    }
+
     // Normalisasi angka
     const total_payment_num = total_payment ? Number(total_payment) : 0;
     const down_payment_num = down_payment ? Number(down_payment) : 0;
@@ -125,8 +171,9 @@ export async function PUT(req, { params }) {
         estimated_installment_1_date = $14,
         estimated_installment_2_date = $15,
         estimated_installment_3_date = $16,
-        total_payment_room = $17
-        WHERE id = $18
+        total_payment_room = $17,
+        current_tenor = $18
+        WHERE id = $19
         RETURNING *
         `,
         [
@@ -140,13 +187,14 @@ export async function PUT(req, { params }) {
           approval_status,
           stepToUse,
           user_id,
-          estimated_installment_1,
-          estimated_installment_2,
-          estimated_installment_3,
-          estimated_installment_1_date,
-          estimated_installment_2_date,
-          estimated_installment_3_date,
+          formated_estimated_installment_1,
+          formated_estimated_installment_2,
+          formated_estimated_installment_3,
+          formated_estimated_installment_1_date,
+          formated_estimated_installment_2_date,
+          formated_estimated_installment_3_date,
           total_payment_room,
+          choose_tenor,
           id,
         ]
       );
@@ -163,7 +211,7 @@ export async function PUT(req, { params }) {
       // Format catatan/notes
       const notes = `Ruangan ini sedang digunakan oleh ${tenantName}`;
 
-      // Jika ruangan berubah → perbarui status 
+      // Jika ruangan berubah → perbarui status
       if (oldRoomId !== room_id) {
         // Ruangan lama jadi available kembali
         await client.query(
@@ -227,7 +275,6 @@ export async function PUT(req, { params }) {
     );
   }
 }
-
 
 export async function DELETE(request, context) {
   const client = await pool.connect();
@@ -293,8 +340,7 @@ export async function DELETE(request, context) {
     return new Response(
       JSON.stringify({
         success: true,
-        message:
-          "Berhasil menghapus Data Penyewa dan Ruangan tersedia kembali",
+        message: "Berhasil menghapus Data Penyewa dan Ruangan tersedia kembali",
       }),
       { status: 200 }
     );

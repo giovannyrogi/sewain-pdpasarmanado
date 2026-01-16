@@ -163,11 +163,12 @@ export async function POST(req) {
           end_date,
           total_payment_room,
           admin_fee,
-          total_ppn
+          total_ppn,
+          current_tenor
         )
         VALUES (
           $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13,
-          $14, $15, $16, $17, $18, $19, $20, $21, $22
+          $14, $15, $16, $17, $18, $19, $20, $21, $22, $23
         )
         RETURNING *
         `,
@@ -194,6 +195,7 @@ export async function POST(req) {
           total_payment_room,
           admin_fee,
           total_ppn,
+          choose_tenor,
         ]
       );
 
@@ -302,6 +304,7 @@ export async function GET(req) {
         ta.admin_fee,
         ta.total_payment_room,
         ta.total_ppn,
+        ta.current_tenor,
 
         -- identitas penyewa saat ini
         ti.full_name AS tenant_name,
@@ -348,6 +351,7 @@ export async function GET(req) {
       tenant_application_id: row.tenant_application_id,
       tenant_identity_id: row.tenant_identity_id,
       user_id: row.user_id,
+      current_tenor: row.current_tenor,
       tenant_name: row.tenant_name,
       tenant_nik: row.tenant_nik,
       tenant_phone: row.tenant_phone,

@@ -256,8 +256,9 @@ const TenantApproval = () => {
                 />
               </Tooltip>
             ) : record?.role_id === user?.role_id &&
-              record?.current_step > user?.step_order &&
-              record?.approval_status === "proses" ? (
+              record?.current_step >= user?.step_order &&
+              (record?.approval_status === "approved" ||
+                record?.approval_status === "proses") ? (
               <Tooltip title="Sudah Approve">
                 <Icon
                   icon={"ph:seal-check-duotone"}
@@ -267,7 +268,7 @@ const TenantApproval = () => {
                 />
               </Tooltip>
             ) : record?.role_id === user?.role_id &&
-              record?.current_step < user?.step_order &&
+              record?.current_step <= user?.step_order &&
               record?.approval_status === "proses" ? (
               <Tooltip title="Menunggu Giliran">
                 <Icon

@@ -74,6 +74,30 @@ const SuratPernyataanPenyewa = forwardRef(({ data }, ref) => {
     remainingPayment: 0,
   };
 
+  const installments = [
+    {
+      label: data?.estimated_installment_1 ? "Cicilan 1" : "-",
+      month: data?.estimated_installment_1_date
+        ? moment(data?.estimated_installment_1_date).format("MMMM YYYY")
+        : "-",
+      amount: formatRupiah(data?.estimated_installment_1),
+    },
+    {
+      label: data?.estimated_installment_2 ? "Cicilan 2" : "-",
+      month: data?.estimated_installment_2_date
+        ? moment(data?.estimated_installment_2_date).format("MMMM YYYY")
+        : "-",
+      amount: formatRupiah(data?.estimated_installment_2),
+    },
+    {
+      label: data?.estimated_installment_3 ? "Cicilan 3" : "-",
+      month: data?.estimated_installment_3_date
+        ? moment(data?.estimated_installment_3_date).format("MMMM YYYY")
+        : "-",
+      amount: formatRupiah(data?.estimated_installment_2),
+    },
+  ];
+
   // console.log("data", data);
 
   return (
@@ -558,142 +582,50 @@ const SuratPernyataanPenyewa = forwardRef(({ data }, ref) => {
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td
-                    style={{
-                      fontSize: "12px",
-                      fontFamily: "calibri",
-                      whiteSpace: "pre-line",
-                      wordBreak: "break-all",
-                      border: "solid 1px black",
-                      padding: "5px",
-                      textAlign: "center",
-                    }}
-                  >
-                    {data?.estimated_installment_1 ? "Cicilan 1" : "-"}
-                  </td>
-                  <td
-                    style={{
-                      fontSize: "12px",
-                      fontFamily: "calibri",
-                      whiteSpace: "pre-line",
-                      wordBreak: "break-all",
-                      border: "solid 1px black",
-                      padding: "5px",
-                      textAlign: "center",
-                    }}
-                  >
-                    {data?.estimated_installment_1_date
-                      ? moment(data?.estimated_installment_1_date).format(
-                          "MMMM YYYY"
-                        )
-                      : "-"}
-                  </td>
-                  <td
-                    style={{
-                      border: "1px solid black",
-                      fontFamily: "calibri",
-                      padding: "5px",
-                      fontSize: "13px",
-                      textAlign: "right",
-                      fontWeight: "bold",
-                    }}
-                  >
-                    {formatRupiah(data?.estimated_installment_1)},-
-                  </td>
-                </tr>
-
-                <tr>
-                  <td
-                    style={{
-                      fontSize: "12px",
-                      fontFamily: "calibri",
-                      whiteSpace: "pre-line",
-                      wordBreak: "break-all",
-                      border: "solid 1px black",
-                      padding: "5px",
-                      textAlign: "center",
-                    }}
-                  >
-                    {data?.estimated_installment_2 ? "Cicilan 2" : "-"}
-                  </td>
-                  <td
-                    style={{
-                      fontSize: "12px",
-                      fontFamily: "calibri",
-                      whiteSpace: "pre-line",
-                      wordBreak: "break-all",
-                      border: "solid 1px black",
-                      padding: "5px",
-                      textAlign: "center",
-                    }}
-                  >
-                    {data?.estimated_installment_2_date
-                      ? moment(data?.estimated_installment_2_date).format(
-                          "MMMM YYYY"
-                        )
-                      : "-"}
-                  </td>
-
-                  <td
-                    style={{
-                      border: "1px solid black",
-                      fontFamily: "calibri",
-                      padding: "5px",
-                      fontSize: "13px",
-                      textAlign: "right",
-                      fontWeight: "bold",
-                    }}
-                  >
-                    {formatRupiah(data?.estimated_installment_2)},-
-                  </td>
-                </tr>
-
-                <tr>
-                  <td
-                    style={{
-                      fontSize: "12px",
-                      fontFamily: "calibri",
-                      whiteSpace: "pre-line",
-                      wordBreak: "break-all",
-                      border: "solid 1px black",
-                      padding: "5px",
-                      textAlign: "center",
-                    }}
-                  >
-                    {data?.estimated_installment_3 ? "Cicilan 3" : "-"}
-                  </td>
-                  <td
-                    style={{
-                      fontSize: "12px",
-                      fontFamily: "calibri",
-                      whiteSpace: "pre-line",
-                      wordBreak: "break-all",
-                      border: "solid 1px black",
-                      padding: "5px",
-                      textAlign: "center",
-                    }}
-                  >
-                    {data?.estimated_installment_3_date
-                      ? moment(data?.estimated_installment_3_date).format(
-                          "MMMM YYYY"
-                        )
-                      : "-"}
-                  </td>
-
-                  <td
-                    style={{
-                      border: "1px solid black",
-                      fontFamily: "calibri",
-                      padding: "5px",
-                      fontSize: "13px",
-                      textAlign: "right",
-                      fontWeight: "bold",
-                    }}
-                  >
-                    {formatRupiah(data?.estimated_installment_3)},-
-                  </td>
-                </tr>
+                {installments
+                  .slice(0, data?.current_tenor)
+                  .map((item, index) => (
+                    <tr key={index}>
+                      <td
+                        style={{
+                          fontSize: "12px",
+                          fontFamily: "calibri",
+                          whiteSpace: "pre-line",
+                          wordBreak: "break-all",
+                          border: "solid 1px black",
+                          padding: "5px",
+                          textAlign: "center",
+                        }}
+                      >
+                        {item?.label}
+                      </td>
+                      <td
+                        style={{
+                          fontSize: "12px",
+                          fontFamily: "calibri",
+                          whiteSpace: "pre-line",
+                          wordBreak: "break-all",
+                          border: "solid 1px black",
+                          padding: "5px",
+                          textAlign: "center",
+                        }}
+                      >
+                        {item?.month}
+                      </td>
+                      <td
+                        style={{
+                          border: "1px solid black",
+                          fontFamily: "calibri",
+                          padding: "5px",
+                          fontSize: "13px",
+                          textAlign: "right",
+                          fontWeight: "bold",
+                        }}
+                      >
+                        {item?.amount},-
+                      </td>
+                    </tr>
+                  ))}
 
                 <tr>
                   <td

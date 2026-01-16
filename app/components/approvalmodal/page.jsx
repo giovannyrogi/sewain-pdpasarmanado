@@ -9,6 +9,7 @@ import {
   Divider,
   Grid,
   useTheme,
+  Button,
 } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import { Icon } from "@iconify/react";
@@ -186,7 +187,10 @@ const ApprovalModal = ({
 
                       {/* Status / Approver */}
                       <Typography
-                        sx={{ fontSize: isMobile ? 12 : 13, color: "text.secondary" }}
+                        sx={{
+                          fontSize: isMobile ? 12 : 13,
+                          color: "text.secondary",
+                        }}
                       >
                         {item.status === "approved"
                           ? `Disetujui oleh: ${item.full_name}`
@@ -199,7 +203,10 @@ const ApprovalModal = ({
                       {(item.status === "approved" ||
                         item.status === "rejected") && (
                         <Typography
-                          sx={{ fontSize: isMobile ? 12 : 13, color: "text.secondary" }}
+                          sx={{
+                            fontSize: isMobile ? 12 : 13,
+                            color: "text.secondary",
+                          }}
                         >
                           Tanggal:{" "}
                           {moment(item.approved_at).format("DD/MM/YYYY HH:mm")}
@@ -219,7 +226,10 @@ const ApprovalModal = ({
                             Catatan:
                           </Typography>
                           <Typography
-                            sx={{ fontSize: isMobile ? 12 : 13, color: "text.secondary" }}
+                            sx={{
+                              fontSize: isMobile ? 12 : 13,
+                              color: "text.secondary",
+                            }}
                           >
                             {item.notes}
                           </Typography>
@@ -255,6 +265,23 @@ const ApprovalModal = ({
                   </Box>
                 </Grid>
               ))}
+
+            {approvalList?.length > 0 && (
+              <Grid size={12} mt={2}>
+                <Button
+                  fullWidth
+                  size="small"
+                  variant="contained"
+                  color="error"
+                  onClick={onClose}
+                  sx={{
+                    textTransform: "capitalize",
+                  }}
+                >
+                  Kembali
+                </Button>
+              </Grid>
+            )}
           </Grid>
         </Box>
       </Fade>

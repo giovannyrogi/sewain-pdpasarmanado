@@ -1,4 +1,5 @@
 import {
+  alpha,
   Autocomplete,
   Box,
   Button,
@@ -113,6 +114,32 @@ const EditTenantApplication = ({
   const [selectedDataIdentity, setSelectedDataIdentity] = useState("");
   const [openViewInformationModal, setOpenViewInformationModal] =
     useState(false);
+
+  const [chooseTenor, setChooseTenor] = useState(1);
+
+  const installments = [
+    {
+      label: "Cicilan 1",
+      amount: estimatedInstallment1,
+      setAmount: setEstimatedInstallment1,
+      date: estimatedInstallmentDate1,
+      setDate: setEstimatedInstallmentDate1,
+    },
+    {
+      label: "Cicilan 2",
+      amount: estimatedInstallment2,
+      setAmount: setEstimatedInstallment2,
+      date: estimatedInstallmentDate2,
+      setDate: setEstimatedInstallmentDate2,
+    },
+    {
+      label: "Cicilan 3",
+      amount: estimatedInstallment3,
+      setAmount: setEstimatedInstallment3,
+      date: estimatedInstallmentDate3,
+      setDate: setEstimatedInstallmentDate3,
+    },
+  ];
 
   const getListIdentities = async () => {
     // console.log("tenant_identity_id");
@@ -237,22 +264,11 @@ const EditTenantApplication = ({
           : null
       );
 
+      setChooseTenor(selectedData.current_tenor || 1);
+
       getListIdentities();
     }
   }, [open]);
-
-  // Sinkronisasi DP & Sisa saat totalPayment atau paymentType berubah
-  useEffect(() => {
-    if (paymentType === "cicilan") {
-      const total = Number(totalPayment) || 0;
-      const defaultDP = Math.round(total * 0.4);
-      setDownPayment(defaultDP);
-      setRemainingPayment(total - defaultDP);
-    } else {
-      setDownPayment("");
-      setRemainingPayment("");
-    }
-  }, [totalPayment, paymentType]);
 
   // Hitung total payment otomatis saat pilih ruangan
   useEffect(() => {
@@ -281,6 +297,22 @@ const EditTenantApplication = ({
       const dp = Number(downPayment) || 0;
       const SewaKontrakRuangan = dp / 1.11;
       const totalPPN = SewaKontrakRuangan * 0.11;
+      const grandTotal = Number(SewaKontrakRuangan + totalPPN).toFixed(2);
+
+      setTotalPaymentDownPayment(grandTotal);
+      setTotalPPNDownPayment(totalPPN);
+      setTotalSewaKontrakDownPayment(SewaKontrakRuangan);
+      setRemainingPayment(total - dp);
+    }
+  }, [downPayment, paymentType, totalPayment]);
+
+  // Sinkronisasi Sisa saat DP diubah manual
+  useEffect(() => {
+    if (paymentType === "cicilan") {
+      const total = Number(totalPayment) || 0;
+      const dp = Number(downPayment) || 0;
+      const SewaKontrakRuangan = dp / 1.11;
+      const totalPPN = SewaKontrakRuangan * 0.11;
       const grandTotal = SewaKontrakRuangan + totalPPN;
 
       setTotalPaymentDownPayment(grandTotal);
@@ -292,28 +324,39 @@ const EditTenantApplication = ({
 
   // Hitung cicilan otomatis saat remainingPayment berubah
   useEffect(() => {
-    if (paymentType === "cicilan") {
-      const sisa = Number(remainingPayment) || 0;
-
-      // bagi rata, bulatkan ke rupiah terdekat
-      const perCicilan = Math.round(sisa / 3);
-
-      // hitung ulang cicilan terakhir agar pas
-      const cicilanTerakhir = sisa - perCicilan * 2;
-
-      // total cicilan
-      const totalCicilan = perCicilan * 2 + cicilanTerakhir;
-
-      setTotalInstallment(totalCicilan);
-      setEstimatedInstallment1(perCicilan);
-      setEstimatedInstallment2(perCicilan);
-      setEstimatedInstallment3(cicilanTerakhir);
-    } else {
+    if (paymentType !== "cicilan") {
       setEstimatedInstallment1("");
       setEstimatedInstallment2("");
       setEstimatedInstallment3("");
+      setTotalInstallment("");
+      return;
     }
-  }, [remainingPayment, paymentType]);
+
+    const sisa = Number(remainingPayment) || 0;
+    const tenor = Number(chooseTenor) || 1;
+
+    if (tenor === 1) {
+      // Pelunasan langsung
+      setEstimatedInstallment1(sisa);
+      setEstimatedInstallment2("");
+      setEstimatedInstallment3("");
+      setTotalInstallment(sisa);
+      return;
+    }
+
+    // Cicilan > 1
+    const perCicilan = Math.floor(sisa / tenor);
+    const sisaPembulatan = sisa - perCicilan * tenor;
+
+    const cicilan = Array(tenor).fill(perCicilan);
+    cicilan[tenor - 1] += sisaPembulatan; // cicilan terakhir menyesuaikan
+
+    setEstimatedInstallment1(cicilan[0] || "");
+    setEstimatedInstallment2(cicilan[1] || "");
+    setEstimatedInstallment3(cicilan[2] || "");
+
+    setTotalInstallment(cicilan.reduce((a, b) => a + b, 0));
+  }, [remainingPayment, paymentType, chooseTenor]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -367,29 +410,20 @@ const EditTenantApplication = ({
     }
 
     if (paymentType === "cicilan") {
-      const totalCicilan =
-        (Number(estimatedInstallment1) || 0) +
-        (Number(estimatedInstallment2) || 0) +
-        (Number(estimatedInstallment3) || 0);
+      const cicilan = [
+        Number(estimatedInstallment1) || 0,
+        Number(estimatedInstallment2) || 0,
+        Number(estimatedInstallment3) || 0,
+      ];
 
-      if (totalCicilan > Number(remainingPayment)) {
+      const usedCicilan = cicilan.slice(0, Number(chooseTenor));
+      const totalCicilan = usedCicilan.reduce((a, b) => a + b, 0);
+
+      if (totalCicilan !== Number(remainingPayment)) {
         onNotify &&
           onNotify({
             open: true,
-            message: `Total cicilan 1, 2 dan 3 tidak boleh lebih besar dari sisa tagihan ${formatRupiah(
-              remainingPayment
-            )}.`,
-            severity: "error",
-          });
-        setIsSubmitting(false);
-        return;
-      }
-
-      if (totalCicilan < Number(remainingPayment)) {
-        onNotify &&
-          onNotify({
-            open: true,
-            message: `Total cicilan 1, 2 dan 3 tidak boleh lebih kecil dari sisa tagihan ${formatRupiah(
+            message: `Total cicilan harus sama dengan sisa tagihan ${formatRupiah(
               remainingPayment
             )}.`,
             severity: "error",
@@ -415,6 +449,7 @@ const EditTenantApplication = ({
       formData.append("total_payment_room", totalSewaKontrakRuangan);
       formData.append("admin_fee", biayaAdministrasi);
       formData.append("total_ppn", totalPPN);
+      formData.append("choose_tenor", chooseTenor);
 
       // hanya kirim data cicilan kalau paymentType === 'cicilan'
       if (paymentType === "cicilan") {
@@ -790,7 +825,7 @@ const EditTenantApplication = ({
                   onChange={(e) => {
                     setPaymentType(e.target.value);
                     if (e.target.value === "lunas") {
-                      setDownPayment(0);
+                      setDownPayment(selectedData?.down_payment || 0);
                     }
                   }}
                 >
@@ -799,6 +834,31 @@ const EditTenantApplication = ({
                 </Select>
               </FormControl>
             </Grid>
+            {paymentType === "cicilan" && (
+              <Grid size={isMobile ? 12 : 6}>
+                <FormControl
+                  fullWidth
+                  variant="filled"
+                  required
+                  disabled={!paymentType}
+                >
+                  <InputLabel id="demo-simple-select-filled-label">
+                    Pilih Tenor Pembayaran
+                  </InputLabel>
+                  <Select
+                    value={chooseTenor}
+                    defaultValue={true}
+                    onChange={(e) => {
+                      setChooseTenor(e.target.value);
+                    }}
+                  >
+                    <MenuItem value={1}>Menyicil 1x</MenuItem>
+                    <MenuItem value={2}>Menyicil 2x</MenuItem>
+                    <MenuItem value={3}>Menyicil 3x</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+            )}
             <Grid size={isMobile ? 12 : 6}>
               <TextField
                 label="Total Pembayaran"
@@ -839,120 +899,68 @@ const EditTenantApplication = ({
                     color="primary"
                   />
                 </Grid>
-                <Grid size={6}>
-                  <TextField
-                    label="Cicilan 1"
-                    variant="filled"
-                    fullWidth
-                    value={formatRupiah(estimatedInstallment1)}
-                    onChange={(e) => {
-                      setEstimatedInstallment1(
-                        e.target.value.replace(/[^0-9]/g, "")
-                      );
+
+                <Grid
+                  size={isMobile ? 12 : 6}
+                  sx={{
+                    p: 1,
+                    bgcolor:
+                      themeMode === "dark"
+                        ? alpha(theme.palette.primary.main, 0.12)
+                        : alpha(theme.palette.primary.main, 0.12),
+                    borderRadius: 1,
+                  }}
+                >
+                  <Typography
+                    sx={{
+                      fontSize: "12px",
+                      fontWeight: "bold",
+                      color: "primary.main",
+                      textAlign: "justify",
                     }}
-                    required
-                    disabled
-                    color="primary"
-                  />
+                  >
+                    DP minimal 40% ({formatRupiah(totalPayment * 0.4)}) dari
+                    total pembayaran {formatRupiah(totalPayment)}.
+                  </Typography>
                 </Grid>
-                <Grid size={6}>
-                  <DatePicker
-                    label="Tanggal Cicilan 1"
-                    // value harus dayjs, bukan string
-                    value={estimatedInstallmentDate1}
-                    onChange={(newValue) => {
-                      // langsung simpan dayjs object
-                      setEstimatedInstallmentDate1(newValue);
-                    }}
-                    views={["year", "month"]} // hanya bulan & tahun
-                    minDate={dayjs()} // bulan sekarang ke atas
-                    slotProps={{
-                      textField: {
-                        variant: "filled",
-                        fullWidth: true,
-                        required: true,
-                        disabled: loading,
-                        color: "primary",
-                      },
-                    }}
-                  />
-                </Grid>
-                <Grid size={6}>
-                  <TextField
-                    label="Cicilan 2"
-                    variant="filled"
-                    fullWidth
-                    value={formatRupiah(estimatedInstallment2)}
-                    onChange={(e) => {
-                      setEstimatedInstallment2(
-                        e.target.value.replace(/[^0-9]/g, "")
-                      );
-                    }}
-                    required
-                    disabled
-                    color="primary"
-                  />
-                </Grid>
-                <Grid size={6}>
-                  <DatePicker
-                    label="Tanggal Cicilan 2"
-                    // value harus dayjs, bukan string
-                    value={estimatedInstallmentDate2}
-                    onChange={(newValue) => {
-                      // langsung simpan dayjs object
-                      setEstimatedInstallmentDate2(newValue);
-                    }}
-                    views={["year", "month"]} // hanya bulan & tahun
-                    minDate={dayjs()} // bulan sekarang ke atas
-                    slotProps={{
-                      textField: {
-                        variant: "filled",
-                        fullWidth: true,
-                        required: true,
-                        disabled: loading,
-                        color: "primary",
-                      },
-                    }}
-                  />
-                </Grid>
-                <Grid size={6}>
-                  <TextField
-                    label="Cicilan 3"
-                    variant="filled"
-                    fullWidth
-                    value={formatRupiah(estimatedInstallment3)}
-                    onChange={(e) => {
-                      setEstimatedInstallment3(
-                        e.target.value.replace(/[^0-9]/g, "")
-                      );
-                    }}
-                    required
-                    disabled
-                    color="primary"
-                  />
-                </Grid>
-                <Grid size={6}>
-                  <DatePicker
-                    label="Tanggal Cicilan 3"
-                    // value harus dayjs, bukan string
-                    value={estimatedInstallmentDate3}
-                    onChange={(newValue) => {
-                      // langsung simpan dayjs object
-                      setEstimatedInstallmentDate3(newValue);
-                    }}
-                    views={["year", "month"]} // hanya bulan & tahun
-                    minDate={dayjs()} // bulan sekarang ke atas
-                    slotProps={{
-                      textField: {
-                        variant: "filled",
-                        fullWidth: true,
-                        required: true,
-                        disabled: loading,
-                        color: "primary",
-                      },
-                    }}
-                  />
-                </Grid>
+
+                {installments.slice(0, chooseTenor).map((item, index) => (
+                  <React.Fragment key={index}>
+                    <Grid size={6}>
+                      <TextField
+                        label={item.label}
+                        variant="filled"
+                        fullWidth
+                        disabled
+                        value={formatRupiah(item.amount)}
+                        onChange={(e) => {
+                          item.setAmount(e.target.value.replace(/[^0-9]/g, ""));
+                        }}
+                        required
+                        color="primary"
+                      />
+                    </Grid>
+
+                    <Grid size={6}>
+                      <DatePicker
+                        label={`Tanggal ${item.label}`}
+                        value={item.date}
+                        onChange={(newValue) => item.setDate(newValue)}
+                        views={["year", "month"]}
+                        minDate={moment()}
+                        slotProps={{
+                          textField: {
+                            variant: "filled",
+                            fullWidth: true,
+                            required: true,
+                            disabled: loading,
+                            color: "primary",
+                          },
+                        }}
+                      />
+                    </Grid>
+                  </React.Fragment>
+                ))}
               </>
             )}
             {totalPayment > 0 && (
@@ -1034,6 +1042,7 @@ const EditTenantApplication = ({
           totalSewaKontrakDownPayment={totalSewaKontrakDownPayment}
           totalPaymentDownPayment={totalPaymentDownPayment}
           totalInstallment={totalInstallment}
+          chooseTenor={chooseTenor}
         />
         <InformationPreviewModal
           open={openViewInformationModal}

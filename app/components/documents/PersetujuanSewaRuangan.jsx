@@ -4,6 +4,7 @@ import moment from "moment";
 import React, { forwardRef } from "react";
 import formatRupiah from "../formatrupiah/page";
 import Image from "next/image";
+import getDurationInYears from "../date_duration_in_years/getDurationInYears";
 
 const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
   if (!data) return null;
@@ -73,6 +74,24 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
     totalInstallment: 0,
     remainingPayment: 0,
   };
+
+  const installments = [
+    {
+      label: data?.estimated_installment_1 ? "Cicilan 1" : "-",
+      month: moment(data?.estimated_installment_1_date).format("MMM YYYY"),
+      amount: formatRupiah(data?.estimated_installment_1),
+    },
+    {
+      label: data?.estimated_installment_2 ? "Cicilan 2" : "-",
+      month: moment(data?.estimated_installment_2_date).format("MMM YYYY"),
+      amount: formatRupiah(data?.estimated_installment_2),
+    },
+    {
+      label: data?.estimated_installment_3 ? "Cicilan 3" : "-",
+      month: moment(data?.estimated_installment_3_date).format("MMM YYYY"),
+      amount: formatRupiah(data?.estimated_installment_3),
+    },
+  ];
 
   return (
     <Box ref={ref} sx={{ padding: "10px 30px 0px 30px" }}>
@@ -396,7 +415,10 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
               :{" "}
               <span style={{ fontWeight: "bold", fontFamily: "calibri" }}>
                 {data.start_date && data.end_date
-                  ? `1 TAHUN (${moment(data.start_date).format(
+                  ? `${getDurationInYears(
+                      data.start_date,
+                      data.end_date
+                    )} TAHUN (${moment(data.start_date).format(
                       "D MMMM YYYY"
                     )} S/D ${moment(data.end_date).format("D MMMM YYYY")})`
                   : "-"}
@@ -609,7 +631,12 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
                     fontFamily: "calibri",
                   }}
                 >
-                  <span style={{ marginRight: "20px" }}></span>Menyicil 4x
+                  <span style={{ marginRight: "20px" }}></span>Menyicil{" "}
+                  {data?.current_tenor === "1"
+                    ? "2x"
+                    : data?.current_tenor === "2"
+                    ? "3x"
+                    : "4x"}
                 </Typography>
               </Grid>
               <Grid size={12}>
@@ -625,51 +652,22 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
                   {formatRupiah(data.down_payment)}, - (Uang Muka)
                 </Typography>
               </Grid>
-              <Grid size={12}>
-                <Typography
-                  sx={{
-                    fontSize: "13px",
-                    textAlign: "justify",
-                    fontWeight: "bold",
-                    fontFamily: "calibri",
-                  }}
-                >
-                  <span style={{ marginRight: "20px" }}></span>-{" "}
-                  {formatRupiah(data?.estimated_installment_1)}, - (
-                  {moment(data.estimated_installment_1_date).format("MMM YYYY")}
-                  )
-                </Typography>
-              </Grid>
-              <Grid size={12}>
-                <Typography
-                  sx={{
-                    fontSize: "13px",
-                    textAlign: "justify",
-                    fontWeight: "bold",
-                    fontFamily: "calibri",
-                  }}
-                >
-                  <span style={{ marginRight: "20px" }}></span>-{" "}
-                  {formatRupiah(data?.estimated_installment_2)}, - (
-                  {moment(data.estimated_installment_2_date).format("MMM YYYY")}
-                  )
-                </Typography>
-              </Grid>
-              <Grid size={12}>
-                <Typography
-                  sx={{
-                    fontSize: "13px",
-                    textAlign: "justify",
-                    fontWeight: "bold",
-                    fontFamily: "calibri",
-                  }}
-                >
-                  <span style={{ marginRight: "20px" }}></span>-{" "}
-                  {formatRupiah(data?.estimated_installment_3)}, - (
-                  {moment(data.estimated_installment_3_date).format("MMM YYYY")}
-                  )
-                </Typography>
-              </Grid>
+
+              {installments.slice(0, data?.current_tenor).map((item, index) => (
+                <Grid size={12} key={index}>
+                  <Typography
+                    sx={{
+                      fontSize: "13px",
+                      textAlign: "justify",
+                      fontWeight: "bold",
+                      fontFamily: "calibri",
+                    }}
+                  >
+                    <span style={{ marginRight: "20px" }}></span>-{" "}
+                    {item?.amount}, - ({item?.month})
+                  </Typography>
+                </Grid>
+              ))}
             </Grid>
           )}
 

@@ -40,6 +40,33 @@ const DetailTenantApplicationModal = ({
 
   // console.log("selected data", selectedData);
 
+  const installments = [
+    {
+      label: selectedData?.estimated_installment_1
+        ? `Cicilan 1 (Bulan ${moment(
+            selectedData?.estimated_installment_1_date
+          ).format("MMM YYYY")})`
+        : "Pilih tanggal pembayaran",
+      amount: formatRupiah(selectedData?.estimated_installment_1),
+    },
+    {
+      label: selectedData?.estimated_installment_2
+        ? `Cicilan 2 (Bulan ${moment(
+            selectedData?.estimated_installment_2_date
+          ).format("MMM YYYY")})`
+        : "Pilih tanggal pembayaran",
+      amount: formatRupiah(selectedData?.estimated_installment_2),
+    },
+    {
+      label: selectedData?.estimated_installment_3
+        ? `Cicilan 3 (Bulan ${moment(
+            selectedData?.estimated_installment_3_date
+          ).format("MMM YYYY")})`
+        : "Pilih tanggal pembayaran",
+      amount: formatRupiah(selectedData?.estimated_installment_3),
+    },
+  ];
+
   const style = {
     width: isMobile ? "90vw" : 500,
     maxWidth: "98vw",
@@ -950,110 +977,44 @@ const DetailTenantApplicationModal = ({
                 }}
               />
 
-              <Grid container>
-                <Grid
-                  size={12}
-                  sx={{
-                    display: "flex",
-                    flexDirection: "row",
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <Typography
+              {installments
+                .slice(0, selectedData?.current_tenor)
+                .map((item, index) => (
+                  <Grid
+                    size={12}
+                    key={index}
                     sx={{
-                      fontWeight: "bold",
-                      fontSize: "13px",
+                      display: "flex",
+                      flexDirection: "row",
+                      justifyContent: "space-between",
                     }}
                   >
-                    {`Cicilan 1 (${moment(
-                      selectedData?.estimated_installment_1_date
-                    ).format("MMM YYYY")})`}
-                  </Typography>
-                  <Typography
-                    sx={{
-                      fontWeight: "bold",
-                      fontSize: "13px",
-                      wordBreak: "break-word", // <-- biar kata panjang pecah
-                      whiteSpace: "normal", // <-- biar bisa turun baris
-                      overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
-                    }}
-                  >
-                    {selectedData?.estimated_installment_1
-                      ? formatRupiah(selectedData?.estimated_installment_1)
-                      : "-"}
-                  </Typography>
-                </Grid>
-
-                <Grid
-                  size={12}
-                  sx={{
-                    display: "flex",
-                    flexDirection: "row",
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <Typography
-                    sx={{
-                      fontWeight: "bold",
-                      fontSize: "13px",
-                    }}
-                  >
-                    {`Cicilan 2 (${moment(
-                      selectedData?.estimated_installment_2_date
-                    ).format("MMM YYYY")})`}
-                  </Typography>
-                  <Typography
-                    sx={{
-                      fontWeight: "bold",
-                      fontSize: "13px",
-                      wordBreak: "break-word", // <-- biar kata panjang pecah
-                      whiteSpace: "normal", // <-- biar bisa turun baris
-                      overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
-                    }}
-                  >
-                    {selectedData?.estimated_installment_2
-                      ? formatRupiah(selectedData?.estimated_installment_2)
-                      : "-"}
-                  </Typography>
-                </Grid>
-
-                <Grid
-                  size={12}
-                  sx={{
-                    display: "flex",
-                    flexDirection: "row",
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <Typography
-                    sx={{
-                      fontWeight: "bold",
-                      fontSize: "13px",
-                    }}
-                  >
-                    {`Cicilan 3 (${moment(
-                      selectedData?.estimated_installment_3_date
-                    ).format("MMM YYYY")})`}
-                  </Typography>
-                  <Typography
-                    sx={{
-                      fontWeight: "bold",
-                      fontSize: "13px",
-                      wordBreak: "break-word", // <-- biar kata panjang pecah
-                      whiteSpace: "normal", // <-- biar bisa turun baris
-                      overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
-                    }}
-                  >
-                    {selectedData?.estimated_installment_3
-                      ? formatRupiah(selectedData?.estimated_installment_3)
-                      : "-"}
-                  </Typography>
-                </Grid>
-              </Grid>
+                    <Typography
+                      sx={{
+                        fontWeight: "bold",
+                        fontSize: "13px",
+                      }}
+                    >
+                      {item?.label}
+                    </Typography>
+                    <Typography
+                      sx={{
+                        fontWeight: "bold",
+                        fontSize: "13px",
+                        wordBreak: "break-word",
+                        whiteSpace: "normal",
+                        overflowWrap: "anywhere",
+                      }}
+                    >
+                      {item?.amount}
+                    </Typography>
+                  </Grid>
+                ))}
 
               <Divider
                 sx={{
                   mb: 0.5,
+                  mt: 0.5,
                   borderColor: theme.palette.primary.main,
                 }}
               />
@@ -1089,6 +1050,13 @@ const DetailTenantApplicationModal = ({
                   </Typography>
                 </Grid>
               </Grid>
+
+              <Divider
+                sx={{
+                  mt: 0.5,
+                  borderColor: theme.palette.primary.main,
+                }}
+              />
             </>
           )}
 
@@ -1127,7 +1095,9 @@ const DetailTenantApplicationModal = ({
             open={openPreview}
             onClose={() => setOpenPreview(false)}
             imageUrl={
-              selectedData?.ktp_file_path ? `/api${selectedData.ktp_file_path}` : ""
+              selectedData?.ktp_file_path
+                ? `/api${selectedData.ktp_file_path}`
+                : ""
             }
             alt="Preview KTP"
           />

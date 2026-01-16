@@ -9,6 +9,7 @@ import {
   Divider,
   Grid,
   useTheme,
+  Button,
 } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import { Icon } from "@iconify/react";
@@ -40,11 +41,39 @@ const ViewCalcPPNModal = ({
   totalSewaKontrakDownPayment,
   totalPaymentDownPayment,
   totalInstallment,
+  chooseTenor,
 }) => {
   const isMobile = useMediaQuery("(max-width:600px)");
   const theme = useTheme();
   const [approvalList, setApprovalList] = useState([]);
   const [openPreview, setOpenPreview] = useState(false);
+
+  const installments = [
+    {
+      label: estimatedInstallmentDate1
+        ? `Cicilan 1 (Bulan ${moment(estimatedInstallmentDate1).format(
+            "MMM YYYY"
+          )})`
+        : "Pilih tanggal pembayaran",
+      amount: formatRupiah(estimatedInstallment1),
+    },
+    {
+      label: estimatedInstallmentDate2
+        ? `Cicilan 2 (Bulan ${moment(estimatedInstallmentDate2).format(
+            "MMM YYYY"
+          )})`
+        : "Pilih tanggal pembayaran",
+      amount: formatRupiah(estimatedInstallment2),
+    },
+    {
+      label: estimatedInstallmentDate3
+        ? `Cicilan 3 (Bulan ${moment(estimatedInstallmentDate3).format(
+            "MMM YYYY"
+          )})`
+        : "Pilih tanggal pembayaran",
+      amount: formatRupiah(estimatedInstallment3),
+    },
+  ];
 
   const style = {
     width: isMobile ? "90vw" : 500,
@@ -481,110 +510,37 @@ const ViewCalcPPNModal = ({
                   }}
                 />
 
-                <Grid
-                  size={12}
-                  sx={{
-                    display: "flex",
-                    flexDirection: "row",
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <Typography
+                {installments.slice(0, chooseTenor).map((item, index) => (
+                  <Grid
+                    size={12}
+                    key={index}
                     sx={{
-                      fontWeight: "bold",
-                      fontSize: "13px",
+                      display: "flex",
+                      flexDirection: "row",
+                      justifyContent: "space-between",
                     }}
                   >
-                    {estimatedInstallmentDate1
-                      ? `Cicilan 1 (Bulan ${moment(
-                          estimatedInstallmentDate1
-                        ).format("MMM YYYY")})`
-                      : "Pilih tanggal pembayaran"}
-                  </Typography>
-                  <Typography
-                    sx={{
-                      fontWeight: "bold",
-                      fontSize: "13px",
-                      wordBreak: "break-word", // <-- biar kata panjang pecah
-                      whiteSpace: "normal", // <-- biar bisa turun baris
-                      overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
-                    }}
-                  >
-                    {estimatedInstallment1
-                      ? formatRupiah(estimatedInstallment1)
-                      : "-"}
-                  </Typography>
-                </Grid>
-
-                <Grid
-                  size={12}
-                  sx={{
-                    display: "flex",
-                    flexDirection: "row",
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <Typography
-                    sx={{
-                      fontWeight: "bold",
-                      fontSize: "13px",
-                    }}
-                  >
-                    {estimatedInstallmentDate2
-                      ? `Cicilan 2 (Bulan ${moment(
-                          estimatedInstallmentDate2
-                        ).format("MMM YYYY")})`
-                      : "Pilih tanggal pembayaran"}
-                  </Typography>
-                  <Typography
-                    sx={{
-                      fontWeight: "bold",
-                      fontSize: "13px",
-                      wordBreak: "break-word", // <-- biar kata panjang pecah
-                      whiteSpace: "normal", // <-- biar bisa turun baris
-                      overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
-                    }}
-                  >
-                    {estimatedInstallment2
-                      ? formatRupiah(estimatedInstallment2)
-                      : "-"}
-                  </Typography>
-                </Grid>
-
-                <Grid
-                  size={12}
-                  sx={{
-                    display: "flex",
-                    flexDirection: "row",
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <Typography
-                    sx={{
-                      fontWeight: "bold",
-                      fontSize: "13px",
-                    }}
-                  >
-                    {estimatedInstallmentDate3
-                      ? `Cicilan 3 (Bulan ${moment(
-                          estimatedInstallmentDate3
-                        ).format("MMM YYYY")})`
-                      : "Pilih tanggal pembayaran"}
-                  </Typography>
-                  <Typography
-                    sx={{
-                      fontWeight: "bold",
-                      fontSize: "13px",
-                      wordBreak: "break-word", // <-- biar kata panjang pecah
-                      whiteSpace: "normal", // <-- biar bisa turun baris
-                      overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
-                    }}
-                  >
-                    {estimatedInstallment3
-                      ? formatRupiah(estimatedInstallment3)
-                      : "-"}
-                  </Typography>
-                </Grid>
+                    <Typography
+                      sx={{
+                        fontWeight: "bold",
+                        fontSize: "13px",
+                      }}
+                    >
+                      {item?.label}
+                    </Typography>
+                    <Typography
+                      sx={{
+                        fontWeight: "bold",
+                        fontSize: "13px",
+                        wordBreak: "break-word",
+                        whiteSpace: "normal",
+                        overflowWrap: "anywhere",
+                      }}
+                    >
+                      {item?.amount}
+                    </Typography>
+                  </Grid>
+                ))}
 
                 <Divider
                   sx={{
@@ -634,6 +590,18 @@ const ViewCalcPPNModal = ({
                 />
               </>
             )}
+
+            <Grid size={12} mt={2}>
+              <Button
+                fullWidth
+                size="small"
+                variant="contained"
+                color="error"
+                onClick={onClose}
+              >
+                Kembali
+              </Button>
+            </Grid>
           </Grid>
         </Box>
       </Fade>

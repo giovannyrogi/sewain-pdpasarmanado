@@ -567,6 +567,7 @@ const AddTenantApplication = ({
     setEstimatedInstallmentDate3(null);
     setTenantType("permohonan baru");
     setSelectedDataTenantExtends(null);
+    setChooseTenor(1);
   };
 
   // Pilihan dropdown
@@ -959,6 +960,7 @@ const AddTenantApplication = ({
                       fontSize: "12px",
                       fontWeight: "bold",
                       color: "primary.main",
+                      textAlign: "justify",
                     }}
                   >
                     DP minimal 40% ({formatRupiah(totalPayment * 0.4)}) dari
@@ -990,7 +992,7 @@ const AddTenantApplication = ({
                         value={item.date}
                         onChange={(newValue) => item.setDate(newValue)}
                         views={["year", "month"]}
-                        minDate={dayjs()}
+                        minDate={moment()}
                         slotProps={{
                           textField: {
                             variant: "filled",
@@ -1085,6 +1087,7 @@ const AddTenantApplication = ({
           totalSewaKontrakDownPayment={totalSewaKontrakDownPayment}
           totalPaymentDownPayment={totalPaymentDownPayment}
           totalInstallment={totalInstallment}
+          chooseTenor={chooseTenor}
         />
         <InformationPreviewModal
           open={openViewInformationModal}
