@@ -24,6 +24,9 @@ const roboto = Roboto({
 export const metadata = {
   title: "Dashboard SewaIN",
   description: "Sistem Informasi SewaIN",
+  other: {
+    "facebook-domain-verification": "4gs2ydcc3mifvxf8kwtp8shmybg8lj",
+  },
 };
 
 export default function RootLayout({ children }) {

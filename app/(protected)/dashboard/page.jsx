@@ -51,7 +51,7 @@ const Dashboard = () => {
   //       url: "https://graph.facebook.com/v22.0/922834554251117/messages",
   //       method: "POST",
   //       headers: {
-  //         Authorization: `Bearer EAAgMhel0n1UBQg7TxeX6dSsz1uwIMoZBVvlcV3KLhAEUeR6H77bwpppEfWQRQ1FFQiSaQaK8LYnL8wL1KtaFJUBUITZATRQe3R39aXddBofVVnVzwCRIQQEZA8IDPck2swC4aoIX34AIjXAIXCZAcZAJEEX65sIbxfPVoJ4A7qQ3e0CMhhNg9C143CaPY7IY25bvVG56iKlZCXT4GjJg1uiLCWCpFvNOKtu7HxyhxaMZCZBKRTyXD8HQo9zNZANz4iAekzNQXPkrMmFu9ozERTUZB5`,
+  //         Authorization: `Bearer EAAgMhel0n1UBQsr36uVwVfZC1we8FvIeiuzsZAyEuQKZA22ElKrAmRzDGTEcSaOGxwA4LQQGcQ2RQEjinLuRcEuaQFTU0zWHvZACBsSbzyAdoS2drSj5yfoKEiFZCTFvPGtH4nxRXelLSjFczlFHfIiWl6micDQvih929g99SZARGKogDIsZA75RpiR7NI6twZDZD`,
   //         "Content-Type": "application/json",
   //       },
   //       data: JSON.stringify({
@@ -173,6 +173,7 @@ const Dashboard = () => {
   const getAllData = async () => {
     try {
       setLoading(true);
+      // await testWhatsappAPI();
       await getUserData();
       await getCurrentMonthIncome();
       await getCurrentContractStatus();
