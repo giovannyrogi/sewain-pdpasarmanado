@@ -362,18 +362,18 @@ const AddTenantApplication = ({
 
     setIsSubmitting(true);
 
-    if (paymentType === "cicilan" && dp < minDp) {
-      onNotify &&
-        onNotify({
-          open: true,
-          message: `DP minimal 40% (${formatRupiah(
-            minDp
-          )}) dari total pembayaran ${formatRupiah(total)}.`,
-          severity: "error",
-        });
-      setIsSubmitting(false);
-      return;
-    }
+    // if (paymentType === "cicilan" && dp < minDp) {
+    //   onNotify &&
+    //     onNotify({
+    //       open: true,
+    //       message: `DP minimal 40% (${formatRupiah(
+    //         minDp
+    //       )}) dari total pembayaran ${formatRupiah(total)}.`,
+    //       severity: "error",
+    //     });
+    //   setIsSubmitting(false);
+    //   return;
+    // }
 
     if (dp > total) {
       onNotify &&

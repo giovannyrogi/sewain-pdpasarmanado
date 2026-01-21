@@ -26,13 +26,13 @@ export async function POST(req) {
     const estimated_installment_2 = formData.get("estimated_installment_2");
     const estimated_installment_3 = formData.get("estimated_installment_3");
     const estimated_installment_1_date = formData.get(
-      "estimated_installment_date_1"
+      "estimated_installment_date_1",
     );
     const estimated_installment_2_date = formData.get(
-      "estimated_installment_date_2"
+      "estimated_installment_date_2",
     );
     const estimated_installment_3_date = formData.get(
-      "estimated_installment_date_3"
+      "estimated_installment_date_3",
     );
     const tenant_type = formData.get("tenant_type");
     const total_payment_room = formData.get("total_payment_room");
@@ -44,12 +44,12 @@ export async function POST(req) {
     const dp = Number(down_payment) || 0;
 
     // Validasi DP minimal 40% dari total
-    if (payment_type === "cicilan" && dp < minDp) {
-      return Response.json(
-        { success: false, message: "DP minimal 40% dari total pembayaran." },
-        { status: 400 }
-      );
-    }
+    // if (payment_type === "cicilan" && dp < minDp) {
+    //   return Response.json(
+    //     { success: false, message: "DP minimal 40% dari total pembayaran." },
+    //     { status: 400 }
+    //   );
+    // }
 
     // Validasi DP tidak boleh lebih besar dari total
     if (dp > total) {
@@ -58,7 +58,7 @@ export async function POST(req) {
           success: false,
           message: "DP tidak boleh lebih besar dari total pembayaran.",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -78,7 +78,7 @@ export async function POST(req) {
             success: false,
             message: "Total cicilan tidak sesuai dengan sisa pembayaran.",
           },
-          { status: 200 }
+          { status: 200 },
         );
       }
     }
@@ -87,35 +87,35 @@ export async function POST(req) {
     if (!location_id) {
       return Response.json(
         { success: false, message: "Lokasi wajib diisi." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (!room_id) {
       return Response.json(
         { success: false, message: "Ruangan wajib diisi." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (!tenant_identity_id) {
       return Response.json(
         { success: false, message: "Identitas wajib diisi." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (!total_payment) {
       return Response.json(
         { success: false, message: "Total pembayaran wajib diisi." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     // Validasi room + lokasi
     const roomCheck = await pool.query(
       "SELECT * FROM rooms WHERE id = $1 AND location_id = $2",
-      [room_id, location_id]
+      [room_id, location_id],
     );
     if (roomCheck.rowCount === 0) {
       return Response.json(
@@ -123,7 +123,7 @@ export async function POST(req) {
           success: false,
           message: "Ruangan tidak ditemukan di lokasi yang dipilih.",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -196,7 +196,7 @@ export async function POST(req) {
           admin_fee,
           total_ppn,
           choose_tenor,
-        ]
+        ],
       );
 
       // Ambil tenant_application_id hasil insert
@@ -220,14 +220,14 @@ export async function POST(req) {
           step_order,
           status
         ) VALUES ($1, $2, $3, $4)`,
-          [tenantAppId, a.role_id, a.step_order, "pending"]
+          [tenantAppId, a.role_id, a.step_order, "pending"],
         );
       }
 
       // Ambil nama tenant dari tabel tenant_identities
       const tenantIdentity = await client.query(
         `SELECT full_name FROM tenant_identities WHERE id = $1`,
-        [tenant_identity_id]
+        [tenant_identity_id],
       );
 
       const tenantName = tenantIdentity.rows[0]?.full_name || "-";
@@ -246,7 +246,7 @@ export async function POST(req) {
             notes = $2
         WHERE id = $1
         `,
-        [room_id, notes]
+        [room_id, notes],
       );
 
       // Jika semua sukses → commit
@@ -258,7 +258,7 @@ export async function POST(req) {
           message: "Permohonan berhasil ditambahkan.",
           data: result.rows[0],
         },
-        { status: 201 }
+        { status: 201 },
       );
     } catch (dbErr) {
       await client.query("ROLLBACK");
@@ -270,7 +270,7 @@ export async function POST(req) {
     console.error("Error upload/insert:", err);
     return Response.json(
       { success: false, message: "Terjadi error: " + err.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -344,7 +344,7 @@ export async function GET(req) {
       LEFT JOIN tenant_identities pti ON prev.tenant_identity_id = pti.id
       WHERE tet.is_terminated = false
          OR tet.is_terminated IS NULL
-      ORDER BY ta.created_at DESC`
+      ORDER BY ta.created_at DESC`,
     );
 
     const rows = result.rows.map((row) => ({
@@ -406,14 +406,14 @@ export async function GET(req) {
         message: "Berhasil mengambil data tenant application",
         data: rows,
       }),
-      { status: 200 }
+      { status: 200 },
     );
   } catch (err) {
     console.log("error", err);
 
     return new Response(
       JSON.stringify({ success: false, message: err.message }),
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

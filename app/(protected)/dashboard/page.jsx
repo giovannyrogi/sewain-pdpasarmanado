@@ -37,13 +37,41 @@ const Dashboard = () => {
   const [currentMonthIncomeWithoutTax, setCurrentMonthIncomeWithoutTax] =
     useState({});
   const [currentMonthIncomeWithTax, setCurrentMonthIncomeWithTax] = useState(
-    {}
+    {},
   );
   const [currentContractStatus, setCurrentContractStatus] = useState([]);
   const [contractApprovalStatus, setContractApprovalStatus] = useState([]);
   const [yearlyIncomeData, setYearlyIncomeData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [dataRoomStatus, setDataRoomStatus] = useState([]);
+
+  // const testWhatsappAPI = async () => {
+  //   try {
+  //     const response = await axios({
+  //       url: "https://graph.facebook.com/v22.0/922834554251117/messages",
+  //       method: "POST",
+  //       headers: {
+  //         Authorization: `Bearer EAAgMhel0n1UBQg7TxeX6dSsz1uwIMoZBVvlcV3KLhAEUeR6H77bwpppEfWQRQ1FFQiSaQaK8LYnL8wL1KtaFJUBUITZATRQe3R39aXddBofVVnVzwCRIQQEZA8IDPck2swC4aoIX34AIjXAIXCZAcZAJEEX65sIbxfPVoJ4A7qQ3e0CMhhNg9C143CaPY7IY25bvVG56iKlZCXT4GjJg1uiLCWCpFvNOKtu7HxyhxaMZCZBKRTyXD8HQo9zNZANz4iAekzNQXPkrMmFu9ozERTUZB5`,
+  //         "Content-Type": "application/json",
+  //       },
+  //       data: JSON.stringify({
+  //         messaging_product: "whatsapp",
+  //         to: "6282187708266",
+  //         type: "template",
+  //         template: {
+  //           name: "hello_world",
+  //           language: {
+  //             code: "en_US",
+  //           },
+  //         },
+  //       }),
+  //     });
+
+  //     console.log("whatsapp response", response);
+  //   } catch (error) {
+  //     console.error("Error fetching whatsapp api:", error);
+  //   }
+  // };
 
   const getCurrentMonthIncome = async () => {
     try {
@@ -67,7 +95,7 @@ const Dashboard = () => {
   const getCurrentContractStatus = async () => {
     try {
       const response = await axios.get(
-        "/api/dashboard/current-contracts-status"
+        "/api/dashboard/current-contracts-status",
       );
 
       // console.log("response contracts", response);
@@ -85,7 +113,7 @@ const Dashboard = () => {
   const getContractApprovalStatus = async () => {
     try {
       const response = await axios.get(
-        "/api/dashboard/contracts-approval-status"
+        "/api/dashboard/contracts-approval-status",
       );
 
       // console.log("response approval", response);
