@@ -144,6 +144,13 @@ const Rooms = () => {
 
   const columns = [
     {
+      title: "No",
+      dataIndex: "index",
+      render: (text, record, index) => index + 1,
+      width: 50,
+      align: "center",
+    },
+    {
       title: "Nama Lokasi",
       dataIndex: "location_name",
       filters: nameFilters,
@@ -246,10 +253,10 @@ const Rooms = () => {
               record.status === "available"
                 ? "green"
                 : record.status === "occupied"
-                ? "yellow"
-                : record.status === "maintenance"
-                ? "orange"
-                : "red"
+                  ? "yellow"
+                  : record.status === "maintenance"
+                    ? "orange"
+                    : "red"
             }
             key={record.id}
             style={{ fontWeight: "bold" }}
@@ -257,10 +264,10 @@ const Rooms = () => {
             {record.status === "available"
               ? "Tersedia"
               : record.status === "occupied"
-              ? "Sudah Terisi"
-              : record.status === "maintenance"
-              ? "Dalam Perbaikan"
-              : "Tidak Layak"}
+                ? "Sudah Terisi"
+                : record.status === "maintenance"
+                  ? "Dalam Perbaikan"
+                  : "Tidak Layak"}
           </Tag>
         );
       },
