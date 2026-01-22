@@ -149,6 +149,13 @@ const TenantApproval = () => {
   });
 
   const columns = [
+     {
+      title: "No",
+      dataIndex: "index",
+      render: (text, record, index) => index + 1,
+      width: 50,
+      align: "center",
+    },
     {
       title: "Nama Penyewa",
       dataIndex: "tenant_name",

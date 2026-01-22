@@ -149,14 +149,21 @@ const TenantTerminations = () => {
   const floorFilter = generateFilters(dataTenantTerminations, "floor");
   const locationFilters = generateFilters(
     dataTenantTerminations,
-    "location_name"
+    "location_name",
   );
   const paymentTypeFilters = generateFilters(
     dataTenantTerminations,
-    "payment_type"
+    "payment_type",
   );
 
   const columns = [
+    {
+      title: "No",
+      dataIndex: "index",
+      render: (text, record, index) => index + 1,
+      width: 50,
+      align: "center",
+    },
     {
       title: "Nama Penyewa",
       dataIndex: "tenant_name",
@@ -262,8 +269,8 @@ const TenantTerminations = () => {
               record.termination_approval_status === "proses"
                 ? "yellow"
                 : record.termination_approval_status === "approved"
-                ? "green"
-                : "red"
+                  ? "green"
+                  : "red"
             }
             key={record.termination_id}
             style={{
@@ -275,10 +282,10 @@ const TenantTerminations = () => {
             {record.termination_approval_status === "proses"
               ? `Dalam Proses ${record.termination_current_step}/5`
               : record.termination_approval_status === "approved"
-              ? "Disetujui"
-              : record.termination_approval_status === "rejected"
-              ? "Tidak Disetujui"
-              : "Dibatalkan"}
+                ? "Disetujui"
+                : record.termination_approval_status === "rejected"
+                  ? "Tidak Disetujui"
+                  : "Dibatalkan"}
           </Tag>
         );
       },

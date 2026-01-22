@@ -120,7 +120,7 @@ const ViewCalcPPNModal = ({
                   mb: isMobile ? 0.5 : undefined,
                 }}
               >
-                Rincian Pembayaran
+                Rincian Biaya
               </Typography>
             </Grid>
 
@@ -475,7 +475,7 @@ const ViewCalcPPNModal = ({
                       fontSize: "13px",
                     }}
                   >
-                    Sisa Pembayaran
+                    Sisa Tagihan
                   </Typography>
                   <Typography
                     sx={{

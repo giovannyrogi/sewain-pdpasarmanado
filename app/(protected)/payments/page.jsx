@@ -201,19 +201,19 @@ const Payments = () => {
   const paymentTypeFilters = generateFilters(
     dataPayments,
     ["tenant_application", "payment_type"],
-    paymentTypeMap
+    paymentTypeMap,
   );
 
   const cicilanFilters = generateFilters(
     dataPayments,
     ["payments", "payment_number"],
-    cicilanMap
+    cicilanMap,
   );
 
   const approvalStatusFilters = generateFilters(
     dataPayments,
     ["payments", "approval_status"],
-    approvalStatusMap
+    approvalStatusMap,
   );
 
   // Utility untuk filter dinamis
@@ -237,6 +237,13 @@ const Payments = () => {
 
   const columns = [
     {
+      title: "No",
+      dataIndex: "index",
+      render: (text, record, index) => index + 1,
+      width: 50,
+      align: "center",
+    },
+    {
       title: "Nama Penyewa",
       dataIndex: ["tenant_application", "tenant_name"],
       filters: tenantName,
@@ -244,7 +251,7 @@ const Payments = () => {
       filterSearch: true,
       sorter: (a, b) =>
         a.tenant_application.tenant_name.localeCompare(
-          b.tenant_application.tenant_name
+          b.tenant_application.tenant_name,
         ),
       sortDirections: ["ascend", "descend"],
       render: (text, record) => (
@@ -305,8 +312,8 @@ const Payments = () => {
               record.payments?.payment_number === 1
                 ? "volcano"
                 : record.payments?.payment_number === 2
-                ? "lime"
-                : "orange"
+                  ? "lime"
+                  : "orange"
             }
             key={record.payments?.payment_id}
             style={{ fontWeight: "bold" }}
@@ -314,10 +321,10 @@ const Payments = () => {
             {record.payments?.payment_number === 1
               ? "Uang Muka (DP)"
               : record.payments?.payment_number === 2
-              ? "Cicilan 1"
-              : record.payments?.payment_number === 3
-              ? "Cicilan 2"
-              : "Cicilan 3"}
+                ? "Cicilan 1"
+                : record.payments?.payment_number === 3
+                  ? "Cicilan 2"
+                  : "Cicilan 3"}
           </Tag>
         ) : (
           <Typography
@@ -343,8 +350,8 @@ const Payments = () => {
               record.payments?.approval_status === "proses"
                 ? "yellow"
                 : record.payments?.approval_status === "rejected"
-                ? "red"
-                : "green"
+                  ? "red"
+                  : "green"
             }
             key={record.payments?.payment_id}
             style={{
@@ -356,8 +363,8 @@ const Payments = () => {
             {record.payments?.approval_status === "proses"
               ? `Dalam Proses`
               : record.payments?.approval_status === "rejected"
-              ? "Ditolak"
-              : "Disetujui"}
+                ? "Ditolak"
+                : "Disetujui"}
           </Tag>
         );
       },

@@ -394,7 +394,7 @@ const Rooms = () => {
             dataSource={filteredData}
             onChange={onChange}
             showSorterTooltip={{ target: "sorter-icon" }}
-            scroll={{ x: "max-content", y: 420 }}
+            // scroll={{ x: "max-content", y: 420 }}
             pagination={{
               pageSize: pageSize,
               showSizeChanger: true,

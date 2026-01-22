@@ -117,6 +117,13 @@ const IdentityList = () => {
 
   const columns = [
     {
+      title: "No",
+      dataIndex: "index",
+      render: (text, record, index) => index + 1,
+      width: 50,
+      align: "center",
+    },
+    {
       title: "Nama Lengkap",
       dataIndex: "full_name",
       filters: nameFilters,
@@ -184,8 +191,8 @@ const IdentityList = () => {
               record.status === "active"
                 ? "green"
                 : record.status === "inactive"
-                ? "red"
-                : "yellow"
+                  ? "red"
+                  : "yellow"
             }
             key={record.id}
             style={{ fontWeight: "bold" }}
@@ -193,8 +200,8 @@ const IdentityList = () => {
             {record.status === "active"
               ? "Aktif"
               : record.status === "inactive"
-              ? "Tidak Aktif"
-              : "Blacklist"}
+                ? "Tidak Aktif"
+                : "Blacklist"}
           </Tag>
         );
       },

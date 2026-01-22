@@ -29,8 +29,10 @@ import MENU_CONFIG from "@/app/components/menu/MenuConfig";
 import DetailTenantApplicationModal from "@/app/components/tenantapplicationmodal/DetailTenantApplicationModal";
 import Image from "next/image";
 import SuratPernyataanPenyewa from "@/app/components/documents/SuratPernyataanPenyewa";
+import { useRouter } from "next/navigation";
 
 const Applications = () => {
+  const router = useRouter();
   // Ref untuk dokumen print
   const printRef = useRef();
   const printRefSuratPernyataanPenyewa = useRef();
@@ -69,7 +71,7 @@ const Applications = () => {
     setLoading(true);
     try {
       const response = await axios.get("/api/tenant-application");
-      // console.log("tenant application", response);
+      console.log("tenant application", response);
       setDataTenantApplication(response.data.data);
       setTimeout(() => {
         setLoading(false);
@@ -138,6 +140,12 @@ const Applications = () => {
     setOpenEditModal(true);
   };
 
+  const handlePreviewData = (record) => {
+    setLoading(true);
+    // setLoadingMessage("Loading...");
+    router.push(`/tenant-application/${record?.tenant_application_id}`);
+  };
+
   const handleDelete = (record) => {
     // console.log("delete record", record);
     setSelectedData(record);
@@ -176,16 +184,16 @@ const Applications = () => {
   const floorFilter = generateFilters(dataTenantApplication, "floor");
   const locationFilters = generateFilters(
     dataTenantApplication,
-    "location_name"
+    "location_name",
   );
   const paymentTypeFilters = generateFilters(
     dataTenantApplication,
-    "payment_type"
+    "payment_type",
   );
 
   const documentNumberFilters = generateFilters(
     dataTenantApplication,
-    "document_number"
+    "document_number",
   );
 
   const approvalStatusFilters = [
@@ -210,6 +218,13 @@ const Applications = () => {
   });
 
   const columns = [
+    {
+      title: "No",
+      dataIndex: "index",
+      render: (text, record, index) => index + 1,
+      width: 50,
+      align: "center",
+    },
     {
       title: "Nama Penyewa",
       dataIndex: "tenant_name",
@@ -321,8 +336,8 @@ const Applications = () => {
               record.approval_status === "proses"
                 ? "yellow"
                 : record.approval_status === "approved"
-                ? "green"
-                : "red"
+                  ? "green"
+                  : "red"
             }
             key={record.tenant_application_id}
             style={{
@@ -334,10 +349,10 @@ const Applications = () => {
             {record.approval_status === "proses"
               ? `Dalam Proses ${record.current_step}/5`
               : record.approval_status === "approved"
-              ? "Disetujui"
-              : record.approval_status === "rejected"
-              ? "Tidak Disetujui"
-              : "Dibatalkan"}
+                ? "Disetujui"
+                : record.approval_status === "rejected"
+                  ? "Tidak Disetujui"
+                  : "Dibatalkan"}
           </Tag>
         );
       },

@@ -100,7 +100,7 @@ const LocationsReport = () => {
   const getDataIncomeLocations = async () => {
     try {
       const response = await axios.get(
-        `/api/report/income-by-locations?start_date=${range[0].startDate}&end_date=${range[0].endDate}`
+        `/api/report/income-by-locations?start_date=${range[0].startDate}&end_date=${range[0].endDate}`,
       );
       // console.log("locations", response);
       setDataLocations(response.data.data);
@@ -113,7 +113,7 @@ const LocationsReport = () => {
   const getSummeryData = async () => {
     try {
       const response = await axios.get(
-        `/api/report/accounting-summary?start_date=${range[0].startDate}&end_date=${range[0].endDate}`
+        `/api/report/accounting-summary?start_date=${range[0].startDate}&end_date=${range[0].endDate}`,
       );
       // console.log("summary reports", response);
       setSummeryData(response.data.data);
@@ -146,7 +146,7 @@ const LocationsReport = () => {
 
     try {
       const response = await axios.get(
-        `/api/report/income-by-locations?start_date=${range[0].startDate}&end_date=${range[0].endDate}`
+        `/api/report/income-by-locations?start_date=${range[0].startDate}&end_date=${range[0].endDate}`,
       );
       // console.log("locations report", response);
       const data = response.data.data;
@@ -229,6 +229,13 @@ const LocationsReport = () => {
   });
 
   const columns = [
+    {
+      title: "No",
+      dataIndex: "index",
+      render: (text, record, index) => index + 1,
+      width: 50,
+      align: "center",
+    },
     {
       title: "Nama Lokasi",
       dataIndex: "location_name",
@@ -409,7 +416,7 @@ const LocationsReport = () => {
     const title = [
       [
         `Laporan Pendapatan Lokasi (${moment(range[0].startDate).format(
-          "DD-MM-YYYY"
+          "DD-MM-YYYY",
         )} s/d ${moment(range[0].endDate).format("DD-MM-YYYY")})`,
       ],
     ];
@@ -516,8 +523,8 @@ const LocationsReport = () => {
     XLSX.writeFile(
       wb,
       `Laporan_Pendapatan_Lokasi_${moment(range[0].startDate).format(
-        "DD-MM-YYYY"
-      )}_sd_${moment(range[0].endDate).format("DD-MM-YYYY")}.xlsx`
+        "DD-MM-YYYY",
+      )}_sd_${moment(range[0].endDate).format("DD-MM-YYYY")}.xlsx`,
     );
 
     handleMenuClose();
@@ -572,8 +579,8 @@ const LocationsReport = () => {
 
     doc.save(
       `Laporan_Pendapatan_Lokasi_${moment(range[0].startDate).format(
-        "DD-MM-YYYY"
-      )}_sd_${moment(range[0].endDate).format("DD-MM-YYYY")}.pdf`
+        "DD-MM-YYYY",
+      )}_sd_${moment(range[0].endDate).format("DD-MM-YYYY")}.pdf`,
     );
 
     handleMenuClose();
@@ -1128,8 +1135,8 @@ const LocationsReport = () => {
                                   ? "rgba(255,255,255,0.05)"
                                   : "rgba(255,255,255,0.1)"
                                 : index % 2 === 0
-                                ? "rgba(0, 0, 0, 0.07)"
-                                : "rgba(18, 17, 17, 0.15)",
+                                  ? "rgba(0, 0, 0, 0.07)"
+                                  : "rgba(18, 17, 17, 0.15)",
                           }}
                         >
                           <Typography

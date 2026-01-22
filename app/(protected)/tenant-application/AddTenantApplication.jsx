@@ -992,7 +992,7 @@ const AddTenantApplication = ({
                         value={item.date}
                         onChange={(newValue) => item.setDate(newValue)}
                         views={["year", "month"]}
-                        minDate={moment()}
+                        // minDate={moment()}
                         slotProps={{
                           textField: {
                             variant: "filled",

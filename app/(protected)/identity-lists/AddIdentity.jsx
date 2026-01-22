@@ -259,14 +259,31 @@ const AddIdentity = ({
 
   const handleKtpChange = (e) => {
     const file = e.target.files[0];
+
+    if (!file) return;
+
+    const allowedTypes = ["image/jpeg", "image/png", "image/jpg"];
+
+    if (!allowedTypes.includes(file.type)) {
+      onNotify?.({
+        open: true,
+        message: "Format file harus JPG atau PNG",
+        severity: "error",
+      });
+      e.target.value = "";
+      return;
+    }
+
+    const MAX_SIZE = 3 * 1024 * 1024; // 3MB
+
     if (file) {
-      if (file.size > 1024 * 1024) {
+      if (file.size > MAX_SIZE) {
         // 1MB = 1024*1024 bytes
         onNotify &&
           onNotify({
             open: true,
             message:
-              "Ukuran file maksimal 1MB. Silakan pilih file yang lebih kecil.",
+              "Ukuran file maksimal 3MB. Silakan pilih file yang lebih kecil.",
             severity: "error",
           });
         // Reset input file agar user bisa pilih ulang
@@ -367,7 +384,7 @@ const AddIdentity = ({
                 value={nomorIndukKependudukan}
                 onChange={(e) => {
                   setNomorIndukKependudukan(
-                    e.target.value.replace(/[^0-9]/g, "")
+                    e.target.value.replace(/[^0-9]/g, ""),
                   );
                 }}
                 required

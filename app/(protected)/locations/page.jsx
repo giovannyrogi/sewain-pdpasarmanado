@@ -56,7 +56,7 @@ const Locations = () => {
     (item) =>
       item.location_name?.toLowerCase().includes(searchText.toLowerCase()) ||
       item.city?.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.address?.toLowerCase().includes(searchText.toLowerCase())
+      item.address?.toLowerCase().includes(searchText.toLowerCase()),
   );
 
   const onChange = (pagination, filters, sorter, extra) => {
@@ -95,6 +95,13 @@ const Locations = () => {
   const kelurahanFilters = generateFilters(dataLocations, "kelurahan");
 
   const columns = [
+    {
+      title: "No",
+      dataIndex: "index",
+      render: (text, record, index) => index + 1,
+      width: 50,
+      align: "center",
+    },
     {
       title: "Nama Lokasi",
       dataIndex: "location_name",

@@ -65,7 +65,7 @@ const Roles = () => {
   }, []);
 
   const filteredData = dataRoles.filter((item) =>
-    item.role_name?.toLowerCase().includes(searchText.toLowerCase())
+    item.role_name?.toLowerCase().includes(searchText.toLowerCase()),
   );
 
   const handleEdit = (record) => {
@@ -100,6 +100,13 @@ const Roles = () => {
   const roleFilters = generateFilters(dataRoles, "role_name");
 
   const columns = [
+    {
+      title: "No",
+      dataIndex: "index",
+      render: (text, record, index) => index + 1,
+      width: 50,
+      align: "center",
+    },
     {
       title: "Nama Role",
       dataIndex: "role_name",
