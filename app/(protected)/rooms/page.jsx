@@ -217,7 +217,7 @@ const Rooms = () => {
           {record.room_length} M
         </Typography>
       ),
-      width: 110,
+      width: 120,
     },
     {
       title: "Lebar (m)",
@@ -228,6 +228,7 @@ const Rooms = () => {
           {record.room_width} M
         </Typography>
       ),
+      width: 120,
     },
     {
       title: "Harga Sewa Ruangan",
@@ -240,6 +241,7 @@ const Rooms = () => {
           {formatRupiah(record.price_per_m2)}
         </Typography>
       ),
+      width: 150,
     },
     {
       title: "Status",
