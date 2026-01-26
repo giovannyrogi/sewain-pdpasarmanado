@@ -2,6 +2,10 @@
 import {
   Box,
   Button,
+  ListItemIcon,
+  ListItemText,
+  Menu,
+  MenuItem,
   Paper,
   Tooltip,
   Typography,
@@ -30,6 +34,7 @@ import DetailTenantApplicationModal from "@/app/components/tenantapplicationmoda
 import Image from "next/image";
 import SuratPernyataanPenyewa from "@/app/components/documents/SuratPernyataanPenyewa";
 import { useRouter } from "next/navigation";
+import XLSX from "xlsx-js-style";
 
 const Applications = () => {
   const router = useRouter();
@@ -66,12 +71,22 @@ const Applications = () => {
   const [openUpdateDateModal, setOpenUpdateDateModal] = useState(false);
   const [printType, setPrintType] = useState(null);
   const [printData, setPrintData] = useState(null);
+  const [anchorEl, setAnchorEl] = useState(null);
+  const openMenu = Boolean(anchorEl);
+
+  const handleMenuClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
 
   const getDataTenantApplication = async () => {
     setLoading(true);
     try {
       const response = await axios.get("/api/tenant-application");
-      console.log("tenant application", response);
+      // console.log("tenant application", response);
       setDataTenantApplication(response.data.data);
       setTimeout(() => {
         setLoading(false);
@@ -510,6 +525,204 @@ const Applications = () => {
     },
   ];
 
+  const handleExportExcel = () => {
+    // cek kalau data kosong
+    if (filteredData.length === 0) {
+      setSnackbar({
+        open: true,
+        message: "Tidak ada data untuk di export",
+        severity: "error",
+      });
+      return;
+    }
+
+    // === Hitung Grand Total ===
+    const grandTotal = filteredData.reduce(
+      (acc, item) => acc + Number(item.total_payment),
+      0,
+    );
+
+    // === Data utama ===
+    const exportData = filteredData.map((item) => ({
+      "Nama Penyewa": item?.location_name ? item?.location_name : "-",
+      "Nomor Dokumen": item?.document_number ? item?.document_number : "-",
+      "Nomor Ruangan": item?.room_number ? item?.room_number : "-",
+      Lantai: item?.floor ? item?.floor : "-",
+      "Masa Berlaku":
+        item?.start_date && item?.end_date
+          ? `${moment(item?.start_date).format("Do MMM YYYY")} s/d ${moment(item?.end_date).format("Do MMM YYYY")}`
+          : "-",
+      "Status Persetujuan":
+        item?.approval_status === "proses"
+          ? "Dalam Proses"
+          : item?.approval_status === "approved"
+            ? "Disetujui"
+            : item?.approval_status === "rejected"
+              ? "Ditolak"
+              : "-",
+      "Jenis Pembayaran":
+        item?.payment_type === "cicilan"
+          ? "Cicilan"
+          : item?.payment_type === "lunas"
+            ? "Lunas"
+            : "-",
+      "Uang Muka": item?.down_payment ? formatRupiah(item?.down_payment) : "-",
+      "Sisa Pembayaran": item?.remaining_payment
+        ? formatRupiah(item?.remaining_payment)
+        : "-",
+      "Total Pembayaran": item?.total_payment
+        ? formatRupiah(item?.total_payment)
+        : "-",
+    }));
+
+    // === Tambah baris total ===
+    exportData.push({
+      "Nama Penyewa": "Grant Total",
+      "Nomor Dokumen": "",
+      "Nomor Ruangan": "",
+      Lantai: "",
+      "Masa Berlaku": "",
+      "Status Persetujuan": "",
+      "Jenis Pembayaran": "",
+      "Uang Muka": "",
+      "Sisa Pembayaran": "",
+      "Total Pembayaran": grandTotal ? formatRupiah(grandTotal) : "-",
+    });
+
+    // === Buat worksheet ===
+    const ws = XLSX.utils.json_to_sheet(exportData, { origin: "A3" }); // Mulai dari baris 3 agar ada ruang judul
+
+    // === Tambahkan judul di baris pertama ===
+    const title = [[`Data Pemohon Sewa Kontrak Ruangan`]];
+    XLSX.utils.sheet_add_aoa(ws, title, { origin: "A1" });
+
+    // === Lebar kolom ===
+    ws["!cols"] = [
+      { wch: 25 },
+      { wch: 20 },
+      { wch: 20 },
+      { wch: 20 },
+      { wch: 30 },
+      { wch: 18 },
+      { wch: 18 },
+      { wch: 22 },
+      { wch: 22 },
+      { wch: 22 },
+      { wch: 22 },
+      { wch: 25 },
+    ];
+
+    // === Tinggi baris ===
+    const totalRows = exportData.length + 3; // data + judul + header
+    ws["!rows"] = Array.from({ length: totalRows }, (_, i) => ({
+      hpt: i === 0 ? 30 : i === 2 ? 22 : 18, // Judul lebih tinggi, header sedikit lebih besar
+    }));
+
+    // === Styling judul (A1) ===
+    const titleCell = ws["A1"];
+    if (titleCell) {
+      titleCell.s = {
+        font: { bold: true, sz: 16, color: { rgb: "FFFFFF" } },
+        fill: { fgColor: { rgb: "2F75B5" } },
+        alignment: { horizontal: "center", vertical: "center" },
+        border: {
+          top: { style: "thin", color: { rgb: "000000" } },
+          bottom: { style: "thin", color: { rgb: "000000" } },
+          left: { style: "thin", color: { rgb: "000000" } },
+          right: { style: "thin", color: { rgb: "000000" } },
+        },
+      };
+    }
+
+    // Gabungkan judul ke seluruh kolom
+    ws["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 9 } }];
+
+    // === Styling header (baris ke-3) ===
+    const headerRowIndex = 2; // baris ketiga (0-based)
+    const headerCols = Object.keys(exportData[0]).length;
+    for (let c = 0; c < headerCols; c++) {
+      const cellAddress = XLSX.utils.encode_cell({ r: headerRowIndex, c });
+      if (!ws[cellAddress]) continue;
+      ws[cellAddress].s = {
+        font: { bold: true, sz: 12, color: { rgb: "FFFFFF" } },
+        fill: { fgColor: { rgb: "4F81BD" } },
+        alignment: { horizontal: "center", vertical: "center" },
+        border: {
+          top: { style: "thin", color: { rgb: "000000" } },
+          bottom: { style: "thin", color: { rgb: "000000" } },
+          left: { style: "thin", color: { rgb: "000000" } },
+          right: { style: "thin", color: { rgb: "000000" } },
+        },
+      };
+    }
+
+    // === Styling total row (baris terakhir) ===
+    const totalRowIndex = exportData.length + 2; // karena mulai dari A3
+    for (let c = 0; c < headerCols; c++) {
+      const cellAddress = XLSX.utils.encode_cell({ r: totalRowIndex, c });
+      if (!ws[cellAddress]) continue;
+
+      ws[cellAddress].s = {
+        font: { bold: true },
+        fill: { fgColor: { rgb: "E2EFDA" } },
+        alignment: {
+          horizontal: c === 0 ? "left" : "right",
+          vertical: "center",
+        },
+        border: {
+          top: { style: "thin", color: { rgb: "000000" } },
+          bottom: { style: "thin", color: { rgb: "000000" } },
+          left: { style: "thin", color: { rgb: "000000" } },
+          right: { style: "thin", color: { rgb: "000000" } },
+        },
+      };
+    }
+
+    // Nomor Dokumen, Nomor Ruangan, Lantai, Masa Berlaku, Status, Jenis Pembayaran
+    const CENTER_COLUMNS = [1, 2, 3, 4, 5, 6];
+
+    // Uang Muka, Sisa Pembayaran, Total Pembayaran
+    const RIGHT_COLUMNS = [7, 8, 9];
+
+    // === Styling seluruh isi data (border tiap cell) ===
+    for (let r = 3; r <= totalRowIndex - 1; r++) {
+      for (let c = 0; c < headerCols; c++) {
+        const cellAddress = XLSX.utils.encode_cell({ r, c });
+        if (!ws[cellAddress]) continue;
+
+        let horizontal = "left";
+
+        if (CENTER_COLUMNS.includes(c)) horizontal = "center";
+        if (RIGHT_COLUMNS.includes(c)) horizontal = "right";
+
+        ws[cellAddress].s = {
+          alignment: {
+            horizontal,
+            vertical: "center",
+          },
+          border: {
+            top: { style: "thin", color: { rgb: "000000" } },
+            bottom: { style: "thin", color: { rgb: "000000" } },
+            left: { style: "thin", color: { rgb: "000000" } },
+            right: { style: "thin", color: { rgb: "000000" } },
+          },
+        };
+      }
+    }
+
+    // === Buat workbook dan simpan ===
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Laporan Lokasi");
+
+    XLSX.writeFile(wb, `Data_Pemohon_${moment().format("YYYY-MM-DD")}.xlsx`);
+
+    handleMenuClose();
+  };
+
+  const handleExportPDF = () => {
+    setSnackbar({ open: true, message: "Comming Soon", severity: "info" });
+  };
+
   return (
     <Box sx={{ width: "100%", height: "100%", minHeight: "100%", p: 2 }}>
       {/* Component Breadcrumbs disini */}
@@ -568,13 +781,74 @@ const Applications = () => {
             overflowX: "auto",
           }}
         >
-          <Input.Search
-            placeholder="Cari..."
-            allowClear
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-            style={{ width: 250, marginBottom: 20, marginTop: 10 }}
-          />
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 2,
+            }}
+          >
+            <Input.Search
+              placeholder="Cari data..."
+              allowClear
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              style={{ width: 250, marginBottom: 20, marginTop: 10 }}
+            />
+
+            {/* Tombol menu export */}
+            <Box align="center">
+              <Button
+                size="small"
+                variant={themeMode === "dark" ? "outlined" : "contained"}
+                onClick={handleMenuClick}
+                sx={{
+                  textTransform: "capitalize",
+                }}
+              >
+                Export
+              </Button>
+
+              <Menu
+                anchorEl={anchorEl}
+                open={openMenu}
+                onClose={handleMenuClose}
+                anchorOrigin={{
+                  vertical: "bottom",
+                  horizontal: "left", // muncul dari kiri bawah tombol
+                }}
+                transformOrigin={{
+                  vertical: "top",
+                  horizontal: "left", // posisi popup ke kiri bawah
+                }}
+                PaperProps={{
+                  sx: {
+                    mt: 1,
+                    ml: -3, // sedikit geser agar tidak mepet tombol
+                    borderRadius: 2,
+                    boxShadow: 6,
+                    overflow: "visible",
+                    zIndex: 2000,
+                  },
+                }}
+              >
+                <MenuItem onClick={handleExportExcel}>
+                  <ListItemIcon>
+                    <Icon icon="vscode-icons:file-type-excel" />
+                  </ListItemIcon>
+                  <ListItemText>Export ke Excel</ListItemText>
+                </MenuItem>
+                <MenuItem onClick={handleExportPDF}>
+                  <ListItemIcon>
+                    <Icon icon="vscode-icons:file-type-pdf2" />
+                  </ListItemIcon>
+                  <ListItemText>Export ke PDF</ListItemText>
+                </MenuItem>
+              </Menu>
+            </Box>
+          </Box>
           <Table
             rowKey="tenant_application_id"
             columns={columns}
