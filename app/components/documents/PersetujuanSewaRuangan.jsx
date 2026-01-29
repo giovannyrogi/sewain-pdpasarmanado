@@ -981,7 +981,8 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
         height={100}
         style={{
           position: "absolute",
-          top: 30,
+          // top: 30,
+          top: 1150,
           left: 5,
         }}
         priority
@@ -994,7 +995,8 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
         height={100}
         style={{
           position: "absolute",
-          top: 30,
+          // top: 30,
+          top: 1150,
           left: 660,
         }}
         priority

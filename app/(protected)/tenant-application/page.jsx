@@ -35,6 +35,7 @@ import Image from "next/image";
 import SuratPernyataanPenyewa from "@/app/components/documents/SuratPernyataanPenyewa";
 import { useRouter } from "next/navigation";
 import XLSX from "xlsx-js-style";
+import PrintDocumentTenant from "@/app/components/documents/PrintDocumentTenant";
 
 const Applications = () => {
   const router = useRouter();
@@ -126,27 +127,18 @@ const Applications = () => {
 
   // useReactToPrint di level atas
   const handlePrintAction = useReactToPrint({
-    contentRef: printRef, // langsung ref
-    documentTitle: "Persetujuan Sewa Ruangan",
-    onAfterPrint: () => setTimeout(() => setPrintData(null), 200),
-  });
-
-  const handlePrintActionSuratPernyataanPenyewa = useReactToPrint({
-    contentRef: printRefSuratPernyataanPenyewa, // langsung ref
-    documentTitle: "Persetujuan Pernyataan Penyewa",
+    contentRef: printRef,
+    documentTitle: "Dokumen Sewa Ruangan",
     onAfterPrint: () => setTimeout(() => setPrintData(null), 200),
   });
 
   // handlers print
-  const handlePrintDoc = (record, type) => {
-    setPrintType(type);
+  const handlePrintDoc = (record) => {
     setPrintData(record);
 
     setTimeout(() => {
-      type === "persetujuan_sewa_ruangan"
-        ? handlePrintAction()
-        : handlePrintActionSuratPernyataanPenyewa();
-    }, 500);
+      handlePrintAction();
+    }, 300);
   };
 
   const handleEdit = (record) => {
@@ -421,37 +413,40 @@ const Applications = () => {
       render: (text, record) =>
         record.approval_status === "approved" ? (
           <Box sx={{ display: "flex", gap: 1, justifyContent: "center" }}>
-            {!record?.document_number ? (
-              <Tooltip title="Update Masa Berlaku Dokumen">
-                <Button
-                  size="small"
-                  variant={themeMode === "dark" ? "outlined" : "contained"}
-                  color="success"
-                  onClick={() => handleUpdateDate(record)}
-                  sx={{ minWidth: 0, px: 1 }}
-                >
-                  <Icon
-                    icon="line-md:calendar"
-                    fontSize={18}
-                    style={{ color: themeMode === "dark" ? "green" : "white" }}
-                  />
-                </Button>
-              </Tooltip>
-            ) : (
-              <Tooltip title="Print Dokumen">
-                <Button
-                  size="small"
-                  variant={themeMode === "dark" ? "outlined" : "contained"}
-                  color="primary"
-                  onClick={() =>
-                    handlePrintDoc(record, "persetujuan_sewa_ruangan")
-                  }
-                  sx={{ minWidth: 0, px: 1 }}
-                >
-                  <Icon icon="streamline-ultimate:print-text" fontSize={18} />
-                </Button>
-              </Tooltip>
-            )}
+            {
+              !record?.document_number ? (
+                <Tooltip title="Update Masa Berlaku Dokumen">
+                  <Button
+                    size="small"
+                    variant={themeMode === "dark" ? "outlined" : "contained"}
+                    color="success"
+                    onClick={() => handleUpdateDate(record)}
+                    sx={{ minWidth: 0, px: 1 }}
+                  >
+                    <Icon
+                      icon="line-md:calendar"
+                      fontSize={18}
+                      style={{
+                        color: themeMode === "dark" ? "green" : "white",
+                      }}
+                    />
+                  </Button>
+                </Tooltip>
+              ) : undefined
+              // <Tooltip title="Print Dokumen">
+              //   <Button
+              //     size="small"
+              //     variant={themeMode === "dark" ? "outlined" : "contained"}
+              //     color="primary"
+              //     onClick={() =>
+              //       handlePrintDoc(record)
+              //     }
+              //     sx={{ minWidth: 0, px: 1 }}
+              //   >
+              //     <Icon icon="streamline-ultimate:print-text" fontSize={18} />
+              //   </Button>
+              // </Tooltip>
+            }
             <Tooltip title="Detail Data Pemohon">
               <Button
                 size="small"
@@ -486,9 +481,7 @@ const Applications = () => {
                 size="small"
                 variant={themeMode === "dark" ? "outlined" : "contained"}
                 color="primary"
-                onClick={() =>
-                  handlePrintDoc(record, "surat_pernyataan_penyewa")
-                }
+                onClick={() => handlePrintDoc(record)}
                 sx={{ minWidth: 0, px: 1 }}
               >
                 <Icon icon="streamline-ultimate:print-text" fontSize={18} />
@@ -959,6 +952,10 @@ const Applications = () => {
       />
       {/* Dokumen tersembunyi (untuk print) */}
       <div style={{ display: "none" }}>
+        {printData && <PrintDocumentTenant ref={printRef} data={printData} />}
+      </div>
+
+      {/* <div style={{ display: "none" }}>
         {printData && printType === "persetujuan_sewa_ruangan" && (
           <PersetujuanSewaRuangan ref={printRef} data={printData} />
         )}
@@ -969,7 +966,7 @@ const Applications = () => {
             data={printData}
           />
         )}
-      </div>
+      </div> */}
     </Box>
   );
 };
