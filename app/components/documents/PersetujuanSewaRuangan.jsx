@@ -421,7 +421,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
                     )} TAHUN (${moment(data.start_date).format(
                       "D MMMM YYYY"
                     )} S/D ${moment(data.end_date).format("D MMMM YYYY")})`
-                  : "-"}
+                  : ""}
               </span>
             </Typography>
           </Grid>
