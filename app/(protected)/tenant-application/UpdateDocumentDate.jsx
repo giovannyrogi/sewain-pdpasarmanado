@@ -74,7 +74,7 @@ const UpdateDocumentDate = ({
     loadingTrue();
     try {
       const response = await axios.get(
-        `/api/tenant-application/update-document`
+        `/api/tenant-application/update-document`,
       );
       // console.log("response update document", response);
       if (response.data.success) {
@@ -122,7 +122,7 @@ const UpdateDocumentDate = ({
     const now = new Date();
     const monthRoman = toRoman(now.getMonth() + 1);
     const year = now.getFullYear();
-    const prefix = `/PM/${monthRoman}/${year}`;
+    const prefix = `/PM/SKR/${monthRoman}/${year}`;
     const finalDocNumber = `${documentNumber}${prefix}`;
 
     try {
@@ -132,7 +132,7 @@ const UpdateDocumentDate = ({
           start_date: startDate,
           end_date: endDate,
           document_number: finalDocNumber,
-        }
+        },
       );
       // console.log("response", response);
 
@@ -182,6 +182,7 @@ const UpdateDocumentDate = ({
     setEndDate(null);
     setDocumentNumber("");
     setHighestDocumentNumber(null);
+    setDurasiKontrak(0);
   };
 
   const toRoman = (num) => {
@@ -290,7 +291,7 @@ const UpdateDocumentDate = ({
                   //   setEndDate(null);
                   // }
                 }}
-                minDate={moment()}
+                // minDate={moment()}
                 disabled={selectedData?.start_date}
                 slotProps={{
                   textField: {
@@ -310,7 +311,7 @@ const UpdateDocumentDate = ({
                 onChange={(newValue) => {
                   setEndDate(newValue);
                 }}
-                minDate={moment()}
+                // minDate={moment()}
                 // disabled
                 slotProps={{
                   textField: {

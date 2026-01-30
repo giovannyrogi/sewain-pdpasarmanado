@@ -114,7 +114,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
         >
           <Typography
             sx={{
-              fontSize: "35px",
+              fontSize: "26pt",
               fontWeight: "bold",
               fontFamily: "Bernard MT Condensed bold",
             }}
@@ -123,7 +123,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
           </Typography>
           <Typography
             sx={{
-              fontSize: "35px",
+              fontSize: "26pt",
               fontWeight: "bold",
               fontFamily: "Bernard MT Condensed bold",
               mt: -2,
@@ -133,7 +133,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
           </Typography>
           <Typography
             sx={{
-              fontSize: "9px",
+              fontSize: "7pt",
               textAlign: "center",
               fontFamily: "agency fb regular",
             }}
@@ -162,7 +162,9 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
       <Grid container spacing={2} mt={0.3}>
         <Grid size={7.3} display={"flex"} flexDirection={"row"} gap={3}></Grid>
         <Grid size={4.7}>
-          <Typography sx={{ fontSize: "13px", fontFamily: "calibri" }}>
+          <Typography
+            sx={{ fontSize: "11pt", fontFamily: "Bernard MT Condensed bold" }}
+          >
             {`Manado, ${moment(new Date()).format("D MMMM YYYY")}`}
           </Typography>
         </Grid>
@@ -180,8 +182,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
           <Grid size={7.3} display={"flex"} flexDirection={"row"} gap={5}>
             <Typography
               sx={{
-                fontSize: "13px",
-                fontFamily: "Bernard MT Condensed bold",
+                fontSize: "11pt",
                 fontFamily: "Bernard MT Condensed bold",
               }}
             >
@@ -189,8 +190,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
             </Typography>
             <Typography
               sx={{
-                fontSize: "13px",
-                fontFamily: "Bernard MT Condensed bold",
+                fontSize: "11pt",
                 fontFamily: "Bernard MT Condensed bold",
               }}
             >
@@ -198,7 +198,9 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
             </Typography>
           </Grid>
           <Grid size={4.7}>
-            <Typography sx={{ fontSize: "13px", fontFamily: "calibri" }}>
+            <Typography
+              sx={{ fontSize: "11pt", fontFamily: "Bernard MT Condensed bold" }}
+            >
               Kepada Yth.
             </Typography>
           </Grid>
@@ -206,11 +208,10 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
 
         {/* Lampiran + Tenant Name */}
         <Grid container spacing={2}>
-          <Grid size={7.3} display={"flex"} flexDirection={"row"} gap={3.2}>
+          <Grid size={7.3} display={"flex"} flexDirection={"row"} gap={3}>
             <Typography
               sx={{
-                fontSize: "13px",
-                fontFamily: "Bernard MT Condensed bold",
+                fontSize: "11pt",
                 fontFamily: "Bernard MT Condensed bold",
               }}
             >
@@ -218,8 +219,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
             </Typography>
             <Typography
               sx={{
-                fontSize: "13px",
-                marginLeft: "2px",
+                fontSize: "11pt",
                 fontFamily: "Bernard MT Condensed bold",
               }}
             >
@@ -229,7 +229,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
           <Grid size={4.7}>
             <Typography
               sx={{
-                fontSize: "13px",
+                fontSize: "11pt",
                 fontWeight: "bold",
                 fontFamily: "Bernard MT Condensed bold",
               }}
@@ -243,7 +243,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
         <Grid container spacing={2}>
           <Grid size={7.3}></Grid>
           <Grid size={4.7}>
-            <Typography sx={{ fontSize: "13px" }}>
+            <Typography sx={{ fontSize: "11pt" }}>
               .......................................................
             </Typography>
           </Grid>
@@ -254,8 +254,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
           <Grid size={7.3} display={"flex"} flexDirection={"row"} gap={5}>
             <Typography
               sx={{
-                fontSize: "13px",
-                fontFamily: "Bernard MT Condensed bold",
+                fontSize: "11pt",
                 fontFamily: "Bernard MT Condensed bold",
               }}
             >
@@ -263,31 +262,36 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
             </Typography>
             <Typography
               sx={{
-                fontSize: "13px",
-                fontFamily: "Bernard MT Condensed bold",
+                fontSize: "11pt",
                 fontFamily: "Bernard MT Condensed bold",
               }}
             >
               :{" "}
-              <span style={{ fontWeight: "bold", fontFamily: "calibri" }}>
+              <span
+                style={{
+                  fontWeight: "bold",
+                  fontFamily: "Bernard MT Condensed bold",
+                }}
+              >
                 Persetujuan Sewa Ruangan
               </span>
             </Typography>
           </Grid>
           <Grid size={4.7}>
-            <Typography sx={{ fontSize: "13px", fontFamily: "calibri" }}>
+            <Typography
+              sx={{ fontSize: "11pt", fontFamily: "Bernard MT Condensed bold" }}
+            >
               di - tempat
             </Typography>
           </Grid>
         </Grid>
 
         {/* Content */}
-        <Grid container mt={2}>
+        <Grid container mt={1}>
           <Grid size={12}>
             <Typography
               sx={{
-                fontSize: "13px",
-                fontFamily: "Bernard MT Condensed bold",
+                fontSize: "11pt",
                 fontFamily: "Bernard MT Condensed bold",
               }}
             >
@@ -297,7 +301,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
           <Grid size={12}>
             <Typography
               sx={{
-                fontSize: "13px",
+                fontSize: "11pt",
                 textAlign: "justify",
                 fontFamily: "Bernard MT Condensed bold",
               }}
@@ -314,8 +318,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
           <Grid size={12} display={"flex"} flexDirection={"row"} gap={6.1}>
             <Typography
               sx={{
-                fontSize: "13px",
-                fontFamily: "Bernard MT Condensed bold",
+                fontSize: "11pt",
                 fontFamily: "Bernard MT Condensed bold",
               }}
             >
@@ -323,7 +326,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
             </Typography>
             <Typography
               sx={{
-                fontSize: "13px",
+                fontSize: "11pt",
                 ml: "1px",
                 fontFamily: "Bernard MT Condensed bold",
               }}
@@ -338,8 +341,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
           <Grid size={12} display={"flex"} flexDirection={"row"} gap={8}>
             <Typography
               sx={{
-                fontSize: "13px",
-                fontFamily: "Bernard MT Condensed bold",
+                fontSize: "11pt",
                 fontFamily: "Bernard MT Condensed bold",
               }}
             >
@@ -347,8 +349,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
             </Typography>
             <Typography
               sx={{
-                fontSize: "13px",
-                fontFamily: "Bernard MT Condensed bold",
+                fontSize: "11pt",
                 fontFamily: "Bernard MT Condensed bold",
               }}
             >
@@ -359,11 +360,10 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
             </Typography>
           </Grid>
           {/* Ukuran Ruangan */}
-          <Grid size={12} display={"flex"} flexDirection={"row"} gap={4.7}>
+          <Grid size={12} display={"flex"} flexDirection={"row"} gap={4.2}>
             <Typography
               sx={{
-                fontSize: "13px",
-                fontFamily: "Bernard MT Condensed bold",
+                fontSize: "11pt",
                 fontFamily: "Bernard MT Condensed bold",
               }}
             >
@@ -371,11 +371,17 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
             </Typography>
             <Typography
               sx={{
-                fontSize: "13px",
+                fontSize: "11pt",
+                fontFamily: "Bernard MT Condensed bold",
               }}
             >
               :{" "}
-              <span style={{ fontWeight: "bold", fontFamily: "calibri" }}>
+              <span
+                style={{
+                  fontWeight: "bold",
+                  fontFamily: "Bernard MT Condensed bold",
+                }}
+              >
                 {data.room_length && data.room_width
                   ? `${data.room_length} M X ${data.room_width} M`
                   : "-"}
@@ -384,11 +390,10 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
           </Grid>
 
           {/* Lokasi */}
-          <Grid size={12} display={"flex"} flexDirection={"row"} gap={7.4}>
+          <Grid size={12} display={"flex"} flexDirection={"row"} gap={7.2}>
             <Typography
               sx={{
-                fontSize: "13px",
-                fontFamily: "Bernard MT Condensed bold",
+                fontSize: "11pt",
                 fontFamily: "Bernard MT Condensed bold",
               }}
             >
@@ -396,8 +401,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
             </Typography>
             <Typography
               sx={{
-                fontSize: "13px",
-                fontFamily: "Bernard MT Condensed bold",
+                fontSize: "11pt",
                 fontFamily: "Bernard MT Condensed bold",
               }}
             >
@@ -412,8 +416,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
           <Grid size={12} display={"flex"} flexDirection={"row"} gap={7.3}>
             <Typography
               sx={{
-                fontSize: "13px",
-                fontFamily: "Bernard MT Condensed bold",
+                fontSize: "11pt",
                 fontFamily: "Bernard MT Condensed bold",
               }}
             >
@@ -421,13 +424,17 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
             </Typography>
             <Typography
               sx={{
-                fontSize: "13px",
-                fontFamily: "Bernard MT Condensed bold",
+                fontSize: "11pt",
                 fontFamily: "Bernard MT Condensed bold",
               }}
             >
               :{" "}
-              <span style={{ fontWeight: "bold", fontFamily: "calibri" }}>
+              <span
+                style={{
+                  fontWeight: "bold",
+                  fontFamily: "Bernard MT Condensed bold",
+                }}
+              >
                 {data.start_date && data.end_date
                   ? `${getDurationInYears(
                       data.start_date,
@@ -444,7 +451,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
           <Grid size={12}>
             <Typography
               sx={{
-                fontSize: "13px",
+                fontSize: "11pt",
                 textAlign: "justify",
                 fontFamily: "Bernard MT Condensed bold",
               }}
@@ -459,12 +466,17 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
             <Grid size={3} display={"flex"} flexDirection={"row"} gap={3.2}>
               <Typography
                 sx={{
-                  fontSize: "13px",
+                  fontSize: "11pt",
                   textAlign: "justify",
                   fontFamily: "Bernard MT Condensed bold",
                 }}
               >
-                <span style={{ marginRight: "10px", fontFamily: "calibri" }}>
+                <span
+                  style={{
+                    marginRight: "10px",
+                    fontFamily: "Bernard MT Condensed bold",
+                  }}
+                >
                   1.
                 </span>
                 Sewa Kontrak Ruangan
@@ -478,7 +490,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
             >
               <Typography
                 sx={{
-                  fontSize: "13px",
+                  fontSize: "11pt",
                   textAlign: "justify",
                   fontWeight: "bold",
                   fontFamily: "Bernard MT Condensed bold",
@@ -497,13 +509,16 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
             <Grid size={3} display={"flex"} flexDirection={"row"} gap={3.2}>
               <Typography
                 sx={{
-                  fontSize: "13px",
+                  fontSize: "11pt",
                   textAlign: "justify",
                   fontFamily: "Bernard MT Condensed bold",
                 }}
               >
                 <span
-                  style={{ marginRight: "20px", fontFamily: "calibri" }}
+                  style={{
+                    marginRight: "20px",
+                    fontFamily: "Bernard MT Condensed bold",
+                  }}
                 ></span>
                 Iuran Jasa Administrasi
               </Typography>
@@ -516,7 +531,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
             >
               <Typography
                 sx={{
-                  fontSize: "13px",
+                  fontSize: "11pt",
                   textAlign: "justify",
                   fontWeight: "bold",
                   fontFamily: "Bernard MT Condensed bold",
@@ -532,7 +547,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
             <Grid size={3} display={"flex"} flexDirection={"row"} gap={3.2}>
               <Typography
                 sx={{
-                  fontSize: "13px",
+                  fontSize: "11pt",
                   textAlign: "justify",
                   fontFamily: "Bernard MT Condensed bold",
                 }}
@@ -549,7 +564,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
             >
               <Typography
                 sx={{
-                  fontSize: "13px",
+                  fontSize: "11pt",
                   textAlign: "justify",
                   fontWeight: "bold",
                   fontFamily: "Bernard MT Condensed bold",
@@ -565,13 +580,16 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
             <Grid size={2} display={"flex"} flexDirection={"row"} gap={3.2}>
               <Typography
                 sx={{
-                  fontSize: "13px",
+                  fontSize: "11pt",
                   textAlign: "justify",
                   fontFamily: "Bernard MT Condensed bold",
                 }}
               >
                 <span
-                  style={{ marginRight: "20px", fontFamily: "calibri" }}
+                  style={{
+                    marginRight: "20px",
+                    fontFamily: "Bernard MT Condensed bold",
+                  }}
                 ></span>
                 PPN 11%
               </Typography>
@@ -584,7 +602,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
             >
               <Typography
                 sx={{
-                  fontSize: "13px",
+                  fontSize: "11pt",
                   textAlign: "justify",
                   fontWeight: "bold",
                   fontFamily: "Bernard MT Condensed bold",
@@ -606,7 +624,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
             <Grid size={2} display={"flex"} flexDirection={"row"} gap={3.2}>
               <Typography
                 sx={{
-                  fontSize: "13px",
+                  fontSize: "11pt",
                   textAlign: "justify",
                   fontFamily: "Bernard MT Condensed bold",
                 }}
@@ -622,7 +640,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
             >
               <Typography
                 sx={{
-                  fontSize: "13px",
+                  fontSize: "11pt",
                   textAlign: "justify",
                   fontWeight: "bold",
                   fontFamily: "Bernard MT Condensed bold",
@@ -639,7 +657,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
               <Grid size={2}>
                 <Typography
                   sx={{
-                    fontSize: "13px",
+                    fontSize: "11pt",
                     textAlign: "justify",
                     fontWeight: "bold",
                     fontFamily: "Bernard MT Condensed bold",
@@ -656,7 +674,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
               <Grid size={12}>
                 <Typography
                   sx={{
-                    fontSize: "13px",
+                    fontSize: "11pt",
                     textAlign: "justify",
                     fontWeight: "bold",
                     fontFamily: "Bernard MT Condensed bold",
@@ -671,7 +689,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
                 <Grid size={12} key={index}>
                   <Typography
                     sx={{
-                      fontSize: "13px",
+                      fontSize: "11pt",
                       textAlign: "justify",
                       fontWeight: "bold",
                       fontFamily: "Bernard MT Condensed bold",
@@ -686,10 +704,10 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
           )}
 
           {/* Informasi pembayaran ke Bank */}
-          <Grid size={12} mt={1}>
+          <Grid size={12}>
             <Typography
               sx={{
-                fontSize: "13px",
+                fontSize: "11pt",
                 textAlign: "justify",
                 fontFamily: "Bernard MT Condensed bold",
               }}
@@ -701,11 +719,10 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
           </Grid>
 
           {/* Nama Bank */}
-          <Grid size={12} display={"flex"} flexDirection={"row"} gap={9.4}>
+          <Grid size={12} display={"flex"} flexDirection={"row"} gap={9.3}>
             <Typography
               sx={{
-                fontSize: "13px",
-                fontFamily: "Bernard MT Condensed bold",
+                fontSize: "11pt",
                 fontFamily: "Bernard MT Condensed bold",
               }}
             >
@@ -713,7 +730,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
             </Typography>
             <Typography
               sx={{
-                fontSize: "13px",
+                fontSize: "11pt",
                 ml: "1px",
                 fontFamily: "Bernard MT Condensed bold",
               }}
@@ -723,11 +740,10 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
           </Grid>
 
           {/* Nomor Rekening */}
-          <Grid size={12} display={"flex"} flexDirection={"row"} gap={5.8}>
+          <Grid size={12} display={"flex"} flexDirection={"row"} gap={5.3}>
             <Typography
               sx={{
-                fontSize: "13px",
-                fontFamily: "Bernard MT Condensed bold",
+                fontSize: "11pt",
                 fontFamily: "Bernard MT Condensed bold",
               }}
             >
@@ -735,7 +751,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
             </Typography>
             <Typography
               sx={{
-                fontSize: "13px",
+                fontSize: "11pt",
                 ml: "1px",
               }}
             >
@@ -747,8 +763,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
           <Grid size={12} display={"flex"} flexDirection={"row"} gap={9.8}>
             <Typography
               sx={{
-                fontSize: "13px",
-                fontFamily: "Bernard MT Condensed bold",
+                fontSize: "11pt",
                 fontFamily: "Bernard MT Condensed bold",
               }}
             >
@@ -756,8 +771,9 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
             </Typography>
             <Typography
               sx={{
-                fontSize: "13px",
+                fontSize: "11pt",
                 ml: "1px",
+                fontFamily: "Bernard MT Condensed bold",
               }}
             >
               :{" "}
@@ -768,7 +784,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
           <Grid size={12} mt={1}>
             <Typography
               sx={{
-                fontSize: "13px",
+                fontSize: "11pt",
                 textAlign: "justify",
                 fontFamily: "Bernard MT Condensed bold",
               }}
@@ -782,7 +798,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
           <Grid size={12} mt={1}>
             <Typography
               sx={{
-                fontSize: "13px",
+                fontSize: "11pt",
                 textAlign: "justify",
                 fontFamily: "Bernard MT Condensed bold",
               }}
@@ -791,12 +807,9 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
               diserahkan ke bagian sewa kontrak untuk diproses penandatanganan
               kontrak ruangan.
             </Typography>
-          </Grid>
-
-          <Grid size={12}>
             <Typography
               sx={{
-                fontSize: "13px",
+                fontSize: "11pt",
                 textAlign: "justify",
                 fontFamily: "Bernard MT Condensed bold",
               }}
@@ -808,11 +821,11 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
 
           {/* TTD Direktur */}
           <Grid container size={12} mt={1}>
-            <Grid size={6.5}></Grid>
-            <Grid size={5.5}>
+            <Grid size={6.8}></Grid>
+            <Grid size={5.2}>
               <Typography
                 sx={{
-                  fontSize: "14px",
+                  fontSize: "11pt",
                   fontWeight: "bold",
                   fontFamily: "Bernard MT Condensed bold",
                 }}
@@ -822,12 +835,12 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
             </Grid>
           </Grid>
 
-          <Grid container size={12} mt={9}>
-            <Grid size={6}></Grid>
-            <Grid size={6}>
+          <Grid container size={12} mt={7}>
+            <Grid size={6.1}></Grid>
+            <Grid size={5.9}>
               <Typography
                 sx={{
-                  fontSize: "14px",
+                  fontSize: "11pt",
                   fontWeight: "bold",
                   fontFamily: "Bernard MT Condensed bold",
                 }}
@@ -838,10 +851,10 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
           </Grid>
 
           {/* Tembusan */}
-          <Grid size={12} mt={1} mb={1}>
+          <Grid size={12} mt={1}>
             <Typography
               sx={{
-                fontSize: "11px",
+                fontSize: "7pt",
                 fontWeight: "bold",
                 fontStyle: "italic",
                 fontFamily: "Bernard MT Condensed bold",
@@ -855,14 +868,15 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
           <Grid size={12} display={"flex"} flexDirection={"row"} gap={1}>
             <Typography
               sx={{
-                fontSize: "11px",
+                fontSize: "7pt",
+                fontFamily: "Bernard MT Condensed bold",
               }}
             >
               <span style={{ marginRight: "20px" }}></span>1)
             </Typography>
             <Typography
               sx={{
-                fontSize: "11px",
+                fontSize: "7pt",
                 ml: "1px",
                 fontFamily: "Bernard MT Condensed bold",
               }}
@@ -874,14 +888,15 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
           <Grid size={12} display={"flex"} flexDirection={"row"} gap={1}>
             <Typography
               sx={{
-                fontSize: "11px",
+                fontSize: "7pt",
+                fontFamily: "Bernard MT Condensed bold",
               }}
             >
               <span style={{ marginRight: "20px" }}></span>2)
             </Typography>
             <Typography
               sx={{
-                fontSize: "11px",
+                fontSize: "7pt",
                 ml: "1px",
                 fontFamily: "Bernard MT Condensed bold",
               }}
@@ -893,7 +908,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
           <Grid size={12} display={"flex"} flexDirection={"row"} gap={1}>
             <Typography
               sx={{
-                fontSize: "11px",
+                fontSize: "7pt",
                 fontFamily: "Bernard MT Condensed bold",
               }}
             >
@@ -901,7 +916,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
             </Typography>
             <Typography
               sx={{
-                fontSize: "11px",
+                fontSize: "7pt",
                 ml: "1px",
                 fontFamily: "Bernard MT Condensed bold",
               }}
@@ -913,7 +928,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
           <Grid size={12} display={"flex"} flexDirection={"row"} gap={1}>
             <Typography
               sx={{
-                fontSize: "11px",
+                fontSize: "7pt",
                 fontFamily: "Bernard MT Condensed bold",
               }}
             >
@@ -921,7 +936,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
             </Typography>
             <Typography
               sx={{
-                fontSize: "11px",
+                fontSize: "7pt",
                 ml: "1px",
                 fontFamily: "Bernard MT Condensed bold",
               }}
@@ -933,7 +948,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
           <Grid size={12} display={"flex"} flexDirection={"row"} gap={1}>
             <Typography
               sx={{
-                fontSize: "11px",
+                fontSize: "7pt",
                 fontFamily: "Bernard MT Condensed bold",
               }}
             >
@@ -941,7 +956,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
             </Typography>
             <Typography
               sx={{
-                fontSize: "11px",
+                fontSize: "7pt",
                 ml: "1px",
                 fontFamily: "Bernard MT Condensed bold",
               }}
@@ -953,14 +968,15 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
           <Grid size={12} display={"flex"} flexDirection={"row"} gap={1}>
             <Typography
               sx={{
-                fontSize: "11px",
+                fontSize: "7pt",
+                fontFamily: "Bernard MT Condensed bold",
               }}
             >
               <span style={{ marginRight: "20px" }}></span>6)
             </Typography>
             <Typography
               sx={{
-                fontSize: "11px",
+                fontSize: "7pt",
                 ml: "1px",
                 fontFamily: "Bernard MT Condensed bold",
               }}
@@ -972,7 +988,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
           <Grid size={12} display={"flex"} flexDirection={"row"} gap={1}>
             <Typography
               sx={{
-                fontSize: "11px",
+                fontSize: "7pt",
                 fontFamily: "Bernard MT Condensed bold",
               }}
             >
@@ -980,7 +996,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
             </Typography>
             <Typography
               sx={{
-                fontSize: "11px",
+                fontSize: "7pt",
                 ml: "1px",
                 fontFamily: "Bernard MT Condensed bold",
               }}

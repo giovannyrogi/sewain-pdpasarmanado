@@ -108,6 +108,7 @@ const SuratPernyataanPenyewa = forwardRef(({ data }, ref) => {
           <Typography
             sx={{
               fontFamily: "calibri",
+              fontSize: "11pt",
             }}
           >
             Manado,{moment(new Date()).format("D MMMM YYYY")}
@@ -118,6 +119,7 @@ const SuratPernyataanPenyewa = forwardRef(({ data }, ref) => {
           <Typography
             sx={{
               fontFamily: "calibri",
+              fontSize: "11pt",
             }}
           >
             Kepada Yth,
@@ -128,6 +130,7 @@ const SuratPernyataanPenyewa = forwardRef(({ data }, ref) => {
           <Typography
             sx={{
               fontFamily: "calibri",
+              fontSize: "11pt",
               fontWeight: "bold",
             }}
           >
@@ -139,6 +142,7 @@ const SuratPernyataanPenyewa = forwardRef(({ data }, ref) => {
           <Typography
             sx={{
               fontFamily: "calibri",
+              fontSize: "11pt",
               fontWeight: "bold",
             }}
           >
@@ -150,16 +154,18 @@ const SuratPernyataanPenyewa = forwardRef(({ data }, ref) => {
           <Typography
             sx={{
               fontFamily: "calibri",
+              fontSize: "11pt",
             }}
           >
             di-tempat
           </Typography>
         </Grid>
 
-        <Grid size={12} mt={3}>
+        <Grid size={12} mt={1}>
           <Typography
             sx={{
               fontFamily: "calibri",
+              fontSize: "11pt",
             }}
           >
             Dengan hormat,
@@ -170,6 +176,7 @@ const SuratPernyataanPenyewa = forwardRef(({ data }, ref) => {
           <Typography
             sx={{
               fontFamily: "calibri",
+              fontSize: "11pt",
               textAlign: "justify",
             }}
           >
@@ -199,7 +206,7 @@ const SuratPernyataanPenyewa = forwardRef(({ data }, ref) => {
               value:
                 data?.start_date && data?.end_date
                   ? `${moment(data?.start_date).format(
-                      "DD/MM/YYYY"
+                      "DD/MM/YYYY",
                     )} s/d ${moment(data?.end_date).format("DD/MM/YYYY")}`
                   : undefined,
             },
@@ -209,7 +216,7 @@ const SuratPernyataanPenyewa = forwardRef(({ data }, ref) => {
               <Grid size={2}>
                 <Typography
                   sx={{
-                    // fontSize: "14px",
+                    fontSize: "11pt",
                     // fontWeight: "bold",
                     // color: theme.palette.text.disabled,
                     fontFamily: "calibri",
@@ -223,7 +230,7 @@ const SuratPernyataanPenyewa = forwardRef(({ data }, ref) => {
               <Grid size={10}>
                 <Typography
                   sx={{
-                    // fontSize: "14px",
+                    fontSize: "11pt",
                     fontWeight: "bold",
                     // color: theme.palette.text.disabled,
                     fontFamily: "calibri",
@@ -242,6 +249,7 @@ const SuratPernyataanPenyewa = forwardRef(({ data }, ref) => {
             sx={{
               fontFamily: "calibri",
               textAlign: "justify",
+              fontSize: "11pt",
             }}
           >
             Demikian permohonan ini kami sampaikan, kiranya dapat disetujui.
@@ -255,7 +263,7 @@ const SuratPernyataanPenyewa = forwardRef(({ data }, ref) => {
             style={{
               borderCollapse: "collapse",
               width: "100%",
-              fontSize: "12px",
+              fontSize: "11pt",
             }}
           >
             <thead>
@@ -267,7 +275,7 @@ const SuratPernyataanPenyewa = forwardRef(({ data }, ref) => {
                     padding: "5px",
                     fontWeight: "bold",
                     textAlign: "center",
-                    fontSize: "14px",
+                    fontSize: "12pt",
                     fontFamily: "calibri",
                   }}
                 >
@@ -280,7 +288,8 @@ const SuratPernyataanPenyewa = forwardRef(({ data }, ref) => {
                     border: "1px solid black",
                     fontFamily: "calibri",
                     padding: "5px",
-                    fontSize: "13px",
+                    fontSize: "11pt",
+                    width:"100pt"
                   }}
                 >
                   Jenis Pembayaran
@@ -290,7 +299,8 @@ const SuratPernyataanPenyewa = forwardRef(({ data }, ref) => {
                     border: "1px solid black",
                     fontFamily: "calibri",
                     padding: "5px",
-                    fontSize: "13px",
+                    fontSize: "11pt",
+                    width:"130pt"
                   }}
                 >
                   Ukuran Ruangan
@@ -300,7 +310,8 @@ const SuratPernyataanPenyewa = forwardRef(({ data }, ref) => {
                     border: "1px solid black",
                     fontFamily: "calibri",
                     padding: "5px",
-                    fontSize: "13px",
+                    fontSize: "11pt",
+                    width:"80pt"
                   }}
                 >
                   Harga Ruangan
@@ -310,8 +321,8 @@ const SuratPernyataanPenyewa = forwardRef(({ data }, ref) => {
                     border: "1px solid black",
                     fontFamily: "calibri",
                     padding: "5px",
-                    textAlign: "right",
-                    fontSize: "13px",
+                    textAlign: "center",
+                    fontSize: "11pt",
                   }}
                 >
                   Total Sewa Ruangan
@@ -322,7 +333,7 @@ const SuratPernyataanPenyewa = forwardRef(({ data }, ref) => {
               <tr>
                 <td
                   style={{
-                    fontSize: "12px",
+                    fontSize: "11pt",
                     fontFamily: "calibri",
                     whiteSpace: "pre-line",
                     wordBreak: "break-all",
@@ -335,7 +346,7 @@ const SuratPernyataanPenyewa = forwardRef(({ data }, ref) => {
                 </td>
                 <td
                   style={{
-                    fontSize: "12px",
+                    fontSize: "11pt",
                     fontFamily: "calibri",
                     whiteSpace: "pre-line",
                     wordBreak: "break-all",
@@ -344,13 +355,13 @@ const SuratPernyataanPenyewa = forwardRef(({ data }, ref) => {
                     textAlign: "center",
                   }}
                 >
-                  {data?.room_width ? data?.room_width + "M" : "-"} X{" "}
-                  {data?.room_length ? data?.room_length + "M" : "-"} (
-                  {data?.room_area ? data?.room_area + " M2" : "-"})
+                  {data?.room_width ? data?.room_width + "m" : "-"} X{" "}
+                  {data?.room_length ? data?.room_length + "m" : "-"} (
+                  {data?.room_area ? data?.room_area + " m²" : "-"})
                 </td>
                 <td
                   style={{
-                    fontSize: "12px",
+                    fontSize: "11pt",
                     fontFamily: "calibri",
                     whiteSpace: "pre-line",
                     wordBreak: "break-all",
@@ -360,12 +371,12 @@ const SuratPernyataanPenyewa = forwardRef(({ data }, ref) => {
                   }}
                 >
                   {data?.price_per_m2
-                    ? formatRupiah(data?.price_per_m2) + "/M2"
+                    ? formatRupiah(data?.price_per_m2) + "/m²"
                     : "-"}
                 </td>
                 <td
                   style={{
-                    fontSize: "12px",
+                    fontSize: "11pt",
                     fontFamily: "calibri",
                     whiteSpace: "pre-line",
                     wordBreak: "break-all",
@@ -387,7 +398,7 @@ const SuratPernyataanPenyewa = forwardRef(({ data }, ref) => {
                     border: "1px solid black",
                     fontFamily: "calibri",
                     padding: "5px",
-                    fontSize: "13px",
+                    fontSize: "11pt",
                     fontWeight: "bold",
                   }}
                 >
@@ -398,7 +409,7 @@ const SuratPernyataanPenyewa = forwardRef(({ data }, ref) => {
                     border: "1px solid black",
                     fontFamily: "calibri",
                     padding: "5px",
-                    fontSize: "13px",
+                    fontSize: "11pt",
                     textAlign: "right",
                     fontWeight: "bold",
                   }}
@@ -414,7 +425,7 @@ const SuratPernyataanPenyewa = forwardRef(({ data }, ref) => {
                     border: "1px solid black",
                     fontFamily: "calibri",
                     padding: "5px",
-                    fontSize: "13px",
+                    fontSize: "11pt",
                     fontWeight: "bold",
                   }}
                 >
@@ -425,7 +436,7 @@ const SuratPernyataanPenyewa = forwardRef(({ data }, ref) => {
                     border: "1px solid black",
                     fontFamily: "calibri",
                     padding: "5px",
-                    fontSize: "13px",
+                    fontSize: "11pt",
                     textAlign: "right",
                     fontWeight: "bold",
                   }}
@@ -441,7 +452,7 @@ const SuratPernyataanPenyewa = forwardRef(({ data }, ref) => {
                     border: "1px solid black",
                     fontFamily: "calibri",
                     padding: "5px",
-                    fontSize: "13px",
+                    fontSize: "11pt",
                     fontWeight: "bold",
                   }}
                 >
@@ -452,7 +463,7 @@ const SuratPernyataanPenyewa = forwardRef(({ data }, ref) => {
                     border: "1px solid black",
                     fontFamily: "calibri",
                     padding: "5px",
-                    fontSize: "13px",
+                    fontSize: "11pt",
                     textAlign: "right",
                     fontWeight: "bold",
                   }}
@@ -470,7 +481,7 @@ const SuratPernyataanPenyewa = forwardRef(({ data }, ref) => {
                         border: "1px solid black",
                         fontFamily: "calibri",
                         padding: "5px",
-                        fontSize: "13px",
+                        fontSize: "11pt",
                         fontWeight: "bold",
                       }}
                     >
@@ -481,7 +492,7 @@ const SuratPernyataanPenyewa = forwardRef(({ data }, ref) => {
                         border: "1px solid black",
                         fontFamily: "calibri",
                         padding: "5px",
-                        fontSize: "13px",
+                        fontSize: "11pt",
                         textAlign: "right",
                         fontWeight: "bold",
                       }}
@@ -497,7 +508,7 @@ const SuratPernyataanPenyewa = forwardRef(({ data }, ref) => {
                         border: "1px solid black",
                         fontFamily: "calibri",
                         padding: "5px",
-                        fontSize: "13px",
+                        fontSize: "11pt",
                         fontWeight: "bold",
                       }}
                     >
@@ -508,7 +519,7 @@ const SuratPernyataanPenyewa = forwardRef(({ data }, ref) => {
                         border: "1px solid black",
                         fontFamily: "calibri",
                         padding: "5px",
-                        fontSize: "13px",
+                        fontSize: "11pt",
                         textAlign: "right",
                         fontWeight: "bold",
                       }}
@@ -529,7 +540,7 @@ const SuratPernyataanPenyewa = forwardRef(({ data }, ref) => {
               style={{
                 borderCollapse: "collapse",
                 width: "100%",
-                fontSize: "12px",
+                fontSize: "11pt",
               }}
             >
               <thead>
@@ -541,7 +552,7 @@ const SuratPernyataanPenyewa = forwardRef(({ data }, ref) => {
                       padding: "5px",
                       fontWeight: "bold",
                       textAlign: "center",
-                      fontSize: "14px",
+                      fontSize: "12pt",
                       fontFamily: "calibri",
                     }}
                   >
@@ -554,7 +565,7 @@ const SuratPernyataanPenyewa = forwardRef(({ data }, ref) => {
                       border: "1px solid black",
                       fontFamily: "calibri",
                       padding: "5px",
-                      fontSize: "13px",
+                      fontSize: "11pt",
                     }}
                   >
                     Tahap Pembayaran
@@ -564,7 +575,7 @@ const SuratPernyataanPenyewa = forwardRef(({ data }, ref) => {
                       border: "1px solid black",
                       fontFamily: "calibri",
                       padding: "5px",
-                      fontSize: "13px",
+                      fontSize: "11pt",
                     }}
                   >
                     Tanggal Pembayaran
@@ -574,7 +585,7 @@ const SuratPernyataanPenyewa = forwardRef(({ data }, ref) => {
                       border: "1px solid black",
                       fontFamily: "calibri",
                       padding: "5px",
-                      fontSize: "13px",
+                      fontSize: "11pt",
                     }}
                   >
                     Total Pembayaran
@@ -588,7 +599,7 @@ const SuratPernyataanPenyewa = forwardRef(({ data }, ref) => {
                     <tr key={index}>
                       <td
                         style={{
-                          fontSize: "12px",
+                          fontSize: "11pt",
                           fontFamily: "calibri",
                           whiteSpace: "pre-line",
                           wordBreak: "break-all",
@@ -601,7 +612,7 @@ const SuratPernyataanPenyewa = forwardRef(({ data }, ref) => {
                       </td>
                       <td
                         style={{
-                          fontSize: "12px",
+                          fontSize: "11pt",
                           fontFamily: "calibri",
                           whiteSpace: "pre-line",
                           wordBreak: "break-all",
@@ -617,7 +628,7 @@ const SuratPernyataanPenyewa = forwardRef(({ data }, ref) => {
                           border: "1px solid black",
                           fontFamily: "calibri",
                           padding: "5px",
-                          fontSize: "13px",
+                          fontSize: "11pt",
                           textAlign: "right",
                           fontWeight: "bold",
                         }}
@@ -631,7 +642,7 @@ const SuratPernyataanPenyewa = forwardRef(({ data }, ref) => {
                   <td
                     colSpan={2}
                     style={{
-                      fontSize: "12px",
+                      fontSize: "11pt",
                       fontFamily: "calibri",
                       whiteSpace: "pre-line",
                       wordBreak: "break-all",
@@ -648,7 +659,7 @@ const SuratPernyataanPenyewa = forwardRef(({ data }, ref) => {
                       border: "1px solid black",
                       fontFamily: "calibri",
                       padding: "5px",
-                      fontSize: "13px",
+                      fontSize: "11pt",
                       textAlign: "right",
                       fontWeight: "bold",
                     }}
@@ -668,6 +679,7 @@ const SuratPernyataanPenyewa = forwardRef(({ data }, ref) => {
             <Typography
               sx={{
                 fontFamily: "calibri",
+                fontSize: "11pt",
               }}
             >
               Hormat kami,
@@ -678,6 +690,7 @@ const SuratPernyataanPenyewa = forwardRef(({ data }, ref) => {
                 fontFamily: "calibri",
                 textTransform: "capitalize",
                 fontWeight: "bold",
+                fontSize: "11pt",
                 mt: 9,
               }}
             >
