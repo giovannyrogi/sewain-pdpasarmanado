@@ -8,6 +8,7 @@ import {
   FormControl,
   Grid,
   IconButton,
+  InputAdornment,
   InputLabel,
   MenuItem,
   Modal,
@@ -97,7 +98,7 @@ const EditTenantApplication = ({
     useState(null);
   const [estimatedInstallmentDate3, setEstimatedInstallmentDate3] =
     useState(null);
-  const [tenantType, setTenantType] = useState("permohonan baru");
+  const [tenantType, setTenantType] = useState("permohonan_baru");
   const [listDataTenantExtends, setListDataTenantExtends] = useState([]);
   const [selectedDataTenantExtends, setSelectedDataTenantExtends] =
     useState(null);
@@ -116,6 +117,51 @@ const EditTenantApplication = ({
     useState(false);
 
   const [chooseTenor, setChooseTenor] = useState(1);
+  const [documentNumber, setDocumentNumber] = useState("");
+  const [durasiKontrak, setDurasiKontrak] = useState(0);
+  const [highestDocumentNumber, setHighestDocumentNumber] = useState(null);
+  const toRoman = (num) => {
+    const roman = [
+      "",
+      "I",
+      "II",
+      "III",
+      "IV",
+      "V",
+      "VI",
+      "VII",
+      "VIII",
+      "IX",
+      "X",
+      "XI",
+      "XII",
+    ];
+    return roman[num] || "";
+  };
+
+  const getPrefix = () => {
+    const now = new Date();
+    const monthRoman = toRoman(now.getMonth() + 1);
+    const year = now.getFullYear();
+    return (
+      <InputAdornment
+        position="end"
+        sx={{
+          whiteSpace: "nowrap",
+          color: theme.palette.primary.main,
+        }}
+      >
+        <Typography
+          sx={{
+            whiteSpace: "nowrap",
+            fontWeight: "bold",
+            fontSize: "14px",
+            letterSpacing: "1px",
+          }}
+        >{`/PM/SKR/${monthRoman}/${year}`}</Typography>
+      </InputAdornment>
+    );
+  };
 
   const installments = [
     {
@@ -141,6 +187,32 @@ const EditTenantApplication = ({
     },
   ];
 
+  const getHighestDocumentNumber = async () => {
+    loadingTrue();
+    try {
+      const response = await axios.get(
+        `/api/tenant-application/update-document`,
+      );
+      // console.log("response update document", response);
+      if (response.data.success) {
+        setHighestDocumentNumber(response.data.data);
+        setTimeout(() => {
+          loadingFalse();
+        }, 1000);
+      } else {
+        console.log("error", response);
+        setTimeout(() => {
+          loadingFalse();
+        }, 1000);
+      }
+    } catch (error) {
+      console.log(error);
+      setTimeout(() => {
+        loadingFalse();
+      }, 1000);
+    }
+  };
+
   const getListIdentities = async () => {
     // console.log("tenant_identity_id");
 
@@ -148,7 +220,7 @@ const EditTenantApplication = ({
     setLoadingMessage("Mengambil data penyewa...");
     try {
       const response = await axios.get(
-        `/api/identity-list/${selectedData?.tenant_identity_id}`
+        `/api/identity-list/${selectedData?.tenant_identity_id}`,
       );
 
       // console.log("response identity-list", response);
@@ -181,7 +253,7 @@ const EditTenantApplication = ({
 
     try {
       const response = await axios.get(
-        `/api/rooms/available-rooms?location_id=${locationId}`
+        `/api/rooms/available-rooms?location_id=${locationId}`,
       );
       // console.log("response rooms", response.data);
       // console.log("selectedData", selectedData);
@@ -232,41 +304,49 @@ const EditTenantApplication = ({
   // Setiap kali selectedData atau open berubah, update form
   useEffect(() => {
     if (open) {
-      setLocationId(selectedData.location_id || "");
-      setRoomId(selectedData.room_id || "");
+      setLocationId(selectedData?.location_id || "");
+      setRoomId(selectedData?.room_id || "");
       // setStartDate(
-      //   selectedData.start_date ? moment(selectedData.start_date) : null
+      //   selectedData?.start_date ? moment(selectedData?.start_date) : null
       // );
-      // setEndDate(selectedData.end_date ? moment(selectedData.end_date) : null);
-      setPaymentType(selectedData.payment_type || "");
-      setTotalPayment(selectedData.total_payment || "");
-      setDownPayment(selectedData.down_payment || "");
-      setRemainingPayment(selectedData.remaining_payment || "");
+      // setEndDate(selectedData?.end_date ? moment(selectedData?.end_date) : null);
+      setPaymentType(selectedData?.payment_type || "");
+      setTotalPayment(selectedData?.total_payment || "");
+      setDownPayment(selectedData?.down_payment || "");
+      setRemainingPayment(selectedData?.remaining_payment || "");
 
-      getRoomsData(selectedData.location_id);
+      getRoomsData(selectedData?.location_id);
       handleViewDetailRooms(selectedData);
-      setEstimatedInstallment1(selectedData.estimated_installment_1 || "");
-      setEstimatedInstallment2(selectedData.estimated_installment_2 || "");
-      setEstimatedInstallment3(selectedData.estimated_installment_3 || "");
+      setEstimatedInstallment1(selectedData?.estimated_installment_1 || "");
+      setEstimatedInstallment2(selectedData?.estimated_installment_2 || "");
+      setEstimatedInstallment3(selectedData?.estimated_installment_3 || "");
       setEstimatedInstallmentDate1(
-        selectedData.estimated_installment_1_date
-          ? moment(selectedData.estimated_installment_1_date)
-          : null
+        selectedData?.estimated_installment_1_date
+          ? moment(selectedData?.estimated_installment_1_date)
+          : null,
       );
       setEstimatedInstallmentDate2(
-        selectedData.estimated_installment_2_date
-          ? moment(selectedData.estimated_installment_2_date)
-          : null
+        selectedData?.estimated_installment_2_date
+          ? moment(selectedData?.estimated_installment_2_date)
+          : null,
       );
       setEstimatedInstallmentDate3(
-        selectedData.estimated_installment_3_date
-          ? moment(selectedData.estimated_installment_3_date)
-          : null
+        selectedData?.estimated_installment_3_date
+          ? moment(selectedData?.estimated_installment_3_date)
+          : null,
       );
 
-      setChooseTenor(selectedData.current_tenor || 1);
-
+      setChooseTenor(selectedData?.current_tenor || 1);
+      setDocumentNumber(selectedData?.document_number?.split("/")[0] || "");
+      setStartDate(
+        selectedData?.start_date ? moment(selectedData?.start_date) : null,
+      );
+      setEndDate(
+        selectedData?.end_date ? moment(selectedData?.end_date) : null,
+      );
+      setTenantType(selectedData?.application_type || "permohonan_baru");
       getListIdentities();
+      getHighestDocumentNumber();
     }
   }, [open]);
 
@@ -358,9 +438,23 @@ const EditTenantApplication = ({
     setTotalInstallment(cicilan.reduce((a, b) => a + b, 0));
   }, [remainingPayment, paymentType, chooseTenor]);
 
+  useEffect(() => {
+    if (startDate && endDate) {
+      const duration = endDate.diff(startDate, "days");
+      setDurasiKontrak(duration + 1);
+    }
+  }, [startDate, endDate]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoadingMessage("Loading...");
+
+    // gabungkan nomor + prefix
+    const now = new Date();
+    const monthRoman = toRoman(now.getMonth() + 1);
+    const year = now.getFullYear();
+    const prefix = `/PM/SKR/${monthRoman}/${year}`;
+    const finalDocNumber = `${documentNumber}${prefix}`;
 
     // const totalPaymentWithoutAdminFee =
     //   Number(totalPayment) - biayaAdministrasi;
@@ -375,7 +469,7 @@ const EditTenantApplication = ({
         onNotify({
           open: true,
           message: `DP minimal 40% (${formatRupiah(
-            minDp
+            minDp,
           )}) dari total pembayaran ${formatRupiah(total)}.`,
           severity: "error",
         });
@@ -388,7 +482,7 @@ const EditTenantApplication = ({
         onNotify({
           open: true,
           message: `DP tidak boleh lebih besar dari total pembayaran ${formatRupiah(
-            total
+            total,
           )}.`,
           severity: "error",
         });
@@ -424,7 +518,7 @@ const EditTenantApplication = ({
           onNotify({
             open: true,
             message: `Total cicilan harus sama dengan sisa tagihan ${formatRupiah(
-              remainingPayment
+              remainingPayment,
             )}.`,
             severity: "error",
           });
@@ -450,6 +544,10 @@ const EditTenantApplication = ({
       formData.append("admin_fee", biayaAdministrasi);
       formData.append("total_ppn", totalPPN);
       formData.append("choose_tenor", chooseTenor);
+      formData.append("document_number", finalDocNumber);
+      formData.append("start_date", moment(startDate).format("YYYY-MM-DD"));
+      formData.append("end_date", moment(endDate).format("YYYY-MM-DD"));
+      formData.append("tenant_type", tenantType);
 
       // hanya kirim data cicilan kalau paymentType === 'cicilan'
       if (paymentType === "cicilan") {
@@ -463,19 +561,19 @@ const EditTenantApplication = ({
         if (estimatedInstallmentDate1) {
           formData.append(
             "estimated_installment_date_1",
-            moment(estimatedInstallmentDate1).format("YYYY-MM-DD")
+            moment(estimatedInstallmentDate1).format("YYYY-MM-DD"),
           );
         }
         if (estimatedInstallmentDate2) {
           formData.append(
             "estimated_installment_date_2",
-            moment(estimatedInstallmentDate2).format("YYYY-MM-DD")
+            moment(estimatedInstallmentDate2).format("YYYY-MM-DD"),
           );
         }
         if (estimatedInstallmentDate3) {
           formData.append(
             "estimated_installment_date_3",
-            moment(estimatedInstallmentDate3).format("YYYY-MM-DD")
+            moment(estimatedInstallmentDate3).format("YYYY-MM-DD"),
           );
         }
       }
@@ -489,7 +587,7 @@ const EditTenantApplication = ({
         formData,
         {
           headers: { "Content-Type": "multipart/form-data" },
-        }
+        },
       );
 
       // console.log("response", response);
@@ -984,6 +1082,132 @@ const EditTenantApplication = ({
                   onClick={() => setOpenViewDetailCalculatePPNModal(true)}
                 >
                   Lihat detail perhitungan biaya dan PPN
+                </Typography>
+              </Grid>
+            )}
+            <Grid size={isMobile ? 12 : 6}>
+              <DatePicker
+                label="Tanggal Mulai Kontrak"
+                value={startDate}
+                onChange={(newValue) => {
+                  setStartDate(newValue);
+                  // console.log("startdate", newValue);
+
+                  // if (newValue) {
+                  //   // Tambahkan 365 hari ke tanggal mulai
+                  //   const end = moment(newValue).add(365, "days");
+
+                  //   setEndDate(end);
+                  // } else {
+                  //   setEndDate(null);
+                  // }
+                }}
+                // minDate={moment()}
+                disabled={tenantType === "perpanjang_tenant"}
+                slotProps={{
+                  textField: {
+                    variant: "filled",
+                    fullWidth: true,
+                    required: true,
+                    disabled: tenantType === "perpanjang_tenant",
+                    color: "primary",
+                  },
+                }}
+              />
+            </Grid>
+            <Grid size={isMobile ? 12 : 6}>
+              <DatePicker
+                label="Tanggal Berakhir Kontrak"
+                value={endDate}
+                onChange={(newValue) => {
+                  setEndDate(newValue);
+                }}
+                // minDate={moment()}
+                disabled={tenantType === "perpanjang_tenant"}
+                slotProps={{
+                  textField: {
+                    variant: "filled",
+                    fullWidth: true,
+                    required: true,
+                    color: "primary",
+                    disabled: tenantType === "perpanjang_tenant",
+                  },
+                }}
+              />
+            </Grid>
+            <Grid size={12}>
+              <TextField
+                label="Durasi Kontrak (hari)"
+                variant="filled"
+                fullWidth
+                value={`${durasiKontrak} hari`}
+                // onChange={(e) => {
+                // }}
+                disabled
+                required
+                color="primary"
+              />
+            </Grid>
+
+            <Grid size={12}>
+              <TextField
+                label="Nomor Dokumen"
+                // placeholder="Cth: 001"
+                variant="filled"
+                fullWidth
+                value={documentNumber}
+                onChange={(e) => {
+                  // document number hanya boleh angka
+                  setDocumentNumber(e.target.value.replace(/[^0-9]/g, ""));
+                }}
+                InputProps={{
+                  endAdornment: getPrefix(),
+                }}
+                required
+                color="primary"
+              />
+            </Grid>
+            {highestDocumentNumber && (
+              <Grid
+                size={12}
+                sx={{
+                  p: 1,
+                  bgcolor:
+                    themeMode === "dark"
+                      ? alpha(theme.palette.primary.main, 0.12)
+                      : alpha(theme.palette.primary.main, 0.12),
+                  borderRadius: 1,
+                  // mt: -1,
+                  mb: -1,
+                }}
+              >
+                {/* <Typography
+                  sx={{
+                    fontSize: "14px",
+                    fontWeight: "bold",
+                    color: "primary.main",
+                    display: "flex",
+                    flexDirection: "row",
+                    gap: 1,
+                  }}
+                >
+                  Nomor Dokumen ini adalah{" "}
+                  {documentNumber?.split("/")[0] || "-"}
+                </Typography> */}
+                <Typography
+                  sx={{
+                    fontSize: "14px",
+                    fontWeight: "bold",
+                    color: "primary.main",
+                    display: "flex",
+                    flexDirection: "row",
+                    gap: 1,
+                  }}
+                >
+                  Nomor Dokumen terakhir adalah{" "}
+                  {highestDocumentNumber?.highest_document_number.split(
+                    "/",
+                  )[0] || "-"}
                 </Typography>
               </Grid>
             )}

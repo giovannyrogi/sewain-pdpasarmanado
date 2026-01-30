@@ -18,9 +18,6 @@ const MENU_CONFIG = [
     roles: [
       ROLES.SUPERADMIN,
       ROLES.DIVISI_KONTRAK,
-      ROLES.KEPALA_SEKSI,
-      ROLES.KEPALA_SUBDIVISI,
-      ROLES.KEPALA_DIVISI,
     ],
     submenu: [
       {
@@ -47,9 +44,6 @@ const MENU_CONFIG = [
         roles: [
           ROLES.SUPERADMIN,
           ROLES.DIVISI_KONTRAK,
-          ROLES.KEPALA_SEKSI,
-          ROLES.KEPALA_SUBDIVISI,
-          ROLES.KEPALA_DIVISI,
         ],
         showIcon: true,
       },
@@ -61,9 +55,6 @@ const MENU_CONFIG = [
         roles: [
           ROLES.SUPERADMIN,
           ROLES.DIVISI_KONTRAK,
-          ROLES.KEPALA_SEKSI,
-          ROLES.KEPALA_SUBDIVISI,
-          ROLES.KEPALA_DIVISI,
         ],
         showIcon: true,
       },
@@ -75,9 +66,6 @@ const MENU_CONFIG = [
         roles: [
           ROLES.SUPERADMIN,
           ROLES.DIVISI_KONTRAK,
-          ROLES.KEPALA_SEKSI,
-          ROLES.KEPALA_SUBDIVISI,
-          ROLES.KEPALA_DIVISI,
         ],
         showIcon: true,
       },
@@ -89,9 +77,6 @@ const MENU_CONFIG = [
         roles: [
           ROLES.SUPERADMIN,
           ROLES.DIVISI_KONTRAK,
-          ROLES.KEPALA_SEKSI,
-          ROLES.KEPALA_SUBDIVISI,
-          ROLES.KEPALA_DIVISI,
         ],
         showIcon: true,
       },
@@ -120,9 +105,6 @@ const MENU_CONFIG = [
         roles: [
           ROLES.SUPERADMIN,
           ROLES.DIVISI_KONTRAK,
-          ROLES.KEPALA_SEKSI,
-          ROLES.KEPALA_SUBDIVISI,
-          ROLES.KEPALA_DIVISI,
         ],
         showIcon: true,
       },
@@ -149,9 +131,6 @@ const MENU_CONFIG = [
         roles: [
           ROLES.SUPERADMIN,
           ROLES.DIVISI_KONTRAK,
-          ROLES.KEPALA_SEKSI,
-          ROLES.KEPALA_SUBDIVISI,
-          ROLES.KEPALA_DIVISI,
         ],
         showIcon: true,
       },

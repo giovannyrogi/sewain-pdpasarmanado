@@ -23,43 +23,47 @@ export async function PUT(req, { params }) {
     const estimated_installment_2 = formData.get("estimated_installment_2");
     const estimated_installment_3 = formData.get("estimated_installment_3");
     const estimated_installment_1_date = formData.get(
-      "estimated_installment_date_1"
+      "estimated_installment_date_1",
     );
     const estimated_installment_2_date = formData.get(
-      "estimated_installment_date_2"
+      "estimated_installment_date_2",
     );
     const estimated_installment_3_date = formData.get(
-      "estimated_installment_date_3"
+      "estimated_installment_date_3",
     );
     const choose_tenor = Number(formData.get("choose_tenor")) || 1;
     const total_payment_room = formData.get("total_payment_room");
+    const start_date = formData.get("start_date");
+    const end_date = formData.get("end_date");
+    const tenant_type = formData.get("tenant_type");
+    const document_number = formData.get("document_number");
 
     // Validasi wajib
     if (!location_id) {
       return Response.json(
         { success: false, message: "Lokasi wajib diisi." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (!room_id) {
       return Response.json(
         { success: false, message: "Ruangan wajib diisi." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (!tenant_identity_id) {
       return Response.json(
         { success: false, message: "Identitas wajib diisi." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (!total_payment) {
       return Response.json(
         { success: false, message: "Total pembayaran wajib diisi." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -79,20 +83,35 @@ export async function PUT(req, { params }) {
             success: false,
             message: "Total cicilan tidak sesuai dengan sisa pembayaran.",
           },
-          { status: 200 }
+          { status: 200 },
         );
       }
+    }
+
+    //check document number duplication when edit data but still can use the same document number
+    const checkDocumentNumber = await pool.query(
+      "SELECT 1 FROM tenant_application WHERE document_number = $1 AND id != $2",
+      [document_number, id],
+    );
+    if (checkDocumentNumber.rows.length > 0) {
+      return Response.json(
+        {
+          success: false,
+          message: "Nomor dokumen sudah terdaftar!",
+        },
+        { status: 200 },
+      );
     }
 
     // Ambil data lama tenant
     const oldDataRes = await pool.query(
       "SELECT * FROM tenant_application WHERE id = $1",
-      [id]
+      [id],
     );
     if (oldDataRes.rowCount === 0) {
       return Response.json(
         { success: false, message: "Data tidak ditemukan" },
-        { status: 404 }
+        { status: 200 },
       );
     }
     const oldData = oldDataRes.rows[0];
@@ -104,7 +123,7 @@ export async function PUT(req, { params }) {
     // Validasi room + lokasi
     const roomCheck = await pool.query(
       "SELECT * FROM rooms WHERE id = $1 AND location_id = $2",
-      [room_id, location_id]
+      [room_id, location_id],
     );
     if (roomCheck.rowCount === 0) {
       return Response.json(
@@ -112,7 +131,7 @@ export async function PUT(req, { params }) {
           success: false,
           message: "Ruangan tidak ditemukan di lokasi yang dipilih.",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -172,8 +191,12 @@ export async function PUT(req, { params }) {
         estimated_installment_2_date = $15,
         estimated_installment_3_date = $16,
         total_payment_room = $17,
-        current_tenor = $18
-        WHERE id = $19
+        current_tenor = $18,
+        start_date = $19,
+        end_date = $20,
+        document_number = $21,
+        application_type = $22
+        WHERE id = $23
         RETURNING *
         `,
         [
@@ -195,8 +218,12 @@ export async function PUT(req, { params }) {
           formated_estimated_installment_3_date,
           total_payment_room,
           choose_tenor,
+          start_date,
+          end_date,
+          document_number,
+          tenant_type,
           id,
-        ]
+        ],
       );
 
       const tenantApp = result.rows[0];
@@ -204,7 +231,7 @@ export async function PUT(req, { params }) {
       // Ambil nama tenant dari tabel tenant_identities
       const tenantIdentity = await client.query(
         `SELECT full_name FROM tenant_identities WHERE id = $1`,
-        [tenant_identity_id]
+        [tenant_identity_id],
       );
       const tenantName = tenantIdentity.rows[0]?.full_name || "-";
 
@@ -221,7 +248,7 @@ export async function PUT(req, { params }) {
               notes = NULL
           WHERE id = $1
           `,
-          [oldRoomId]
+          [oldRoomId],
         );
       }
 
@@ -233,7 +260,7 @@ export async function PUT(req, { params }) {
             notes = $2
         WHERE id = $1
         `,
-        [room_id, notes]
+        [room_id, notes],
       );
 
       // Update tenant_approval: reset hanya yang belum approve
@@ -247,7 +274,7 @@ export async function PUT(req, { params }) {
         WHERE tenant_application_id = $1
           AND status <> 'approved' 
         `,
-        [id]
+        [id],
       );
 
       await client.query("COMMIT");
@@ -259,7 +286,7 @@ export async function PUT(req, { params }) {
             "Data tenant berhasil diperbarui & status ruangan diperbarui.",
           data: result.rows[0],
         },
-        { status: 200 }
+        { status: 200 },
       );
     } catch (dbErr) {
       await client.query("ROLLBACK");
@@ -271,7 +298,7 @@ export async function PUT(req, { params }) {
     console.error("Error update tenant:", err);
     return Response.json(
       { success: false, message: "Terjadi error: " + err.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -286,7 +313,7 @@ export async function DELETE(request, context) {
     // Ambil data tenant_application sebelum dihapus
     const tenantRes = await client.query(
       `SELECT room_id FROM tenant_application WHERE id = $1`,
-      [id]
+      [id],
     );
 
     if (tenantRes.rows.length === 0) {
@@ -296,7 +323,7 @@ export async function DELETE(request, context) {
           success: false,
           message: "Data Penyewa tidak ditemukan",
         }),
-        { status: 404 }
+        { status: 200 },
       );
     }
 
@@ -310,19 +337,19 @@ export async function DELETE(request, context) {
           notes = NULL 
       WHERE id = $1
       `,
-      [room_id]
+      [room_id],
     );
 
     // Hapus tenant_approval terkait
     await client.query(
       `DELETE FROM tenant_approval WHERE tenant_application_id = $1`,
-      [id]
+      [id],
     );
 
     // Hapus tenant_application
     const result = await client.query(
       `DELETE FROM tenant_application WHERE id = $1 RETURNING *`,
-      [id]
+      [id],
     );
 
     await client.query("COMMIT");
@@ -333,7 +360,7 @@ export async function DELETE(request, context) {
           success: false,
           message: "Gagal menghapus Data Penyewa",
         }),
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -342,7 +369,7 @@ export async function DELETE(request, context) {
         success: true,
         message: "Berhasil menghapus Data Penyewa dan Ruangan tersedia kembali",
       }),
-      { status: 200 }
+      { status: 200 },
     );
   } catch (err) {
     await pool.query("ROLLBACK");
@@ -352,7 +379,7 @@ export async function DELETE(request, context) {
         success: false,
         message: err.message,
       }),
-      { status: 500 }
+      { status: 500 },
     );
   } finally {
     client.release();

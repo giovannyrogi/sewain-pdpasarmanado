@@ -38,6 +38,7 @@ export async function POST(req) {
     const total_payment_room = formData.get("total_payment_room");
     const admin_fee = formData.get("admin_fee");
     const choose_tenor = Number(formData.get("choose_tenor")) || 1;
+    const document_number = formData.get("document_number");
 
     const total = Number(total_payment) || 0;
     const minDp = Math.round(total * 0.4);
@@ -127,6 +128,21 @@ export async function POST(req) {
       );
     }
 
+    //check document number duplication
+    const checkDocumentNumber = await pool.query(
+      "SELECT 1 FROM tenant_application WHERE document_number = $1",
+      [document_number],
+    );
+    if (checkDocumentNumber.rows.length > 0) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: "Nomor dokumen sudah terdaftar!",
+        }),
+        { status: 200 },
+      );
+    }
+
     // Normalisasi nilai numeric
     const total_payment_num = total_payment ? Number(total_payment) : 0;
     const down_payment_num = down_payment ? Number(down_payment) : 0;
@@ -164,11 +180,13 @@ export async function POST(req) {
           total_payment_room,
           admin_fee,
           total_ppn,
-          current_tenor
+          current_tenor,
+          document_number,
+          application_type
         )
         VALUES (
           $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13,
-          $14, $15, $16, $17, $18, $19, $20, $21, $22, $23
+          $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25
         )
         RETURNING *
         `,
@@ -196,6 +214,8 @@ export async function POST(req) {
           admin_fee,
           total_ppn,
           choose_tenor,
+          document_number,
+          tenant_type,
         ],
       );
 
@@ -305,6 +325,7 @@ export async function GET(req) {
         ta.total_payment_room,
         ta.total_ppn,
         ta.current_tenor,
+        ta.application_type,
 
         -- identitas penyewa saat ini
         ti.full_name AS tenant_name,
@@ -351,6 +372,7 @@ export async function GET(req) {
       tenant_application_id: row.tenant_application_id,
       tenant_identity_id: row.tenant_identity_id,
       user_id: row.user_id,
+      application_type: row.application_type,
       current_tenor: row.current_tenor,
       tenant_name: row.tenant_name,
       tenant_nik: row.tenant_nik,

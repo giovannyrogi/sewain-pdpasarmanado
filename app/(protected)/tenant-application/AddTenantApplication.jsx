@@ -8,6 +8,7 @@ import {
   FormControl,
   Grid,
   IconButton,
+  InputAdornment,
   InputLabel,
   MenuItem,
   Modal,
@@ -96,7 +97,7 @@ const AddTenantApplication = ({
     useState(null);
   const [estimatedInstallmentDate3, setEstimatedInstallmentDate3] =
     useState(null);
-  const [tenantType, setTenantType] = useState("permohonan baru");
+  const [tenantType, setTenantType] = useState("permohonan_baru");
   const [listDataTenantExtends, setListDataTenantExtends] = useState([]);
   const [selectedDataTenantExtends, setSelectedDataTenantExtends] =
     useState(null);
@@ -114,6 +115,51 @@ const AddTenantApplication = ({
   const [openViewInformationModal, setOpenViewInformationModal] =
     useState(false);
   const [chooseTenor, setChooseTenor] = useState(1);
+  const [documentNumber, setDocumentNumber] = useState("");
+  const [durasiKontrak, setDurasiKontrak] = useState(0);
+  const [highestDocumentNumber, setHighestDocumentNumber] = useState(null);
+  const toRoman = (num) => {
+    const roman = [
+      "",
+      "I",
+      "II",
+      "III",
+      "IV",
+      "V",
+      "VI",
+      "VII",
+      "VIII",
+      "IX",
+      "X",
+      "XI",
+      "XII",
+    ];
+    return roman[num] || "";
+  };
+
+  const getPrefix = () => {
+    const now = new Date();
+    const monthRoman = toRoman(now.getMonth() + 1);
+    const year = now.getFullYear();
+    return (
+      <InputAdornment
+        position="end"
+        sx={{
+          whiteSpace: "nowrap",
+          color: theme.palette.primary.main,
+        }}
+      >
+        <Typography
+          sx={{
+            whiteSpace: "nowrap",
+            fontWeight: "bold",
+            fontSize: "14px",
+            letterSpacing: "1px",
+          }}
+        >{`/PM/SKR/${monthRoman}/${year}`}</Typography>
+      </InputAdornment>
+    );
+  };
 
   const installments = [
     {
@@ -139,6 +185,32 @@ const AddTenantApplication = ({
     },
   ];
 
+  const getHighestDocumentNumber = async () => {
+    loadingTrue();
+    try {
+      const response = await axios.get(
+        `/api/tenant-application/update-document`,
+      );
+      // console.log("response update document", response);
+      if (response.data.success) {
+        setHighestDocumentNumber(response.data.data);
+        setTimeout(() => {
+          loadingFalse();
+        }, 1000);
+      } else {
+        console.log("error", response);
+        setTimeout(() => {
+          loadingFalse();
+        }, 1000);
+      }
+    } catch (error) {
+      console.log(error);
+      setTimeout(() => {
+        loadingFalse();
+      }, 1000);
+    }
+  };
+
   const getRoomsData = async (locationId) => {
     if (!locationId) {
       setDataAvailableRooms([]);
@@ -151,7 +223,7 @@ const AddTenantApplication = ({
 
     try {
       const response = await axios.get(
-        `/api/rooms/available-rooms?location_id=${locationId}`
+        `/api/rooms/available-rooms?location_id=${locationId}`,
       );
 
       // console.log("response rooms", response.data);
@@ -184,12 +256,11 @@ const AddTenantApplication = ({
     setLoadingMessage("Mengambil data sebelumnya...");
     try {
       const response = await axios.get(
-        "/api/tenant-application/tenant-extends"
+        "/api/tenant-application/tenant-extends",
       );
-      // console.log("response tenant-extends", response);
+      console.log("response tenant-extends", response);
 
-      setStartDate(response?.data?.data?.[0]?.start_date);
-      setEndDate(response?.data?.data?.[0]?.end_date);
+      // setEndDate(response?.data?.data?.[0]?.end_date);
 
       if (response.data.success) {
         setListDataTenantExtends(response.data.data);
@@ -212,7 +283,7 @@ const AddTenantApplication = ({
     setLoadingMessage("Mengambil data sebelumnya...");
     try {
       const response = await axios.get(
-        `/api/tenant-application/tenant-extends/${id}`
+        `/api/tenant-application/tenant-extends/${id}`,
       );
       // console.log("response previous data", response);
       setLocationId(response.data?.data?.locations?.id);
@@ -263,8 +334,16 @@ const AddTenantApplication = ({
   useEffect(() => {
     if (open) {
       getListIdentities();
+      getHighestDocumentNumber();
     }
   }, [open]);
+
+  useEffect(() => {
+    if (startDate && endDate) {
+      const duration = endDate.diff(startDate, "days");
+      setDurasiKontrak(duration + 1);
+    }
+  }, [startDate, endDate]);
 
   // Sinkronisasi DP & Sisa saat totalPayment atau paymentType berubah
   useEffect(() => {
@@ -354,6 +433,13 @@ const AddTenantApplication = ({
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // gabungkan nomor + prefix
+    const now = new Date();
+    const monthRoman = toRoman(now.getMonth() + 1);
+    const year = now.getFullYear();
+    const prefix = `/PM/SKR/${monthRoman}/${year}`;
+    const finalDocNumber = `${documentNumber}${prefix}`;
+
     // const totalPaymentWithoutAdminFee =
     //   Number(totalPayment) - biayaAdministrasi;
     const total = Number(totalPayment) || 0;
@@ -380,7 +466,7 @@ const AddTenantApplication = ({
         onNotify({
           open: true,
           message: `DP tidak boleh lebih besar dari total pembayaran ${formatRupiah(
-            total
+            total,
           )}.`,
           severity: "error",
         });
@@ -416,7 +502,7 @@ const AddTenantApplication = ({
           onNotify({
             open: true,
             message: `Total cicilan harus sama dengan sisa tagihan ${formatRupiah(
-              remainingPayment
+              remainingPayment,
             )}.`,
             severity: "error",
           });
@@ -442,16 +528,20 @@ const AddTenantApplication = ({
       formData.append("admin_fee", biayaAdministrasi);
       formData.append("total_ppn", totalPPN);
       formData.append("choose_tenor", chooseTenor);
+      formData.append("document_number", finalDocNumber);
+      formData.append("start_date", moment(startDate).format("YYYY-MM-DD"));
+      formData.append("end_date", moment(endDate).format("YYYY-MM-DD"));
+      formData.append("tenant_type", tenantType)
 
-      if (tenantType === "perpanjang tenant" && endDate) {
-        // tenant lama endDate dijadikan start_date tenant baru
-        const newStartDate = moment(endDate).format("YYYY-MM-DD");
-        // endDate tenant baru = endDate lama + 1 tahun
-        const newEndDate = moment(endDate).add(1, "year").format("YYYY-MM-DD");
+      // if (tenantType === "perpanjang_tenant" && endDate) {
+      //   // tenant lama endDate dijadikan start_date tenant baru
+      //   const newStartDate = moment(endDate).format("YYYY-MM-DD");
+      //   // endDate tenant baru = endDate lama + 1 tahun
+      //   const newEndDate = moment(endDate).add(1, "year").format("YYYY-MM-DD");
 
-        formData.append("start_date", newStartDate);
-        formData.append("end_date", newEndDate);
-      }
+      //   formData.append("start_date", newStartDate);
+      //   formData.append("end_date", newEndDate);
+      // }
 
       // hanya kirim data cicilan kalau paymentType === 'cicilan'
       if (paymentType === "cicilan") {
@@ -465,29 +555,29 @@ const AddTenantApplication = ({
         if (estimatedInstallmentDate1) {
           formData.append(
             "estimated_installment_date_1",
-            moment(estimatedInstallmentDate1).format("YYYY-MM-DD")
+            moment(estimatedInstallmentDate1).format("YYYY-MM-DD"),
           );
         }
         if (estimatedInstallmentDate2) {
           formData.append(
             "estimated_installment_date_2",
-            moment(estimatedInstallmentDate2).format("YYYY-MM-DD")
+            moment(estimatedInstallmentDate2).format("YYYY-MM-DD"),
           );
         }
         if (estimatedInstallmentDate3) {
           formData.append(
             "estimated_installment_date_3",
-            moment(estimatedInstallmentDate3).format("YYYY-MM-DD")
+            moment(estimatedInstallmentDate3).format("YYYY-MM-DD"),
           );
         }
       }
 
-      if (tenantType === "perpanjang tenant") {
+      if (tenantType === "perpanjang_tenant") {
         formData.append(
           "renewal_of",
           selectedDataTenantExtends
             ? selectedDataTenantExtends?.tenant_application_id
-            : null
+            : null,
         );
       }
 
@@ -565,15 +655,18 @@ const AddTenantApplication = ({
     setEstimatedInstallmentDate1(null);
     setEstimatedInstallmentDate2(null);
     setEstimatedInstallmentDate3(null);
-    setTenantType("permohonan baru");
+    setTenantType("permohonan_baru");
     setSelectedDataTenantExtends(null);
     setChooseTenor(1);
+    setDocumentNumber("");
+    setHighestDocumentNumber(null);
+    setDurasiKontrak(0);
   };
 
   // Pilihan dropdown
   const tenantOptions = [
-    { label: "Permohonan Baru", value: "permohonan baru" },
-    { label: "Perpanjang Tenant", value: "perpanjang tenant" },
+    { label: "Permohonan Baru", value: "permohonan_baru" },
+    { label: "Perpanjang Tenant", value: "perpanjang_tenant" },
   ];
 
   return (
@@ -633,9 +726,10 @@ const AddTenantApplication = ({
                 }
                 onChange={(event, newValue) => {
                   // simpan value ke state
-                  if (newValue?.value === "perpanjang tenant") {
+                  if (newValue?.value === "perpanjang_tenant") {
                     clearForm();
                     getListTenantExtends();
+                    getHighestDocumentNumber();
                   } else {
                     clearForm();
                     setListDataTenantExtends([]);
@@ -654,10 +748,10 @@ const AddTenantApplication = ({
                 )}
               />
             </Grid>
-            {tenantType === "perpanjang tenant" ? (
+            {tenantType === "perpanjang_tenant" ? (
               <Grid size={12}>
                 <Autocomplete
-                  disabled={!tenantType || tenantType === "permohonan baru"}
+                  disabled={!tenantType || tenantType === "permohonan_baru"}
                   options={listDataTenantExtends || []}
                   getOptionLabel={(option) =>
                     option?.tenant_name +
@@ -669,13 +763,14 @@ const AddTenantApplication = ({
                   value={selectedDataTenantExtends}
                   onChange={(event, newValue) => {
                     setSelectedDataTenantExtends(newValue ?? null);
-                    // console.log("newValue perpanjang tenant", newValue);
+                    console.log("newValue perpanjang_tenant", newValue);
 
                     // clear form setelah menghapus data tenant lama
                     if (!newValue) {
                       clearForm();
                     } else {
                       getCurrentExtendTenant(newValue?.tenant_application_id);
+                      setStartDate(moment(newValue?.end_date));
                       setIdentityID(newValue?.tenant_identity_id);
                     }
                   }}
@@ -952,7 +1047,7 @@ const AddTenantApplication = ({
                         ? alpha(theme.palette.primary.main, 0.12)
                         : alpha(theme.palette.primary.main, 0.12),
                     borderRadius: 1,
-                    mt: -1,
+                    alignContent: "center",
                   }}
                 >
                   <Typography
@@ -1032,6 +1127,121 @@ const AddTenantApplication = ({
                 </Typography>
               </Grid>
             )}
+
+            <Grid size={isMobile ? 12 : 6}>
+              <DatePicker
+                label="Tanggal Mulai Kontrak"
+                value={startDate}
+                onChange={(newValue) => {
+                  setStartDate(newValue);
+                  // console.log("startdate", newValue);
+
+                  // if (newValue) {
+                  //   // Tambahkan 365 hari ke tanggal mulai
+                  //   const end = moment(newValue).add(365, "days");
+
+                  //   setEndDate(end);
+                  // } else {
+                  //   setEndDate(null);
+                  // }
+                }}
+                // minDate={moment()}
+                disabled={tenantType === "perpanjang_tenant"}
+                slotProps={{
+                  textField: {
+                    variant: "filled",
+                    fullWidth: true,
+                    required: true,
+                    disabled: tenantType === "perpanjang_tenant",
+                    color: "primary",
+                  },
+                }}
+              />
+            </Grid>
+            <Grid size={isMobile ? 12 : 6}>
+              <DatePicker
+                label="Tanggal Berakhir Kontrak"
+                value={endDate}
+                onChange={(newValue) => {
+                  setEndDate(newValue);
+                }}
+                // minDate={moment()}
+                // disabled
+                slotProps={{
+                  textField: {
+                    variant: "filled",
+                    fullWidth: true,
+                    required: true,
+                    color: "primary",
+                    // disabled: true,
+                  },
+                }}
+              />
+            </Grid>
+            <Grid size={12}>
+              <TextField
+                label="Durasi Kontrak (hari)"
+                variant="filled"
+                fullWidth
+                value={`${durasiKontrak} hari`}
+                // onChange={(e) => {
+                // }}
+                disabled
+                required
+                color="primary"
+              />
+            </Grid>
+
+            <Grid size={12}>
+              <TextField
+                label="Nomor Dokumen"
+                // placeholder="Cth: 001"
+                variant="filled"
+                fullWidth
+                value={documentNumber}
+                onChange={(e) => {
+                  // document number hanya boleh angka
+                  setDocumentNumber(e.target.value.replace(/[^0-9]/g, ""));
+                }}
+                InputProps={{
+                  endAdornment: getPrefix(),
+                }}
+                required
+                color="primary"
+              />
+            </Grid>
+            {highestDocumentNumber && (
+              <Grid
+                size={12}
+                sx={{
+                  p: 1,
+                  bgcolor:
+                    themeMode === "dark"
+                      ? alpha(theme.palette.primary.main, 0.12)
+                      : alpha(theme.palette.primary.main, 0.12),
+                  borderRadius: 1,
+                  // mt: -1,
+                  mb: -1,
+                  display: "flex",
+                  flexDirection: "row",
+                  gap: 1,
+                }}
+              >
+                <Typography
+                  sx={{
+                    fontSize: "14px",
+                    fontWeight: "bold",
+                    color: "primary.main",
+                  }}
+                >
+                  Nomor Dokumen terakhir adalah{" "}
+                  {highestDocumentNumber?.highest_document_number
+                    .split("/")[0]
+                    .trim() || "-"}
+                </Typography>
+              </Grid>
+            )}
+
             <Grid size={12}>
               <Button
                 type="submit"
