@@ -413,40 +413,6 @@ const Applications = () => {
       render: (text, record) =>
         record.approval_status === "approved" ? (
           <Box sx={{ display: "flex", gap: 1, justifyContent: "center" }}>
-            {
-              !record?.document_number ? (
-                <Tooltip title="Update Masa Berlaku Dokumen">
-                  <Button
-                    size="small"
-                    variant={themeMode === "dark" ? "outlined" : "contained"}
-                    color="success"
-                    onClick={() => handleUpdateDate(record)}
-                    sx={{ minWidth: 0, px: 1 }}
-                  >
-                    <Icon
-                      icon="line-md:calendar"
-                      fontSize={18}
-                      style={{
-                        color: themeMode === "dark" ? "green" : "white",
-                      }}
-                    />
-                  </Button>
-                </Tooltip>
-              ) : undefined
-              // <Tooltip title="Print Dokumen">
-              //   <Button
-              //     size="small"
-              //     variant={themeMode === "dark" ? "outlined" : "contained"}
-              //     color="primary"
-              //     onClick={() =>
-              //       handlePrintDoc(record)
-              //     }
-              //     sx={{ minWidth: 0, px: 1 }}
-              //   >
-              //     <Icon icon="streamline-ultimate:print-text" fontSize={18} />
-              //   </Button>
-              // </Tooltip>
-            }
             <Tooltip title="Detail Data Pemohon">
               <Button
                 size="small"
@@ -476,17 +442,7 @@ const Applications = () => {
                 <Icon icon="line-md:edit" fontSize={18} />
               </Button>
             </Tooltip>
-            <Tooltip title="Print Dokumen">
-              <Button
-                size="small"
-                variant={themeMode === "dark" ? "outlined" : "contained"}
-                color="primary"
-                onClick={() => handlePrintDoc(record)}
-                sx={{ minWidth: 0, px: 1 }}
-              >
-                <Icon icon="streamline-ultimate:print-text" fontSize={18} />
-              </Button>
-            </Tooltip>
+
             <Tooltip title="Detail Data Pemohon">
               <Button
                 size="small"
@@ -502,6 +458,37 @@ const Applications = () => {
                 />
               </Button>
             </Tooltip>
+            {!record?.document_number ? (
+              <Tooltip title="Update Masa Berlaku Dokumen">
+                <Button
+                  size="small"
+                  variant={themeMode === "dark" ? "outlined" : "contained"}
+                  color="success"
+                  onClick={() => handleUpdateDate(record)}
+                  sx={{ minWidth: 0, px: 1 }}
+                >
+                  <Icon
+                    icon="line-md:calendar"
+                    fontSize={18}
+                    style={{
+                      color: themeMode === "dark" ? "green" : "white",
+                    }}
+                  />
+                </Button>
+              </Tooltip>
+            ) : (
+              <Tooltip title="Print Dokumen">
+                <Button
+                  size="small"
+                  variant={themeMode === "dark" ? "outlined" : "contained"}
+                  color="primary"
+                  onClick={() => handlePrintDoc(record)}
+                  sx={{ minWidth: 0, px: 1 }}
+                >
+                  <Icon icon="streamline-ultimate:print-text" fontSize={18} />
+                </Button>
+              </Tooltip>
+            )}
             <Tooltip title="Hapus Data">
               <Button
                 size="small"

@@ -222,7 +222,7 @@ const UpdateDocumentDate = ({
             fontSize: "14px",
             letterSpacing: "1px",
           }}
-        >{`/PM/${monthRoman}/${year}`}</Typography>
+        >{`/PM/SKR/${monthRoman}/${year}`}</Typography>
       </InputAdornment>
     );
   };
