@@ -8,8 +8,6 @@ import Image from "next/image";
 const LembarPersetujuan = forwardRef(({ data }, ref) => {
   if (!data) return null;
 
-  console.log("data", data);
-
   return (
     <Box ref={ref} sx={{ padding: "100px 50px 0px 30px" }}>
       <Grid container spacing={1}>
