@@ -7,6 +7,7 @@ import Image from "next/image";
 
 const SuratPernyataanPenyewa = forwardRef(({ data }, ref) => {
   if (!data) return null;
+  // console.log("data", data);
 
   const handleCalculateTotal = () => {
     // Konversi nilai ke number
@@ -180,9 +181,11 @@ const SuratPernyataanPenyewa = forwardRef(({ data }, ref) => {
               textAlign: "justify",
             }}
           >
-            Dengan ini kami mengajukan permohonan pembayaran{" "}
-            {data?.payment_type === "cicilan" ? "Menyicil" : undefined} Kontrak
-            Ruangan sebagai berikut :
+            Dengan ini kami mengajukan Permohonan{" "}
+            {data?.application_type === "permohonan_baru"
+              ? "Baru"
+              : "Perpanjangan"}{" "}
+            Kontrak Ruangan sebagai berikut :
           </Typography>
         </Grid>
 
@@ -252,12 +255,13 @@ const SuratPernyataanPenyewa = forwardRef(({ data }, ref) => {
               fontSize: "11pt",
             }}
           >
-            Demikian permohonan ini kami sampaikan, kiranya dapat disetujui.
-            Atas perhatian dan kerjasamanya diucapkan terima kasih.
+            Adapun pembayaran kontrak dibayar{" "}
+            {data?.payment_type === "cicilan" ? "Menyicil" : "Lunas"} dengan
+            rincian sebagai berikut :
           </Typography>
         </Grid>
 
-        <Grid size={12} mb={2}>
+        <Grid size={12}>
           {/* Tabel Rincian Tagihan */}
           <table
             style={{
@@ -289,7 +293,7 @@ const SuratPernyataanPenyewa = forwardRef(({ data }, ref) => {
                     fontFamily: "calibri",
                     padding: "5px",
                     fontSize: "11pt",
-                    width:"100pt"
+                    width: "100pt",
                   }}
                 >
                   Jenis Pembayaran
@@ -300,7 +304,7 @@ const SuratPernyataanPenyewa = forwardRef(({ data }, ref) => {
                     fontFamily: "calibri",
                     padding: "5px",
                     fontSize: "11pt",
-                    width:"130pt"
+                    width: "130pt",
                   }}
                 >
                   Ukuran Ruangan
@@ -311,7 +315,7 @@ const SuratPernyataanPenyewa = forwardRef(({ data }, ref) => {
                     fontFamily: "calibri",
                     padding: "5px",
                     fontSize: "11pt",
-                    width:"80pt"
+                    width: "80pt",
                   }}
                 >
                   Harga Ruangan
@@ -670,6 +674,19 @@ const SuratPernyataanPenyewa = forwardRef(({ data }, ref) => {
               </tbody>
             </table>
           )}
+        </Grid>
+
+        <Grid size={12}>
+          <Typography
+            sx={{
+              fontFamily: "calibri",
+              textAlign: "justify",
+              fontSize: "11pt",
+            }}
+          >
+            Demikian permohonan ini kami sampaikan, kiranya dapat disetujui.
+            Atas perhatian dan kerjasamanya diucapkan terima kasih.
+          </Typography>
         </Grid>
 
         {/* TTD Penyewa */}
