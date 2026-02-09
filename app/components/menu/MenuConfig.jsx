@@ -190,6 +190,23 @@ const MENU_CONFIG = [
     icon: <Icon icon="fluent:chart-multiple-16-filled" fontSize={23} />,
     roles: [ROLES.SUPERADMIN, ROLES.DIVISI_KONTRAK],
     submenu: [
+      // {
+      //   label: "Room Status",
+      //   value: "room-status",
+      //   path: "/room-status",
+      //   icon: <Icon icon="ic:baseline-meeting-room" fontSize="20px" />,
+      //   roles: [
+      //     ROLES.SUPERADMIN,
+      //     ROLES.DIVISI_KONTRAK,
+      //     ROLES.KEPALA_SEKSI,
+      //     ROLES.KEPALA_SUBDIVISI,
+      //     ROLES.KEPALA_DIVISI,
+      //     ROLES.DIREKTUR_BISNIS,
+      //     ROLES.DIREKTUR_UTAMA,
+      //     ROLES.DIVISI_KEUANGAN,
+      //   ],
+      //   showIcon: true,
+      // },
       {
         label: "Report By Locations",
         value: "locations-report",

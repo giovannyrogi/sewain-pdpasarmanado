@@ -45,12 +45,12 @@ export async function POST(req) {
     const dp = Number(down_payment) || 0;
 
     // Validasi DP minimal 40% dari total
-    // if (payment_type === "cicilan" && dp < minDp) {
-    //   return Response.json(
-    //     { success: false, message: "DP minimal 40% dari total pembayaran." },
-    //     { status: 400 }
-    //   );
-    // }
+    if (payment_type === "cicilan" && dp < minDp) {
+      return Response.json(
+        { success: false, message: "DP minimal 40% dari total pembayaran." },
+        { status: 400 },
+      );
+    }
 
     // Validasi DP tidak boleh lebih besar dari total
     if (dp > total) {

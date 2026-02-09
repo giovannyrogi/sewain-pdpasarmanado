@@ -64,6 +64,7 @@ const AddRoom = ({
   const [pricePerMeter, setPricePerMeter] = useState("");
   const [notes, setNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [priceType, setPriceType] = useState("harga_per_meter");
 
   const getFloorData = async (locationId) => {
     if (!locationId) {
@@ -77,7 +78,7 @@ const AddRoom = ({
 
     try {
       const response = await axios.get(
-        `/api/location-floor-price/floor-by-location-id?location_id=${locationId}`
+        `/api/location-floor-price/floor-by-location-id?location_id=${locationId}`,
       );
       // console.log("data floor", response);
 
@@ -118,6 +119,7 @@ const AddRoom = ({
         status: statusRoom,
         price_per_m2: pricePerMeter,
         notes: notes || null,
+        price_type: priceType,
       });
 
       if (response.data.success) {
@@ -154,7 +156,9 @@ const AddRoom = ({
       onNotify &&
         onNotify({
           open: true,
-          message: error.response.data.message || "Terjadi error saat menambah Ruangan.",
+          message:
+            error.response.data.message ||
+            "Terjadi error saat menambah Ruangan.",
           severity: "error",
         });
       setTimeout(() => {
@@ -175,6 +179,7 @@ const AddRoom = ({
     setPricePerMeter("");
     setNotes("");
     setDataFloor([]);
+    setPriceType("harga_per_meter");
   };
 
   return (
@@ -245,12 +250,12 @@ const AddRoom = ({
               <Autocomplete
                 disabled={!locationId}
                 options={dataFloor || []}
-                getOptionLabel={(option) =>
-                  option.floor
-                    // ? option.floor +
-                    //   " " +
-                    //   `(${formatRupiah(option.base_price)})`
-                    // : ""
+                getOptionLabel={
+                  (option) => option.floor
+                  // ? option.floor +
+                  //   " " +
+                  //   `(${formatRupiah(option.base_price)})`
+                  // : ""
                 }
                 value={
                   dataFloor
@@ -300,67 +305,108 @@ const AddRoom = ({
                 }}
               />
             </Grid>
-            <Grid size={6}>
-              <TextField
-                label="Panjang (m)"
-                placeholder="Cth: 2.86"
-                variant="filled"
-                fullWidth
-                value={roomLength}
-                onChange={(e) =>
-                  setRoomLength(e.target.value.replace(/\s/g, ""))
-                }
-                autoFocus
-                required
-                disabled={loading}
-                color="primary"
-              />
-            </Grid>
-            <Grid size={6}>
-              <TextField
-                label="Lebar (m)"
-                placeholder="Cth: 13.00"
-                variant="filled"
-                fullWidth
-                value={roomWidth}
-                onChange={(e) =>
-                  setRoomWidth(e.target.value.replace(/\s/g, ""))
-                }
-                autoFocus
-                required
-                disabled={loading}
-                color="primary"
-              />
-            </Grid>
             <Grid size={12}>
-              <TextField
-                label="Luas (m)"
-                placeholder="Cth: 13.00"
-                variant="filled"
-                fullWidth
-                value={roomArea}
-                onChange={(e) => setRoomArea(e.target.value.replace(/\s/g, ""))}
-                autoFocus
-                disabled
-                color="primary"
-              />
+              {" "}
+              <FormControl fullWidth variant="filled" required>
+                <InputLabel id="demo-simple-select-filled-label">
+                  Jenis Ruangan
+                </InputLabel>
+                <Select
+                  value={priceType}
+                  defaultValue={priceType}
+                  onChange={(e) => {
+                    setPriceType(e.target.value);
+                  }}
+                >
+                  <MenuItem value="harga_per_meter">Harga Per m²</MenuItem>
+                  <MenuItem value="harga_tetap">Harga Tetap</MenuItem>
+                </Select>
+              </FormControl>
             </Grid>
-            <Grid size={12}>
-              <TextField
-                label="Harga Per Meter (Rp)"
-                // placeholder=""
-                variant="filled"
-                fullWidth
-                value={pricePerMeter ? formatRupiah(pricePerMeter) : ""}
-                onChange={(e) => {
-                  const rawValue = e.target.value.replace(/\D/g, ""); // hanya ambil angka
-                  setPricePerMeter(rawValue);
-                }}
-                autoFocus
-                required
-                color="primary"
-              />
-            </Grid>
+            {priceType === "harga_per_meter" ? (
+              <>
+                <Grid size={6}>
+                  <TextField
+                    label="Panjang (m)"
+                    placeholder="Cth: 2.86"
+                    variant="filled"
+                    fullWidth
+                    value={roomLength}
+                    onChange={(e) =>
+                      setRoomLength(e.target.value.replace(/\s/g, ""))
+                    }
+                    autoFocus
+                    required
+                    disabled={loading}
+                    color="primary"
+                  />
+                </Grid>
+                <Grid size={6}>
+                  <TextField
+                    label="Lebar (m)"
+                    placeholder="Cth: 13.00"
+                    variant="filled"
+                    fullWidth
+                    value={roomWidth}
+                    onChange={(e) =>
+                      setRoomWidth(e.target.value.replace(/\s/g, ""))
+                    }
+                    autoFocus
+                    required
+                    disabled={loading}
+                    color="primary"
+                  />
+                </Grid>
+                <Grid size={12}>
+                  <TextField
+                    label="Luas (m²)"
+                    placeholder="Cth: 13.00"
+                    variant="filled"
+                    fullWidth
+                    value={roomArea}
+                    onChange={(e) =>
+                      setRoomArea(e.target.value.replace(/\s/g, ""))
+                    }
+                    autoFocus
+                    disabled
+                    color="primary"
+                  />
+                </Grid>
+                <Grid size={12}>
+                  <TextField
+                    label="Harga Per m² (Rp)"
+                    // placeholder=""
+                    variant="filled"
+                    fullWidth
+                    value={pricePerMeter ? formatRupiah(pricePerMeter) : ""}
+                    onChange={(e) => {
+                      const rawValue = e.target.value.replace(/\D/g, ""); // hanya ambil angka
+                      setPricePerMeter(rawValue);
+                    }}
+                    autoFocus
+                    required
+                    color="primary"
+                  />
+                </Grid>
+              </>
+            ) : (
+              <Grid size={12}>
+                <TextField
+                  label="Harga Tetap (Rp)"
+                  // placeholder=""
+                  variant="filled"
+                  fullWidth
+                  value={pricePerMeter ? formatRupiah(pricePerMeter) : ""}
+                  onChange={(e) => {
+                    const rawValue = e.target.value.replace(/\D/g, ""); // hanya ambil angka
+                    setPricePerMeter(rawValue);
+                  }}
+                  autoFocus
+                  required
+                  color="primary"
+                />
+              </Grid>
+            )}
             <Grid size={12}>
               {" "}
               <FormControl fullWidth variant="filled" required>

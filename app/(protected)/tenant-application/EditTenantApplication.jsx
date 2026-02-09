@@ -350,13 +350,22 @@ const EditTenantApplication = ({
     }
   }, [open]);
 
+  // Sinkronisasi DP & Sisa saat totalPayment atau paymentType berubah
+  useEffect(() => {
+    if (paymentType === "cicilan") {
+      const total = Number(totalPayment) || 0;
+      const defaultDP = Math.round(total * 0.4);
+      setDownPayment(defaultDP);
+      setRemainingPayment(total - defaultDP);
+    } else {
+      setDownPayment("");
+      setRemainingPayment("");
+    }
+  }, [totalPayment, paymentType]);
+
   // Hitung total payment otomatis saat pilih ruangan
   useEffect(() => {
-    if (
-      selectedDataRooms &&
-      selectedDataRooms.room_area &&
-      selectedDataRooms.price_per_m2
-    ) {
+    if (selectedDataRooms?.price_type === "harga_per_meter") {
       const total =
         parseFloat(selectedDataRooms.room_area) * // luas dari room_length * room_width
         parseInt(selectedDataRooms.price_per_m2); // harga dari price_per_m2
@@ -367,6 +376,8 @@ const EditTenantApplication = ({
       setTotalSewaKontrakRuangan(total);
       setTotalPPN(totalPPN);
       setTotalPayment(grandTotal); // simpan ke state totalPayment
+    } else {
+      setTotalPayment(selectedDataRooms?.price_per_m2);
     }
   }, [selectedDataRooms]);
 

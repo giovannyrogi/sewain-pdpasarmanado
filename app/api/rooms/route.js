@@ -14,51 +14,52 @@ export async function POST(req) {
       status,
       price_per_m2,
       notes,
+      price_type,
     } = body;
 
     // Validasi field wajib
     if (!location_id) {
       return new Response(
         JSON.stringify({ success: false, message: "Lokasi wajib diisi!" }),
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (!floor_id) {
       return new Response(
         JSON.stringify({ success: false, message: "Lantai wajib diisi!" }),
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (!room_number) {
       return new Response(
         JSON.stringify({ success: false, message: "Nomor kamar wajib diisi!" }),
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    if (!room_length || !room_width) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          message: "Panjang dan lebar kamar wajib diisi!",
-        }),
-        { status: 400 }
-      );
-    }
+    // if (!room_length || !room_width) {
+    //   return new Response(
+    //     JSON.stringify({
+    //       success: false,
+    //       message: "Panjang dan lebar kamar wajib diisi!",
+    //     }),
+    //     { status: 400 },
+    //   );
+    // }
 
     if (!status) {
       return new Response(
         JSON.stringify({ success: false, message: "Status wajib diisi!" }),
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (price_per_m2 < 0) {
       return new Response(
         JSON.stringify({ success: false, message: "Harga wajib diisi!" }),
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -69,7 +70,7 @@ export async function POST(req) {
             success: false,
             message: "Notes maksimal 150 karakter!",
           }),
-          { status: 400 }
+          { status: 400 },
         );
       }
     }
@@ -77,30 +78,34 @@ export async function POST(req) {
     // Validasi apakah nomor kamar sudah terdaftar pada lokasi yang dipilih
     const checkRoom = await pool.query(
       `SELECT * FROM rooms WHERE location_id=$1 AND room_number=$2`,
-      [location_id, room_number]
+      [location_id, room_number],
     );
     if (checkRoom.rows.length > 0) {
       return new Response(
-        JSON.stringify({ success: false, message: "Nomor ruangan sudah terdaftar pada lokasi yang dipilih!" }),
-        { status: 400 }
+        JSON.stringify({
+          success: false,
+          message: "Nomor ruangan sudah terdaftar pada lokasi yang dipilih!",
+        }),
+        { status: 400 },
       );
     }
 
     const result = await pool.query(
       `INSERT INTO rooms 
-       (location_id, room_number, floor_id, room_length, room_width, price_per_m2, status, notes)
-       VALUES ($1, $2, $3, $4, $5, $6, $7 , $8)
+       (location_id, room_number, floor_id, room_length, room_width, price_per_m2, status, notes, price_type)
+       VALUES ($1, $2, $3, $4, $5, $6, $7 , $8, $9)
        RETURNING *`,
       [
         location_id,
         room_number,
         floor_id,
-        room_length,
-        room_width,
+        room_length || 0,
+        room_width || 0,
         price_per_m2 || 0,
         status,
         notes,
-      ]
+        price_type,
+      ],
     );
 
     return new Response(
@@ -109,13 +114,13 @@ export async function POST(req) {
         message: "Berhasil menambah room baru",
         data: result.rows[0],
       }),
-      { status: 201 }
+      { status: 201 },
     );
   } catch (err) {
     console.log(err, "err");
     return new Response(
       JSON.stringify({ success: false, message: err.message }),
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -136,6 +141,7 @@ export async function GET(req) {
          r.location_id,
          r.price_per_m2,
          r.notes,
+         r.price_type,
          l.location_name,
          f.id AS floor_id,
          f.floor AS room_floor
@@ -144,7 +150,7 @@ export async function GET(req) {
       LEFT JOIN location_floor_prices f 
         ON r.floor_id = f.id
       ORDER BY r.created_at DESC
-      `
+      `,
     );
 
     const rows = result.rows.map((row) => ({
@@ -156,10 +162,11 @@ export async function GET(req) {
       room_width: row.room_width,
       room_area: row.room_area,
       notes: row.notes,
-      price_per_m2: row.price_per_m2, 
+      price_per_m2: row.price_per_m2,
       floor_id: row.floor_id,
       room_floor: row.room_floor,
       status: row.status,
+      price_type: row.price_type,
       updated_at: row.updated_at
         ? moment(row.updated_at).format("YYYY-MM-DD HH:mm:ss")
         : null,
@@ -174,12 +181,12 @@ export async function GET(req) {
         message: "Berhasil mengambil data rooms dengan floor price",
         data: rows,
       }),
-      { status: 200 }
+      { status: 200 },
     );
   } catch (err) {
     return new Response(
       JSON.stringify({ success: false, message: err.message }),
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

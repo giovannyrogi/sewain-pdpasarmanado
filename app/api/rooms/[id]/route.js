@@ -15,6 +15,7 @@ export async function PUT(request, { params }) {
       status,
       price_per_m2,
       notes,
+      price_type
     } = body;
 
     // Validasi field wajib
@@ -39,15 +40,15 @@ export async function PUT(request, { params }) {
       );
     }
 
-    if (!room_length || !room_width) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          message: "Panjang dan lebar kamar wajib diisi!",
-        }),
-        { status: 400 }
-      );
-    }
+    // if (!room_length || !room_width) {
+    //   return new Response(
+    //     JSON.stringify({
+    //       success: false,
+    //       message: "Panjang dan lebar kamar wajib diisi!",
+    //     }),
+    //     { status: 400 }
+    //   );
+    // }
 
     if (!status) {
       return new Response(
@@ -216,8 +217,8 @@ export async function PUT(request, { params }) {
              status       = $6,
              price_per_m2 = $7,
              notes        = $8,
-             updated_at   = NOW()
-       WHERE id = $9
+             price_type   = $9
+       WHERE id = $10
        RETURNING *
       `,
       [
@@ -229,6 +230,7 @@ export async function PUT(request, { params }) {
         typeof status === "undefined" ? roomData.status : status,
         price_per_m2,
         notes,
+        price_type,
         id,
       ]
     );

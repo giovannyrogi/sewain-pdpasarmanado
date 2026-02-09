@@ -257,6 +257,7 @@ const LeftNavBar = ({
             alt="logo-pdpasar"
             width={45}
             height={45}
+            priority
           />
           {/* <Avatar
             src={"/logo-pdpasar.png"}

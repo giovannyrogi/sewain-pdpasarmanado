@@ -210,6 +210,7 @@ const WelcomeCard = ({ user, loading, isMobile, isTablet }) => {
                   right: -20,
                   transition: "all 0.2s ease",
                 }}
+                priority
               />
             </Grid>
           </Grid>

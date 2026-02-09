@@ -24,6 +24,7 @@ export async function GET(req) {
           rooms.updated_at,
           rooms.created_at,
           rooms.location_id,
+          rooms.price_type,
           locations.location_name,
           location_floor_prices.floor           
         FROM rooms
@@ -34,7 +35,7 @@ export async function GET(req) {
           AND rooms.location_id = $1
         ORDER BY rooms.created_at DESC
         `,
-        [locationId]
+        [locationId],
       );
     } else {
       // Jika tidak ada filter, tampilkan semua
@@ -47,6 +48,7 @@ export async function GET(req) {
           rooms.room_length,
           rooms.room_width,
           rooms.room_area,
+          rooms.price_type,
           rooms.price_per_m2,
           rooms.status,
           rooms.updated_at,
@@ -60,7 +62,7 @@ export async function GET(req) {
           ON rooms.floor_id = location_floor_prices.id 
         WHERE rooms.status = 'available'
         ORDER BY rooms.created_at DESC
-        `
+        `,
       );
     }
 
@@ -75,7 +77,8 @@ export async function GET(req) {
       price_per_m2: row.price_per_m2,
       floor_id: row.floor_id,
       floor: row.floor,
-      status: row.status, 
+      status: row.status,
+      price_type: row.price_type,
       updated_at: row.updated_at
         ? moment(row.updated_at).format("YYYY-MM-DD HH:mm:ss")
         : null,
@@ -90,13 +93,13 @@ export async function GET(req) {
         message: "Berhasil mengambil data rooms yang tersedia",
         data: rows,
       }),
-      { status: 200 }
+      { status: 200 },
     );
   } catch (err) {
     console.error("Error GET rooms", err);
     return new Response(
       JSON.stringify({ success: false, message: err.message }),
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

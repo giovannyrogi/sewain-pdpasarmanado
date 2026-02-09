@@ -360,11 +360,7 @@ const AddTenantApplication = ({
 
   // Hitung total payment otomatis saat pilih ruangan
   useEffect(() => {
-    if (
-      selectedDataRooms &&
-      selectedDataRooms.room_area &&
-      selectedDataRooms.price_per_m2
-    ) {
+    if (selectedDataRooms?.price_type === "harga_per_meter") {
       const total =
         parseFloat(selectedDataRooms.room_area) * // luas dari room_length * room_width
         parseInt(selectedDataRooms.price_per_m2); // harga dari price_per_m2
@@ -375,6 +371,8 @@ const AddTenantApplication = ({
       setTotalSewaKontrakRuangan(total);
       setTotalPPN(totalPPN);
       setTotalPayment(grandTotal); // simpan ke state totalPayment
+    } else {
+      setTotalPayment(selectedDataRooms?.price_per_m2);
     }
   }, [selectedDataRooms]);
 
@@ -448,18 +446,18 @@ const AddTenantApplication = ({
 
     setIsSubmitting(true);
 
-    // if (paymentType === "cicilan" && dp < minDp) {
-    //   onNotify &&
-    //     onNotify({
-    //       open: true,
-    //       message: `DP minimal 40% (${formatRupiah(
-    //         minDp
-    //       )}) dari total pembayaran ${formatRupiah(total)}.`,
-    //       severity: "error",
-    //     });
-    //   setIsSubmitting(false);
-    //   return;
-    // }
+    if (paymentType === "cicilan" && dp < minDp) {
+      onNotify &&
+        onNotify({
+          open: true,
+          message: `DP minimal 40% (${formatRupiah(
+            minDp,
+          )}) dari total pembayaran ${formatRupiah(total)}.`,
+          severity: "error",
+        });
+      setIsSubmitting(false);
+      return;
+    }
 
     if (dp > total) {
       onNotify &&
@@ -531,7 +529,7 @@ const AddTenantApplication = ({
       formData.append("document_number", finalDocNumber);
       formData.append("start_date", moment(startDate).format("YYYY-MM-DD"));
       formData.append("end_date", moment(endDate).format("YYYY-MM-DD"));
-      formData.append("tenant_type", tenantType)
+      formData.append("tenant_type", tenantType);
 
       // if (tenantType === "perpanjang_tenant" && endDate) {
       //   // tenant lama endDate dijadikan start_date tenant baru

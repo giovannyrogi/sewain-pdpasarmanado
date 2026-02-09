@@ -47,7 +47,7 @@ const Roles = () => {
 
     try {
       const response = await axios.get("/api/roles");
-      console.log("data role", response.data);
+      // console.log("data role", response.data);
       setDataRoles(response.data.data);
       setTimeout(() => {
         setLoading(false);

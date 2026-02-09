@@ -163,10 +163,10 @@ const Rooms = () => {
           {record.location_name}
         </Typography>
       ),
-      width: 180,
+      width: 200,
     },
     {
-      title: "Nomor",
+      title: "Nomor Ruangan",
       dataIndex: "room_number",
       sorter: (a, b) => a.room_number.localeCompare(b.room_number),
       sortDirections: ["ascend", "descend"],
@@ -185,7 +185,7 @@ const Rooms = () => {
           </Typography>
         );
       },
-      width: 150,
+      width: 170,
     },
     {
       title: "Lantai",
@@ -222,10 +222,21 @@ const Rooms = () => {
     {
       title: "Lebar (m)",
       dataIndex: "room_width",
-      width: 110,
       render: (text, record) => (
         <Typography sx={{ fontWeight: "bold", fontSize: "12px" }}>
           {record.room_width} M
+        </Typography>
+      ),
+      width: 120,
+    },
+    {
+      title: "Jenis Harga",
+      dataIndex: "price_type",
+      render: (text, record) => (
+        <Typography sx={{ fontWeight: "bold", fontSize: "12px" }}>
+          {record.price_type === "harga_per_meter"
+            ? "Harga Per m²"
+            : "Harga Tetap"}
         </Typography>
       ),
       width: 120,
@@ -241,7 +252,6 @@ const Rooms = () => {
           {formatRupiah(record.price_per_m2)}
         </Typography>
       ),
-      width: 150,
     },
     {
       title: "Status",
@@ -403,7 +413,7 @@ const Rooms = () => {
             dataSource={filteredData}
             onChange={onChange}
             showSorterTooltip={{ target: "sorter-icon" }}
-            // scroll={{ x: "max-content", y: 420 }}
+            scroll={{ x: "max-content", y: 420 }}
             pagination={{
               pageSize: pageSize,
               showSizeChanger: true,
