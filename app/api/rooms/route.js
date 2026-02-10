@@ -15,6 +15,7 @@ export async function POST(req) {
       price_per_m2,
       notes,
       price_type,
+      room_area,
     } = body;
 
     // Validasi field wajib
@@ -92,8 +93,8 @@ export async function POST(req) {
 
     const result = await pool.query(
       `INSERT INTO rooms 
-       (location_id, room_number, floor_id, room_length, room_width, price_per_m2, status, notes, price_type)
-       VALUES ($1, $2, $3, $4, $5, $6, $7 , $8, $9)
+       (location_id, room_number, floor_id, room_length, room_width, price_per_m2, status, notes, price_type, room_area)
+       VALUES ($1, $2, $3, $4, $5, $6, $7 , $8, $9, $10)
        RETURNING *`,
       [
         location_id,
@@ -105,6 +106,7 @@ export async function POST(req) {
         status,
         notes,
         price_type,
+        room_area,
       ],
     );
 

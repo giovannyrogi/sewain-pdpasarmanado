@@ -377,7 +377,13 @@ const EditTenantApplication = ({
       setTotalPPN(totalPPN);
       setTotalPayment(grandTotal); // simpan ke state totalPayment
     } else {
-      setTotalPayment(selectedDataRooms?.price_per_m2);
+      const total = parseInt(selectedDataRooms.price_per_m2);
+      const totalPPN = total * 0.11; // tambahkan PPN 11%
+      const grandTotal = total + totalPPN + biayaAdministrasi;
+
+      setTotalSewaKontrakRuangan(total);
+      setTotalPPN(totalPPN);
+      setTotalPayment(grandTotal); // simpan ke state totalPayment
     }
   }, [selectedDataRooms]);
 

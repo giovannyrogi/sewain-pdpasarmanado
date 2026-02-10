@@ -372,8 +372,19 @@ const AddTenantApplication = ({
       setTotalPPN(totalPPN);
       setTotalPayment(grandTotal); // simpan ke state totalPayment
     } else {
-      setTotalPayment(selectedDataRooms?.price_per_m2);
+      const total = parseInt(selectedDataRooms.price_per_m2);
+      const totalPPN = total * 0.11; // tambahkan PPN 11%
+      const grandTotal = total + totalPPN + biayaAdministrasi;
+
+      setTotalSewaKontrakRuangan(total);
+      setTotalPPN(totalPPN);
+      setTotalPayment(grandTotal); // simpan ke state totalPayment
+      console.log('total', total);
+      console.log('totalPPN', totalPPN);
+      console.log('grandTotal', grandTotal);
     }
+
+    
   }, [selectedDataRooms]);
 
   // Sinkronisasi Sisa saat DP diubah manual

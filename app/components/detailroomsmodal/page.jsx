@@ -98,7 +98,8 @@ const DetailRoomsModal = ({
                   overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
                 }}
               >
-                No. {selectedDataRooms?.room_number
+                No.{" "}
+                {selectedDataRooms?.room_number
                   ? selectedDataRooms.room_number
                   : "-"}
               </Typography>
@@ -229,33 +230,35 @@ const DetailRoomsModal = ({
                   : "-"}
               </Typography>
             </Grid>
-
-            <Grid size={6} sx={{ display: "flex", flexDirection: "column" }}>
-              <Typography
-                sx={{
-                  fontWeight: "bold",
-                  fontSize: "14px",
-                  color: theme.palette.primary.main,
-                }}
-              >
-                Total Harga Sewa
-              </Typography>
-              <Typography
-                sx={{
-                  fontWeight: "bold",
-                  fontSize: "13px",
-                  wordBreak: "break-word", // <-- biar kata panjang pecah
-                  whiteSpace: "normal", // <-- biar bisa turun baris
-                  overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
-                }}
-              >
-                {selectedDataRooms?.price_per_m2
-                  ? formatRupiah(
-                      selectedDataRooms.price_per_m2 * selectedDataRooms.room_area
-                    )
-                  : "-"}
-              </Typography>
-            </Grid>
+            {selectedDataRooms?.price_type === "harga_per_meter" && (
+              <Grid size={6} sx={{ display: "flex", flexDirection: "column" }}>
+                <Typography
+                  sx={{
+                    fontWeight: "bold",
+                    fontSize: "14px",
+                    color: theme.palette.primary.main,
+                  }}
+                >
+                  Total Harga Sewa
+                </Typography>
+                <Typography
+                  sx={{
+                    fontWeight: "bold",
+                    fontSize: "13px",
+                    wordBreak: "break-word", // <-- biar kata panjang pecah
+                    whiteSpace: "normal", // <-- biar bisa turun baris
+                    overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
+                  }}
+                >
+                  {selectedDataRooms?.price_per_m2
+                    ? formatRupiah(
+                        selectedDataRooms.price_per_m2 *
+                          selectedDataRooms.room_area,
+                      )
+                    : "-"}
+                </Typography>
+              </Grid>
+            )}
           </Grid>
         </Box>
       </Fade>

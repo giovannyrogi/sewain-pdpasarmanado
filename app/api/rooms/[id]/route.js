@@ -15,7 +15,8 @@ export async function PUT(request, { params }) {
       status,
       price_per_m2,
       notes,
-      price_type
+      price_type,
+      room_area,
     } = body;
 
     // Validasi field wajib
@@ -217,8 +218,9 @@ export async function PUT(request, { params }) {
              status       = $6,
              price_per_m2 = $7,
              notes        = $8,
-             price_type   = $9
-       WHERE id = $10
+             price_type   = $9,
+             room_area    = $10
+       WHERE id = $11
        RETURNING *
       `,
       [
@@ -231,6 +233,7 @@ export async function PUT(request, { params }) {
         price_per_m2,
         notes,
         price_type,
+        room_area,
         id,
       ]
     );

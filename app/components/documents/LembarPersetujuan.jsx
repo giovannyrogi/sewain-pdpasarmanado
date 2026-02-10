@@ -332,7 +332,7 @@ const LembarPersetujuan = forwardRef(({ data }, ref) => {
                 fontSize: "11pt",
               }}
             >
-              Kepala Sub Divisi Sewa Kontrak dan Ijin Lahan
+              Kepala Sub Divisi Pendapatan
             </td>
             <td style={{ border: "1px solid black" }}></td>
             <td style={{ border: "1px solid black" }}></td>
@@ -359,7 +359,7 @@ const LembarPersetujuan = forwardRef(({ data }, ref) => {
                 fontSize: "11pt",
               }}
             >
-              Kepala Divisi Kerja Sama Bisnis
+              Kepala Divisi Pengelolaan Unit Usaha
             </td>
             <td style={{ border: "1px solid black" }}></td>
             <td style={{ border: "1px solid black" }}></td>
