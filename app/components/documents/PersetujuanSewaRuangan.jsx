@@ -457,7 +457,10 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
               }}
             >
               Pada prinsipnya pembayaran dapat kami setujui, dengan membayar{" "}
-              <strong>menyicil</strong> sebagai berikut :
+              <strong>
+                {data?.payment_type === "cicilan" ? "menyicil" : "lunas"}
+              </strong>{" "}
+              sebagai berikut :
             </Typography>
           </Grid>
 

@@ -258,7 +258,7 @@ const AddTenantApplication = ({
       const response = await axios.get(
         "/api/tenant-application/tenant-extends",
       );
-      console.log("response tenant-extends", response);
+      // console.log("response tenant-extends", response);
 
       // setEndDate(response?.data?.data?.[0]?.end_date);
 
@@ -379,12 +379,7 @@ const AddTenantApplication = ({
       setTotalSewaKontrakRuangan(total);
       setTotalPPN(totalPPN);
       setTotalPayment(grandTotal); // simpan ke state totalPayment
-      console.log('total', total);
-      console.log('totalPPN', totalPPN);
-      console.log('grandTotal', grandTotal);
     }
-
-    
   }, [selectedDataRooms]);
 
   // Sinkronisasi Sisa saat DP diubah manual
@@ -772,7 +767,7 @@ const AddTenantApplication = ({
                   value={selectedDataTenantExtends}
                   onChange={(event, newValue) => {
                     setSelectedDataTenantExtends(newValue ?? null);
-                    console.log("newValue perpanjang_tenant", newValue);
+                    // console.log("newValue perpanjang_tenant", newValue);
 
                     // clear form setelah menghapus data tenant lama
                     if (!newValue) {
