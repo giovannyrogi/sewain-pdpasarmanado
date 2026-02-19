@@ -40,7 +40,7 @@ const Users = () => {
     try {
       // Kirim role_name sebagai query parameter
       const response = await axios.get(`/api/users?role_id=${user.role_id}`);
-      console.log("Users data", response);
+      // console.log("Users data", response);
       setDataUsers(response.data.data);
       setTimeout(() => {
         setLoading(false);
@@ -58,7 +58,7 @@ const Users = () => {
 
     try {
       const response = await axios.get("/api/roles");
-      console.log("data role", response.data);
+      // console.log("data role", response.data);
       setDataRoles(response.data.data);
     } catch (error) {
       console.log(error);
