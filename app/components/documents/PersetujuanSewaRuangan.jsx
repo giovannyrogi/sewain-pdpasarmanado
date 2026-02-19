@@ -359,15 +359,16 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
               </span>
             </Typography>
           </Grid>
+
           {/* Ukuran Ruangan */}
-          <Grid size={12} display={"flex"} flexDirection={"row"} gap={4.2}>
+          <Grid size={12} display={"flex"} flexDirection={"row"} gap={5.1}>
             <Typography
               sx={{
                 fontSize: "11pt",
                 fontFamily: "Bernard MT Condensed bold",
               }}
             >
-              Ukurang Ruangan
+              Ukuran Ruangan
             </Typography>
             <Typography
               sx={{
@@ -385,6 +386,34 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
                 {data.room_length && data.room_width
                   ? `${data.room_length} M X ${data.room_width} M`
                   : "-"}
+              </span>
+            </Typography>
+          </Grid>
+
+          {/* Ukuran Ruangan */}
+          <Grid size={12} display={"flex"} flexDirection={"row"} gap={6.5}>
+            <Typography
+              sx={{
+                fontSize: "11pt",
+                fontFamily: "Bernard MT Condensed bold",
+              }}
+            >
+              Harga (Per m²)
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: "11pt",
+                fontFamily: "Bernard MT Condensed bold",
+              }}
+            >
+              :{" "}
+              <span
+                style={{
+                  fontWeight: "bold",
+                  fontFamily: "Bernard MT Condensed bold",
+                }}
+              >
+                {data.price_per_m2 ? `${formatRupiah(parseInt(data.price_per_m2))}` : "-"}
               </span>
             </Typography>
           </Grid>
