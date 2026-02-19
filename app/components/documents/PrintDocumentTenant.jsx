@@ -3,6 +3,7 @@ import React, { forwardRef } from "react";
 import SuratPernyataanPenyewa from "./SuratPernyataanPenyewa";
 import PersetujuanSewaRuangan from "./PersetujuanSewaRuangan";
 import LembarPersetujuan from "./LembarPersetujuan";
+import FotoKTP from "./FotoKTP";
 
 const PrintDocumentTenant = forwardRef(({ data }, ref) => {
   if (!data) return null;
@@ -29,6 +30,14 @@ const PrintDocumentTenant = forwardRef(({ data }, ref) => {
         {/* PAGE 3 */}
         <div className="print-page">
           <PersetujuanSewaRuangan data={data} />
+        </div>
+
+        {/* PAGE BREAK */}
+        <div className="page-break" />
+
+        {/* PAGE 3 */}
+        <div className="print-page">
+          <FotoKTP data={data} />
         </div>
       </div>
 
