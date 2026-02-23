@@ -5,9 +5,13 @@ import React, { forwardRef } from "react";
 import formatRupiah from "../formatrupiah/page";
 import Image from "next/image";
 import getDurationInYears from "../date_duration_in_years/getDurationInYears";
+import { parse } from "pg-protocol";
 
 const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
   if (!data) return null;
+
+  console.log('data', data);
+  
 
   const handleCalculateTotal = () => {
     // Konversi nilai ke number
@@ -529,7 +533,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
                 }}
               >
                 {totalSewaKontrakRuangan
-                  ? formatRupiah(totalSewaKontrakRuangan)
+                  ? formatRupiah(parseInt(totalSewaKontrakRuangan))
                   : "-"}
                 , -
               </Typography>
@@ -640,7 +644,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
                   fontFamily: "Bernard MT Condensed bold",
                 }}
               >
-                {totalPPN ? formatRupiah(totalPPN) : "-"}, -
+                {totalPPN ? formatRupiah(parseInt(totalPPN)) : "-"}, -
               </Typography>
               <Divider
                 sx={{
@@ -678,7 +682,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
                   fontFamily: "Bernard MT Condensed bold",
                 }}
               >
-                {grandTotal ? formatRupiah(grandTotal) : "-"}, -
+                {grandTotal ? formatRupiah(parseInt(grandTotal)) : "-"}, -
               </Typography>
             </Grid>
           </Grid>
