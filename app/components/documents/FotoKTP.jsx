@@ -31,7 +31,8 @@ const FotoKTP = forwardRef(({ data }, ref) => {
       <Box
         sx={{
           width: "100%",
-          maxWidth: 450,
+          maxWidth: 500,
+          height: 500,
           aspectRatio: "16/9",
           position: "relative",
           mt: 10,
