@@ -38,13 +38,13 @@ const DetailTenantApplicationModal = ({
 
   const theme = useTheme();
 
-  // console.log("selected data", selectedData);
+  console.log("selected data", selectedData);
 
   const installments = [
     {
       label: selectedData?.estimated_installment_1
         ? `Cicilan 1 (Bulan ${moment(
-            selectedData?.estimated_installment_1_date
+            selectedData?.estimated_installment_1_date,
           ).format("MMM YYYY")})`
         : "Pilih tanggal pembayaran",
       amount: formatRupiah(selectedData?.estimated_installment_1),
@@ -52,7 +52,7 @@ const DetailTenantApplicationModal = ({
     {
       label: selectedData?.estimated_installment_2
         ? `Cicilan 2 (Bulan ${moment(
-            selectedData?.estimated_installment_2_date
+            selectedData?.estimated_installment_2_date,
           ).format("MMM YYYY")})`
         : "Pilih tanggal pembayaran",
       amount: formatRupiah(selectedData?.estimated_installment_2),
@@ -60,7 +60,7 @@ const DetailTenantApplicationModal = ({
     {
       label: selectedData?.estimated_installment_3
         ? `Cicilan 3 (Bulan ${moment(
-            selectedData?.estimated_installment_3_date
+            selectedData?.estimated_installment_3_date,
           ).format("MMM YYYY")})`
         : "Pilih tanggal pembayaran",
       amount: formatRupiah(selectedData?.estimated_installment_3),
@@ -93,9 +93,15 @@ const DetailTenantApplicationModal = ({
     const installment2 = Number(selectedData?.estimated_installment_2 || 0);
     const installment3 = Number(selectedData?.estimated_installment_3 || 0);
     const remainingPayment = Number(selectedData?.remaining_payment || 0);
+    const priceType = selectedData?.price_type || "";
 
-    const totalSewaKontrakRuangan =
-      selectedData?.price_per_m2 * selectedData?.room_area;
+    let totalSewaKontrakRuangan = 0;
+    if (priceType === "harga_per_meter") {
+      totalSewaKontrakRuangan =
+        selectedData?.price_per_m2 * selectedData?.room_area;
+    } else {
+      totalSewaKontrakRuangan = selectedData?.price_per_m2;
+    }
 
     // Hitung Nilai Kontrak
     const nilaiKontrak = downPayment / 1.11;
