@@ -20,6 +20,16 @@ const SuratPernyataanPenyewa = forwardRef(({ data }, ref) => {
     const roomPrice = Number(data?.price_per_m2 || 0);
     const roomArea = Number(data?.room_area || 0);
 
+    // console.log('total payment', totalPayment);
+    // console.log('down payment', downPayment);
+    // console.log('installment 1', installment1);
+    // console.log('installment 2', installment2);
+    // console.log('installment 3', installment3);
+    // console.log('remaining payment', remainingPayment);
+    // console.log('room price', roomPrice);
+    // console.log('room area', roomArea);
+    
+
     const totalSewaKontrakRuangan = roomPrice * roomArea;
 
     // Hitung Nilai Kontrak

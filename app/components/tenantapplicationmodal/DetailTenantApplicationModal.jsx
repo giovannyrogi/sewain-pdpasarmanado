@@ -38,7 +38,7 @@ const DetailTenantApplicationModal = ({
 
   const theme = useTheme();
 
-  console.log("selected data", selectedData);
+  // console.log("selected data", selectedData);
 
   const installments = [
     {

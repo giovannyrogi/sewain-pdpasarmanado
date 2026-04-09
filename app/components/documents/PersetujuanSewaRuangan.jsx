@@ -10,8 +10,7 @@ import { parse } from "pg-protocol";
 const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
   if (!data) return null;
 
-  console.log('data', data);
-  
+  // console.log("data", data);
 
   const handleCalculateTotal = () => {
     // Konversi nilai ke number
@@ -23,8 +22,19 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
     const remainingPayment = Number(data?.remaining_payment || 0);
     const roomPrice = Number(data?.price_per_m2 || 0);
     const roomArea = Number(data?.room_area || 0);
+    const priceType = data?.price_type || "";
 
-    const totalSewaKontrakRuangan = roomPrice * roomArea;
+    let totalSewaKontrakRuangan = 0;
+    if (priceType === "harga_per_meter") {
+      totalSewaKontrakRuangan = roomPrice * roomArea;
+    } else {
+      totalSewaKontrakRuangan = data?.price_per_m2;
+    }
+
+    const dataRuangan =
+      priceType === "harga_per_meter"
+        ? `${data.room_length} M X ${data.room_width} m²`
+        : roomArea + " m²";
 
     // Hitung Nilai Kontrak
     const nilaiKontrak = downPayment / 1.11;
@@ -54,6 +64,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
       grandTotal,
       totalInstallment,
       remainingPayment,
+      dataRuangan,
     };
   };
 
@@ -67,6 +78,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
     grandTotal,
     totalInstallment,
     remainingPayment,
+    dataRuangan,
   } = handleCalculateTotal() || {
     totalPayment: 0,
     totalSewaKontrakRuangan: 0,
@@ -77,6 +89,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
     grandTotal: 0,
     totalInstallment: 0,
     remainingPayment: 0,
+    dataRuangan: 0,
   };
 
   const installments = [
@@ -387,9 +400,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
                   fontFamily: "Bernard MT Condensed bold",
                 }}
               >
-                {data.room_length && data.room_width
-                  ? `${data.room_length} M X ${data.room_width} M`
-                  : "-"}
+                {dataRuangan ? dataRuangan : "-"}
               </span>
             </Typography>
           </Grid>
@@ -417,7 +428,9 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
                   fontFamily: "Bernard MT Condensed bold",
                 }}
               >
-                {data.price_per_m2 ? `${formatRupiah(parseInt(data.price_per_m2))}` : "-"}
+                {data.price_per_m2
+                  ? `${formatRupiah(parseInt(data.price_per_m2))}`
+                  : "-"}
               </span>
             </Typography>
           </Grid>
@@ -682,7 +695,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
                   fontFamily: "Bernard MT Condensed bold",
                 }}
               >
-                {grandTotal ? formatRupiah(parseInt(grandTotal)) : "-"}, -
+                {grandTotal ? formatRupiah(data?.total_payment) : "-"}, -
               </Typography>
             </Grid>
           </Grid>
