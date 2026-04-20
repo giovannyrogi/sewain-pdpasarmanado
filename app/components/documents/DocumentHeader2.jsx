@@ -1,7 +1,7 @@
 import { Box, Typography, Divider } from "@mui/material";
 import Image from "next/image";
 
-const documentHeader = () => {
+const DocumentHeader2 = () => {
   return (
     <Box sx={{ width: "100%", mb: 1 }}>
       {/* HEADER UTAMA */}
@@ -87,4 +87,4 @@ const documentHeader = () => {
   );
 };
 
-export default documentHeader;
+export default DocumentHeader2;

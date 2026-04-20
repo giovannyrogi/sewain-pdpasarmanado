@@ -7,7 +7,7 @@ import Image from "next/image";
 import getDurationInYears from "../date_duration_in_years/getDurationInYears";
 import { parse } from "pg-protocol";
 import { formatNumber } from "@/app/utils/formatNumber";
-import DocumentHeader from "./documentHeader";
+import DocumentHeader2 from "./DocumentHeader2";
 
 const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
   if (!data) return null;
@@ -115,7 +115,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
   return (
     <Box ref={ref} sx={{ padding: "10px 30px 0px 30px" }}>
       {/* Headers */}
-      <DocumentHeader />
+      <DocumentHeader2 />
 
       {/* Tanggal Dokumen */}
       <Grid container spacing={2} mt={0.3}>
