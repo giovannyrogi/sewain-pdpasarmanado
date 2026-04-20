@@ -4,6 +4,7 @@ import moment from "moment";
 import React, { forwardRef } from "react";
 import formatRupiah from "../formatrupiah/page";
 import Image from "next/image";
+import { formatNumber } from "@/app/utils/formatNumber";
 
 const SuratPernyataanPenyewa = forwardRef(({ data }, ref) => {
   if (!data) return null;
@@ -369,9 +370,9 @@ const SuratPernyataanPenyewa = forwardRef(({ data }, ref) => {
                     textAlign: "center",
                   }}
                 >
-                  {data?.room_width ? data?.room_width + "m" : "-"} X{" "}
-                  {data?.room_length ? data?.room_length + "m" : "-"} (
-                  {data?.room_area ? data?.room_area + " m²" : "-"})
+                  {data?.room_width ? formatNumber(data?.room_width) + "m" : "-"} X{" "}
+                  {data?.room_length ? formatNumber(data?.room_length) + "m" : "-"} (
+                  {data?.room_area ? formatNumber(data?.room_area) + " m²" : "-"})
                 </td>
                 <td
                   style={{

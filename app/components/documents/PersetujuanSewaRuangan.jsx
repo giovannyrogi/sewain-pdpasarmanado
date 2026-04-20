@@ -6,6 +6,8 @@ import formatRupiah from "../formatrupiah/page";
 import Image from "next/image";
 import getDurationInYears from "../date_duration_in_years/getDurationInYears";
 import { parse } from "pg-protocol";
+import DocumentHeader from "./documentHeader";
+import { formatNumber } from "@/app/utils/formatNumber";
 
 const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
   if (!data) return null;
@@ -113,67 +115,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
   return (
     <Box ref={ref} sx={{ padding: "10px 30px 0px 30px" }}>
       {/* Headers */}
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-        }}
-      >
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-            alignItems: "center",
-            mt: 2,
-          }}
-        >
-          <Typography
-            sx={{
-              fontSize: "26pt",
-              fontWeight: "bold",
-              fontFamily: "Bernard MT Condensed bold",
-            }}
-          >
-            PERUSAHAAN UMUM DAERAH
-          </Typography>
-          <Typography
-            sx={{
-              fontSize: "26pt",
-              fontWeight: "bold",
-              fontFamily: "Bernard MT Condensed bold",
-              mt: -2,
-            }}
-          >
-            PASAR MANADO
-          </Typography>
-          <Typography
-            sx={{
-              fontSize: "7pt",
-              textAlign: "center",
-              fontFamily: "agency fb regular",
-            }}
-          >
-            Kompleks Gedung Shoping Center Lt. II Manado, Jl. Walanda Maramis
-            No. 123, Kel. Pinaesaan, Kec. Wenang Kota Manado
-          </Typography>
-        </Box>
-      </Box>
-
-      {/* Garis Pembatas */}
-      <Divider
-        sx={{
-          borderColor: "black",
-          mb: "1px",
-        }}
-      />
-      <Divider
-        sx={{
-          borderWidth: "1px",
-          borderColor: "black",
-        }}
-      />
+      <DocumentHeader />
 
       {/* Tanggal Dokumen */}
       <Grid container spacing={2} mt={0.3}>
@@ -400,7 +342,9 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
                   fontFamily: "Bernard MT Condensed bold",
                 }}
               >
-                {dataRuangan ? dataRuangan : "-"}
+                {data?.price_type === "harga_per_meter"
+                  ? `${formatNumber(data.room_length)} m x ${formatNumber(data.room_width)} m (${formatNumber(data.room_area)} m²)`
+                  : roomArea + " m²"}
               </span>
             </Typography>
           </Grid>
@@ -586,7 +530,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
                   fontFamily: "Bernard MT Condensed bold",
                 }}
               >
-                {formatRupiah(50000)}, -
+                {formatRupiah(data?.admin_fee)}, -
               </Typography>
             </Grid>
           </Grid>
@@ -1055,34 +999,6 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
           </Grid>
         </Grid>
       </Box>
-      {/* Logo Pemerintah Kota Manado */}
-      <Image
-        src="/logo-pemerintah-kota-manado.png"
-        alt="logo-pemerintah-kota-manado"
-        width={150}
-        height={100}
-        style={{
-          position: "absolute",
-          // top: 30,
-          top: 2270,
-          left: 5,
-        }}
-        priority
-      />
-      {/* Logo Perumda Pasar Manado */}
-      <Image
-        src="/logo-perumda-pasar-manado.png"
-        alt="logo-perumda-pasar-manado"
-        width={110}
-        height={100}
-        style={{
-          position: "absolute",
-          // top: 30,
-          top: 2270,
-          left: 660,
-        }}
-        priority
-      />
     </Box>
   );
 });

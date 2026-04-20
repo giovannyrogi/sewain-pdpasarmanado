@@ -15,6 +15,7 @@ import { Icon } from "@iconify/react";
 import axios from "axios";
 import moment from "moment";
 import formatRupiah from "../formatrupiah/page";
+import { formatNumber } from "@/app/utils/formatNumber";
 
 const DetailRoomsModal = ({
   open,
@@ -29,6 +30,8 @@ const DetailRoomsModal = ({
   const theme = useTheme();
   const [approvalList, setApprovalList] = useState([]);
   const [openPreview, setOpenPreview] = useState(false);
+
+  // console.log('selectedDataRooms di DetailRoomsModal:', selectedDataRooms);
 
   const style = {
     width: isMobile ? "90vw" : 500,
@@ -148,9 +151,9 @@ const DetailRoomsModal = ({
                 }}
               >
                 {selectedDataRooms?.room_length
-                  ? selectedDataRooms.room_length
+                  ? formatNumber(selectedDataRooms.room_length)
                   : "-"}{" "}
-                M
+                m
               </Typography>
             </Grid>
 
@@ -174,9 +177,9 @@ const DetailRoomsModal = ({
                 }}
               >
                 {selectedDataRooms?.room_width
-                  ? selectedDataRooms.room_width
+                  ? formatNumber(selectedDataRooms.room_width)
                   : "-"}{" "}
-                M
+                m
               </Typography>
             </Grid>
 
@@ -200,9 +203,9 @@ const DetailRoomsModal = ({
                 }}
               >
                 {selectedDataRooms?.room_area
-                  ? selectedDataRooms.room_area
+                  ? formatNumber(selectedDataRooms.room_area)
                   : "-"}{" "}
-                M
+                m²
               </Typography>
             </Grid>
 

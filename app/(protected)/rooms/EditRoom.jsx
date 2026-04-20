@@ -20,6 +20,7 @@ import React, { useEffect, useState } from "react";
 import { Icon } from "@iconify/react";
 import axios from "axios";
 import formatRupiah from "@/app/components/formatrupiah/page";
+import { formatNumber } from "@/app/utils/formatNumber";
 
 const EditRoom = ({
   open,
@@ -72,9 +73,9 @@ const EditRoom = ({
       setLocationId(selectedData?.location_id);
       setFloorId(selectedData?.floor_id);
       setRoomNumber(selectedData?.room_number);
-      setRoomArea(selectedData?.room_area);
-      setRoomLength(selectedData?.room_length);
-      setRoomWidth(selectedData?.room_width);
+      setRoomArea(formatNumber(selectedData?.room_area));
+      setRoomLength(formatNumber(selectedData?.room_length));
+      setRoomWidth(formatNumber(selectedData?.room_width));
       setStatusRoom(selectedData?.status);
       setPricePerMeter(selectedData?.price_per_m2);
       setNotes(selectedData?.notes || "");
@@ -89,7 +90,8 @@ const EditRoom = ({
       const length = parseFloat(roomLength) || 0;
       const width = parseFloat(roomWidth) || 0;
       const area = length * width;
-      setRoomArea(area > 0 ? area.toFixed(2) : ""); // 2 desimal
+      setRoomArea(area);
+      // setRoomArea(area > 0 ? area.toFixed(2) : ""); // 2 desimal
     }
   }, [roomLength, roomWidth]);
 

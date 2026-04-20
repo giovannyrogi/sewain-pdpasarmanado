@@ -10,38 +10,36 @@ const LembarPersetujuan = forwardRef(({ data }, ref) => {
 
   return (
     <Box ref={ref} sx={{ padding: "100px 50px 0px 30px" }}>
-      <Grid container spacing={1}>
-        {/* Nomor Dokumen */}
-        <Grid
-          sx={{
-            position: "absolute",
-            // top: 30,
-            top: 1180,
-            left: 560,
-            border: "1px solid black",
-            padding: "5px 70px",
-          }}
-        >
+      <Grid container alignItems="center" sx={{ mb: 2 }}>
+        {/* KIRI (kosong biar balance) */}
+        <Grid item size={3.5} />
+
+        {/* TENGAH (JUDUL) */}
+        <Grid item size={4.5} textAlign="center">
           <Typography
             sx={{
-              fontSize: "40pt", 
-              fontFamily: "Calibri",
-              fontWeight: "bold",
-            }}
-          >
-            {data?.document_number?.split("/")[0]}
-          </Typography>
-        </Grid>
-        <Grid size={12} align="center">
-          <Typography
-            sx={{
-              fontSize: "20pt",
+              fontSize: "18pt",
               fontFamily: "calibri",
               fontWeight: "bold",
               textDecoration: "underline",
             }}
           >
             LEMBAR PERSETUJUAN
+          </Typography>
+        </Grid>
+
+        {/* KANAN (NOMOR DOKUMEN) */}
+        <Grid item size={4} display="flex" justifyContent="flex-end">
+          <Typography
+            sx={{
+              fontSize: "40pt",
+              fontFamily: "Calibri",
+              fontWeight: "bold",
+              border: "2px solid black",
+              padding: "10px 60px",
+            }}
+          >
+            {data?.document_number?.split("/")[0]}
           </Typography>
         </Grid>
 

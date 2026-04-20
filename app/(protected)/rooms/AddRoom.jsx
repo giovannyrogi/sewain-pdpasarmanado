@@ -102,7 +102,8 @@ const AddRoom = ({
       const length = parseFloat(roomLength) || 0;
       const width = parseFloat(roomWidth) || 0;
       const area = length * width;
-      setRoomArea(area > 0 ? area.toFixed(2) : ""); // 2 desimal
+      setRoomArea(area);
+      // setRoomArea(area > 0 ? area.toFixed(2) : ""); // 2 desimal
     }
   }, [roomLength, roomWidth]);
 

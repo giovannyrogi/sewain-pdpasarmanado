@@ -30,6 +30,7 @@ import ImagePreviewModal from "@/app/components/imagepreviewmodal/page";
 import DetailRoomsModal from "@/app/components/detailroomsmodal/page";
 import ViewCalcPPNModal from "@/app/components/view-calc-ppn-modal/ViewCalcPPNModal";
 import InformationPreviewModal from "@/app/components/informationpreviewmodal/page";
+import { calculateAllPayments } from "@/app/utils/calculateAllPayments";
 
 const EditTenantApplication = ({
   open,
@@ -103,7 +104,7 @@ const EditTenantApplication = ({
   const [selectedDataTenantExtends, setSelectedDataTenantExtends] =
     useState(null);
 
-  const [biayaAdministrasi, setBiayaAdministrasi] = useState(50000);
+  const [biayaAdministrasi, setBiayaAdministrasi] = useState(0);
   const [totalPPNDownPayment, setTotalPPNDownPayment] = useState(0);
   const [totalSewaKontrakDownPayment, setTotalSewaKontrakDownPayment] =
     useState(0);
@@ -285,7 +286,7 @@ const EditTenantApplication = ({
       }
 
       // console.log("rooms test", rooms);
-
+      setBiayaAdministrasi(Number(selectedData?.admin_fee || 0));
       setDataAvailableRooms(rooms);
 
       setTimeout(() => {
@@ -350,110 +351,72 @@ const EditTenantApplication = ({
     }
   }, [open]);
 
-  // Sinkronisasi DP & Sisa saat totalPayment atau paymentType berubah
   useEffect(() => {
+    if (!selectedDataRooms) return;
+
+    // JANGAN hitung kalau data belum lengkap
+    if (!locationId || !selectedDataRooms) {
+      setTotalSewaKontrakRuangan(0);
+      setTotalPPN(0);
+      setTotalPayment(0);
+      return;
+    }
+
+    const result = calculateAllPayments({
+      room: selectedDataRooms,
+      paymentType,
+      downPayment,
+      chooseTenor,
+      adminFee: biayaAdministrasi,
+    });
+
+    // total utama
+    setTotalSewaKontrakRuangan(result.totalSewa);
+    setTotalPPN(result.totalPPN);
+    setTotalPayment(result.totalPayment);
+
     if (paymentType === "cicilan") {
-      const total = Number(totalPayment) || 0;
-      const defaultDP = Math.round(total * 0.4);
-      setDownPayment(defaultDP);
-      setRemainingPayment(total - defaultDP);
+      const dp = Number(downPayment || 0);
+
+      // default DP kalau kosong
+      if (!dp) {
+        const defaultDP = Math.round(result.totalPayment * 0.4);
+        setDownPayment(defaultDP);
+        setRemainingPayment(result.totalPayment - defaultDP);
+      } else {
+        setRemainingPayment(result.remaining);
+      }
+
+      // cicilan
+      setEstimatedInstallment1(result.installments[0] || "");
+      setEstimatedInstallment2(result.installments[1] || "");
+      setEstimatedInstallment3(result.installments[2] || "");
+
+      setTotalInstallment(result.installments.reduce((a, b) => a + b, 0));
+
+      // DP breakdown
+      const dpValue = Number(downPayment || 0);
+      const sewaDP = dpValue / 1.11;
+      const ppnDP = sewaDP * 0.11;
+
+      setTotalSewaKontrakDownPayment(sewaDP);
+      setTotalPPNDownPayment(ppnDP);
+      setTotalPaymentDownPayment(sewaDP + ppnDP);
     } else {
       setDownPayment("");
       setRemainingPayment("");
-    }
-  }, [totalPayment, paymentType]);
-
-  // Hitung total payment otomatis saat pilih ruangan
-  useEffect(() => {
-    if (selectedDataRooms?.price_type === "harga_per_meter") {
-      const total =
-        parseFloat(selectedDataRooms.room_area) * // luas dari room_length * room_width
-        parseInt(selectedDataRooms.price_per_m2); // harga dari price_per_m2
-
-      const totalPPN = total * 0.11; // tambahkan PPN 11%
-      const grandTotal = total + totalPPN + biayaAdministrasi;
-
-      setTotalSewaKontrakRuangan(total);
-      setTotalPPN(totalPPN);
-      setTotalPayment(grandTotal); // simpan ke state totalPayment
-    } else {
-      const total = parseInt(selectedDataRooms.price_per_m2);
-      const totalPPN = total * 0.11; // tambahkan PPN 11%
-      const grandTotal = total + totalPPN + biayaAdministrasi;
-
-      setTotalSewaKontrakRuangan(total);
-      setTotalPPN(totalPPN);
-      setTotalPayment(grandTotal); // simpan ke state totalPayment
-    }
-  }, [selectedDataRooms]);
-
-  // Sinkronisasi Sisa saat DP diubah manual
-  useEffect(() => {
-    if (paymentType === "cicilan") {
-      const total = Number(totalPayment) || 0;
-      const dp = Number(downPayment) || 0;
-      const SewaKontrakRuangan = dp / 1.11;
-      const totalPPN = SewaKontrakRuangan * 0.11;
-      const grandTotal = Number(SewaKontrakRuangan + totalPPN).toFixed(2);
-
-      setTotalPaymentDownPayment(grandTotal);
-      setTotalPPNDownPayment(totalPPN);
-      setTotalSewaKontrakDownPayment(SewaKontrakRuangan);
-      setRemainingPayment(total - dp);
-    }
-  }, [downPayment, paymentType, totalPayment]);
-
-  // Sinkronisasi Sisa saat DP diubah manual
-  useEffect(() => {
-    if (paymentType === "cicilan") {
-      const total = Number(totalPayment) || 0;
-      const dp = Number(downPayment) || 0;
-      const SewaKontrakRuangan = dp / 1.11;
-      const totalPPN = SewaKontrakRuangan * 0.11;
-      const grandTotal = SewaKontrakRuangan + totalPPN;
-
-      setTotalPaymentDownPayment(grandTotal);
-      setTotalPPNDownPayment(totalPPN);
-      setTotalSewaKontrakDownPayment(SewaKontrakRuangan);
-      setRemainingPayment(total - dp);
-    }
-  }, [downPayment, paymentType, totalPayment]);
-
-  // Hitung cicilan otomatis saat remainingPayment berubah
-  useEffect(() => {
-    if (paymentType !== "cicilan") {
       setEstimatedInstallment1("");
       setEstimatedInstallment2("");
       setEstimatedInstallment3("");
       setTotalInstallment("");
-      return;
     }
-
-    const sisa = Number(remainingPayment) || 0;
-    const tenor = Number(chooseTenor) || 1;
-
-    if (tenor === 1) {
-      // Pelunasan langsung
-      setEstimatedInstallment1(sisa);
-      setEstimatedInstallment2("");
-      setEstimatedInstallment3("");
-      setTotalInstallment(sisa);
-      return;
-    }
-
-    // Cicilan > 1
-    const perCicilan = Math.floor(sisa / tenor);
-    const sisaPembulatan = sisa - perCicilan * tenor;
-
-    const cicilan = Array(tenor).fill(perCicilan);
-    cicilan[tenor - 1] += sisaPembulatan; // cicilan terakhir menyesuaikan
-
-    setEstimatedInstallment1(cicilan[0] || "");
-    setEstimatedInstallment2(cicilan[1] || "");
-    setEstimatedInstallment3(cicilan[2] || "");
-
-    setTotalInstallment(cicilan.reduce((a, b) => a + b, 0));
-  }, [remainingPayment, paymentType, chooseTenor]);
+  }, [
+    selectedDataRooms,
+    paymentType,
+    downPayment,
+    chooseTenor,
+    biayaAdministrasi,
+  ]);
 
   useEffect(() => {
     if (startDate && endDate) {

@@ -20,6 +20,8 @@ import formatRupiah from "../formatrupiah/page";
 import moment from "moment";
 import ApprovedOverlay from "./ApprovedOverlay";
 import Image from "next/image";
+import { buildPaymentDetail } from "@/app/utils/buildPaymentDetail";
+import { formatNumber } from "@/app/utils/formatNumber";
 
 const DetailTenantApplicationModal = ({
   open,
@@ -85,48 +87,6 @@ const DetailTenantApplicationModal = ({
     position: "relative",
   };
 
-  const handleCalculateTotal = () => {
-    // Konversi nilai ke number
-    const totalPayment = Number(selectedData?.total_payment || 0);
-    const downPayment = Number(selectedData?.down_payment || 0);
-    const installment1 = Number(selectedData?.estimated_installment_1 || 0);
-    const installment2 = Number(selectedData?.estimated_installment_2 || 0);
-    const installment3 = Number(selectedData?.estimated_installment_3 || 0);
-    const remainingPayment = Number(selectedData?.remaining_payment || 0);
-    const priceType = selectedData?.price_type || "";
-
-    let totalSewaKontrakRuangan = 0;
-    if (priceType === "harga_per_meter") {
-      totalSewaKontrakRuangan =
-        selectedData?.price_per_m2 * selectedData?.room_area;
-    } else {
-      totalSewaKontrakRuangan = selectedData?.price_per_m2;
-    }
-
-    // Hitung Nilai Kontrak
-    const nilaiKontrak = downPayment / 1.11;
-
-    // Hitung PPN Down Payment
-    const PPNDownPayment = nilaiKontrak * 0.11;
-
-    // Hitung total PPN
-    const totalPPN = totalSewaKontrakRuangan * 0.11;
-
-    // Total cicilan semua + PPN
-    const totalInstallment = installment1 + installment2 + installment3;
-
-    return {
-      totalPayment,
-      totalSewaKontrakRuangan,
-      PPNDownPayment,
-      nilaiKontrak,
-      totalPPN,
-      totalInstallment,
-      remainingPayment,
-      downPayment,
-    };
-  };
-
   const {
     totalPayment,
     totalSewaKontrakRuangan,
@@ -136,7 +96,7 @@ const DetailTenantApplicationModal = ({
     totalInstallment,
     remainingPayment,
     downPayment,
-  } = handleCalculateTotal() || {
+  } = buildPaymentDetail(selectedData) || {
     totalPayment: 0,
     totalSewaKontrakRuangan: 0,
     PPNDownPayment: 0,
@@ -453,7 +413,10 @@ const DetailTenantApplicationModal = ({
                   overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
                 }}
               >
-                {selectedData?.room_length ? selectedData.room_length : "-"} M
+                {selectedData?.room_length
+                  ? formatNumber(selectedData.room_length)
+                  : "-"}{" "}
+                M
               </Typography>
             </Grid>
 
@@ -476,7 +439,10 @@ const DetailTenantApplicationModal = ({
                   overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
                 }}
               >
-                {selectedData?.room_width ? selectedData.room_width : "-"} M
+                {selectedData?.room_width
+                  ? formatNumber(selectedData.room_width)
+                  : "-"}{" "}
+                M
               </Typography>
             </Grid>
 
@@ -499,7 +465,9 @@ const DetailTenantApplicationModal = ({
                   overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
                 }}
               >
-                {selectedData?.room_area ? selectedData.room_area + " M" : "-"}
+                {selectedData?.room_area
+                  ? formatNumber(selectedData.room_area) + " m²"
+                  : "-"}
               </Typography>
             </Grid>
 
@@ -687,10 +655,7 @@ const DetailTenantApplicationModal = ({
                   overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
                 }}
               >
-                {/* {selectedData?.total_payment
-                ? formatRupiah(selectedData.total_payment)
-                : "-"} */}{" "}
-                {formatRupiah(50000)}
+                {formatRupiah(selectedData?.admin_fee || 0)}
               </Typography>
             </Grid>
 
@@ -759,9 +724,6 @@ const DetailTenantApplicationModal = ({
                   overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
                 }}
               >
-                {/* {selectedData?.total_payment
-                ? formatRupiah(selectedData.total_payment)
-                : "-"} */}{" "}
                 {totalPayment ? formatRupiah(totalPayment) : "-"}
               </Typography>
             </Grid>

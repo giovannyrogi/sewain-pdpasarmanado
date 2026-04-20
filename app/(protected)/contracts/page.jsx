@@ -417,6 +417,8 @@ const Contract = () => {
     const totalPaymentInWords = numberToWords(Number(totalPayment));
     const totalPPN = Number(totalPayment) * 0.11;
     const totalPPNInWords = numberToWords(Number(totalPPN));
+    const biayaAdministrasi = record?.tenant_application?.admin_fee || 0;
+    const biayaAdministrasiInWords = numberToWords(Number(biayaAdministrasi));
 
     // convert month to romawi
     const romawi = [
@@ -502,6 +504,8 @@ const Contract = () => {
         totalPaymentInWords: totalPaymentInWords || "-",
         totalPPN: formatRupiah(totalPPN) || "-",
         totalPPNInWords: totalPPNInWords || "-",
+        biayaAdministrasi: formatRupiah(biayaAdministrasi) || "-",
+        biayaAdministrasiInWords: biayaAdministrasiInWords || "-",
       };
 
       // Render ke docx

@@ -15,6 +15,7 @@ import DeleteRoom from "./DeleteRoom";
 import formatRupiah from "@/app/components/formatrupiah/page";
 import NotesModal from "./NotesModal";
 import MENU_CONFIG from "@/app/components/menu/MenuConfig";
+import { formatNumber } from "@/app/utils/formatNumber";
 
 const Rooms = () => {
   const [dataRooms, setDataRooms] = useState([]);
@@ -214,7 +215,7 @@ const Rooms = () => {
       dataIndex: "room_length",
       render: (text, record) => (
         <Typography sx={{ fontWeight: "bold", fontSize: "12px" }}>
-          {record.room_length} M
+          {formatNumber(record.room_length)} m
         </Typography>
       ),
       width: 120,
@@ -224,7 +225,17 @@ const Rooms = () => {
       dataIndex: "room_width",
       render: (text, record) => (
         <Typography sx={{ fontWeight: "bold", fontSize: "12px" }}>
-          {record.room_width} M
+          {formatNumber(record.room_width)} m
+        </Typography>
+      ),
+      width: 120,
+    },
+    {
+      title: "Luas (m²)",
+      dataIndex: "room_area",
+      render: (text, record) => (
+        <Typography sx={{ fontWeight: "bold", fontSize: "12px" }}>
+          {formatNumber(record.room_area)} m²
         </Typography>
       ),
       width: 120,
