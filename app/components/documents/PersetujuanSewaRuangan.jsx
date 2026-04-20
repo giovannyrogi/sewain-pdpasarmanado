@@ -6,8 +6,8 @@ import formatRupiah from "../formatrupiah/page";
 import Image from "next/image";
 import getDurationInYears from "../date_duration_in_years/getDurationInYears";
 import { parse } from "pg-protocol";
-import DocumentHeader from "./documentHeader";
 import { formatNumber } from "@/app/utils/formatNumber";
+import DocumentHeader from "./documentHeader";
 
 const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
   if (!data) return null;
