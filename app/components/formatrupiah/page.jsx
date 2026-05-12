@@ -1,22 +1,36 @@
 /**
- * Format angka/string ke format mata uang Rupiah dengan akurasi tinggi.
- * @param {number|string} value - Nilai yang akan diformat.
- * @param {"useRp"|"hideRp"} type - Tipe format: tampilkan "Rp." atau tidak.
+ * Format angka/string ke format mata uang Rupiah.
+ * - Otomatis menghapus trailing zero pada desimal
+ * - Tetap mempertahankan angka desimal penting
+ *
+ * Contoh:
+ * 8066919.500 -> 8.066.919,5
+ * 8066919.250 -> 8.066.919,25
+ * 8066919.000 -> 8.066.919
+ *
+ * @param {number|string} value
+ * @param {"useRp"|"hideRp"} type
  * @returns {string}
  */
 function formatRupiah(value, type = "useRp") {
-  // Konversi ke angka
+  // Handle null, undefined, empty string
+  if (value === null || value === undefined || value === "") {
+    return type === "useRp" ? "Rp. 0" : "0";
+  }
+
+  // Konversi ke number
   const number = Number(value);
-  if (isNaN(number)) return type === "useRp" ? "Rp. 0" : "0";
 
-  // Cek apakah memiliki nilai desimal
-  const hasDecimal = !Number.isInteger(number);
+  // Validasi NaN
+  if (isNaN(number)) {
+    return type === "useRp" ? "Rp. 0" : "0";
+  }
 
-  // Format ke string lokal Indonesia
-  const formatted = number.toLocaleString("id-ID", {
-    minimumFractionDigits: hasDecimal ? 3 : 0,
-    maximumFractionDigits: hasDecimal ? 3 : 0,
-  });
+  // Format angka Indonesia
+  const formatted = new Intl.NumberFormat("id-ID", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 3,
+  }).format(number);
 
   return type === "useRp" ? `Rp. ${formatted}` : formatted;
 }

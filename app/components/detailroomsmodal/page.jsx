@@ -255,8 +255,9 @@ const DetailRoomsModal = ({
                 >
                   {selectedDataRooms?.price_per_m2
                     ? formatRupiah(
-                        selectedDataRooms.price_per_m2 *
-                          selectedDataRooms.room_area,
+                        selectedDataRooms?.room_width *
+                          selectedDataRooms?.room_length *
+                          selectedDataRooms?.price_per_m2,
                       )
                     : "-"}
                 </Typography>
