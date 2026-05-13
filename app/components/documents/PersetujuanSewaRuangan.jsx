@@ -67,6 +67,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
       totalInstallment,
       remainingPayment,
       dataRuangan,
+      roomArea,
     };
   };
 
@@ -81,6 +82,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
     totalInstallment,
     remainingPayment,
     dataRuangan,
+    roomArea,
   } = handleCalculateTotal() || {
     totalPayment: 0,
     totalSewaKontrakRuangan: 0,
@@ -92,6 +94,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
     totalInstallment: 0,
     remainingPayment: 0,
     dataRuangan: 0,
+    roomArea: 0,
   };
 
   const installments = [
