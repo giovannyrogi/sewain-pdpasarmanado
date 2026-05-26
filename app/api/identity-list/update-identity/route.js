@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import pool from "@/lib/dbConfig";
 import moment from "moment";
+import { normalizeStoredUploadPath } from "@/app/utils/uploadPath";
 
 const uploadDir = path.join(process.cwd(), "uploads/ktp");
 if (!fs.existsSync(uploadDir)) {
@@ -161,7 +162,7 @@ export async function PUT(req) {
       );
     }
 
-    let ktp_file_path = oldKtpPath || null;
+    let ktp_file_path = normalizeStoredUploadPath(oldKtpPath) || null;
     let fileBuffer = null;
     let filename = null;
 

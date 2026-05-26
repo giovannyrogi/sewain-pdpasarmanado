@@ -22,6 +22,7 @@ import ApprovedOverlay from "./ApprovedOverlay";
 import Image from "next/image";
 import { buildPaymentDetail } from "@/app/utils/buildPaymentDetail";
 import { formatNumber } from "@/app/utils/formatNumber";
+import { getUploadApiUrl } from "@/app/utils/uploadPath";
 
 const DetailTenantApplicationModal = ({
   open,
@@ -106,6 +107,7 @@ const DetailTenantApplicationModal = ({
     remainingPayment: 0,
     downPayment: 0,
   };
+  const ktpImageUrl = getUploadApiUrl(selectedData?.ktp_file_path);
 
   return (
     <Modal
@@ -254,7 +256,7 @@ const DetailTenantApplicationModal = ({
                 >
                   {selectedData?.ktp_file_path ? (
                     <Image
-                      src={`/api${selectedData.ktp_file_path}`}
+                      src={ktpImageUrl}
                       alt="ktp"
                       fill // penuh mengikuti container
                       style={{
@@ -1063,9 +1065,7 @@ const DetailTenantApplicationModal = ({
             open={openPreview}
             onClose={() => setOpenPreview(false)}
             imageUrl={
-              selectedData?.ktp_file_path
-                ? `/api${selectedData.ktp_file_path}`
-                : ""
+              ktpImageUrl
             }
             alt="Preview KTP"
           />

@@ -20,6 +20,7 @@ import formatRupiah from "../../components/formatrupiah/page";
 import moment from "moment";
 import ApprovedOverlay from "./ApprovedOverlay";
 import Image from "next/image";
+import { getUploadApiUrl } from "@/app/utils/uploadPath";
 
 const TenantApprovalModal = ({
   open,
@@ -38,6 +39,7 @@ const TenantApprovalModal = ({
 
   // console.log("selectedData", selectedData);
   const theme = useTheme();
+  const ktpImageUrl = getUploadApiUrl(selectedData?.ktp_file_path);
 
   const installments = [
     {
@@ -340,11 +342,7 @@ const TenantApprovalModal = ({
                 >
                   {selectedData?.ktp_file_path ? (
                     <Image
-                      src={
-                        selectedData?.ktp_file_path
-                          ? `/api${selectedData.ktp_file_path}`
-                          : ""
-                      }
+                      src={ktpImageUrl}
                       alt="ktp"
                       fill // penuh mengikuti container
                       style={{
@@ -1186,11 +1184,7 @@ const TenantApprovalModal = ({
           <ImagePreviewModal
             open={openPreview}
             onClose={() => setOpenPreview(false)}
-            imageUrl={
-              selectedData?.ktp_file_path
-                ? `/api${selectedData.ktp_file_path}`
-                : ""
-            }
+            imageUrl={ktpImageUrl}
             alt="Preview KTP"
           />
 

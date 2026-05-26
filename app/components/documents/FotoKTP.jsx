@@ -14,9 +14,11 @@ import moment from "moment";
 import React, { forwardRef } from "react";
 import formatRupiah from "../formatrupiah/page";
 import Image from "next/image";
+import { getUploadApiUrl } from "@/app/utils/uploadPath";
 
 const FotoKTP = forwardRef(({ data }, ref) => {
   if (!data) return null;
+  const ktpImageUrl = getUploadApiUrl(data?.ktp_file_path);
 
   return (
     <Box
@@ -39,7 +41,7 @@ const FotoKTP = forwardRef(({ data }, ref) => {
         }}
       >
         <Image
-          src={`/api${data?.ktp_file_path}`}
+          src={ktpImageUrl}
           alt={`foto-ktp-${data?.tenant_name}`}
           fill
           style={{ objectFit: "contain", borderRadius: "8px" }}

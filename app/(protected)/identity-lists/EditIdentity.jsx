@@ -26,6 +26,10 @@ import ImagePreviewModal from "@/app/components/imagepreviewmodal/page";
 import { useThemeMode } from "@/app/components/themeprovider/ThemeContext";
 import { Icon } from "@iconify/react";
 import wilayah from "daftar-wilayah-indonesia";
+import {
+  getUploadApiUrl,
+  normalizeStoredUploadPath,
+} from "@/app/utils/uploadPath";
 
 const EditIdentity = ({
   open,
@@ -115,7 +119,7 @@ const EditIdentity = ({
       setAgama(selectedData?.religion || "");
       setPekerjaan(selectedData?.occupation || "");
       setPhone(selectedData?.phone || "");
-      setKtpFilePath(`/api${selectedData?.ktp_file_path}` || "");
+      setKtpFilePath(getUploadApiUrl(selectedData?.ktp_file_path));
       setAlamatJalan(selectedData?.street_address || "");
       setRt(selectedData?.rt || "");
       setRw(selectedData?.rw || "");
@@ -182,7 +186,14 @@ const EditIdentity = ({
     if (ktpFile) {
       formData.append("ktpFile", ktpFile);
     }
-    formData.append("oldKtpPath", ktpFilePath);
+    formData.append(
+      "oldKtpPath",
+      normalizeStoredUploadPath(
+        ktpFilePath?.startsWith("blob:")
+          ? selectedData?.ktp_file_path
+          : ktpFilePath
+      )
+    );
     formData.append("tempatLahir", tempatLahir);
     formData.append("tanggalLahir", tanggalLahir);
     formData.append("agama", agama);

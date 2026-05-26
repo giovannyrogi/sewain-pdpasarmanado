@@ -14,9 +14,11 @@ import moment from "moment";
 import React, { forwardRef } from "react";
 import formatRupiah from "../formatrupiah/page";
 import Image from "next/image";
+import { getUploadApiUrl } from "@/app/utils/uploadPath";
 
 const BuktiPembayaran = forwardRef(({ data }, ref) => {
   if (!data) return null;
+  const ktpImageUrl = getUploadApiUrl(data?.tenant_application?.ktp_file_path);
 
   const handleCalculateTotal = () => {
     // console.log("data", data);
@@ -880,7 +882,7 @@ const BuktiPembayaran = forwardRef(({ data }, ref) => {
             }}
           >
             <Image
-              src={`/api${data?.tenant_application?.ktp_file_path}`}
+              src={ktpImageUrl}
               alt={`foto-ktp-${data?.tenant_application?.tenant_name}`}
               fill
               style={{ objectFit: "contain", borderRadius: "8px" }}

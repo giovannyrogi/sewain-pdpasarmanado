@@ -22,6 +22,7 @@ import PaymentApprovedOverlay from "./PaymentsApprovedOverlay";
 import InstallmentDetail from "@/app/components/installment-detail/InstallmentDetail";
 import PaymentProof from "../../components/installment-detail/PaymentProof";
 import Image from "next/image";
+import { getUploadApiUrl } from "@/app/utils/uploadPath";
 
 const ApprovalModal = ({
   open,
@@ -38,6 +39,9 @@ const ApprovalModal = ({
   const [openPreview, setOpenPreview] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [switchImage, setSwitchImage] = useState("");
+  const ktpImageUrl = getUploadApiUrl(
+    selectedData?.tenant_application?.ktp_file_path
+  );
 
   // console.log("selectedData", selectedData);
   const theme = useTheme();
@@ -116,7 +120,7 @@ const ApprovalModal = ({
   };
 
   const handleSwitchImage = (imageUrl) => {
-    setSwitchImage(`/api${imageUrl}`);
+    setSwitchImage(getUploadApiUrl(imageUrl));
     setOpenPreview(true);
   };
 
@@ -574,11 +578,7 @@ const ApprovalModal = ({
                 >
                   {selectedData?.tenant_application?.ktp_file_path ? (
                     <Image
-                      src={
-                        selectedData?.tenant_application?.ktp_file_path
-                          ? `/api${selectedData.tenant_application?.ktp_file_path}`
-                          : ""
-                      }
+                      src={ktpImageUrl}
                       alt="ktp"
                       fill // penuh mengikuti container
                       style={{

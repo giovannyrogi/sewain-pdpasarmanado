@@ -19,6 +19,7 @@ import ImagePreviewModal from "../imagepreviewmodal/page";
 import formatRupiah from "../formatrupiah/page";
 import moment from "moment";
 import ApprovedOverlay from "../tenantapplicationmodal/ApprovedOverlay";
+import { getUploadApiUrl } from "@/app/utils/uploadPath";
 
 const TerminationReasonModal = ({
   open,
@@ -33,6 +34,7 @@ const TerminationReasonModal = ({
   const isMobile = useMediaQuery("(max-width:600px)");
 
   const [openPreview, setOpenPreview] = useState(false);
+  const ktpImageUrl = getUploadApiUrl(selectedData?.ktp_file_path);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // console.log("selectedData", selectedData);
@@ -148,7 +150,7 @@ const TerminationReasonModal = ({
             open={openPreview}
             onClose={() => setOpenPreview(false)}
             imageUrl={
-              selectedData?.ktp_file_path ? `/api${selectedData.ktp_file_path}` : ""
+              ktpImageUrl
             }
             alt="Preview KTP"
           />

@@ -20,6 +20,7 @@ import formatRupiah from "../../components/formatrupiah/page";
 import moment from "moment";
 import ApprovedOverlay from "../tenantapplicationmodal/ApprovedOverlay";
 import Image from "next/image";
+import { getUploadApiUrl } from "@/app/utils/uploadPath";
 
 const PreviewTenantInformationModal = ({ open, onClose, selectedData }) => {
   const isMobile = useMediaQuery("(max-width:600px)");
@@ -28,6 +29,7 @@ const PreviewTenantInformationModal = ({ open, onClose, selectedData }) => {
 
   //   console.log("selectedData", selectedData);
   const theme = useTheme();
+  const ktpImageUrl = getUploadApiUrl(selectedData?.ktp_file_path);
 
   const style = {
     width: isMobile ? "90vw" : 500,
@@ -192,11 +194,7 @@ const PreviewTenantInformationModal = ({ open, onClose, selectedData }) => {
                 >
                   {selectedData?.ktp_file_path ? (
                     <Image
-                      src={
-                        selectedData?.ktp_file_path
-                          ? `/api${selectedData.ktp_file_path}`
-                          : ""
-                      }
+                      src={ktpImageUrl}
                       alt="ktp"
                       fill // penuh mengikuti container
                       style={{
@@ -663,7 +661,7 @@ const PreviewTenantInformationModal = ({ open, onClose, selectedData }) => {
           <ImagePreviewModal
             open={openPreview}
             onClose={() => setOpenPreview(false)}
-            imageUrl={`/api${selectedData?.ktp_file_path}`}
+            imageUrl={ktpImageUrl}
             alt="Preview Pitcure"
           />
 

@@ -20,6 +20,7 @@ import moment from "moment";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
+import { getUploadApiUrl } from "@/app/utils/uploadPath";
 
 const PreviewDetailData = ({ data }) => {
   const router = useRouter();
@@ -29,6 +30,7 @@ const PreviewDetailData = ({ data }) => {
 
   const [openPreview, setOpenPreview] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const ktpImageUrl = getUploadApiUrl(data?.ktp_file_path);
 
   const installments = [
     {
@@ -267,7 +269,7 @@ const PreviewDetailData = ({ data }) => {
               >
                 {data?.ktp_file_path ? (
                   <Image
-                    src={`/api${data.ktp_file_path}`}
+                    src={ktpImageUrl}
                     alt="ktp"
                     fill // penuh mengikuti container
                     style={{
@@ -1036,7 +1038,7 @@ const PreviewDetailData = ({ data }) => {
         <ImagePreviewModal
           open={openPreview}
           onClose={() => setOpenPreview(false)}
-          imageUrl={data?.ktp_file_path ? `/api${data.ktp_file_path}` : ""}
+          imageUrl={ktpImageUrl}
           alt="Preview KTP"
         />
 
