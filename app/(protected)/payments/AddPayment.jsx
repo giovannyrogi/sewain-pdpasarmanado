@@ -193,9 +193,9 @@ const AddPayment = ({
 
     if (selectedData?.payment_type === "cicilan") {
       remainingBalanceAfterInstallment = remainingBalance - total;
-      formData.append("contract_amount", contractAmount);
     }
 
+    formData.append("contract_amount", contractAmount);
     formData.append("tenant_application_id", selectedTenantApplicationId);
     formData.append("proof_file", proofFile);
     formData.append("type_pembayaran", typePembayaran);

@@ -81,6 +81,16 @@ export async function PUT(request, { params }) {
       [payment_id]
     );
 
+    await pool.query(
+      `UPDATE payment_receipts
+       SET status = 'rejected',
+           approved_at = NOW(),
+           approved_by = $1,
+           updated_at = NOW()
+       WHERE payment_id = $2`,
+      [approver_id, payment_id]
+    );
+
     return new Response(
       JSON.stringify({
         success: true,

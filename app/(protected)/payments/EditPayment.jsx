@@ -247,10 +247,10 @@ const EditPayment = ({
 
     // Jika payment_type = cicilan
     if (selectedData?.tenant_application?.payment_type === "cicilan") {
-      formData.append("contract_amount", contractAmount);
       remainingBalanceAfterInstallment = remainingBalance - amount;
     }
 
+    formData.append("contract_amount", contractAmount);
     formData.append(
       "payment_approval_id",
       selectedCurrentData?.payment_approval?.id

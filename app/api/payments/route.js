@@ -13,6 +13,14 @@ if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
+const padReceiptNumber = (id) => String(id).padStart(6, "0");
+
+const getPaymentLabel = (paymentType, paymentNumber) => {
+  if (paymentType === "lunas") return "Lunas";
+  if (Number(paymentNumber) === 1) return "Uang Muka";
+  return `Cicilan ${Number(paymentNumber) - 1}`;
+};
+
 export async function POST(req) {
   const client = await pool.connect();
   try {
@@ -27,6 +35,10 @@ export async function POST(req) {
     const ppnAmount = formData.get("ppn_amount");
     const payment_type = formData.get("payment_type");
     const contract_amount = formData.get("contract_amount");
+    const contractAmountValue =
+      Number(contract_amount) || Number(amount || 0) / 1.11;
+    const ppnAmountValue =
+      Number(ppnAmount) || Number(amount || 0) - contractAmountValue;
 
     // Kondisi untuk remaining balance
     let remainingBalance = 0;
@@ -73,13 +85,16 @@ export async function POST(req) {
       moment(paymentDate).format("YYYY-MM-DD"),
       proofFilePath,
       uploadedBy,
-      ppnAmount,
+      ppnAmountValue,
       remainingBalance,
-      contract_amount,
+      contractAmountValue,
     ];
 
     const paymentResult = await client.query(insertPaymentQuery, paymentValues);
     const paymentId = paymentResult.rows[0].id;
+    const paymentLabel = getPaymentLabel(payment_type, paymentNumber);
+    const receiptYear = moment(paymentDate).format("YYYY");
+    const receiptSequence = padReceiptNumber(paymentId);
 
     // Insert ke payment_approval otomatis
     const insertApprovalQuery = `
@@ -88,6 +103,46 @@ export async function POST(req) {
       RETURNING id;
     `;
     await client.query(insertApprovalQuery, [paymentId]);
+
+    const contractReceiptNumber = `PEN-${receiptYear}-${receiptSequence}`;
+    const pphReceiptNumber = `PEM-${receiptYear}-${receiptSequence}`;
+    const contractDescription = `${paymentLabel} sewa kontrak ruangan atas nama ${tenantName}`;
+    const pphDescription = `Pajak PPH Psl 4(2) atas nama ${tenantName}`;
+
+    await client.query(
+      `
+      INSERT INTO payment_receipts (
+        payment_id,
+        receipt_type,
+        receipt_number,
+        receipt_date,
+        account_code,
+        amount,
+        contract_amount,
+        ppn_amount,
+        pph_amount,
+        description,
+        status,
+        created_at,
+        updated_at
+      )
+      VALUES
+        ($1, 'contract', $2, $3, '4-250', $4, $5, $6, 0, $7, 'draft', NOW(), NOW()),
+        ($1, 'pph', $8, $3, '5-192', 0, 0, 0, 0, $9, 'draft', NOW(), NOW())
+      ON CONFLICT (payment_id, receipt_type) DO NOTHING
+      `,
+      [
+        paymentId,
+        contractReceiptNumber,
+        moment(paymentDate).format("YYYY-MM-DD"),
+        amount,
+        contractAmountValue,
+        ppnAmountValue,
+        contractDescription,
+        pphReceiptNumber,
+        pphDescription,
+      ]
+    );
 
     // --- Commit DB baru tulis file
     await client.query("COMMIT");
@@ -130,6 +185,7 @@ export async function GET() {
         p.ppn_amount,
         p.contract_amount,
         p.remaining_balance,
+        receipts.receipts_json,
 
         -- Subquery: pembayaran sebelumnya
         (
@@ -215,6 +271,33 @@ export async function GET() {
       LEFT JOIN locations loc ON loc.id = ta.location_id
       LEFT JOIN location_floor_prices lfp ON lfp.id = rm.floor_id
       LEFT JOIN payment_approval pa ON pa.payment_id = p.id
+      LEFT JOIN LATERAL (
+        SELECT json_object_agg(
+          pr.receipt_type,
+          json_build_object(
+            'id', pr.id,
+            'payment_id', pr.payment_id,
+            'receipt_type', pr.receipt_type,
+            'receipt_number', pr.receipt_number,
+            'receipt_date', pr.receipt_date,
+            'account_code', pr.account_code,
+            'amount', pr.amount,
+            'contract_amount', pr.contract_amount,
+            'ppn_amount', pr.ppn_amount,
+            'pph_amount', pr.pph_amount,
+            'description', pr.description,
+            'status', pr.status,
+            'printed_at', pr.printed_at,
+            'printed_by', pr.printed_by,
+            'approved_at', pr.approved_at,
+            'approved_by', pr.approved_by,
+            'created_at', pr.created_at,
+            'updated_at', pr.updated_at
+          )
+        ) AS receipts_json
+        FROM payment_receipts pr
+        WHERE pr.payment_id = p.id
+      ) receipts ON TRUE
       WHERE ta.approval_status = 'approved'
         AND ta.start_date IS NOT NULL
         AND ta.end_date IS NOT NULL
@@ -271,6 +354,7 @@ export async function GET() {
           remaining_balance: row.remaining_balance,
           previous_payments: row.previous_payments || [],
         },
+        receipts: row.receipts_json || {},
         payment_approval: {
           id: row.id,
           payment_id: row.payment_id,

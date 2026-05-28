@@ -81,6 +81,16 @@ export async function PUT(request, { params }) {
       [status, payment_id]
     );
 
+    await pool.query(
+      `UPDATE payment_receipts
+       SET status = 'approved',
+           approved_at = NOW(),
+           approved_by = $1,
+           updated_at = NOW()
+       WHERE payment_id = $2`,
+      [approver_id, payment_id]
+    );
+
     // Jika payment_number == 3, set tenant_application.is_fully_paid = true
     // if (paymentData.payment_number === 3 || payment_type === "lunas") {
     //   await pool.query(

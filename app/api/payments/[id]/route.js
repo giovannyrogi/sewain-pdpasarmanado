@@ -8,6 +8,14 @@ if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
+const padReceiptNumber = (id) => String(id).padStart(6, "0");
+
+const getPaymentLabel = (paymentType, paymentNumber) => {
+  if (paymentType === "lunas") return "Lunas";
+  if (Number(paymentNumber) === 1) return "Uang Muka";
+  return `Cicilan ${Number(paymentNumber) - 1}`;
+};
+
 export async function PUT(req, { params }) {
   const { id } = await params;
   const client = await pool.connect();
@@ -52,6 +60,8 @@ export async function PUT(req, { params }) {
       moment(oldData.payment_date).format("YYYY-MM-DD");
     const proofFile = formData.get("proof_file");
     const payment_approval_id = formData.get("payment_approval_id");
+    const paymentType = formData.get("payment_type");
+    const paymentNumber = formData.get("payment_number") || oldData.payment_number;
 
     // validasi status hanya proses atau rejected
     if (!approvalStatus === "proses" || !approvalStatus === "rejected") {
@@ -165,6 +175,58 @@ export async function PUT(req, { params }) {
         [payment_approval_id]
       );
     }
+
+    const receiptYear = moment(paymentDate).format("YYYY");
+    const receiptSequence = padReceiptNumber(id);
+    const contractReceiptNumber = `PEN-${receiptYear}-${receiptSequence}`;
+    const pphReceiptNumber = `PEM-${receiptYear}-${receiptSequence}`;
+    const paymentLabel = getPaymentLabel(paymentType, paymentNumber);
+
+    await client.query(
+      `
+      INSERT INTO payment_receipts (
+        payment_id,
+        receipt_type,
+        receipt_number,
+        receipt_date,
+        account_code,
+        amount,
+        contract_amount,
+        ppn_amount,
+        pph_amount,
+        description,
+        status,
+        created_at,
+        updated_at
+      )
+      VALUES
+        ($1, 'contract', $2, $3, '4-250', $4, $5, $6, 0, $7, 'draft', NOW(), NOW()),
+        ($1, 'pph', $8, $3, '5-192', 0, 0, 0, 0, $9, 'draft', NOW(), NOW())
+      ON CONFLICT (payment_id, receipt_type)
+      DO UPDATE SET
+        receipt_date = EXCLUDED.receipt_date,
+        amount = EXCLUDED.amount,
+        contract_amount = EXCLUDED.contract_amount,
+        ppn_amount = EXCLUDED.ppn_amount,
+        pph_amount = EXCLUDED.pph_amount,
+        description = EXCLUDED.description,
+        status = 'draft',
+        printed_at = NULL,
+        printed_by = NULL,
+        updated_at = NOW()
+      `,
+      [
+        id,
+        contractReceiptNumber,
+        moment(paymentDate).format("YYYY-MM-DD"),
+        amount,
+        contractAmount,
+        ppnAmount,
+        `${paymentLabel} sewa kontrak ruangan atas nama ${tenantName}`,
+        pphReceiptNumber,
+        `Pajak PPH Psl 4(2) atas nama ${tenantName}`,
+      ]
+    );
 
     // Commit sebelum operasi file
     await client.query("COMMIT");

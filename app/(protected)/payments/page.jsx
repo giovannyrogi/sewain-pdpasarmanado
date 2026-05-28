@@ -28,10 +28,13 @@ import EditPayment from "./EditPayment";
 import MENU_CONFIG from "@/app/components/menu/MenuConfig";
 import ApprovalModal from "./ApprovalModal";
 import RejectedModal from "./RejectedModal";
+import KwitansiPembayaran from "@/app/components/documents/KwitansiPembayaran";
+import KwitansiPph from "@/app/components/documents/KwitansiPph";
 
 const Payments = () => {
   // Ref untuk dokumen print
   const printRef = useRef();
+  const receiptPrintRef = useRef();
   const { user } = useUser();
   const [dataPayments, setDataPayments] = useState([]);
   const { themeMode } = useThemeMode();
@@ -55,6 +58,8 @@ const Payments = () => {
   const [openApprovalModal, setOpenApprovalModal] = useState(false);
   const [openRejectedModal, setOpenRejectedModal] = useState(false);
   const [printData, setPrintData] = useState(null);
+  const [receiptPrintData, setReceiptPrintData] = useState(null);
+  const [receiptPrintType, setReceiptPrintType] = useState(null);
 
   const getDataPayments = async () => {
     setLoading(true);
@@ -124,6 +129,28 @@ const Payments = () => {
     onAfterPrint: () => setTimeout(() => setPrintData(null), 200),
   });
 
+  const handleReceiptPrintAction = useReactToPrint({
+    contentRef: receiptPrintRef,
+    documentTitle: "Kwitansi Pembayaran",
+    pageStyle: `
+      @page {
+        size: A5 landscape;
+        margin: 0;
+      }
+
+      @media print {
+        html, body {
+          margin: 0;
+          padding: 0;
+        }
+      }
+    `,
+    onAfterPrint: () => {
+      setReceiptPrintData(null);
+      setReceiptPrintType(null);
+    },
+  });
+
   // panggil print setelah ref sudah render
   useEffect(() => {
     if (!printData) return;
@@ -140,10 +167,29 @@ const Payments = () => {
     return () => clearTimeout(timeout);
   }, [printData]);
 
+  useEffect(() => {
+    if (!receiptPrintData || !receiptPrintType) return;
+
+    const timeout = setTimeout(() => {
+      if (receiptPrintRef.current) {
+        handleReceiptPrintAction();
+      } else {
+        console.error("Belum ada ref untuk print kwitansi");
+      }
+    }, 200);
+
+    return () => clearTimeout(timeout);
+  }, [receiptPrintData, receiptPrintType]);
+
   // handlers
   const handlePrint = (record) => {
     // cukup set selectedData — useEffect akan menangani memanggil printAction
     setPrintData(record);
+  };
+
+  const handlePrintReceipt = (record, type) => {
+    setReceiptPrintData(record);
+    setReceiptPrintType(type);
   };
 
   // Utility untuk filter dinamis
@@ -438,6 +484,28 @@ const Payments = () => {
               </Button>
             </Tooltip>
           )}
+          <Tooltip title="Print Kwitansi Penerimaan (3 rangkap)">
+            <Button
+              size="small"
+              variant={themeMode === "dark" ? "outlined" : "contained"}
+              color="warning"
+              onClick={() => handlePrintReceipt(record, "contract")}
+              sx={{ minWidth: 0, px: 1 }}
+            >
+              <Icon icon="mdi:receipt-text-send-outline" fontSize={18} />
+            </Button>
+          </Tooltip>
+          <Tooltip title="Print Kwitansi Pembayaran PPH (2 rangkap)">
+            <Button
+              size="small"
+              variant={themeMode === "dark" ? "outlined" : "contained"}
+              color="secondary"
+              onClick={() => handlePrintReceipt(record, "pph")}
+              sx={{ minWidth: 0, px: 1 }}
+            >
+              <Icon icon="mdi:receipt-text-plus-outline" fontSize={18} />
+            </Button>
+          </Tooltip>
           {user?.role_id !== 8 &&
             (record.payments?.approval_status === "rejected" ||
               record.payments?.approval_status === "proses") && (
@@ -646,6 +714,14 @@ const Payments = () => {
       {/* Dokumen tersembunyi (untuk print) */}
       <div style={{ display: "none" }}>
         {printData && <BuktiPembayaran ref={printRef} data={printData} />}
+      </div>
+      <div style={{ display: "none" }}>
+        {receiptPrintData && receiptPrintType === "contract" && (
+          <KwitansiPembayaran ref={receiptPrintRef} data={receiptPrintData} />
+        )}
+        {receiptPrintData && receiptPrintType === "pph" && (
+          <KwitansiPph ref={receiptPrintRef} data={receiptPrintData} />
+        )}
       </div>
     </Box>
   );
