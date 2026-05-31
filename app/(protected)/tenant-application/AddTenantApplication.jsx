@@ -585,6 +585,7 @@ const AddTenantApplication = ({
               response?.data?.message || "Form Permohonan berhasil dibuat!",
             severity: "success",
           });
+        window.dispatchEvent(new Event("sewain:notifications-refresh"));
         getDataTenantApplication();
         getLocationsData();
         getRoomsData();

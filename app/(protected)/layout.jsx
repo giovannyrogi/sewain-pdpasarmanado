@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Box, Grid, useMediaQuery } from "@mui/material";
 import { useUser } from "../utils/useUser";
 import { getMenusByRole } from "../components/menu/getMenuByRole";
@@ -22,6 +22,39 @@ const MainLayout = ({ children }) => {
   // aktifkan backdrop
   const handleShowLoading = () => setLoadingBackdropOpen(true);
   const handleHideLoading = () => setLoadingBackdropOpen(false);
+
+  useEffect(() => {
+    const handleGlobalShowLoading = (event) => {
+      if (event.detail?.message) {
+        setLoadingMessage(event.detail.message);
+      }
+      setLoadingBackdropOpen(true);
+    };
+
+    const handleGlobalHideLoading = () => {
+      setLoadingBackdropOpen(false);
+      setLoadingMessage("Loading...");
+    };
+
+    /**
+     * Event global ini menjaga loading tetap hidup lintas navigasi.
+     * Dipakai saat klik notifikasi karena router.push tidak memberi sinyal
+     * kapan halaman tujuan sudah selesai membuka modal/detail.
+     */
+    window.addEventListener("sewain:global-loading-show", handleGlobalShowLoading);
+    window.addEventListener("sewain:global-loading-hide", handleGlobalHideLoading);
+
+    return () => {
+      window.removeEventListener(
+        "sewain:global-loading-show",
+        handleGlobalShowLoading,
+      );
+      window.removeEventListener(
+        "sewain:global-loading-hide",
+        handleGlobalHideLoading,
+      );
+    };
+  }, []);
 
   return (
     <>
@@ -77,6 +110,7 @@ const MainLayout = ({ children }) => {
                 onBurgerClick={() => setDrawerOpen(true)}
                 onShowLoading={handleShowLoading}
                 onHideLoading={handleHideLoading}
+                setLoadingMessage={(message) => setLoadingMessage(message)}
               />
             </Grid>
 

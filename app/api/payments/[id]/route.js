@@ -2,6 +2,12 @@ import pool from "@/lib/dbConfig";
 import path from "path";
 import fs from "fs";
 import moment from "moment";
+import { getAuthenticatedUser, unauthorizedResponse } from "@/app/utils/auth";
+import {
+  getPaymentNotificationContext,
+  notifyPaymentDeleted,
+  notifyPaymentUpdated,
+} from "@/app/utils/notifications";
 
 const uploadDir = path.join(process.cwd(), "uploads", "bukti_transfer");
 if (!fs.existsSync(uploadDir)) {
@@ -53,7 +59,11 @@ export async function PUT(req, { params }) {
     const contractAmount = formData.get("contract_amount");
     const ppnAmount = formData.get("ppn_amount");
     const remainingBalance = formData.get("remaining_balance");
-    const uploadedBy = formData.get("uploaded_by");
+    const authUser = await getAuthenticatedUser();
+    if (!authUser) {
+      return unauthorizedResponse();
+    }
+    const uploadedBy = authUser.id;
     const approvalStatus = "proses";
     const paymentDate =
       formData.get("payment_date") ||
@@ -228,6 +238,14 @@ export async function PUT(req, { params }) {
       ]
     );
 
+    const paymentContext = await getPaymentNotificationContext(client, id);
+
+    // Setelah bukti pembayaran diedit, status approval kembali pending.
+    // Keuangan perlu mendapat notifikasi validasi ulang.
+    if (paymentContext) {
+      await notifyPaymentUpdated(client, paymentContext, uploadedBy);
+    }
+
     // Commit sebelum operasi file
     await client.query("COMMIT");
 
@@ -267,15 +285,28 @@ export async function PUT(req, { params }) {
 
 export async function DELETE(req, { params }) {
   const { id } = await params; // payment_id dari URL
+  const client = await pool.connect();
+  let transactionOpen = false;
+
   try {
+    const authUser = await getAuthenticatedUser();
+    if (!authUser) {
+      return unauthorizedResponse();
+    }
+
+    await client.query("BEGIN");
+    transactionOpen = true;
+
     // Ambil data payment
     const findPaymentQuery = `
       SELECT id, proof_file_path
       FROM payments
       WHERE id = $1
     `;
-    const findPaymentResult = await pool.query(findPaymentQuery, [id]);
+    const findPaymentResult = await client.query(findPaymentQuery, [id]);
     if (findPaymentResult.rowCount === 0) {
+      await client.query("ROLLBACK");
+      transactionOpen = false;
       return new Response(
         JSON.stringify({
           success: false,
@@ -287,14 +318,22 @@ export async function DELETE(req, { params }) {
 
     const payment = findPaymentResult.rows[0];
     const proofFilePath = payment.proof_file_path;
+    const paymentContext = await getPaymentNotificationContext(client, id);
+
+    if (paymentContext) {
+      await notifyPaymentDeleted(client, paymentContext, authUser.id);
+    }
 
     // Hapus data payment_approval
     const deleteApprovalQuery = `DELETE FROM payment_approval WHERE payment_id = $1`;
-    await pool.query(deleteApprovalQuery, [id]);
+    await client.query(deleteApprovalQuery, [id]);
 
     // Hapus data payments
     const deletePaymentQuery = `DELETE FROM payments WHERE id = $1`;
-    await pool.query(deletePaymentQuery, [id]);
+    await client.query(deletePaymentQuery, [id]);
+
+    await client.query("COMMIT");
+    transactionOpen = false;
 
     // Hapus file bukti transfer jika ada
     if (proofFilePath) {
@@ -316,10 +355,15 @@ export async function DELETE(req, { params }) {
       { status: 200 }
     );
   } catch (err) {
+    if (transactionOpen) {
+      await client.query("ROLLBACK");
+    }
     console.error("Error delete payment", err);
     return new Response(
       JSON.stringify({ success: false, message: err.message }),
       { status: 500 }
     );
+  } finally {
+    client.release();
   }
 }

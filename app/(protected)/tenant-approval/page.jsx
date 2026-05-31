@@ -49,6 +49,42 @@ const TenantApproval = () => {
   ] = useState(false);
   const [openTenantRejectModal, setOpenTenantRejectModal] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState("Loading...");
+  const [handledNotificationTarget, setHandledNotificationTarget] =
+    useState(null);
+  const [notificationOpenSignal, setNotificationOpenSignal] = useState(0);
+
+  const hideGlobalNotificationLoading = () => {
+    window.dispatchEvent(new Event("sewain:global-loading-hide"));
+  };
+
+  const resetNotificationFeedback = () => {
+    setSnackbar((current) => ({
+      ...current,
+      open: false,
+      message: "",
+    }));
+  };
+
+  const clearNotificationRouteState = () => {
+    if (typeof window === "undefined") return;
+
+    window.sessionStorage.removeItem("sewain:tenant-approval-target");
+
+    const params = new URLSearchParams(window.location.search);
+    const hasNotificationParams =
+      params.has("open") ||
+      params.has("tenant_application_id") ||
+      params.has("deleted");
+
+    /**
+     * Query notifikasi hanya dipakai sebagai trigger pembuka modal.
+     * Setelah diproses harus dibersihkan agar target lama, terutama data yang
+     * sudah dihapus, tidak terbaca ulang saat user klik notifikasi berikutnya.
+     */
+    if (hasNotificationParams) {
+      window.history.replaceState(null, "", window.location.pathname);
+    }
+  };
 
   const getDataApprovals = async () => {
     if (!user) {
@@ -87,6 +123,165 @@ const TenantApproval = () => {
       getDataApprovals();
     }
   }, [user]);
+
+  useEffect(() => {
+    const handleNotificationOpenSignal = () => {
+      setNotificationOpenSignal((value) => value + 1);
+    };
+
+    window.addEventListener(
+      "sewain:tenant-approval-notification-open",
+      handleNotificationOpenSignal,
+    );
+
+    return () => {
+      window.removeEventListener(
+        "sewain:tenant-approval-notification-open",
+        handleNotificationOpenSignal,
+      );
+    };
+  }, []);
+
+  useEffect(() => {
+    const getNotificationTarget = () => {
+      if (typeof window === "undefined") return null;
+
+      const params = new URLSearchParams(window.location.search);
+      const storageValue = window.sessionStorage.getItem(
+        "sewain:tenant-approval-target",
+      );
+
+      if (storageValue) {
+        try {
+          const parsed = JSON.parse(storageValue);
+          return {
+            openMode: parsed.openMode || "approval",
+            tenantApplicationId: Number(parsed.tenantApplicationId),
+            deletedFromNotification: Boolean(parsed.deleted),
+            requestedAt: parsed.requestedAt,
+          };
+        } catch {
+          window.sessionStorage.removeItem("sewain:tenant-approval-target");
+        }
+      }
+
+      return {
+        openMode: params.get("open"),
+        tenantApplicationId: Number(params.get("tenant_application_id")),
+        deletedFromNotification: params.get("deleted") === "1",
+        requestedAt: 0,
+      };
+    };
+
+    const target = getNotificationTarget();
+    const openMode = target?.openMode;
+    const tenantApplicationId = target?.tenantApplicationId;
+    const deletedFromNotification = target?.deletedFromNotification;
+    const targetKey = `${tenantApplicationId}-${openMode}-${deletedFromNotification}-${target?.requestedAt || 0}`;
+
+    if (
+      !["approval", "progress"].includes(openMode) ||
+      !tenantApplicationId ||
+      !user ||
+      handledNotificationTarget === targetKey
+    ) {
+      return;
+    }
+
+    const openApprovalFromNotification = async () => {
+      setHandledNotificationTarget(targetKey);
+      resetNotificationFeedback();
+      setLoadingMessage("Menampilkan data permohonan...");
+      setLoading(true);
+
+      try {
+        window.sessionStorage.removeItem("sewain:tenant-approval-target");
+
+        /**
+         * Notifikasi data hapus tidak bisa membuka modal karena record utama sudah
+         * tidak ada. User tetap diberi feedback yang jelas melalui snackbar.
+         */
+        if (deletedFromNotification) {
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+          setSelectedData(null);
+          setOpenApprovalModal(false);
+          setOpenTenantApprovalInformationModal(false);
+          setSnackbar({
+            open: true,
+            severity: "error",
+            message:
+              "Data permohonan ini sudah dihapus, sehingga detail approval tidak dapat ditampilkan.",
+          });
+          return;
+        }
+
+        /**
+         * Klik dari notifikasi harus selalu membaca data terbaru dari server.
+         * Tanpa refresh ini, modal bisa membawa status lama dari state browser
+         * seperti permohonan yang sebelumnya rejected tetapi sudah diedit kembali
+         * menjadi proses oleh Admin Kontrak.
+         */
+        const response = await axios.get(
+          "/api/tenant-approval/by-tenant-application-id",
+          {
+            params: { tenant_application_id: tenantApplicationId },
+          },
+        );
+
+        const approvalRows = response.data?.data || [];
+        const selectedApproval =
+          approvalRows.find((item) => Number(item.role_id) === Number(user.role_id)) ||
+          approvalRows.find((item) => item.status === "proses") ||
+          approvalRows[0];
+
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+
+        if (selectedApproval) {
+          /**
+           * Sinkronkan baris di tabel lokal supaya aksi berikutnya pada halaman
+           * yang sama tidak kembali memakai status approval lama.
+           */
+          setApprovalList((currentList) =>
+            currentList.map((item) => {
+              const freshItem = approvalRows.find(
+                (approval) => Number(approval.id) === Number(item.id),
+              );
+              return freshItem || item;
+            }),
+          );
+          resetNotificationFeedback();
+          setSelectedData(selectedApproval);
+          if (openMode === "progress") {
+            setOpenApprovalModal(true);
+          } else {
+            setOpenTenantApprovalInformationModal(true);
+          }
+          return;
+        }
+
+        setSnackbar({
+          open: true,
+          severity: "error",
+          message:
+            "Data permohonan tidak ditemukan. Kemungkinan data sudah dihapus atau akses tidak tersedia.",
+        });
+      } catch (err) {
+        console.log("Error open approval from notification:", err);
+        setSnackbar({
+          open: true,
+          severity: "error",
+          message: "Gagal menampilkan data permohonan dari notifikasi.",
+        });
+      } finally {
+        clearNotificationRouteState();
+        setLoading(false);
+        setLoadingMessage("Loading...");
+        hideGlobalNotificationLoading();
+      }
+    };
+
+    openApprovalFromNotification();
+  }, [approvalList, handledNotificationTarget, notificationOpenSignal, user]);
 
   const handleTenantApprove = (record) => {
     // console.log("edit record", record);

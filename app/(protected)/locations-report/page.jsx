@@ -233,7 +233,7 @@ const LocationsReport = () => {
       title: "No",
       dataIndex: "index",
       render: (text, record, index) => index + 1,
-      width: 50,
+      width: 40,
       align: "center",
     },
     {
@@ -975,55 +975,60 @@ const LocationsReport = () => {
                               sx={{
                                 fontWeight: "bold",
                                 fontSize: "12px",
-                                width: 200,
+                                // width: 200,
                               }}
-                            >
-                              TOTAL
-                            </Typography>
+                            ></Typography>
                           </Table.Summary.Cell>
-                          <Table.Summary.Cell index={1} align="right">
+                          <Table.Summary.Cell index={1} align="left">
                             <Typography
                               sx={{ fontWeight: "bold", fontSize: "12px" }}
                             >
-                              {formatRupiah(totals?.total_contract)}
+                              TOTAL
                             </Typography>
                           </Table.Summary.Cell>
                           <Table.Summary.Cell index={2} align="right">
                             <Typography
                               sx={{ fontWeight: "bold", fontSize: "12px" }}
                             >
-                              {formatRupiah(totals?.total_JTU)}
+                              {formatRupiah(totals?.total_contract)}
                             </Typography>
                           </Table.Summary.Cell>
                           <Table.Summary.Cell index={3} align="right">
                             <Typography
                               sx={{ fontWeight: "bold", fontSize: "12px" }}
                             >
-                              {formatRupiah(totals?.total_without_ppn)}
+                              {formatRupiah(totals?.total_JTU)}
                             </Typography>
                           </Table.Summary.Cell>
                           <Table.Summary.Cell index={4} align="right">
                             <Typography
                               sx={{ fontWeight: "bold", fontSize: "12px" }}
                             >
-                              {formatRupiah(totals?.total_ppn)}
+                              {formatRupiah(totals?.total_without_ppn)}
                             </Typography>
                           </Table.Summary.Cell>
                           <Table.Summary.Cell index={5} align="right">
                             <Typography
                               sx={{ fontWeight: "bold", fontSize: "12px" }}
                             >
-                              {formatRupiah(totals?.total_with_ppn)}
+                              {formatRupiah(totals?.total_ppn)}
                             </Typography>
                           </Table.Summary.Cell>
                           <Table.Summary.Cell index={6} align="right">
                             <Typography
                               sx={{ fontWeight: "bold", fontSize: "12px" }}
                             >
-                              {formatRupiah(totals?.total_pph)}
+                              {formatRupiah(totals?.total_with_ppn)}
                             </Typography>
                           </Table.Summary.Cell>
                           <Table.Summary.Cell index={7} align="right">
+                            <Typography
+                              sx={{ fontWeight: "bold", fontSize: "12px" }}
+                            >
+                              {formatRupiah(totals?.total_pph)}
+                            </Typography>
+                          </Table.Summary.Cell>
+                          <Table.Summary.Cell index={8} align="right">
                             <Typography
                               sx={{ fontWeight: "bold", fontSize: "12px" }}
                             >
@@ -1041,7 +1046,7 @@ const LocationsReport = () => {
         </Grid>
 
         {/* Summery */}
-        {dataLocations.length > 0 && (
+        {/* {dataLocations.length > 0 && (
           <Grid size={12}>
             <Paper
               elevation={6}
@@ -1170,7 +1175,7 @@ const LocationsReport = () => {
               </Grid>
             </Paper>
           </Grid>
-        )}
+        )} */}
       </Grid>
 
       {/* Popup Date Range */}

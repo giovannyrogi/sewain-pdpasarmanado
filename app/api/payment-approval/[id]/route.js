@@ -1,144 +1,156 @@
 import pool from "@/lib/dbConfig";
+import { getAuthenticatedUser, unauthorizedResponse } from "@/app/utils/auth";
+import {
+  getPaymentNotificationContext,
+  notifyPaymentDecision,
+} from "@/app/utils/notifications";
 
 export async function PUT(request, { params }) {
+  const client = await pool.connect();
+
   try {
-    const { id } = await params; // id payment_approval
+    const { id } = await params;
     const body = await request.json();
     const {
       payment_id,
       status,
-      approver_id,
-      role_id,
       tenant_application_id,
-      payment_type,
     } = body;
+    const authUser = await getAuthenticatedUser();
+    if (!authUser) {
+      return unauthorizedResponse();
+    }
+    const approver_id = authUser.id;
+    const role_id = authUser.role_id;
 
-    // Validasi input status
     if (!["approved"].includes(status)) {
-      return new Response(
-        JSON.stringify({ success: false, message: "Status tidak valid" }),
-        { status: 400 }
+      return Response.json(
+        { success: false, message: "Status tidak valid" },
+        { status: 400 },
       );
     }
 
-    // Ambil data payment_approval
-    const approvalRes = await pool.query(
+    await client.query("BEGIN");
+
+    const approvalRes = await client.query(
       `SELECT * FROM payment_approval WHERE id=$1`,
-      [id]
+      [id],
     );
     if (approvalRes.rows.length === 0) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          message: "Data Payment Approval tidak ditemukan",
-        }),
-        { status: 404 }
+      await client.query("ROLLBACK");
+      return Response.json(
+        { success: false, message: "Data Payment Approval tidak ditemukan" },
+        { status: 404 },
       );
     }
+
     const approvalData = approvalRes.rows[0];
-
-    // Cek apakah role_id login sama dengan role_id di payment_approval
     if (approvalData.role_id !== role_id) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          message: "Anda tidak memiliki akses untuk approval ini",
-        }),
-        { status: 403 }
+      await client.query("ROLLBACK");
+      return Response.json(
+        { success: false, message: "Anda tidak memiliki akses untuk approval ini" },
+        { status: 403 },
       );
     }
 
-    // Cek data payment
-    const paymentRes = await pool.query(`SELECT * FROM payments WHERE id=$1`, [
-      payment_id,
-    ]);
+    const paymentRes = await client.query(
+      `SELECT * FROM payments WHERE id=$1`,
+      [payment_id],
+    );
     if (paymentRes.rows.length === 0) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          message: "Data Payment tidak ditemukan",
-        }),
-        { status: 404 }
+      await client.query("ROLLBACK");
+      return Response.json(
+        { success: false, message: "Data Payment tidak ditemukan" },
+        { status: 404 },
       );
     }
 
-    const paymentData = paymentRes.rows[0];
-
-    // Update tabel payment_approval
-    const updateApproval = await pool.query(
-      `UPDATE payment_approval 
-       SET status=$1, approver_id=$2, approved_at=$3
-       WHERE id=$4 AND payment_id=$5
-       RETURNING *`,
-      [status, approver_id, new Date(), id, payment_id]
-    );
-
-    // Update tabel payments.approval_status
-    await pool.query(
-      `UPDATE payments 
-       SET approval_status=$1
-       WHERE id=$2`,
-      [status, payment_id]
-    );
-
-    await pool.query(
-      `UPDATE payment_receipts
-       SET status = 'approved',
-           approved_at = NOW(),
-           approved_by = $1,
-           updated_at = NOW()
-       WHERE payment_id = $2`,
-      [approver_id, payment_id]
-    );
-
-    // Jika payment_number == 3, set tenant_application.is_fully_paid = true
-    // if (paymentData.payment_number === 3 || payment_type === "lunas") {
-    //   await pool.query(
-    //     `UPDATE tenant_application
-    //      SET is_fully_paid = true
-    //      WHERE id = $1`,
-    //     [tenant_application_id]
-    //   );
-    // }
-
-    // Cek apakah pembayaran terakhir sudah lunas (remaining_balance <= 0)
-    const latestPaymentRes = await pool.query(
+    const updateApproval = await client.query(
       `
-      SELECT remaining_balance 
-      FROM payments 
+      UPDATE payment_approval
+      SET status=$1, approver_id=$2, approved_at=$3
+      WHERE id=$4 AND payment_id=$5
+      RETURNING *
+      `,
+      [status, approver_id, new Date(), id, payment_id],
+    );
+
+    await client.query(
+      `
+      UPDATE payments
+      SET approval_status=$1
+      WHERE id=$2
+      `,
+      [status, payment_id],
+    );
+
+    await client.query(
+      `
+      UPDATE payment_receipts
+      SET status = 'approved',
+          approved_at = NOW(),
+          approved_by = $1,
+          updated_at = NOW()
+      WHERE payment_id = $2
+      `,
+      [approver_id, payment_id],
+    );
+
+    const latestPaymentRes = await client.query(
+      `
+      SELECT remaining_balance
+      FROM payments
       WHERE tenant_application_id = $1
       ORDER BY payment_number DESC
       LIMIT 1
       `,
-      [tenant_application_id]
+      [tenant_application_id],
     );
 
     const latestRemaining = parseFloat(
-      latestPaymentRes.rows[0]?.remaining_balance || 0
+      latestPaymentRes.rows[0]?.remaining_balance || 0,
     );
 
     if (latestRemaining <= 0) {
-      await pool.query(
-        `UPDATE tenant_application 
-         SET is_fully_paid = true
-         WHERE id = $1`,
-        [tenant_application_id]
+      await client.query(
+        `
+        UPDATE tenant_application
+        SET is_fully_paid = true
+        WHERE id = $1
+        `,
+        [tenant_application_id],
       );
     }
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: "Payment Approval berhasil diproses",
-        data: updateApproval.rows[0],
-      }),
-      { status: 200 }
-    );
+    const paymentContext = await getPaymentNotificationContext(client, payment_id);
+
+    // Keputusan keuangan dikirim hanya ke pihak pembayaran terkait:
+    // uploader/admin kontrak, pembuat permohonan, dan approver keuangan.
+    if (paymentContext) {
+      await notifyPaymentDecision(
+        client,
+        paymentContext,
+        approver_id,
+        status,
+        null,
+      );
+    }
+
+    await client.query("COMMIT");
+
+    return Response.json({
+      success: true,
+      message: "Payment Approval berhasil diproses",
+      data: updateApproval.rows[0],
+    });
   } catch (err) {
+    await client.query("ROLLBACK");
     console.error("Error update Payment Approval", err);
-    return new Response(
-      JSON.stringify({ success: false, message: err.message }),
-      { status: 500 }
+    return Response.json(
+      { success: false, message: err.message },
+      { status: 500 },
     );
+  } finally {
+    client.release();
   }
 }

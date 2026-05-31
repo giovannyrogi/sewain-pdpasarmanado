@@ -1,10 +1,21 @@
 import pool from "@/lib/dbConfig";
+import { getAuthenticatedUser, unauthorizedResponse } from "@/app/utils/auth";
+import {
+  getPaymentNotificationContext,
+  notifyPaymentDecision,
+} from "@/app/utils/notifications";
 
 export async function PUT(request, { params }) {
   try {
     const { id } = params; // id payment_approval dari URL
     const body = await request.json();
-    const { notes, status, approver_id, payment_id, role_id } = body;
+    const { notes, status, payment_id } = body;
+    const authUser = await getAuthenticatedUser();
+    if (!authUser) {
+      return unauthorizedResponse();
+    }
+    const approver_id = authUser.id;
+    const role_id = authUser.role_id;
 
     if (!notes) {
       return new Response(
@@ -90,6 +101,20 @@ export async function PUT(request, { params }) {
        WHERE payment_id = $2`,
       [approver_id, payment_id]
     );
+
+    const paymentContext = await getPaymentNotificationContext(pool, payment_id);
+
+    // Notifikasi reject pembayaran dikirim ke pihak yang perlu menindaklanjuti,
+    // terutama admin kontrak/uploader agar bukti bisa diperbaiki.
+    if (paymentContext) {
+      await notifyPaymentDecision(
+        pool,
+        paymentContext,
+        approver_id,
+        status,
+        notes,
+      );
+    }
 
     return new Response(
       JSON.stringify({

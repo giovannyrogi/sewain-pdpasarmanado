@@ -2,6 +2,8 @@ import fs from "fs";
 import path from "path";
 import pool from "@/lib/dbConfig";
 import moment from "moment";
+import { getAuthenticatedUser, unauthorizedResponse } from "@/app/utils/auth";
+import { notifyTenantApplicationCreated } from "@/app/utils/notifications";
 
 export async function POST(req) {
   try {
@@ -19,7 +21,11 @@ export async function POST(req) {
     const down_payment = formData.get("down_payment");
     const remaining_payment = formData.get("remaining_payment");
     const approval_status = formData.get("approval_status");
-    const user_id = formData.get("user_id");
+    const authUser = await getAuthenticatedUser();
+    if (!authUser) {
+      return unauthorizedResponse();
+    }
+    const user_id = authUser.id;
     const current_step = formData.get("current_step");
     const renewal_of = formData.get("renewal_of");
     const estimated_installment_1 = formData.get("estimated_installment_1");
@@ -249,8 +255,13 @@ export async function POST(req) {
         `SELECT full_name FROM tenant_identities WHERE id = $1`,
         [tenant_identity_id],
       );
+      const locationResult = await client.query(
+        `SELECT location_name FROM locations WHERE id = $1`,
+        [location_id],
+      );
 
       const tenantName = tenantIdentity.rows[0]?.full_name || "-";
+      const locationName = locationResult.rows[0]?.location_name || "-";
 
       // Format notes
       const notes =
@@ -268,6 +279,24 @@ export async function POST(req) {
         `,
         [room_id, notes],
       );
+
+      // Notifikasi dikirim di dalam transaksi agar tidak ada pesan palsu
+      // jika proses insert permohonan atau pembuatan approval gagal.
+      await notifyTenantApplicationCreated(client, {
+        id: tenantAppId,
+        user_id,
+        documentNumber: tenantApp.document_number,
+        document_number: tenantApp.document_number,
+        tenantName,
+        tenant_name: tenantName,
+        roomNumber: roomCheck.rows[0]?.room_number,
+        room_number: roomCheck.rows[0]?.room_number,
+        locationName,
+        location_name: locationName,
+        location_id,
+        room_id,
+        current_step: tenantApp.current_step,
+      });
 
       // Jika semua sukses → commit
       await client.query("COMMIT");

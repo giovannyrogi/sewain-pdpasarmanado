@@ -60,20 +60,58 @@ const Payments = () => {
   const [printData, setPrintData] = useState(null);
   const [receiptPrintData, setReceiptPrintData] = useState(null);
   const [receiptPrintType, setReceiptPrintType] = useState(null);
+  const [paymentsLoaded, setPaymentsLoaded] = useState(false);
+  const [handledNotificationTarget, setHandledNotificationTarget] =
+    useState(null);
+  const [notificationOpenSignal, setNotificationOpenSignal] = useState(0);
+
+  const hideGlobalNotificationLoading = () => {
+    window.dispatchEvent(new Event("sewain:global-loading-hide"));
+  };
+
+  const resetNotificationFeedback = () => {
+    setSnackbar((current) => ({
+      ...current,
+      open: false,
+      message: "",
+    }));
+  };
+
+  const clearNotificationRouteState = () => {
+    if (typeof window === "undefined") return;
+
+    window.sessionStorage.removeItem("sewain:payment-target");
+
+    const params = new URLSearchParams(window.location.search);
+    const hasNotificationParams =
+      params.has("open") || params.has("payment_id") || params.has("deleted");
+
+    if (hasNotificationParams) {
+      window.history.replaceState(null, "", window.location.pathname);
+    }
+  };
 
   const getDataPayments = async () => {
     setLoading(true);
+    setPaymentsLoaded(false);
     try {
       const response = await axios.get("/api/payments");
       // console.log("data payments", response);
       if (response.data.success) {
         setDataPayments(response.data.data);
+        setPaymentsLoaded(true);
+        setTimeout(() => {
+          setLoading(false);
+        }, 1000);
+      } else {
+        setPaymentsLoaded(true);
         setTimeout(() => {
           setLoading(false);
         }, 1000);
       }
     } catch (error) {
       console.log("error", error);
+      setPaymentsLoaded(true);
       setTimeout(() => {
         setLoading(false);
       }, 1000);
@@ -85,6 +123,150 @@ const Payments = () => {
       getDataPayments();
     }
   }, [user]);
+
+  useEffect(() => {
+    const handleNotificationOpenSignal = () => {
+      setNotificationOpenSignal((value) => value + 1);
+    };
+
+    window.addEventListener(
+      "sewain:payment-notification-open",
+      handleNotificationOpenSignal,
+    );
+
+    return () => {
+      window.removeEventListener(
+        "sewain:payment-notification-open",
+        handleNotificationOpenSignal,
+      );
+    };
+  }, []);
+
+  useEffect(() => {
+    const getNotificationTarget = () => {
+      if (typeof window === "undefined") return null;
+
+      const params = new URLSearchParams(window.location.search);
+      const storageValue = window.sessionStorage.getItem("sewain:payment-target");
+
+      if (storageValue) {
+        try {
+          const parsed = JSON.parse(storageValue);
+          return {
+            openMode: parsed.openMode || "detail",
+            paymentId: Number(parsed.paymentId),
+            deletedFromNotification: Boolean(parsed.deleted),
+            requestedAt: parsed.requestedAt,
+          };
+        } catch {
+          window.sessionStorage.removeItem("sewain:payment-target");
+        }
+      }
+
+      return {
+        openMode: params.get("open"),
+        paymentId: Number(params.get("payment_id")),
+        deletedFromNotification: params.get("deleted") === "1",
+        requestedAt: 0,
+      };
+    };
+
+    const target = getNotificationTarget();
+    const openMode = target?.openMode;
+    const paymentId = target?.paymentId;
+    const deletedFromNotification = target?.deletedFromNotification;
+    const targetKey = `${paymentId}-${openMode}-${deletedFromNotification}-${target?.requestedAt || 0}`;
+
+    if (
+      !["detail", "progress"].includes(openMode) ||
+      !paymentId ||
+      !user ||
+      (!deletedFromNotification && !paymentsLoaded) ||
+      handledNotificationTarget === targetKey
+    ) {
+      return;
+    }
+
+    const openPaymentFromNotification = async () => {
+      setHandledNotificationTarget(targetKey);
+      resetNotificationFeedback();
+      setLoadingMessage("Menampilkan detail pembayaran...");
+      setLoading(true);
+
+      try {
+        window.sessionStorage.removeItem("sewain:payment-target");
+
+        if (deletedFromNotification) {
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+          setSelectedData(null);
+          setOpenApprovalModal(false);
+          setOpenVerificationModal(false);
+          setSnackbar({
+            open: true,
+            severity: "error",
+            message:
+              "Data pembayaran ini sudah dihapus, sehingga detail pembayaran tidak dapat ditampilkan.",
+          });
+          return;
+        }
+
+        /**
+         * Klik dari notifikasi payment harus mengambil data terbaru dari server.
+         * Ini mencegah modal progress masih membaca status rejected lama setelah
+         * Admin Kontrak memperbarui bukti pembayaran menjadi proses lagi.
+         */
+        const response = await axios.get("/api/payments");
+        const freshPayments = response.data?.success ? response.data.data || [] : [];
+        setDataPayments(freshPayments);
+
+        const selectedPayment = freshPayments.find(
+          (item) => Number(item?.payments?.payment_id) === paymentId,
+        );
+
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+
+        if (selectedPayment) {
+          resetNotificationFeedback();
+          setSelectedData(selectedPayment);
+          if (openMode === "progress") {
+            setOpenApprovalModal(false);
+            setOpenVerificationModal(true);
+          } else {
+            setOpenVerificationModal(false);
+            setOpenApprovalModal(true);
+          }
+          return;
+        }
+
+        setSnackbar({
+          open: true,
+          severity: "error",
+          message:
+            "Data pembayaran tidak ditemukan. Kemungkinan data sudah dihapus atau akses tidak tersedia.",
+        });
+      } catch (err) {
+        console.log("Error open payment from notification:", err);
+        setSnackbar({
+          open: true,
+          severity: "error",
+          message: "Gagal menampilkan detail pembayaran dari notifikasi.",
+        });
+      } finally {
+        clearNotificationRouteState();
+        setLoading(false);
+        setLoadingMessage("Loading...");
+        hideGlobalNotificationLoading();
+      }
+    };
+
+    openPaymentFromNotification();
+  }, [
+    dataPayments,
+    handledNotificationTarget,
+    notificationOpenSignal,
+    paymentsLoaded,
+    user,
+  ]);
 
   const onChange = (pagination, filters, sorter, extra) => {
     if (pagination.pageSize !== pageSize) {

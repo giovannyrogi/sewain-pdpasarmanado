@@ -92,7 +92,7 @@ const TenantsReport = () => {
     setLoading(true);
     try {
       const response = await axios.get(
-        `/api/report/income-by-tenants?start_date=${range[0].startDate}&end_date=${range[0].endDate}`
+        `/api/report/income-by-tenants?start_date=${range[0].startDate}&end_date=${range[0].endDate}`,
       );
       // console.log("tenants report", response);
       setDataIncomeTenants(response.data.data);
@@ -118,7 +118,7 @@ const TenantsReport = () => {
     setIsSubmitting(true);
     try {
       const response = await axios.get(
-        `/api/report/income-by-tenants?start_date=${range[0].startDate}&end_date=${range[0].endDate}`
+        `/api/report/income-by-tenants?start_date=${range[0].startDate}&end_date=${range[0].endDate}`,
       );
       // console.log("tenants report", response);
       const data = response.data.data;
@@ -201,7 +201,7 @@ const TenantsReport = () => {
   });
 
   const columns = [
-     {
+    {
       title: "No",
       dataIndex: "index",
       render: (text, record, index) => index + 1,
@@ -464,7 +464,7 @@ const TenantsReport = () => {
     const title = [
       [
         `Laporan Pendapatan Lokasi (${moment(range[0].startDate).format(
-          "DD-MM-YYYY"
+          "DD-MM-YYYY",
         )} s/d ${moment(range[0].endDate).format("DD-MM-YYYY")})`,
       ],
     ];
@@ -571,8 +571,8 @@ const TenantsReport = () => {
     XLSX.writeFile(
       wb,
       `Laporan_Pendapatan_Lokasi_${moment(range[0].startDate).format(
-        "DD-MM-YYYY"
-      )}_sd_${moment(range[0].endDate).format("DD-MM-YYYY")}.xlsx`
+        "DD-MM-YYYY",
+      )}_sd_${moment(range[0].endDate).format("DD-MM-YYYY")}.xlsx`,
     );
 
     handleMenuClose();
@@ -627,8 +627,8 @@ const TenantsReport = () => {
 
     doc.save(
       `Laporan_Pendapatan_Lokasi_${moment(range[0].startDate).format(
-        "DD-MM-YYYY"
-      )}_sd_${moment(range[0].endDate).format("DD-MM-YYYY")}.pdf`
+        "DD-MM-YYYY",
+      )}_sd_${moment(range[0].endDate).format("DD-MM-YYYY")}.pdf`,
     );
 
     handleMenuClose();
@@ -1027,9 +1027,7 @@ const TenantsReport = () => {
                                 fontWeight: "bold",
                                 fontSize: "12px",
                               }}
-                            >
-                              TOTAL
-                            </Typography>
+                            ></Typography>
                           </Table.Summary.Cell>
                           <Table.Summary.Cell index={1}>
                             <Typography
@@ -1037,7 +1035,9 @@ const TenantsReport = () => {
                                 fontWeight: "bold",
                                 fontSize: "12px",
                               }}
-                            ></Typography>
+                            >
+                              TOTAL
+                            </Typography>
                           </Table.Summary.Cell>
                           <Table.Summary.Cell index={2}>
                             <Typography

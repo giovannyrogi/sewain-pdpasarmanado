@@ -2,6 +2,11 @@ import fs from "fs";
 import path from "path";
 import pool from "@/lib/dbConfig";
 import moment from "moment";
+import { getAuthenticatedUser, unauthorizedResponse } from "@/app/utils/auth";
+import {
+  notifyTenantApplicationDeleted,
+  notifyTenantApplicationUpdated,
+} from "@/app/utils/notifications";
 
 export async function PUT(req, { params }) {
   const { id } = await params;
@@ -18,7 +23,11 @@ export async function PUT(req, { params }) {
     const down_payment = formData.get("down_payment");
     const remaining_payment = formData.get("remaining_payment");
     const approval_status = formData.get("approval_status");
-    const user_id = formData.get("user_id");
+    const authUser = await getAuthenticatedUser();
+    if (!authUser) {
+      return unauthorizedResponse();
+    }
+    const user_id = authUser.id;
     const estimated_installment_1 = formData.get("estimated_installment_1");
     const estimated_installment_2 = formData.get("estimated_installment_2");
     const estimated_installment_3 = formData.get("estimated_installment_3");
@@ -233,7 +242,12 @@ export async function PUT(req, { params }) {
         `SELECT full_name FROM tenant_identities WHERE id = $1`,
         [tenant_identity_id],
       );
+      const locationResult = await client.query(
+        `SELECT location_name FROM locations WHERE id = $1`,
+        [location_id],
+      );
       const tenantName = tenantIdentity.rows[0]?.full_name || "-";
+      const locationName = locationResult.rows[0]?.location_name || "-";
 
       // Format catatan/notes
       const notes = `Ruangan ini sedang digunakan oleh ${tenantName}`;
@@ -277,6 +291,28 @@ export async function PUT(req, { params }) {
         [id],
       );
 
+      // Notifikasi update dibuat setelah data dan reset approval selesai.
+      // Jika transaksi rollback, notifikasi juga otomatis batal.
+      await notifyTenantApplicationUpdated(
+        client,
+        {
+          id: tenantApp.id,
+          user_id,
+          documentNumber: tenantApp.document_number,
+          document_number: tenantApp.document_number,
+          tenantName,
+          tenant_name: tenantName,
+          roomNumber: roomCheck.rows[0]?.room_number,
+          room_number: roomCheck.rows[0]?.room_number,
+          locationName,
+          location_name: locationName,
+          location_id,
+          room_id,
+          current_step: tenantApp.current_step,
+        },
+        user_id,
+      );
+
       await client.query("COMMIT");
 
       return Response.json(
@@ -307,12 +343,31 @@ export async function DELETE(request, context) {
   const client = await pool.connect();
   try {
     const { id } = await context.params;
+    const authUser = await getAuthenticatedUser();
+    if (!authUser) {
+      return unauthorizedResponse();
+    }
 
     await client.query("BEGIN");
 
-    // Ambil data tenant_application sebelum dihapus
+    // Ambil data tenant_application sebelum dihapus untuk update ruangan
+    // dan metadata notifikasi setelah entity utamanya hilang.
     const tenantRes = await client.query(
-      `SELECT room_id FROM tenant_application WHERE id = $1`,
+      `
+      SELECT
+        ta.id,
+        ta.room_id,
+        ta.user_id,
+        ta.document_number,
+        ti.full_name AS tenant_name,
+        r.room_number,
+        l.location_name
+      FROM tenant_application ta
+      LEFT JOIN tenant_identities ti ON ti.id = ta.tenant_identity_id
+      LEFT JOIN rooms r ON r.id = ta.room_id
+      LEFT JOIN locations l ON l.id = ta.location_id
+      WHERE ta.id = $1
+      `,
       [id],
     );
 
@@ -327,7 +382,8 @@ export async function DELETE(request, context) {
       );
     }
 
-    const { room_id } = tenantRes.rows[0];
+    const deletedTenant = tenantRes.rows[0];
+    const { room_id } = deletedTenant;
 
     // Update room agar kembali available sebelum menghapus tenant_application
     await client.query(
@@ -350,6 +406,22 @@ export async function DELETE(request, context) {
     const result = await client.query(
       `DELETE FROM tenant_application WHERE id = $1 RETURNING *`,
       [id],
+    );
+
+    await notifyTenantApplicationDeleted(
+      client,
+      {
+        id: deletedTenant.id,
+        user_id: deletedTenant.user_id,
+        documentNumber: deletedTenant.document_number,
+        document_number: deletedTenant.document_number,
+        tenantName: deletedTenant.tenant_name,
+        tenant_name: deletedTenant.tenant_name,
+        roomNumber: deletedTenant.room_number,
+        room_number: deletedTenant.room_number,
+        location_name: deletedTenant.location_name,
+      },
+      authUser.id,
     );
 
     await client.query("COMMIT");

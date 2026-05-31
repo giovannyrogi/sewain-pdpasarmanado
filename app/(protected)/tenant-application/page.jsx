@@ -73,7 +73,38 @@ const Applications = () => {
   const [printType, setPrintType] = useState(null);
   const [printData, setPrintData] = useState(null);
   const [anchorEl, setAnchorEl] = useState(null);
+  const [tenantApplicationsLoaded, setTenantApplicationsLoaded] =
+    useState(false);
+  const [handledNotificationTarget, setHandledNotificationTarget] =
+    useState(null);
+  const [notificationOpenSignal, setNotificationOpenSignal] = useState(0);
   const openMenu = Boolean(anchorEl);
+
+  const hideGlobalNotificationLoading = () => {
+    window.dispatchEvent(new Event("sewain:global-loading-hide"));
+  };
+
+  const resetNotificationFeedback = () => {
+    setSnackbar((current) => ({
+      ...current,
+      open: false,
+      message: "",
+    }));
+  };
+
+  const clearNotificationRouteState = () => {
+    if (typeof window === "undefined") return;
+
+    window.sessionStorage.removeItem("sewain:tenant-application-target");
+
+    const params = new URLSearchParams(window.location.search);
+    const hasNotificationParams =
+      params.has("open") || params.has("tenant_application_id");
+
+    if (hasNotificationParams) {
+      window.history.replaceState(null, "", window.location.pathname);
+    }
+  };
 
   const handleMenuClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -85,15 +116,18 @@ const Applications = () => {
 
   const getDataTenantApplication = async () => {
     setLoading(true);
+    setTenantApplicationsLoaded(false);
     try {
       const response = await axios.get("/api/tenant-application");
       // console.log("tenant application", response);
       setDataTenantApplication(response.data.data);
+      setTenantApplicationsLoaded(true);
       setTimeout(() => {
         setLoading(false);
       }, 1000);
     } catch (error) {
       console.log("error", error);
+      setTenantApplicationsLoaded(true);
       setTimeout(() => {
         setLoading(false);
       }, 1000);
@@ -118,6 +152,151 @@ const Applications = () => {
       getLocationsData();
     }
   }, [user]);
+
+  useEffect(() => {
+    const handleNotificationOpenSignal = () => {
+      setNotificationOpenSignal((value) => value + 1);
+    };
+
+    window.addEventListener(
+      "sewain:tenant-application-notification-open",
+      handleNotificationOpenSignal,
+    );
+
+    return () => {
+      window.removeEventListener(
+        "sewain:tenant-application-notification-open",
+        handleNotificationOpenSignal,
+      );
+    };
+  }, []);
+
+  useEffect(() => {
+    const getNotificationTarget = () => {
+      if (typeof window === "undefined") return null;
+
+      const params = new URLSearchParams(window.location.search);
+      const storageValue = window.sessionStorage.getItem(
+        "sewain:tenant-application-target",
+      );
+
+      if (storageValue) {
+        try {
+          const parsed = JSON.parse(storageValue);
+          return {
+            openMode: parsed.openMode || "detail",
+            tenantApplicationId: Number(parsed.tenantApplicationId),
+            deletedFromNotification: Boolean(parsed.deleted),
+            requestedAt: parsed.requestedAt,
+          };
+        } catch {
+          window.sessionStorage.removeItem(
+            "sewain:tenant-application-target",
+          );
+        }
+      }
+
+      return {
+        openMode: params.get("open"),
+        tenantApplicationId: Number(params.get("tenant_application_id")),
+        deletedFromNotification: params.get("deleted") === "1",
+        requestedAt: 0,
+      };
+    };
+
+    const target = getNotificationTarget();
+    const openMode = target?.openMode;
+    const tenantApplicationId = target?.tenantApplicationId;
+    const deletedFromNotification = target?.deletedFromNotification;
+    const targetKey = `${tenantApplicationId}-${openMode}-${deletedFromNotification}-${target?.requestedAt || 0}`;
+
+    if (
+      !["detail", "approval"].includes(openMode) ||
+      !tenantApplicationId ||
+      !user ||
+      !tenantApplicationsLoaded ||
+      handledNotificationTarget === targetKey
+    ) {
+      return;
+    }
+
+    const openTenantApplicationFromNotification = async () => {
+      setHandledNotificationTarget(targetKey);
+      resetNotificationFeedback();
+      setLoadingMessage("Menampilkan detail permohonan...");
+      setLoading(true);
+
+      try {
+        window.sessionStorage.removeItem("sewain:tenant-application-target");
+
+        if (deletedFromNotification) {
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+          setSelectedData(null);
+          setOpenApprovalModal(false);
+          setOpenTenantApprovalInformationModal(false);
+          setSnackbar({
+            open: true,
+            severity: "error",
+            message:
+              "Data permohonan ini sudah dihapus, sehingga detail approval tidak dapat ditampilkan.",
+          });
+          return;
+        }
+
+        /**
+         * Ambil ulang daftar permohonan saat notifikasi diklik. Ini penting
+         * untuk notifikasi "data diperbarui", karena browser bisa saja masih
+         * menyimpan status lama dari sebelum user refresh halaman.
+         */
+        const response = await axios.get("/api/tenant-application");
+        const freshApplications = response.data?.data || [];
+        setDataTenantApplication(freshApplications);
+
+        const selectedApplication = freshApplications.find(
+          (item) => Number(item?.tenant_application_id) === tenantApplicationId,
+        );
+
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+
+        if (selectedApplication) {
+          setSelectedData(selectedApplication);
+          if (openMode === "approval") {
+            setOpenApprovalModal(true);
+          } else {
+            setOpenTenantApprovalInformationModal(true);
+          }
+          return;
+        }
+
+        setSnackbar({
+          open: true,
+          severity: "error",
+          message:
+            "Data permohonan tidak ditemukan. Kemungkinan data sudah dihapus atau akses tidak tersedia.",
+        });
+      } catch (err) {
+        console.log("Error open tenant application from notification:", err);
+        setSnackbar({
+          open: true,
+          severity: "error",
+          message: "Gagal menampilkan detail permohonan dari notifikasi.",
+        });
+      } finally {
+        clearNotificationRouteState();
+        setLoading(false);
+        setLoadingMessage("Loading...");
+        hideGlobalNotificationLoading();
+      }
+    };
+
+    openTenantApplicationFromNotification();
+  }, [
+    dataTenantApplication,
+    handledNotificationTarget,
+    notificationOpenSignal,
+    tenantApplicationsLoaded,
+    user,
+  ]);
 
   const onChange = (pagination, filters, sorter, extra) => {
     if (pagination.pageSize !== pageSize) {

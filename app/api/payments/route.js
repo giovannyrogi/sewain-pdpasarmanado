@@ -2,6 +2,11 @@ import pool from "@/lib/dbConfig";
 import path from "path";
 import fs from "fs";
 import moment from "moment";
+import { getAuthenticatedUser, unauthorizedResponse } from "@/app/utils/auth";
+import {
+  getPaymentNotificationContext,
+  notifyPaymentSubmitted,
+} from "@/app/utils/notifications";
 
 // Konfigurasi upload folder
 const uploadDir = path.join(
@@ -31,7 +36,11 @@ export async function POST(req) {
     const paymentDate = formData.get("payment_date");
     const tenantName = formData.get("tenant_name") || "tenant";
     const proofFile = formData.get("proof_file");
-    const uploadedBy = formData.get("uploaded_by");
+    const authUser = await getAuthenticatedUser();
+    if (!authUser) {
+      return unauthorizedResponse();
+    }
+    const uploadedBy = authUser.id;
     const ppnAmount = formData.get("ppn_amount");
     const payment_type = formData.get("payment_type");
     const contract_amount = formData.get("contract_amount");
@@ -143,6 +152,17 @@ export async function POST(req) {
         pphDescription,
       ]
     );
+
+    const paymentContext = await getPaymentNotificationContext(
+      client,
+      paymentId,
+    );
+
+    // Notifikasi pembayaran dibuat sebelum commit agar ikut rollback jika
+    // pembuatan payment, approval, atau receipt gagal.
+    if (paymentContext) {
+      await notifyPaymentSubmitted(client, paymentContext, uploadedBy);
+    }
 
     // --- Commit DB baru tulis file
     await client.query("COMMIT");

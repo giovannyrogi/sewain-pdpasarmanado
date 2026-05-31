@@ -1,4 +1,10 @@
 import pool from "@/lib/dbConfig";
+import { getAuthenticatedUser, unauthorizedResponse } from "@/app/utils/auth";
+import {
+  getTenantNotificationContext,
+  notifyTenantApprovalActionCompleted,
+  notifyTenantApprovalRejected,
+} from "@/app/utils/notifications";
 
 export async function PUT(request, { params }) {
   const client = await pool.connect();
@@ -6,7 +12,12 @@ export async function PUT(request, { params }) {
   try {
     const { id } = await params; // id tenant_approval dari URL
     const body = await request.json();
-    const { notes, status, approver_id, tenant_application_id } = body;
+    const { notes, status, tenant_application_id } = body;
+    const authUser = await getAuthenticatedUser();
+    if (!authUser) {
+      return unauthorizedResponse();
+    }
+    const approver_id = authUser.id;
 
     if (!notes) {
       return new Response(
@@ -38,6 +49,14 @@ export async function PUT(request, { params }) {
     }
 
     const approvalData = approvalRes.rows[0];
+    if (approvalData.role_id !== authUser.role_id) {
+      await client.query("ROLLBACK");
+      return Response.json(
+        { success: false, message: "Anda tidak memiliki akses untuk approval ini" },
+        { status: 403 },
+      );
+    }
+
     const stepOrder = approvalData.step_order;
 
     // Ambil current_step dari tenant_application
@@ -105,6 +124,30 @@ export async function PUT(request, { params }) {
           message: "Gagal memperbarui status tenant application",
         }),
         { status: 500 }
+      );
+    }
+
+    const tenantContext = await getTenantNotificationContext(
+      client,
+      tenant_application_id,
+    );
+
+    // Notifikasi reject hanya dikirim ke pihak terkait agar inbox role lain
+    // tidak penuh oleh informasi yang tidak perlu ditindaklanjuti.
+    if (tenantContext) {
+      await notifyTenantApprovalActionCompleted(
+        client,
+        tenantContext,
+        approver_id,
+        approvalData.role_id,
+        status,
+      );
+
+      await notifyTenantApprovalRejected(
+        client,
+        tenantContext,
+        approver_id,
+        notes,
       );
     }
 

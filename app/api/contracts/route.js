@@ -1,10 +1,16 @@
 import pool from "@/lib/dbConfig";
 import moment from "moment";
+import { getAuthenticatedUser, unauthorizedResponse } from "@/app/utils/auth";
+import { notifyContractCreated } from "@/app/utils/notifications";
 
 export async function POST(req) {
   try {
     const body = await req.json();
     const { tenant_application_id, contract_number } = body;
+    const authUser = await getAuthenticatedUser();
+    if (!authUser) {
+      return unauthorizedResponse();
+    }
 
     if (!tenant_application_id) {
       return new Response(
@@ -62,6 +68,38 @@ export async function POST(req) {
 
     const result = await pool.query(insertQuery, values);
     const newContract = result.rows[0];
+
+    const contractContext = await pool.query(
+      `
+      SELECT
+        c.id AS contract_id,
+        c.contract_number,
+        c.tenant_application_id AS id,
+        ta.user_id,
+        ta.document_number,
+        ti.full_name AS tenant_name,
+        r.room_number,
+        l.location_name
+      FROM contracts c
+      LEFT JOIN tenant_application ta ON ta.id = c.tenant_application_id
+      LEFT JOIN tenant_identities ti ON ti.id = ta.tenant_identity_id
+      LEFT JOIN rooms r ON r.id = ta.room_id
+      LEFT JOIN locations l ON l.id = ta.location_id
+      WHERE c.id = $1
+      LIMIT 1
+      `,
+      [newContract.id],
+    );
+
+    // Kontrak final tidak melibatkan bagian keuangan, sehingga notifikasi
+    // dikirim ke role non-keuangan sesuai akses menu contracts.
+    if (contractContext.rows[0]) {
+      await notifyContractCreated(
+        pool,
+        contractContext.rows[0],
+        authUser.id,
+      );
+    }
 
     return new Response(
       JSON.stringify({
