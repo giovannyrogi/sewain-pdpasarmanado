@@ -1,9 +1,18 @@
 import pool from "@/lib/dbConfig";
+import { forbiddenResponse, requireAuthenticatedUser } from "@/app/utils/auth";
 
 // UPDATE user
 export async function PUT(request, { params }) {
   try {
+    const { user: authUser, response } = await requireAuthenticatedUser();
+    if (response) return response;
+
     const { id } = await params; // id dari URL
+
+    if (Number(id) !== Number(authUser.id) && Number(authUser.role_id) !== 1) {
+      return forbiddenResponse("Anda hanya dapat mengubah data akun sendiri.");
+    }
+
     const body = await request.json(); // data dari body
     const { username, phone, fullName, email } = body;
 
@@ -35,11 +44,13 @@ export async function PUT(request, { params }) {
         { status: 404 }
       );
     }
+    const { password: _password, ...safeUser } = result.rows[0];
+
     return new Response(
       JSON.stringify({
         success: true,
         message: "Berhasil mengubah data user",
-        data: result.rows[0],
+        data: safeUser,
       }),
       { status: 200 }
     );

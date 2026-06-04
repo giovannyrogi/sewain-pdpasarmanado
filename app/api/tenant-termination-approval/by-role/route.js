@@ -1,6 +1,8 @@
 import pool from "@/lib/dbConfig";
 import { getAuthenticatedUser, unauthorizedResponse } from "@/app/utils/auth";
 
+const NON_FINANCE_ROLES = [1, 2, 3, 4, 5, 6, 7];
+
 export async function GET(req) {
   try {
     const user = await getAuthenticatedUser();
@@ -9,6 +11,16 @@ export async function GET(req) {
     }
 
     const roleId = user.role_id;
+
+    if (!NON_FINANCE_ROLES.includes(Number(roleId))) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: "Anda tidak memiliki akses ke approval terminasi.",
+        }),
+        { status: 403 }
+      );
+    }
 
     if (!roleId) {
       return new Response(

@@ -1,8 +1,14 @@
 import pool from "@/lib/dbConfig";
+import { requireRole } from "@/app/utils/auth";
+
+const MASTER_DATA_ROLES = [1, 2];
 
 // UPDATE Rooms
 export async function PUT(request, { params }) {
   try {
+    const { response } = await requireRole(MASTER_DATA_ROLES);
+    if (response) return response;
+
     const { id } = await params; // id dari URL
     const body = await request.json(); // data dari body
     const { location_id, floor } = body;
@@ -72,6 +78,9 @@ export async function PUT(request, { params }) {
 // DELETE Floor Price
 export async function DELETE(request, { params }) {
   try {
+    const { response } = await requireRole(MASTER_DATA_ROLES);
+    if (response) return response;
+
     const { id } = params;
 
     // Cek apakah ada room yang terkait dengan floor_id ini

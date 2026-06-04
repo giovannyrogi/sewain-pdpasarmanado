@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { Box, Grid, useMediaQuery } from "@mui/material";
+import { Box, Grid, useMediaQuery, useTheme } from "@mui/material";
 import CardViewIncome from "./CardViewIncome";
 import axios from "axios";
 import CardViewContract from "./CardViewContract";
@@ -9,8 +9,23 @@ import ViewLineChart from "./LineChart";
 import CardViewStatusRooms from "./CardViewStatusRooms";
 import WelcomeCard from "./WelcomeCard";
 import { useUser } from "@/app/utils/useUser";
+import LoadingBackdrop from "@/app/components/loading/Backdrop";
+
+const isUnauthorizedRequest = (error) => axios.isAxiosError(error) && error.response?.status === 401;
+
+/**
+ * Dashboard requests can be interrupted when a user logs out or the session
+ * expires while initial data is still loading. A 401 in that moment is expected,
+ * so only unexpected errors are printed to the console.
+ */
+const logDashboardError = (label, error) => {
+  if (isUnauthorizedRequest(error) || axios.isCancel(error)) return;
+
+  console.error(label, error);
+};
 
 const Dashboard = () => {
+  const theme = useTheme();
   const { user } = useUser();
   const isTablet = useMediaQuery("(max-width:1300px)");
   const isMobile = useMediaQuery("(max-width:750px)");
@@ -69,7 +84,7 @@ const Dashboard = () => {
         console.error("Error fetching income:", response);
       }
     } catch (error) {
-      console.error("Error fetching income:", error);
+      logDashboardError("Error fetching income:", error);
     }
   };
 
@@ -87,7 +102,7 @@ const Dashboard = () => {
         console.error("Error fetching current contracts:", response);
       }
     } catch (error) {
-      console.error("Error fetching  current contracts:", error);
+      logDashboardError("Error fetching current contracts:", error);
     }
   };
 
@@ -105,7 +120,7 @@ const Dashboard = () => {
         console.error("Error fetching approval status:", response);
       }
     } catch (error) {
-      console.error("Error fetching approval status:", error);
+      logDashboardError("Error fetching approval status:", error);
     }
   };
 
@@ -121,7 +136,7 @@ const Dashboard = () => {
         console.error("Error fetching yearly income data:", response);
       }
     } catch (error) {
-      console.error("Error fetching yearly income data:", error);
+      logDashboardError("Error fetching yearly income data:", error);
     }
   };
 
@@ -137,7 +152,7 @@ const Dashboard = () => {
         console.error("Error fetching room status data:", response);
       }
     } catch (error) {
-      console.error("Error fetching room status data:", error);
+      logDashboardError("Error fetching room status data:", error);
     }
   };
 
@@ -147,7 +162,7 @@ const Dashboard = () => {
         setDataUser(user);
       }
     } catch (error) {
-      console.error("Error fetching user data:", error);
+      logDashboardError("Error fetching user data:", error);
     }
   };
 
@@ -162,7 +177,7 @@ const Dashboard = () => {
       await getYearlyIncomeData();
       await getDataRoomStatus();
     } catch (error) {
-      console.error(error);
+      logDashboardError("Error fetching dashboard data:", error);
     } finally {
       setTimeout(() => {
         setLoading(false);
@@ -179,10 +194,15 @@ const Dashboard = () => {
       sx={{
         width: "100%",
         height: "100%",
+        minHeight: "calc(100vh - 64px)",
+        bgcolor: theme.ui.pageBg,
         p: { xs: 1.25, sm: 2 },
         mt: { xs: 0.5, sm: 1 },
+        transition: "background-color 0.2s ease",
       }}
     >
+      <LoadingBackdrop open={loading} message="Memuat data dashboard..." />
+
       <Grid container size={12}>
         <Grid size={12}>
           <WelcomeCard

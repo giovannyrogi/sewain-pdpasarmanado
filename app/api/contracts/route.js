@@ -1,10 +1,15 @@
 import pool from "@/lib/dbConfig";
 import moment from "moment";
-import { getAuthenticatedUser, unauthorizedResponse } from "@/app/utils/auth";
+import { getAuthenticatedUser, requireRole, unauthorizedResponse } from "@/app/utils/auth";
 import { notifyContractCreated } from "@/app/utils/notifications";
+
+const CONTRACT_ACCESS_ROLES = [1, 2, 3, 4, 5, 6, 7];
 
 export async function POST(req) {
   try {
+    const { response: roleResponse } = await requireRole(CONTRACT_ACCESS_ROLES);
+    if (roleResponse) return roleResponse;
+
     const body = await req.json();
     const { tenant_application_id, contract_number } = body;
     const authUser = await getAuthenticatedUser();
@@ -120,6 +125,9 @@ export async function POST(req) {
 
 export async function GET() {
   try {
+    const { response } = await requireRole(CONTRACT_ACCESS_ROLES);
+    if (response) return response;
+
     const sql = `
       SELECT  
         -- tenant_application

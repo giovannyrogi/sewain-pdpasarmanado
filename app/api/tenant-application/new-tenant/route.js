@@ -1,8 +1,14 @@
 import pool from "@/lib/dbConfig";
 import moment from "moment";
+import { requireRole } from "@/app/utils/auth";
+
+const TENANT_APPLICATION_ROLES = [1, 2];
 
 export async function GET(req) {
   try {
+    const { response } = await requireRole(TENANT_APPLICATION_ROLES);
+    if (response) return response;
+
     const result = await pool.query(
       `
       SELECT 

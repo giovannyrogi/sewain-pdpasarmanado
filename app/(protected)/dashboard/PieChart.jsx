@@ -1,4 +1,3 @@
-import { useThemeMode } from "@/app/components/themeprovider/ThemeContext";
 import { Icon } from "@iconify/react";
 import {
   Box,
@@ -7,31 +6,21 @@ import {
   Paper,
   Skeleton,
   Typography,
-  useMediaQuery,
   useTheme,
 } from "@mui/material";
 import React from "react";
 import { pieArcClasses, PieChart, pieClasses } from "@mui/x-charts";
+import { getDashboardCardSx, getDashboardDividerSx } from "./dashboardStyles";
 
 const ViewPieChart = ({ loading, contractApprovalStatus }) => {
   const theme = useTheme();
-  const { themeMode } = useThemeMode();
-  const isMobile = useMediaQuery("(max-width:600px)");
 
   return (
     <Paper
-      elevation={6}
-      sx={{
-        backgroundColor: "background.paper",
+      elevation={0}
+      sx={getDashboardCardSx(theme, {
         p: { xs: 1.5, sm: 2 },
-        borderRadius: 2,
-        border: `1px solid ${theme.palette.divider}`,
-        transition: "transform 0.2s ease, box-shadow 0.2s ease",
-        "&:hover": {
-          transform: "translateY(-3px)",
-          boxShadow: themeMode === "dark" ? 8 : 6,
-        },
-      }}
+      })}
     >
       <Grid container spacing={1}>
         {/* Header */}
@@ -53,14 +42,10 @@ const ViewPieChart = ({ loading, contractApprovalStatus }) => {
 
         {loading ? undefined : (
           <Divider
-            sx={{
-              // borderWidth: "1px",
-              borderColor: theme.palette.primary.main,
-              // mt: 1,
-              width: "100%",
+            sx={getDashboardDividerSx(theme, {
               mt: "-5px",
               mb: 1,
-            }}
+            })}
           />
         )}
 

@@ -1,9 +1,13 @@
 import pool from "@/lib/dbConfig";
 import moment from "moment";
+import { requireAuthenticatedUser } from "@/app/utils/auth";
 
 // GET /api/locations/my?location_id=xxx
 export async function GET(req) {
   try {
+    const { response } = await requireAuthenticatedUser();
+    if (response) return response;
+
     const { searchParams } = new URL(req.url);
     const location_id = searchParams.get("location_id");
 

@@ -2,11 +2,16 @@ import fs from "fs";
 import path from "path";
 import pool from "@/lib/dbConfig";
 import moment from "moment";
-import { getAuthenticatedUser, unauthorizedResponse } from "@/app/utils/auth";
+import { getAuthenticatedUser, requireRole, unauthorizedResponse } from "@/app/utils/auth";
 import { notifyTenantApplicationCreated } from "@/app/utils/notifications";
+
+const TENANT_APPLICATION_ROLES = [1, 2];
 
 export async function POST(req) {
   try {
+    const { response: roleResponse } = await requireRole(TENANT_APPLICATION_ROLES);
+    if (roleResponse) return roleResponse;
+
     const formData = await req.formData();
 
     // Ambil fields dari formData
@@ -326,6 +331,9 @@ export async function POST(req) {
 
 export async function GET(req) {
   try {
+    const { response } = await requireRole(TENANT_APPLICATION_ROLES);
+    if (response) return response;
+
     const result = await pool.query(
       `SELECT
         ta.id AS tenant_application_id,

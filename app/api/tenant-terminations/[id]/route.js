@@ -1,17 +1,23 @@
 import pool from "@/lib/dbConfig";
 import fs from "fs";
 import path from "path";
-import { getAuthenticatedUser, unauthorizedResponse } from "@/app/utils/auth";
+import { getAuthenticatedUser, requireRole, unauthorizedResponse } from "@/app/utils/auth";
 import {
   getTerminationNotificationContext,
   notifyTerminationDeleted,
 } from "@/app/utils/notifications";
+
+const TENANT_TERMINATION_ROLES = [1, 2];
+const STATEMENT_UPLOAD_DIR = path.join(process.cwd(), "uploads/surat_pernyataan");
 
 export async function DELETE(request, context) {
   const { id } = await context.params; // termination_id
   const client = await pool.connect();
 
   try {
+    const { response: roleResponse } = await requireRole(TENANT_TERMINATION_ROLES);
+    if (roleResponse) return roleResponse;
+
     const authUser = await getAuthenticatedUser();
     if (!authUser) {
       return unauthorizedResponse();
@@ -70,17 +76,11 @@ export async function DELETE(request, context) {
       // Ambil nama file saja
       const fileName = path.basename(statement_file_path);
 
-      console.log('fileName', fileName);
-      
-
       // Path fisik file
-      const filePath = path.join(process.cwd(), "uploads/surat_pernyataan", fileName.replace(/^\/+/, ""));
+      const filePath = path.normalize(path.join(STATEMENT_UPLOAD_DIR, fileName.replace(/^\/+/, "")));
 
-      if (fs.existsSync(filePath)) {
+      if (filePath.startsWith(STATEMENT_UPLOAD_DIR) && fs.existsSync(filePath)) {
         fs.unlinkSync(filePath);
-        console.log("File surat pernyataan berhasil dihapus:", filePath);
-      } else {
-        console.log("File surat pernyataan tidak ditemukan:", filePath);
       }
     }
 

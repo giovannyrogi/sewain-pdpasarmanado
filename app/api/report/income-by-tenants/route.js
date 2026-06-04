@@ -1,25 +1,19 @@
 import pool from "@/lib/dbConfig";
 import moment from "moment";
+import { requireAuthenticatedUser } from "@/app/utils/auth";
+
+function isValidDate(value) {
+  return moment(value, "YYYY-MM-DD", true).isValid();
+}
 
 export async function GET(request) {
   try {
+    const { response } = await requireAuthenticatedUser();
+    if (response) return response;
+
     const url = new URL(request.url);
     const startDate = url.searchParams.get("start_date");
     const endDate = url.searchParams.get("end_date");
-
-    const startDateFormatted = moment(startDate).format("YYYY-MM-DD");
-    const endDateFormatted = moment(endDate).format("YYYY-MM-DD");
-
-    // validasi range tanggal
-    if (moment(startDate).isAfter(endDate)) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          message: "Start date must be before end date",
-        }),
-        { status: 400 }
-      );
-    }
 
     if (!startDate) {
       return new Response(
@@ -36,6 +30,30 @@ export async function GET(request) {
         JSON.stringify({
           success: false,
           message: "End date are required",
+        }),
+        { status: 400 }
+      );
+    }
+
+    if (!isValidDate(startDate) || !isValidDate(endDate)) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: "Format tanggal harus YYYY-MM-DD.",
+        }),
+        { status: 400 }
+      );
+    }
+
+    const startDateFormatted = moment(startDate).format("YYYY-MM-DD");
+    const endDateFormatted = moment(endDate).format("YYYY-MM-DD");
+
+    // validasi range tanggal
+    if (moment(startDate).isAfter(endDate)) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: "Start date must be before end date",
         }),
         { status: 400 }
       );

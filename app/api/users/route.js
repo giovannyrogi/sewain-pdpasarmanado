@@ -1,8 +1,14 @@
 import pool from "@/lib/dbConfig";
+import { requireRole } from "@/app/utils/auth";
+
+const SUPERADMIN_ROLE_ID = 1;
 
 // CREATE user
 export async function POST(req) {
   try {
+    const { response } = await requireRole([SUPERADMIN_ROLE_ID]);
+    if (response) return response;
+
     const body = await req.json();
     const { username, password, email, fullName, roleId } = body;
 
@@ -79,6 +85,9 @@ export async function POST(req) {
 
 export async function GET(req) {
   try {
+    const { response } = await requireRole([SUPERADMIN_ROLE_ID]);
+    if (response) return response;
+
     // Ambil role dari query parameter
     const { searchParams } = new URL(req.url);
     const role_id = searchParams.get("role_id");
@@ -89,7 +98,6 @@ export async function GET(req) {
         u.id,
         u.full_name,
         u.username,
-        u.password,
         u.email,
         u.role_id,
         r.role_name,
@@ -106,7 +114,6 @@ export async function GET(req) {
       id: user.id,
       full_name: user.full_name,
       username: user.username,
-      password: user.password,
       email: user.email,
       role_id: user.role_id,
       role_name: user.role_name,

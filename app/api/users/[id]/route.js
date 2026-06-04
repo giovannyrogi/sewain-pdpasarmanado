@@ -1,8 +1,14 @@
 import pool from "@/lib/dbConfig";
+import { requireRole } from "@/app/utils/auth";
+
+const SUPERADMIN_ROLE_ID = 1;
 
 // UPDATE user
 export async function PUT(request, { params }) {
   try {
+    const { response } = await requireRole([SUPERADMIN_ROLE_ID]);
+    if (response) return response;
+
     const { id } = await params; // id dari URL
     const body = await request.json(); // data dari body
     const { username, password, email, fullName, roleId } = body;
@@ -49,11 +55,13 @@ export async function PUT(request, { params }) {
         { status: 404 }
       );
     }
+    const { password: _password, ...safeUser } = result.rows[0];
+
     return new Response(
       JSON.stringify({
         success: true,
         message: "Berhasil mengubah data user",
-        data: result.rows[0],
+        data: safeUser,
       }),
       { status: 200 }
     );
@@ -69,6 +77,9 @@ export async function PUT(request, { params }) {
 // DELETE user
 export async function DELETE(request, context) {
   try {
+    const { response } = await requireRole([SUPERADMIN_ROLE_ID]);
+    if (response) return response;
+
     const { id } = await context.params;
 
     const result = await pool.query(

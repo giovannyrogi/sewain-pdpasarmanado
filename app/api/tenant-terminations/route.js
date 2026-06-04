@@ -2,7 +2,7 @@ import pool from "@/lib/dbConfig";
 import moment from "moment";
 import path from "path";
 import fs from "fs";
-import { getAuthenticatedUser, unauthorizedResponse } from "@/app/utils/auth";
+import { getAuthenticatedUser, requireRole, unauthorizedResponse } from "@/app/utils/auth";
 import {
   getTerminationNotificationContext,
   notifyTerminationCreated,
@@ -14,9 +14,24 @@ if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
+const TENANT_TERMINATION_ROLES = [1, 2];
+const MAX_STATEMENT_FILE_SIZE = 5 * 1024 * 1024;
+const ALLOWED_STATEMENT_EXTENSIONS = [".pdf", ".doc", ".docx"];
+
+function sanitizeFilenamePart(value) {
+  return String(value || "tenant")
+    .trim()
+    .replace(/[^a-zA-Z0-9_-]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .slice(0, 80) || "tenant";
+}
+
 export async function POST(req) {
   const client = await pool.connect();
   try {
+    const { response: roleResponse } = await requireRole(TENANT_TERMINATION_ROLES);
+    if (roleResponse) return roleResponse;
+
     const formData = await req.formData();
     const tenant_application_id = formData.get("tenant_application_id");
     const reason = formData.get("reason");
@@ -64,15 +79,24 @@ export async function POST(req) {
     let fileBuffer = null;
     let filename = null;
     if (surat_file && typeof surat_file === "object") {
+      if (surat_file.size > MAX_STATEMENT_FILE_SIZE) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            message: "Ukuran file surat pernyataan maksimal 5MB",
+          }),
+          { status: 400 }
+        );
+      }
+
       const arrayBuffer = await surat_file.arrayBuffer();
       fileBuffer = Buffer.from(arrayBuffer);
 
       // Ambil ekstensi asli (bisa .pdf, .docx, dsb.)
-      const ext = path.extname(surat_file.name) || ".pdf";
+      const ext = path.extname(surat_file.name).toLowerCase() || ".pdf";
 
       // opsional: validasi ekstensi
-      const allowed = [".pdf", ".doc", ".docx"];
-      if (!allowed.includes(ext.toLowerCase())) {
+      if (!ALLOWED_STATEMENT_EXTENSIONS.includes(ext)) {
         return new Response(
           JSON.stringify({
             success: false,
@@ -83,9 +107,7 @@ export async function POST(req) {
       }
 
       // Buat nama file
-      const safeTenantName = tenantName
-        .replace(/\s+/g, "_")
-        .replace(/[^\w\-]/g, "");
+      const safeTenantName = sanitizeFilenamePart(tenantName);
 
       filename = `surat_${safeTenantName}_${moment(Date.now()).format(
         "YYYY_MM_DD_HH_mm_ss"
@@ -164,6 +186,9 @@ export async function POST(req) {
 
 export async function GET(req) {
   try {
+    const { response } = await requireRole(TENANT_TERMINATION_ROLES);
+    if (response) return response;
+
     const authUser = await getAuthenticatedUser();
     if (!authUser) {
       return unauthorizedResponse();

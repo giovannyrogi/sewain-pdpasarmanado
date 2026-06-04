@@ -19,6 +19,21 @@ export async function POST(req) {
   try {
     const body = await req.json();
     const { username, password } = body;
+    const invalidCredentialResponse = NextResponse.json(
+      { message: "Username atau password salah" },
+      { status: 401 }
+    );
+
+    if (
+      typeof username !== "string" ||
+      typeof password !== "string" ||
+      username.trim().length === 0 ||
+      password.length === 0 ||
+      username.length > 100 ||
+      password.length > 255
+    ) {
+      return invalidCredentialResponse;
+    }
 
     // 1. Cek user di database
     const userResult = await pool.query(
@@ -28,21 +43,18 @@ export async function POST(req) {
        FROM users u
        JOIN roles r ON u.role_id = r.id
        WHERE u.username = $1`,
-      [username]
+      [username.trim()]
     );
 
     if (userResult.rows.length === 0) {
-      return NextResponse.json(
-        { message: "Username belum terdaftar" },
-        { status: 400 }
-      );
+      return invalidCredentialResponse;
     }
 
     const user = userResult.rows[0];
 
     // 2. Cek password
     if (user.password !== password) {
-      return NextResponse.json({ message: "Password salah" }, { status: 401 });
+      return invalidCredentialResponse;
     }
 
     // 3. Tambahkan step_order berdasarkan role
@@ -66,6 +78,7 @@ export async function POST(req) {
       httpOnly: false,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
+      maxAge: SESSION_DURATION_MINUTES * 60,
       path: "/",
     });
 

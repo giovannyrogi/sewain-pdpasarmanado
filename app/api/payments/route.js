@@ -19,6 +19,16 @@ if (!fs.existsSync(uploadDir)) {
 }
 
 const padReceiptNumber = (id) => String(id).padStart(6, "0");
+const MAX_PROOF_FILE_SIZE = 5 * 1024 * 1024;
+const ALLOWED_PROOF_EXTENSIONS = [".jpg", ".jpeg", ".png", ".pdf"];
+
+function sanitizeFilenamePart(value) {
+  return String(value || "tenant")
+    .trim()
+    .replace(/[^a-zA-Z0-9_-]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .slice(0, 80) || "tenant";
+}
 
 const getPaymentLabel = (paymentType, paymentNumber) => {
   if (paymentType === "lunas") return "Lunas";
@@ -65,14 +75,31 @@ export async function POST(req) {
       );
     }
 
+    if (proofFile.size > MAX_PROOF_FILE_SIZE) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: "Ukuran file bukti pembayaran maksimal 5MB",
+        }),
+        { status: 400 }
+      );
+    }
+
     // --- Generate nama file saja (belum simpan file)
     const arrayBuffer = await proofFile.arrayBuffer();
     const fileBuffer = Buffer.from(arrayBuffer);
-    const ext = path.extname(proofFile.name) || ".jpg";
-    const filename = `bukti_transfer_${tenantName.replace(
-      /\s+/g,
-      "_"
-    )}_${moment().format("YYYY_MM_DD_HH_mm_ss")}${ext}`;
+    const ext = path.extname(proofFile.name).toLowerCase() || ".jpg";
+    if (!ALLOWED_PROOF_EXTENSIONS.includes(ext)) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: "Format file bukti pembayaran tidak valid",
+        }),
+        { status: 400 }
+      );
+    }
+
+    const filename = `bukti_transfer_${sanitizeFilenamePart(tenantName)}_${moment().format("YYYY_MM_DD_HH_mm_ss")}${ext}`;
     const filePath = path.join(uploadDir, filename);
     const proofFilePath = `/uploads/bukti_transfer/${filename}`;
 
@@ -192,6 +219,11 @@ export async function POST(req) {
 
 export async function GET() {
   try {
+    const authUser = await getAuthenticatedUser();
+    if (!authUser) {
+      return unauthorizedResponse();
+    }
+
     const sql = `
       SELECT
         -- payments

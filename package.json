@@ -26,6 +26,7 @@
     "dotenv": "^17.2.3",
     "file-saver": "^2.0.5",
     "formidable": "^3.5.4",
+    "framer-motion": "^12.40.0",
     "install": "^0.13.0",
     "jspdf": "^4.0.0",
     "jspdf-autotable": "^5.0.2",

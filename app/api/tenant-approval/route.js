@@ -1,7 +1,11 @@
 import pool from "@/lib/dbConfig";
+import { requireAuthenticatedUser } from "@/app/utils/auth";
 
 export async function GET(req) {
   try {
+    const { response } = await requireAuthenticatedUser();
+    if (response) return response;
+
     const { searchParams } = new URL(req.url);
     const tenantAppId = searchParams.get("id");
 

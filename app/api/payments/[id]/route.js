@@ -15,6 +15,16 @@ if (!fs.existsSync(uploadDir)) {
 }
 
 const padReceiptNumber = (id) => String(id).padStart(6, "0");
+const MAX_PROOF_FILE_SIZE = 5 * 1024 * 1024;
+const ALLOWED_PROOF_EXTENSIONS = [".jpg", ".jpeg", ".png", ".pdf"];
+
+function sanitizeFilenamePart(value) {
+  return String(value || "tenant")
+    .trim()
+    .replace(/[^a-zA-Z0-9_-]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .slice(0, 80) || "tenant";
+}
 
 const getPaymentLabel = (paymentType, paymentNumber) => {
   if (paymentType === "lunas") return "Lunas";
@@ -129,18 +139,35 @@ export async function PUT(req, { params }) {
     let fileBuffer = null;
     let filename = null;
     if (proofFile && typeof proofFile === "object") {
-      const ext = path.extname(proofFile.name) || ".jpg";
-      filename = `bukti_transfer_${tenantName.replace(
-        /\s+/g,
-        "_"
-      )}_${moment().format("YYYY_MM_DD_HH_mm_ss")}${ext}`;
+      if (proofFile.size > MAX_PROOF_FILE_SIZE) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            message: "Ukuran file bukti pembayaran maksimal 5MB",
+          }),
+          { status: 400 }
+        );
+      }
+
+      const ext = path.extname(proofFile.name).toLowerCase() || ".jpg";
+      if (!ALLOWED_PROOF_EXTENSIONS.includes(ext)) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            message: "Format file bukti pembayaran tidak valid",
+          }),
+          { status: 400 }
+        );
+      }
+
+      filename = `bukti_transfer_${sanitizeFilenamePart(tenantName)}_${moment().format("YYYY_MM_DD_HH_mm_ss")}${ext}`;
       newFilePath = path.join(uploadDir, filename);
       proofFilePath = `/uploads/bukti_transfer/${filename}`;
 
-      oldFilePathToDelete = path.join(
+      oldFilePathToDelete = path.normalize(path.join(
         process.cwd(),
         oldData.proof_file_path.replace(/^\/+/, "")
-      );
+      ));
 
       const arrayBuffer = await proofFile.arrayBuffer();
       fileBuffer = Buffer.from(arrayBuffer);
@@ -254,7 +281,11 @@ export async function PUT(req, { params }) {
       fs.writeFileSync(newFilePath, fileBuffer);
 
       // Hapus file lama (jika ada dan berbeda)
-      if (oldFilePathToDelete && fs.existsSync(oldFilePathToDelete)) {
+      if (
+        oldFilePathToDelete &&
+        oldFilePathToDelete.startsWith(uploadDir) &&
+        fs.existsSync(oldFilePathToDelete)
+      ) {
         try {
           fs.unlinkSync(oldFilePathToDelete);
         } catch (err) {
@@ -337,12 +368,12 @@ export async function DELETE(req, { params }) {
 
     // Hapus file bukti transfer jika ada
     if (proofFilePath) {
-      const absolutePath = path.join(
+      const absolutePath = path.normalize(path.join(
         process.cwd(),
         proofFilePath.replace(/^\/+/, "")
-      );
+      ));
 
-      if (fs.existsSync(absolutePath)) {
+      if (absolutePath.startsWith(uploadDir) && fs.existsSync(absolutePath)) {
         fs.unlinkSync(absolutePath);
       }
     }

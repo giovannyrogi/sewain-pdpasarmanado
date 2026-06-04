@@ -24,6 +24,10 @@ const roboto = Roboto({
 export const metadata = {
   title: "Dashboard SewaIN",
   description: "Sistem Informasi SewaIN",
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/sewain-s-icon-red.png",
+  },
   other: {
     "facebook-domain-verification": "4gs2ydcc3mifvxf8kwtp8shmybg8lj",
   },

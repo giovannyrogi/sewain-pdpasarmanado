@@ -1,8 +1,14 @@
 import pool from "@/lib/dbConfig";
 import moment from "moment";
+import { requireRole } from "@/app/utils/auth";
+
+const CONTRACT_DOCUMENT_ROLES = [1, 2];
 
 export async function PUT(request, { params }) {
   try {
+    const { response } = await requireRole(CONTRACT_DOCUMENT_ROLES);
+    if (response) return response;
+
     const { id } = await params; // id dari URL (rooms.id)
     const body = await request.json();
     const { start_date, end_date, document_number } = body;

@@ -1,9 +1,15 @@
 import pool from "@/lib/dbConfig";
 import moment from "moment";
+import { requireRole } from "@/app/utils/auth";
+
+const MASTER_DATA_ROLES = [1, 2];
 
 export async function PUT(request, { params }) {
   const client = await pool.connect();
   try {
+    const { response } = await requireRole(MASTER_DATA_ROLES);
+    if (response) return response;
+
     const { id } = await params;
     const body = await request.json();
     const {
@@ -260,6 +266,9 @@ export async function PUT(request, { params }) {
 // DELETE Rooms
 export async function DELETE(request, context) {
   try {
+    const { response } = await requireRole(MASTER_DATA_ROLES);
+    if (response) return response;
+
     const { id } = await context.params;
 
     // Cek apakah ada tenant yang menggunakan room ini (join tenant_identities)

@@ -45,6 +45,14 @@ export async function PUT(request, { params }) {
     }
 
     const approvalData = approvalRes.rows[0];
+    if (Number(approvalData.payment_id) !== Number(payment_id)) {
+      await client.query("ROLLBACK");
+      return Response.json(
+        { success: false, message: "Data approval tidak sesuai dengan pembayaran" },
+        { status: 400 },
+      );
+    }
+
     if (approvalData.role_id !== role_id) {
       await client.query("ROLLBACK");
       return Response.json(
@@ -74,6 +82,14 @@ export async function PUT(request, { params }) {
       `,
       [status, approver_id, new Date(), id, payment_id],
     );
+
+    if (updateApproval.rowCount === 0) {
+      await client.query("ROLLBACK");
+      return Response.json(
+        { success: false, message: "Approval pembayaran gagal diperbarui" },
+        { status: 400 },
+      );
+    }
 
     await client.query(
       `

@@ -49,3 +49,31 @@ export function unauthorizedResponse() {
     { status: 401 },
   );
 }
+
+export function forbiddenResponse(message = "Anda tidak memiliki akses untuk aksi ini.") {
+  return Response.json({ success: false, message }, { status: 403 });
+}
+
+export async function requireAuthenticatedUser() {
+  const user = await getAuthenticatedUser();
+
+  if (!user) {
+    return { user: null, response: unauthorizedResponse() };
+  }
+
+  return { user, response: null };
+}
+
+export async function requireRole(allowedRoleIds = []) {
+  const { user, response } = await requireAuthenticatedUser();
+
+  if (response) {
+    return { user: null, response };
+  }
+
+  if (!allowedRoleIds.map(Number).includes(Number(user.role_id))) {
+    return { user, response: forbiddenResponse() };
+  }
+
+  return { user, response: null };
+}

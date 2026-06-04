@@ -42,6 +42,14 @@ export async function PUT(request, { params }) {
     }
 
     const approvalData = approvalRes.rows[0];
+    if (Number(approvalData.tenant_application_id) !== Number(tenant_application_id)) {
+      await client.query("ROLLBACK");
+      return Response.json(
+        { success: false, message: "Data approval tidak sesuai dengan permohonan" },
+        { status: 400 },
+      );
+    }
+
     if (approvalData.role_id !== authUser.role_id) {
       await client.query("ROLLBACK");
       return Response.json(
@@ -90,6 +98,14 @@ export async function PUT(request, { params }) {
       `,
       [status, approver_id, new Date(), id, tenant_application_id],
     );
+
+    if (updateApproval.rowCount === 0) {
+      await client.query("ROLLBACK");
+      return Response.json(
+        { success: false, message: "Approval gagal diperbarui" },
+        { status: 400 },
+      );
+    }
 
     const totalStepsResult = await client.query(
       `

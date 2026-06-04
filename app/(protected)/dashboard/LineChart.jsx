@@ -18,6 +18,7 @@ import {
   markElementClasses,
 } from "@mui/x-charts/LineChart";
 import formatRupiah from "@/app/components/formatrupiah/page";
+import { getDashboardCardSx, getDashboardDividerSx } from "./dashboardStyles";
 
 const ViewLineChart = ({ loading, yearlyIncomeData }) => {
   const theme = useTheme();
@@ -47,21 +48,13 @@ const ViewLineChart = ({ loading, yearlyIncomeData }) => {
 
   return (
     <Paper
-      elevation={6}
-      sx={{
-        backgroundColor: "background.paper",
+      elevation={0}
+      sx={getDashboardCardSx(theme, {
         p: { xs: 1.5, sm: 2 },
-        borderRadius: 2,
         minHeight: isSmallMobile ? 390 : isMobile ? 430 : 450,
         display: "flex",
         flexDirection: "column",
-        border: `1px solid ${theme.palette.divider}`,
-        transition: "transform 0.2s ease, box-shadow 0.2s ease",
-        "&:hover": {
-          transform: "translateY(-3px)",
-          boxShadow: themeMode === "dark" ? 8 : 6,
-        },
-      }}
+      })}
     >
       {/* Header */}
       {loading ? (
@@ -79,11 +72,9 @@ const ViewLineChart = ({ loading, yearlyIncomeData }) => {
             Pendapatan Per Bulan
           </Typography>
           <Divider
-            sx={{
-              borderColor: theme.palette.primary.main,
+            sx={getDashboardDividerSx(theme, {
               mb: 2,
-              width: "100%",
-            }}
+            })}
           />
         </>
       )}
@@ -167,17 +158,30 @@ const ViewLineChart = ({ loading, yearlyIncomeData }) => {
               legend: {
                 direction: isMobile ? "column" : "row",
                 position: { vertical: "top", horizontal: "middle" },
-                itemMarkWidth: 16,
-                itemMarkHeight: 3,
-                labelStyle: {
-                  fontFamily: "Poppins",
-                  fontSize: isSmallMobile ? 10 : 12,
-                  fill: theme.palette.text.primary,
-                  fontWeight: 600,
-                },
               },
             }}
             sx={{
+              /**
+               * Legend props like itemMarkWidth, itemMarkHeight, and labelStyle
+               * are not supported by the installed MUI X Charts version and get
+               * forwarded to the DOM. Style the generated legend classes here to
+               * avoid React unknown-prop warnings during initial render.
+               */
+              "& .MuiChartsLegend-root": {
+                fontFamily: "Poppins",
+              },
+              "& .MuiChartsLegend-label": {
+                fill: theme.palette.text.primary,
+                color: theme.palette.text.primary,
+                fontFamily: "Poppins",
+                fontSize: isSmallMobile ? 10 : 12,
+                fontWeight: 600,
+              },
+              "& .MuiChartsLegend-mark": {
+                width: 16,
+                height: 3,
+                rx: 2,
+              },
               "& .MuiChartsGrid-line": {
                 stroke: gridColor,
                 strokeDasharray: "5 5",

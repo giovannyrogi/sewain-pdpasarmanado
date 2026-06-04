@@ -1,8 +1,14 @@
 import pool from "@/lib/dbConfig";
+import { requireRole } from "@/app/utils/auth";
+
+const SUPERADMIN_ROLE_ID = 1;
 
 // UPDATE Role
 export async function PUT(request, { params }) {
   try {
+    const { response } = await requireRole([SUPERADMIN_ROLE_ID]);
+    if (response) return response;
+
     const { id } = await params; // id dari URL
     const body = await request.json(); // data dari body
     const { roleName } = body;
@@ -54,6 +60,9 @@ export async function PUT(request, { params }) {
 // DELETE ROle
 export async function DELETE(request, context) {
   try {
+    const { response } = await requireRole([SUPERADMIN_ROLE_ID]);
+    if (response) return response;
+
     const { id } = await context.params;
 
     const result = await pool.query(

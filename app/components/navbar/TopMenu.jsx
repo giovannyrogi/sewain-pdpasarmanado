@@ -1,23 +1,13 @@
 import React, { useCallback, useEffect, useState } from "react";
 import {
-  alpha,
   Badge,
   Box,
   Button,
-  Chip,
-  CircularProgress,
   Divider,
   IconButton,
-  List,
-  ListItemButton,
-  ListItemText,
   Menu,
   MenuItem,
   Paper,
-  Popover,
-  Stack,
-  Tab,
-  Tabs,
   Tooltip,
   Typography,
   useMediaQuery,
@@ -30,18 +20,11 @@ import { Icon } from "@iconify/react";
 import { useThemeMode } from "../themeprovider/ThemeContext";
 import axios from "axios";
 import { useRouter } from "next/navigation";
-import NotificationMessage, {
-  getNotificationTitle,
-} from "../notifications/NotificationMessage";
-
-const POLLING_INTERVAL_MS = 10000;
-
-const priorityColor = {
-  low: "default",
-  normal: "primary",
-  high: "warning",
-  urgent: "error",
-};
+import NotificationPopover from "./NotificationPopover";
+import {
+  getTopbarActionSx,
+  POLLING_INTERVAL_MS,
+} from "./TopMenu.helpers";
 
 const isInternalUrl = (url) => typeof url === "string" && url.startsWith("/");
 
@@ -259,6 +242,11 @@ const isTenantTerminationUrl = (url) =>
   (url.startsWith("/tenant-terminations") ||
     url.startsWith("/tenant-terminations-approval"));
 
+/**
+ * Top application bar for protected pages.
+ * Komponen ini mengelola state global yang memang hidup di topbar: theme mode,
+ * polling notifikasi, menu akun, dan loading saat navigasi dari notifikasi.
+ */
 const TopMenu = ({
   user,
   onBurgerClick,
@@ -511,15 +499,26 @@ const TopMenu = ({
 
   return (
     <Paper
+      elevation={0}
       sx={{
-        p: 2,
-        height: "55px",
+        px: { xs: 1.5, sm: 2 },
+        py: 1,
+        minHeight: 64,
         display: "flex",
         flexDirection: "row",
         alignItems: "center",
         justifyContent: isMobile ? "space-between" : "flex-end",
-        transition: "all 0.3s",
-        borderRadius: "0px",
+        gap: 2,
+        position: "sticky",
+        top: 0,
+        zIndex: 20,
+        bgcolor: theme.ui.topbarBg,
+        color: "text.primary",
+        borderRadius: 0,
+        borderBottom: `1px solid ${theme.ui.topbarBorder}`,
+        boxShadow: "none",
+        backdropFilter: "blur(16px)",
+        transition: "background-color 0.3s ease, border-color 0.3s ease",
       }}
     >
       {isMobile && (
@@ -529,24 +528,43 @@ const TopMenu = ({
             edge="start"
             aria-label="open drawer"
             sx={{
-              m: 0,
-              p: 0,
+              minHeight: 40,
+              px: 1.25,
+              borderRadius: 2,
               color: theme.palette.primary.main,
               display: "flex",
               alignItems: "center",
               gap: 1,
               textTransform: "capitalize",
+              bgcolor: theme.ui.iconButtonBg,
+              border: `1px solid ${theme.ui.navBorder}`,
+              "&:hover": {
+                bgcolor: theme.ui.iconButtonHover,
+              },
             }}
           >
             <MenuIcon />
-            <Typography sx={{ fontFamily: "poppins", fontWeight: "bold" }}>
+            <Typography
+              sx={{
+                display: { xs: "none", sm: "block" },
+                fontFamily: "poppins",
+                fontWeight: 800,
+              }}
+            >
               Menu
             </Typography>
           </Button>
         </Box>
       )}
 
-      <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "flex-end",
+          gap: { xs: 1, sm: 1.25 },
+        }}
+      >
         <Tooltip title={themeMode === "dark" ? "Dark Mode" : "Light Mode"}>
           <IconButton
             onClick={() => {
@@ -559,14 +577,7 @@ const TopMenu = ({
               );
             }}
             aria-label="toggle theme"
-            sx={{
-              color: theme.palette.primary.main,
-              bgcolor: alpha(theme.palette.primary.main, 0.1),
-              transition: "background-color 0.3s, color 0.3s",
-              "&:hover": {
-                bgcolor: alpha(theme.palette.primary.main, 0.2),
-              },
-            }}
+            sx={getTopbarActionSx(theme)}
           >
             {themeMode === "dark" ? (
               <Icon icon="line-md:moon-rising-filled-loop" fontSize="22px" />
@@ -584,13 +595,7 @@ const TopMenu = ({
             onClick={handleNotificationOpen}
             size="small"
             aria-label="open notifications"
-            sx={{
-              color: theme.palette.primary.main,
-              bgcolor: alpha(theme.palette.primary.main, 0.1),
-              "&:hover": {
-                bgcolor: alpha(theme.palette.primary.main, 0.2),
-              },
-            }}
+            sx={getTopbarActionSx(theme)}
           >
             <Badge
               badgeContent={unreadCount}
@@ -601,212 +606,38 @@ const TopMenu = ({
               <Icon
                 icon="line-md:bell-filled-loop"
                 color={theme.palette.primary.main}
-                fontSize="25px"
+                fontSize="23px"
               />
             </Badge>
           </IconButton>
         </Tooltip>
 
-        <Popover
-          open={notificationOpen}
+        <NotificationPopover
           anchorEl={notificationAnchorEl}
+          open={notificationOpen}
           onClose={handleNotificationClose}
-          anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-          transformOrigin={{ vertical: "top", horizontal: "right" }}
-          PaperProps={{
-            sx: {
-              mt: 1.5,
-              width: isSmallScreen ? "calc(100vw - 24px)" : 390,
-              maxWidth: "calc(100vw - 24px)",
-              borderRadius: 2,
-              overflow: "hidden",
-              bgcolor: "background.paper",
-              color: "text.primary",
-              border: `1px solid ${alpha(theme.palette.divider, 0.8)}`,
-            },
+          isSmallScreen={isSmallScreen}
+          notifications={notifications}
+          visibleNotifications={visibleNotifications}
+          unreadCount={unreadCount}
+          notificationLoading={notificationLoading}
+          notificationActionLoading={notificationActionLoading}
+          notificationTab={notificationTab}
+          onTabChange={(event, value) => {
+            setNotificationTab(value);
+            fetchNotifications({ unreadOnly: value === "unread" });
           }}
-        >
-          <Box sx={{ p: 2, pb: 1.25 }}>
-            <Stack
-              direction="row"
-              alignItems="center"
-              justifyContent="space-between"
-              spacing={1}
-            >
-              <Box>
-                <Typography sx={{ fontWeight: 700, fontSize: 15 }}>
-                  Notifikasi
-                </Typography>
-                <Typography sx={{ fontSize: 12, color: "text.secondary" }}>
-                  {unreadCount} belum dibaca
-                </Typography>
-              </Box>
-              {notificationLoading && <CircularProgress size={18} />}
-            </Stack>
-
-            <Tabs
-              value={notificationTab}
-              onChange={(event, value) => {
-                setNotificationTab(value);
-                fetchNotifications({ unreadOnly: value === "unread" });
-              }}
-              variant="fullWidth"
-              sx={{ minHeight: 36, mt: 1 }}
-            >
-              <Tab label="Semua" value="all" sx={{ minHeight: 36, fontSize: 12 }} />
-              <Tab
-                label="Belum dibaca"
-                value="unread"
-                sx={{ minHeight: 36, fontSize: 12 }}
-              />
-            </Tabs>
-          </Box>
-
-          <Divider />
-
-          <List
-            disablePadding
-            sx={{
-              maxHeight: isSmallScreen ? "55vh" : 420,
-              overflowY: "auto",
-            }}
-          >
-            {visibleNotifications.length === 0 ? (
-              <Box sx={{ p: 3, textAlign: "center" }}>
-                <Icon
-                  icon="solar:bell-off-linear"
-                  fontSize="34px"
-                  color={theme.palette.text.secondary}
-                />
-                <Typography sx={{ mt: 1, fontWeight: 600 }}>
-                  Belum ada notifikasi
-                </Typography>
-                <Typography sx={{ fontSize: 12, color: "text.secondary" }}>
-                  Informasi approval dan pembayaran akan tampil di sini.
-                </Typography>
-              </Box>
-            ) : (
-              visibleNotifications.map((notification) => {
-                const unread = !notification.read_at;
-                return (
-                  <ListItemButton
-                    key={notification.recipient_id}
-                    onClick={() => handleNotificationClick(notification)}
-                    sx={{
-                      alignItems: "flex-start",
-                      gap: 1.25,
-                      px: 2,
-                      py: 1.25,
-                      bgcolor: unread
-                        ? alpha(theme.palette.primary.main, 0.08)
-                        : "transparent",
-                      "&:hover": {
-                        bgcolor: alpha(theme.palette.primary.main, 0.12),
-                      },
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        width: 8,
-                        height: 8,
-                        borderRadius: "50%",
-                        mt: 0.8,
-                        flex: "0 0 auto",
-                        bgcolor: unread
-                          ? theme.palette.primary.main
-                          : "transparent",
-                      }}
-                    />
-                    <ListItemText
-                      disableTypography
-                      primary={
-                        <Stack direction="row" spacing={1} alignItems="center">
-                          <Typography
-                            sx={{
-                              fontSize: 13,
-                              fontWeight: unread ? 700 : 600,
-                              flex: 1,
-                              minWidth: 0,
-                              overflowWrap: "anywhere",
-                            }}
-                          >
-                            {getNotificationTitle(notification)}
-                          </Typography>
-                          <Chip
-                            label={notification.priority}
-                            color={priorityColor[notification.priority] || "default"}
-                            size="small"
-                            sx={{
-                              height: 20,
-                              fontSize: 10,
-                              textTransform: "capitalize",
-                            }}
-                          />
-                        </Stack>
-                      }
-                      secondary={
-                        <NotificationMessage notification={notification} />
-                      }
-                    />
-                    <Tooltip title="Bersihkan">
-                      <IconButton
-                        size="small"
-                        onClick={(event) =>
-                          handleArchiveNotification(event, notification.id)
-                        }
-                        disabled={notificationActionLoading}
-                        sx={{ mt: -0.4, color: "text.secondary" }}
-                      >
-                        <Icon icon="line-md:close" fontSize="18px" />
-                      </IconButton>
-                    </Tooltip>
-                  </ListItemButton>
-                );
-              })
-            )}
-          </List>
-
-          <Divider />
-
-          <Stack
-            direction={isSmallScreen ? "column" : "row"}
-            spacing={1}
-            sx={{ p: 1.25 }}
-          >
-            <Button
-              size="small"
-              variant="outlined"
-              fullWidth
-              onClick={handleMarkAllRead}
-              disabled={unreadCount === 0 || notificationActionLoading}
-              sx={{ textTransform: "none" }}
-            >
-              Tandai dibaca
-            </Button>
-            <Button
-              size="small"
-              variant="contained"
-              fullWidth
-              onClick={handleArchiveAll}
-              disabled={notifications.length === 0 || notificationActionLoading}
-              sx={{ textTransform: "none" }}
-            >
-              Bersihkan
-            </Button>
-          </Stack>
-        </Popover>
+          onNotificationClick={handleNotificationClick}
+          onArchiveNotification={handleArchiveNotification}
+          onMarkAllRead={handleMarkAllRead}
+          onArchiveAll={handleArchiveAll}
+        />
 
         <Tooltip title="Settings">
           <IconButton
             onClick={handleAvatarClick}
             size="small"
-            sx={{
-              color: theme.palette.primary.main,
-              bgcolor: alpha(theme.palette.primary.main, 0.1),
-              "&:hover": {
-                bgcolor: alpha(theme.palette.primary.main, 0.2),
-              },
-            }}
+            sx={getTopbarActionSx(theme)}
           >
             <Icon
               icon="line-md:cog-loop"
@@ -823,7 +654,15 @@ const TopMenu = ({
           onClick={handleMenuClose}
           PaperProps={{
             elevation: 3,
-            sx: { mt: 1.5, minWidth: 180 },
+            sx: {
+              mt: 1.5,
+              minWidth: 190,
+              borderRadius: 2.5,
+              bgcolor: theme.ui.menuPaperBg,
+              border: `1px solid ${theme.ui.navBorder}`,
+              boxShadow: theme.ui.shellShadow,
+              overflow: "hidden",
+            },
           }}
           anchorOrigin={{
             vertical: "bottom",

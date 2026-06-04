@@ -86,6 +86,16 @@ export async function PUT(request, { params }) {
     const approvalData = approvalRes.rows[0];
     const stepOrder = approvalData.step_order;
 
+    if (Number(approvalData.tenant_early_termination_id) !== Number(tenant_early_termination_id)) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: "Data approval tidak sesuai dengan permintaan terminasi.",
+        }),
+        { status: 400 }
+      );
+    }
+
     if (Number(approvalData.role_id) !== Number(authUser.role_id)) {
       return new Response(
         JSON.stringify({
@@ -145,6 +155,17 @@ export async function PUT(request, { params }) {
        RETURNING *`,
       [status, approver_id, new Date(), id, tenant_early_termination_id]
     );
+
+    if (updateApproval.rowCount === 0) {
+      await client.query("ROLLBACK");
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: "Approval terminasi gagal diperbarui.",
+        }),
+        { status: 400 }
+      );
+    }
 
     // --- Hitung max_step ---
     const totalStepsResult = await client.query(

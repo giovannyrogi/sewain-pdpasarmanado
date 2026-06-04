@@ -3,14 +3,29 @@ import path from "path";
 import pool from "@/lib/dbConfig";
 import moment from "moment";
 import { normalizeStoredUploadPath } from "@/app/utils/uploadPath";
+import { requireRole } from "@/app/utils/auth";
 
 const uploadDir = path.join(process.cwd(), "uploads/ktp");
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
+const MASTER_DATA_ROLES = [1, 2];
+const MAX_KTP_FILE_SIZE = 5 * 1024 * 1024;
+
+function sanitizeFilenamePart(value) {
+  return String(value || "tenant")
+    .trim()
+    .replace(/[^a-zA-Z0-9_-]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .slice(0, 80) || "tenant";
+}
+
 export async function PUT(req) {
   try {
+    const { response } = await requireRole(MASTER_DATA_ROLES);
+    if (response) return response;
+
     const formData = await req.formData();
 
     const id = formData.get("id"); // ambil id untuk data yg mau diedit
@@ -168,6 +183,13 @@ export async function PUT(req) {
 
     // kalau ada file baru
     if (ktpFile && ktpFile.name) {
+      if (ktpFile.size > MAX_KTP_FILE_SIZE) {
+        return Response.json(
+          { success: false, message: "Ukuran file KTP maksimal 5MB." },
+          { status: 400 }
+        );
+      }
+
       const arrayBuffer = await ktpFile.arrayBuffer();
       fileBuffer = Buffer.from(arrayBuffer);
 
@@ -179,7 +201,7 @@ export async function PUT(req) {
         );
       }
 
-      filename = `ktp_${full_name}_${moment().format(
+      filename = `ktp_${sanitizeFilenamePart(full_name)}_${moment().format(
         "YYYY_MM_DD_HH_mm_ss"
       )}${ext}`;
       ktp_file_path = `/uploads/ktp/${filename}`;

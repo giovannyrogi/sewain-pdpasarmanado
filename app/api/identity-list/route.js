@@ -2,6 +2,15 @@ import fs from "fs";
 import path from "path";
 import pool from "@/lib/dbConfig";
 import moment from "moment";
+import { requireAuthenticatedUser, requireRole } from "@/app/utils/auth";
+
+const MASTER_DATA_ROLES = [1, 2];
+const MAX_KTP_FILE_SIZE = 5 * 1024 * 1024;
+
+const sanitizeFilenamePart = (value) =>
+  String(value || "tenant")
+    .replace(/[^a-zA-Z0-9-_]/g, "_")
+    .slice(0, 80);
 
 const uploadDir = path.join(process.cwd(), "uploads/ktp");
 if (!fs.existsSync(uploadDir)) {
@@ -10,6 +19,9 @@ if (!fs.existsSync(uploadDir)) {
 
 export async function POST(req) {
   try {
+    const { response } = await requireRole(MASTER_DATA_ROLES);
+    if (response) return response;
+
     const formData = await req.formData();
 
     // Ambil fields dari formData
@@ -165,6 +177,13 @@ export async function POST(req) {
     let filename = null;
 
     if (ktpFile && ktpFile.name) {
+      if (ktpFile.size > MAX_KTP_FILE_SIZE) {
+        return Response.json(
+          { success: false, message: "Ukuran file KTP maksimal 5MB." },
+          { status: 400 }
+        );
+      }
+
       const arrayBuffer = await ktpFile.arrayBuffer();
       fileBuffer = Buffer.from(arrayBuffer);
 
@@ -176,7 +195,7 @@ export async function POST(req) {
         );
       }
 
-      filename = `ktp_${full_name}_${moment().format(
+      filename = `ktp_${sanitizeFilenamePart(full_name)}_${moment().format(
         "YYYY_MM_DD_HH_mm_ss"
       )}${ext}`;
       ktp_file_path = `/uploads/ktp/${filename}`;
@@ -255,6 +274,9 @@ export async function POST(req) {
 
 export async function GET(req) {
   try {
+    const { response } = await requireAuthenticatedUser();
+    if (response) return response;
+
     const result = await pool.query(
       `
       SELECT 

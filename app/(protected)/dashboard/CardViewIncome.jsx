@@ -1,5 +1,4 @@
 import formatRupiah from "@/app/components/formatrupiah/page";
-import { useThemeMode } from "@/app/components/themeprovider/ThemeContext";
 import { Icon } from "@iconify/react";
 import {
   Box,
@@ -9,11 +8,11 @@ import {
   Paper,
   Skeleton,
   Typography,
-  useMediaQuery,
   useTheme,
 } from "@mui/material";
 import { Tag } from "antd";
 import React, { useState } from "react";
+import { getDashboardCardSx, getDashboardDividerSx } from "./dashboardStyles";
 
 const CardViewIncome = ({
   currentMonthIncomeWithTax,
@@ -21,9 +20,6 @@ const CardViewIncome = ({
   loading,
 }) => {
   const theme = useTheme();
-  const { themeMode } = useThemeMode();
-  const isMobile = useMediaQuery("(max-width:600px)");
-  const isTablet = useMediaQuery("(max-width:1200px)");
   const [checked, setChecked] = useState(false);
 
   // console.log("currentMonthIncomeWithTax", currentMonthIncomeWithTax);
@@ -37,19 +33,11 @@ const CardViewIncome = ({
 
   return (
     <Paper
-      elevation={6}
-      sx={{
-        backgroundColor: "background.paper",
+      elevation={0}
+      sx={getDashboardCardSx(theme, {
         p: { xs: 1.5, sm: 2 },
         minHeight: "200px",
-        borderRadius: 2,
-        border: `1px solid ${theme.palette.divider}`,
-        transition: "transform 0.2s ease, box-shadow 0.2s ease",
-        "&:hover": {
-          transform: "translateY(-4px)",
-          boxShadow: themeMode === "dark" ? 8 : 6,
-        },
-      }}
+      })}
     >
       <Grid container spacing={1}>
         <Grid container spacing={1} size={12}>
@@ -104,14 +92,10 @@ const CardViewIncome = ({
 
         {loading ? undefined : (
           <Divider
-            sx={{
-              // borderWidth: "1px",
-              borderColor: theme.palette.primary.main,
-              // mt: 1,
-              width: "100%",
+            sx={getDashboardDividerSx(theme, {
               mt: "-5px",
               mb: 3,
-            }}
+            })}
           />
         )}
 

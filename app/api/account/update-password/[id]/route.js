@@ -1,9 +1,18 @@
 import pool from "@/lib/dbConfig";
 import { NextResponse } from "next/server";
+import { forbiddenResponse, requireAuthenticatedUser } from "@/app/utils/auth";
 
 export async function PUT(req, { params }) {
   try {
+    const { user: authUser, response } = await requireAuthenticatedUser();
+    if (response) return response;
+
     const { id } = await params; // ambil id user dari URL
+
+    if (Number(id) !== Number(authUser.id) && Number(authUser.role_id) !== 1) {
+      return forbiddenResponse("Anda hanya dapat mengubah password akun sendiri.");
+    }
+
     const { oldPassword, newPassword, comfirmNewPassword } = await req.json();
 
     // Validasi input dasar

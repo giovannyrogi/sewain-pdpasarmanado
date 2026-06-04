@@ -3,8 +3,15 @@ import fs from "fs";
 import path from "path";
 import pool from "@/lib/dbConfig";
 import moment from "moment";
+import { requireAuthenticatedUser, requireRole } from "@/app/utils/auth";
+
+const MASTER_DATA_ROLES = [1, 2];
+const UPLOAD_ROOT = path.join(process.cwd(), "uploads");
 
 export async function GET(request, { params }) {
+  const { response } = await requireAuthenticatedUser();
+  if (response) return response;
+
   const { id } = await params;
 
   if (!id || id === "undefined" || id === "null") {
@@ -90,6 +97,9 @@ export async function DELETE(req, { params }) {
   const client = await pool.connect();
 
   try {
+    const { response } = await requireRole(MASTER_DATA_ROLES);
+    if (response) return response;
+
     const { id } = await params;
     const today = moment().format("YYYY-MM-DD");
 
@@ -175,11 +185,11 @@ export async function DELETE(req, { params }) {
     // === 4. Hapus file KTP ===
     if (ktpFilePath) {
       try {
-        const filePath = path.join(
+        const filePath = path.normalize(path.join(
           process.cwd(),
           ktpFilePath.replace(/^\/+/, "")
-        );
-        if (fs.existsSync(filePath)) {
+        ));
+        if (filePath.startsWith(UPLOAD_ROOT) && fs.existsSync(filePath)) {
           fs.unlinkSync(filePath);
         }
       } catch (fileErr) {

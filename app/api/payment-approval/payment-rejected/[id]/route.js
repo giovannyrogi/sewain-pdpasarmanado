@@ -51,6 +51,16 @@ export async function PUT(request, { params }) {
     }
     const approvalData = approvalRes.rows[0];
 
+    if (Number(approvalData.payment_id) !== Number(payment_id)) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: "Data approval tidak sesuai dengan pembayaran",
+        }),
+        { status: 400 }
+      );
+    }
+
     // Cek apakah role_id login sama dengan role_id di payment_approval
     if (approvalData.role_id !== role_id) {
       return new Response(

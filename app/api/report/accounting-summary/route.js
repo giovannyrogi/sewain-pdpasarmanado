@@ -1,7 +1,16 @@
 import pool from "@/lib/dbConfig";
+import moment from "moment";
+import { requireAuthenticatedUser } from "@/app/utils/auth";
+
+function isValidDate(value) {
+  return moment(value, "YYYY-MM-DD", true).isValid();
+}
 
 export async function GET(request) {
   try {
+    const { response } = await requireAuthenticatedUser();
+    if (response) return response;
+
     const url = new URL(request.url);
     const startDate = url.searchParams.get("start_date"); // format YYYY-MM-DD
     const endDate = url.searchParams.get("end_date");     // format YYYY-MM-DD
@@ -9,6 +18,13 @@ export async function GET(request) {
     if (!startDate || !endDate) {
       return new Response(
         JSON.stringify({ success: false, message: "Parameter start_date dan end_date wajib dikirim." }),
+        { status: 400 }
+      );
+    }
+
+    if (!isValidDate(startDate) || !isValidDate(endDate)) {
+      return new Response(
+        JSON.stringify({ success: false, message: "Format tanggal harus YYYY-MM-DD." }),
         { status: 400 }
       );
     }

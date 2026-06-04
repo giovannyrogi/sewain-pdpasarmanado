@@ -53,6 +53,17 @@ export async function PUT(request, { params }) {
     const approvalData = approvalRes.rows[0];
     const stepOrder = approvalData.step_order;
 
+    if (Number(approvalData.tenant_early_termination_id) !== Number(tenant_early_termination_id)) {
+      await client.query("ROLLBACK");
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: "Data approval tidak sesuai dengan permintaan terminasi.",
+        }),
+        { status: 400 }
+      );
+    }
+
     if (Number(approvalData.role_id) !== Number(authUser.role_id)) {
       await client.query("ROLLBACK");
       return new Response(

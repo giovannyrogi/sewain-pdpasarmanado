@@ -1,7 +1,11 @@
 import pool from "@/lib/dbConfig";
+import { forbiddenResponse, requireAuthenticatedUser } from "@/app/utils/auth";
 
 export async function GET(req) {
   try {
+    const { user, response } = await requireAuthenticatedUser();
+    if (response) return response;
+
     const { searchParams } = new URL(req.url);
     const roleId = searchParams.get("role_id");
 
@@ -13,6 +17,10 @@ export async function GET(req) {
         }),
         { status: 400 }
       );
+    }
+
+    if (Number(roleId) !== Number(user.role_id) && Number(user.role_id) !== 1) {
+      return forbiddenResponse("Anda tidak dapat mengakses data approval role lain.");
     }
 
     const result = await pool.query(

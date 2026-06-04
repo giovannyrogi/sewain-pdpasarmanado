@@ -1,9 +1,15 @@
 import pool from "@/lib/dbConfig";
 import moment from "moment";
+import { requireAuthenticatedUser, requireRole } from "@/app/utils/auth";
+
+const MASTER_DATA_ROLES = [1, 2];
 
 // CREATE lokasi
 export async function POST(req) {
   try {
+    const { response } = await requireRole(MASTER_DATA_ROLES);
+    if (response) return response;
+
     const body = await req.json();
     const { location_id, floor } = body;
 
@@ -60,6 +66,9 @@ export async function POST(req) {
 // READ Data floor
 export async function GET(req) {
   try {
+    const { response } = await requireAuthenticatedUser();
+    if (response) return response;
+
     const result = await pool.query(
       `SELECT 
         lfp.id,

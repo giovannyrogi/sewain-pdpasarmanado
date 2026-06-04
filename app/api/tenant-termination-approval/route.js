@@ -1,11 +1,23 @@
 import pool from "@/lib/dbConfig";
 import { getAuthenticatedUser, unauthorizedResponse } from "@/app/utils/auth";
 
+const NON_FINANCE_ROLES = [1, 2, 3, 4, 5, 6, 7];
+
 export async function GET(req) {
   try {
     const user = await getAuthenticatedUser();
     if (!user) {
       return unauthorizedResponse();
+    }
+
+    if (!NON_FINANCE_ROLES.includes(Number(user.role_id))) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: "Anda tidak memiliki akses ke detail approval terminasi.",
+        }),
+        { status: 403 }
+      );
     }
 
     const { searchParams } = new URL(req.url);

@@ -1,9 +1,13 @@
 import pool from "@/lib/dbConfig";
 import moment from "moment";
+import { forbiddenResponse, requireAuthenticatedUser } from "@/app/utils/auth";
 
 
 export async function GET(req) {
   try {
+    const { user, response } = await requireAuthenticatedUser();
+    if (response) return response;
+
     // ambil role_id dari query string (misalnya ?role_id=3)
     const { searchParams } = new URL(req.url);
     const roleId = searchParams.get("role_id");
@@ -13,6 +17,10 @@ export async function GET(req) {
         JSON.stringify({ success: false, message: "role_id harus diisi" }),
         { status: 400 }
       );
+    }
+
+    if (Number(roleId) !== Number(user.role_id) && Number(user.role_id) !== 1) {
+      return forbiddenResponse("Anda tidak dapat mengakses data pembayaran role lain.");
     }
 
     const sql = `

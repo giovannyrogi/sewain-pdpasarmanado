@@ -1,11 +1,18 @@
 import fs from "fs";
 import path from "path";
 import { NextResponse } from "next/server";
+import { getAuthenticatedUser } from "@/app/utils/auth";
 
 const UPLOAD_DIR = path.join(process.cwd(), "uploads");
 
 export async function GET(request, context) {
   try {
+    const authUser = await getAuthenticatedUser();
+
+    if (!authUser) {
+      return new NextResponse("Unauthorized", { status: 401 });
+    }
+
     const { params } = context;
     const resolvedParams = await params;
 

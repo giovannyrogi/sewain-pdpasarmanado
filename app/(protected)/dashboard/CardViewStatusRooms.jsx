@@ -1,4 +1,3 @@
-import { useThemeMode } from "@/app/components/themeprovider/ThemeContext";
 import {
   Box,
   Divider,
@@ -6,17 +5,15 @@ import {
   Paper,
   Skeleton,
   Typography,
-  useMediaQuery,
   useTheme,
 } from "@mui/material";
 import React from "react";
 import { BarChart } from "@mui/x-charts";
 import { Icon } from "@iconify/react";
+import { getDashboardCardSx, getDashboardDividerSx } from "./dashboardStyles";
 
 const CardViewStatusRooms = ({ data, loading }) => {
   const theme = useTheme();
-  const { themeMode } = useThemeMode();
-  const isMobile = useMediaQuery("(max-width:600px)");
 
   // console.log("data", data);
 
@@ -42,18 +39,10 @@ const CardViewStatusRooms = ({ data, loading }) => {
 
   return (
     <Paper
-      elevation={6}
-      sx={{
-        backgroundColor: "background.paper",
+      elevation={0}
+      sx={getDashboardCardSx(theme, {
         p: { xs: 1.5, sm: 2 },
-        borderRadius: 2,
-        border: `1px solid ${theme.palette.divider}`,
-        transition: "transform 0.2s ease, box-shadow 0.2s ease",
-        "&:hover": {
-          transform: "translateY(-3px)",
-          boxShadow: themeMode === "dark" ? 8 : 6,
-        },
-      }}
+      })}
     >
       <Grid container spacing={1}>
         {/* Header */}
@@ -80,12 +69,10 @@ const CardViewStatusRooms = ({ data, loading }) => {
 
         {!loading && (
           <Divider
-            sx={{
-              borderColor: theme.palette.primary.main,
-              width: "100%",
+            sx={getDashboardDividerSx(theme, {
               mt: "-5px",
               mb: 1.5,
-            }}
+            })}
           />
         )}
 

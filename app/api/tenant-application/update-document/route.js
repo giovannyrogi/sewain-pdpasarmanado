@@ -1,7 +1,13 @@
 import pool from "@/lib/dbConfig";
+import { requireRole } from "@/app/utils/auth";
+
+const CONTRACT_DOCUMENT_ROLES = [1, 2];
 
 export async function GET() {
   try {
+    const { response } = await requireRole(CONTRACT_DOCUMENT_ROLES);
+    if (response) return response;
+
     const sql = `
       SELECT 
         ta.document_number,
