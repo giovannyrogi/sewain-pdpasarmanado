@@ -59,10 +59,11 @@ const WelcomeCard = ({ user, loading, isMobile, isTablet }) => {
       <Paper
         elevation={6}
         sx={{
-          backgroundColor: "background.default",
+          backgroundColor: "background.paper",
           p: 2,
-          height: "200px",
-          borderRadius: "15px",
+          minHeight: "200px",
+          borderRadius: 2,
+          border: `1px solid ${theme.palette.divider}`,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -77,11 +78,13 @@ const WelcomeCard = ({ user, loading, isMobile, isTablet }) => {
     <Paper
       elevation={6}
       sx={{
-        backgroundColor: "background.default",
-        p: 2,
-        height: isMobile ? "350px" : "250px",
-        borderRadius: "15px",
-        transition: "all 0.2s ease",
+        backgroundColor: "background.paper",
+        p: { xs: 1.5, sm: 2 },
+        minHeight: isMobile ? 320 : 250,
+        borderRadius: 2,
+        border: `1px solid ${theme.palette.divider}`,
+        overflow: "hidden",
+        transition: "box-shadow 0.2s ease",
       }}
     >
       {loading ? (
@@ -206,9 +209,10 @@ const WelcomeCard = ({ user, loading, isMobile, isTablet }) => {
                 style={{
                   objectFit: "contain",
                   position: "relative",
-                  top: -60,
-                  right: -20,
+                  top: isMobile ? -20 : -60,
+                  right: isMobile ? 0 : -20,
                   transition: "all 0.2s ease",
+                  maxWidth: "100%",
                 }}
                 priority
               />

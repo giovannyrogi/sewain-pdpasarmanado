@@ -24,14 +24,15 @@ const CardViewContract = ({
     <Paper
       elevation={6}
       sx={{
-        backgroundColor: "background.default",
-        p: 2,
-        height: "200px",
-        borderRadius: "15px",
-        transition: "all 0.2s ease",
+        backgroundColor: "background.paper",
+        p: { xs: 1.5, sm: 2 },
+        minHeight: "200px",
+        borderRadius: 2,
+        border: `1px solid ${theme.palette.divider}`,
+        transition: "transform 0.2s ease, box-shadow 0.2s ease",
         "&:hover": {
           transform: "translateY(-4px)",
-          boxShadow: 10,
+          boxShadow: themeMode === "dark" ? 8 : 6,
         },
       }}
     >
@@ -120,9 +121,9 @@ const CardViewContract = ({
                     themeMode === "dark"
                       ? "rgba(0, 200, 0, 0.15)"
                       : "rgba(0, 200, 0, 0.1)",
-                  borderRadius: "12px",
+                  borderRadius: 2,
                   p: 1.5,
-                  height:'120px',
+                  minHeight: "120px",
                   transition: "all 0.2s ease",
                   "&:hover": {
                     transform: "scale(1.05)",
@@ -166,9 +167,9 @@ const CardViewContract = ({
                     themeMode === "dark"
                       ? "rgba(255, 0, 0, 0.15)"
                       : "rgba(255, 0, 0, 0.1)",
-                  borderRadius: "12px",
+                  borderRadius: 2,
                   p: 1.5,
-                  height:'120px',
+                  minHeight: "120px",
                   transition: "all 0.2s ease",
                   "&:hover": {
                     transform: "scale(1.05)",
@@ -212,9 +213,9 @@ const CardViewContract = ({
                     themeMode === "dark"
                       ? "rgba(255, 193, 7, 0.15)" // kuning amber redup untuk dark mode
                       : "rgba(255, 193, 7, 0.1)", // lembut untuk light mode
-                  borderRadius: "12px",
+                  borderRadius: 2,
                   p: 1.5,
-                  height:'120px',
+                  minHeight: "120px",
                   transition: "all 0.2s ease",
                   "&:hover": {
                     transform: "scale(1.05)",

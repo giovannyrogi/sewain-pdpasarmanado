@@ -1,8 +1,14 @@
 import pool from "@/lib/dbConfig";
 import moment from "moment";
+import { getAuthenticatedUser, unauthorizedResponse } from "@/app/utils/auth";
 
 export async function GET() {
   try {
+    const user = await getAuthenticatedUser();
+    if (!user) {
+      return unauthorizedResponse();
+    }
+
     // === Ambil data ACTIVE & EXPIRED dari tenant_application ===
     const tenantQuery = `
       SELECT id, start_date, end_date

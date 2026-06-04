@@ -39,14 +39,15 @@ const CardViewIncome = ({
     <Paper
       elevation={6}
       sx={{
-        backgroundColor: "background.default",
-        p: 2,
-        height: "200px",
-        borderRadius: "15px",
-        transition: "all 0.2s ease",
+        backgroundColor: "background.paper",
+        p: { xs: 1.5, sm: 2 },
+        minHeight: "200px",
+        borderRadius: 2,
+        border: `1px solid ${theme.palette.divider}`,
+        transition: "transform 0.2s ease, box-shadow 0.2s ease",
         "&:hover": {
           transform: "translateY(-4px)",
-          boxShadow: 10,
+          boxShadow: themeMode === "dark" ? 8 : 6,
         },
       }}
     >

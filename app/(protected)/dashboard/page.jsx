@@ -1,23 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { useThemeMode } from "@/app/components/themeprovider/ThemeContext";
-import { Icon } from "@iconify/react";
-import {
-  Box,
-  Grid,
-  Paper,
-  Skeleton,
-  Typography,
-  useMediaQuery,
-  useTheme,
-} from "@mui/material";
-import {
-  LineChart,
-  lineElementClasses,
-  pieArcClasses,
-  PieChart,
-  pieClasses,
-} from "@mui/x-charts";
+import { Box, Grid, useMediaQuery } from "@mui/material";
 import CardViewIncome from "./CardViewIncome";
 import axios from "axios";
 import CardViewContract from "./CardViewContract";
@@ -31,8 +14,6 @@ const Dashboard = () => {
   const { user } = useUser();
   const isTablet = useMediaQuery("(max-width:1300px)");
   const isMobile = useMediaQuery("(max-width:750px)");
-  const { themeMode, setThemeMode } = useThemeMode();
-  const theme = useTheme();
   const [dataUser, setDataUser] = useState(null);
   const [currentMonthIncomeWithoutTax, setCurrentMonthIncomeWithoutTax] =
     useState({});
@@ -198,8 +179,8 @@ const Dashboard = () => {
       sx={{
         width: "100%",
         height: "100%",
-        p: 2,
-        mt: 1,
+        p: { xs: 1.25, sm: 2 },
+        mt: { xs: 0.5, sm: 1 },
       }}
     >
       <Grid container size={12}>
@@ -213,7 +194,7 @@ const Dashboard = () => {
         </Grid>
       </Grid>
 
-      <Grid container spacing={2} mt={2} alignItems="flex-start">
+      <Grid container spacing={{ xs: 1.5, sm: 2 }} mt={2} alignItems="flex-start">
         {/* === KOLOM 1 (KIRI) === */}
         <Grid
           container

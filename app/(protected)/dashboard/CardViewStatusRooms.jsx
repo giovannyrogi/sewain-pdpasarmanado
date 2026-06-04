@@ -44,14 +44,14 @@ const CardViewStatusRooms = ({ data, loading }) => {
     <Paper
       elevation={6}
       sx={{
-        backgroundColor: "background.default",
-        p: 2,
-        // height: "180px",
-        borderRadius: "15px",
-        transition: "all 0.2s ease",
+        backgroundColor: "background.paper",
+        p: { xs: 1.5, sm: 2 },
+        borderRadius: 2,
+        border: `1px solid ${theme.palette.divider}`,
+        transition: "transform 0.2s ease, box-shadow 0.2s ease",
         "&:hover": {
           transform: "translateY(-3px)",
-          boxShadow: 0,
+          boxShadow: themeMode === "dark" ? 8 : 6,
         },
       }}
     >
