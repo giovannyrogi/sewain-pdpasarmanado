@@ -1,9 +1,14 @@
 import pool from "@/lib/dbConfig";
+import { getAuthenticatedUser, unauthorizedResponse } from "@/app/utils/auth";
 
 export async function GET(req) {
   try {
-    const { searchParams } = new URL(req.url);
-    const roleId = searchParams.get("role_id");
+    const user = await getAuthenticatedUser();
+    if (!user) {
+      return unauthorizedResponse();
+    }
+
+    const roleId = user.role_id;
 
     if (!roleId) {
       return new Response(

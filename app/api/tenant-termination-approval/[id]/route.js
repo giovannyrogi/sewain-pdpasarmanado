@@ -1,5 +1,12 @@
 import pool from "@/lib/dbConfig";
 import moment from "moment";
+import { getAuthenticatedUser, unauthorizedResponse } from "@/app/utils/auth";
+import {
+  getTerminationNotificationContext,
+  notifyTerminationApprovalActionCompleted,
+  notifyTerminationApprovalMoved,
+  notifyTerminationRejected,
+} from "@/app/utils/notifications";
 
 export async function PUT(request, { params }) {
   const client = await pool.connect();
@@ -9,29 +16,16 @@ export async function PUT(request, { params }) {
     const {
       tenant_early_termination_id,
       status,
-      approver_id,
       room_id,
       tenant_identity_id,
     } = body;
+    const authUser = await getAuthenticatedUser();
 
-    console.log("id", id);
-    console.log("tenant_early_termination_id", tenant_early_termination_id);
-    console.log("status", status);
-    console.log('approver_id', approver_id);
-    console.log('room_id', room_id);
-    console.log("tenant_identity_id", tenant_identity_id);
-
-    // --- Validasi input approver_id ---
-    if (!approver_id) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          message: "approver_id wajib diisi",
-        }),
-        { status: 400 }
-      );
+    if (!authUser) {
+      return unauthorizedResponse();
     }
-    
+
+    const approver_id = authUser.id;
 
     // --- Validasi id tenant_termination_approval ---
     if (!id) {
@@ -92,6 +86,16 @@ export async function PUT(request, { params }) {
     const approvalData = approvalRes.rows[0];
     const stepOrder = approvalData.step_order;
 
+    if (Number(approvalData.role_id) !== Number(authUser.role_id)) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: "Role Anda tidak sesuai dengan step approval ini.",
+        }),
+        { status: 403 }
+      );
+    }
+
     // --- Ambil current_step dari tenant_early_terminations ---
     const terminationRes = await client.query(
       `SELECT current_step, approval_status FROM tenant_early_terminations WHERE id=$1`,
@@ -150,6 +154,7 @@ export async function PUT(request, { params }) {
       [tenant_early_termination_id]
     );
     const maxStep = totalStepsResult.rows[0]?.max_step || 1;
+    let nextRoleId = null;
 
     // --- Update current_step & status pada tenant_early_terminations ---
     if (status === "approved" && stepOrder === currentStep) {
@@ -214,6 +219,18 @@ export async function PUT(request, { params }) {
           );
         }
       } else {
+        const nextApprovalRes = await client.query(
+          `
+          SELECT role_id
+          FROM tenant_termination_approval
+          WHERE tenant_early_termination_id = $1
+            AND step_order = $2
+          LIMIT 1
+          `,
+          [tenant_early_termination_id, stepOrder + 1]
+        );
+        nextRoleId = nextApprovalRes.rows[0]?.role_id || null;
+
         // Step berikutnya
         await client.query(
           `UPDATE tenant_early_terminations 
@@ -230,6 +247,37 @@ export async function PUT(request, { params }) {
          WHERE id=$1`,
         [tenant_early_termination_id, new Date()]
       );
+    }
+
+    const notificationContext = await getTerminationNotificationContext(
+      client,
+      tenant_early_termination_id,
+    );
+
+    if (notificationContext) {
+      await notifyTerminationApprovalActionCompleted(
+        client,
+        notificationContext,
+        approver_id,
+        authUser.role_id,
+        status,
+      );
+
+      if (status === "approved") {
+        await notifyTerminationApprovalMoved(
+          client,
+          notificationContext,
+          approver_id,
+          nextRoleId,
+        );
+      } else {
+        await notifyTerminationRejected(
+          client,
+          notificationContext,
+          approver_id,
+          null,
+        );
+      }
     }
 
     await client.query("COMMIT");

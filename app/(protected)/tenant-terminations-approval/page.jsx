@@ -40,6 +40,10 @@ const TenantTerminations = () => {
     severity: "success",
   });
   const [loadingMessage, setLoadingMessage] = useState("Loading...");
+  const [terminationsLoaded, setTerminationsLoaded] = useState(false);
+  const [handledNotificationTarget, setHandledNotificationTarget] =
+    useState(null);
+  const [notificationOpenSignal, setNotificationOpenSignal] = useState(0);
   const [openInformationModal, setOpenInformationModal] = useState(false);
   const [openTenantTerminationsModal, setOpenTenantTerminationsModal] =
     useState(false);
@@ -55,8 +59,37 @@ const TenantTerminations = () => {
   const [cancelTenantTerminationsModal, setCancelTenantTerminationsModal] =
     useState(false);
 
+  const hideGlobalNotificationLoading = () => {
+    window.dispatchEvent(new Event("sewain:global-loading-hide"));
+  };
+
+  const resetNotificationFeedback = () => {
+    setSnackbar((current) => ({
+      ...current,
+      open: false,
+      message: "",
+    }));
+  };
+
+  const clearNotificationRouteState = () => {
+    if (typeof window === "undefined") return;
+
+    window.sessionStorage.removeItem("sewain:tenant-termination-target");
+
+    const params = new URLSearchParams(window.location.search);
+    const hasNotificationParams =
+      params.has("open") ||
+      params.has("tenant_early_termination_id") ||
+      params.has("deleted");
+
+    if (hasNotificationParams) {
+      window.history.replaceState(null, "", window.location.pathname);
+    }
+  };
+
   const getDataTenantTerminations = async () => {
     setLoading(true);
+    setTerminationsLoaded(false);
     try {
       const response = await axios.get(
         `/api/tenant-termination-approval/by-role`,
@@ -67,11 +100,13 @@ const TenantTerminations = () => {
 
       // console.log("tenant terminations approval", response);
       setDataTenantTerminations(response.data.data);
+      setTerminationsLoaded(true);
       setTimeout(() => {
         setLoading(false);
       }, 1000);
     } catch (error) {
       console.log("error", error);
+      setTerminationsLoaded(true);
       setTimeout(() => {
         setLoading(false);
       }, 1000);
@@ -83,6 +118,150 @@ const TenantTerminations = () => {
       getDataTenantTerminations();
     }
   }, [user]);
+
+  useEffect(() => {
+    const handleNotificationOpenSignal = () => {
+      setNotificationOpenSignal((value) => value + 1);
+    };
+
+    window.addEventListener(
+      "sewain:tenant-termination-notification-open",
+      handleNotificationOpenSignal,
+    );
+
+    return () => {
+      window.removeEventListener(
+        "sewain:tenant-termination-notification-open",
+        handleNotificationOpenSignal,
+      );
+    };
+  }, []);
+
+  useEffect(() => {
+    const getNotificationTarget = () => {
+      if (typeof window === "undefined") return null;
+
+      const params = new URLSearchParams(window.location.search);
+      const storageValue = window.sessionStorage.getItem(
+        "sewain:tenant-termination-target",
+      );
+
+      if (storageValue) {
+        try {
+          const parsed = JSON.parse(storageValue);
+          return {
+            openMode: parsed.openMode || "detail",
+            terminationId: Number(parsed.tenantEarlyTerminationId),
+            deletedFromNotification: Boolean(parsed.deleted),
+            requestedAt: parsed.requestedAt,
+          };
+        } catch {
+          window.sessionStorage.removeItem("sewain:tenant-termination-target");
+        }
+      }
+
+      return {
+        openMode: params.get("open"),
+        terminationId: Number(params.get("tenant_early_termination_id")),
+        deletedFromNotification: params.get("deleted") === "1",
+        requestedAt: 0,
+      };
+    };
+
+    const target = getNotificationTarget();
+    const openMode = target?.openMode;
+    const terminationId = target?.terminationId;
+    const deletedFromNotification = target?.deletedFromNotification;
+    const targetKey = `${terminationId}-${openMode}-${deletedFromNotification}-${target?.requestedAt || 0}`;
+
+    if (
+      !["detail", "progress"].includes(openMode) ||
+      !terminationId ||
+      !user ||
+      (!deletedFromNotification && !terminationsLoaded) ||
+      handledNotificationTarget === targetKey
+    ) {
+      return;
+    }
+
+    const openTerminationApprovalFromNotification = async () => {
+      setHandledNotificationTarget(targetKey);
+      resetNotificationFeedback();
+      setLoadingMessage("Menampilkan data nonaktif tenant...");
+      setLoading(true);
+
+      try {
+        window.sessionStorage.removeItem("sewain:tenant-termination-target");
+
+        if (deletedFromNotification) {
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+          setSelectedData(null);
+          setOpenTenantApprovalInformationModal(false);
+          setOpenTerminationApprovalModal(false);
+          setSnackbar({
+            open: true,
+            severity: "error",
+            message:
+              "Data nonaktif tenant ini sudah dihapus, sehingga detail tidak dapat ditampilkan.",
+          });
+          return;
+        }
+
+        const response = await axios.get(
+          "/api/tenant-termination-approval/by-role",
+          {
+            params: { role_id: user.role_id },
+          },
+        );
+        const freshTerminations = response.data?.data || [];
+        setDataTenantTerminations(freshTerminations);
+
+        const selectedTermination = freshTerminations.find(
+          (item) =>
+            Number(item?.tenant_early_termination_id) === terminationId,
+        );
+
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+
+        if (selectedTermination) {
+          resetNotificationFeedback();
+          setSelectedData(selectedTermination);
+          if (openMode === "progress") {
+            setOpenTerminationApprovalModal(true);
+          } else {
+            setOpenTenantApprovalInformationModal(true);
+          }
+          return;
+        }
+
+        setSnackbar({
+          open: true,
+          severity: "error",
+          message:
+            "Data nonaktif tenant tidak ditemukan. Kemungkinan data sudah dihapus atau akses tidak tersedia.",
+        });
+      } catch (err) {
+        console.log("Error open termination approval from notification:", err);
+        setSnackbar({
+          open: true,
+          severity: "error",
+          message: "Gagal menampilkan data nonaktif tenant dari notifikasi.",
+        });
+      } finally {
+        clearNotificationRouteState();
+        setLoading(false);
+        setLoadingMessage("Loading...");
+        hideGlobalNotificationLoading();
+      }
+    };
+
+    openTerminationApprovalFromNotification();
+  }, [
+    handledNotificationTarget,
+    notificationOpenSignal,
+    terminationsLoaded,
+    user,
+  ]);
 
   const onChange = (pagination, filters, sorter, extra) => {
     if (pagination.pageSize !== pageSize) {

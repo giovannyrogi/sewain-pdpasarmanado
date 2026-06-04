@@ -51,9 +51,21 @@ const wait = (duration) =>
   });
 
 const getNotificationTargetUrl = (notification, user) => {
+  const isTenantTermination =
+    notification?.entity_type === "tenant_termination" ||
+    notification?.type?.startsWith("tenant_termination");
   const isTenantApplication =
     notification?.entity_type === "tenant_application" ||
-    notification?.type?.startsWith("tenant_");
+    notification?.type?.startsWith("tenant_application") ||
+    notification?.type?.startsWith("tenant_approval");
+  const progressTerminationNotificationTypes = new Set([
+    "tenant_termination_created",
+    "tenant_termination_progress",
+    "tenant_termination_approval_completed",
+    "tenant_termination_rejected_by_you",
+    "tenant_termination_approved",
+    "tenant_termination_rejected",
+  ]);
   const progressApprovalNotificationTypes = new Set([
     "tenant_approval_progress",
     "tenant_approval_completed",
@@ -61,6 +73,23 @@ const getNotificationTargetUrl = (notification, user) => {
     "tenant_application_approved",
     "tenant_application_rejected",
   ]);
+
+  if (isTenantTermination && notification?.entity_id) {
+    const deletedParam =
+      notification.type === "tenant_termination_deleted" ? "&deleted=1" : "";
+    const isAdminContract = [1, 2].includes(Number(user?.role_id));
+    const openMode =
+      notification.type === "tenant_termination_waiting"
+        ? "detail"
+        : progressTerminationNotificationTypes.has(notification.type)
+        ? "progress"
+        : "detail";
+    const basePath = isAdminContract
+      ? "/tenant-terminations"
+      : "/tenant-terminations-approval";
+
+    return `${basePath}?tenant_early_termination_id=${notification.entity_id}&open=${openMode}${deletedParam}`;
+  }
 
   if (
     progressApprovalNotificationTypes.has(notification?.type) &&
@@ -191,6 +220,31 @@ const persistTenantApplicationTarget = (targetUrl) => {
   }
 };
 
+const persistTenantTerminationTarget = (targetUrl) => {
+  if (typeof window === "undefined") return;
+
+  try {
+    const url = new URL(targetUrl, window.location.origin);
+    const tenantEarlyTerminationId = url.searchParams.get(
+      "tenant_early_termination_id",
+    );
+
+    if (!tenantEarlyTerminationId) return;
+
+    window.sessionStorage.setItem(
+      "sewain:tenant-termination-target",
+      JSON.stringify({
+        tenantEarlyTerminationId: Number(tenantEarlyTerminationId),
+        openMode: url.searchParams.get("open") || "detail",
+        deleted: url.searchParams.get("deleted") === "1",
+        requestedAt: Date.now(),
+      }),
+    );
+  } catch (err) {
+    console.log("Error persist tenant termination notification target", err);
+  }
+};
+
 const isTenantApprovalUrl = (url) =>
   typeof url === "string" && url.startsWith("/tenant-approval");
 
@@ -199,6 +253,11 @@ const isPaymentUrl = (url) =>
 
 const isTenantApplicationUrl = (url) =>
   typeof url === "string" && url.startsWith("/tenant-application");
+
+const isTenantTerminationUrl = (url) =>
+  typeof url === "string" &&
+  (url.startsWith("/tenant-terminations") ||
+    url.startsWith("/tenant-terminations-approval"));
 
 const TopMenu = ({
   user,
@@ -395,6 +454,8 @@ const TopMenu = ({
       setLoadingMessage?.(
         notification.entity_type === "payment"
           ? "Menampilkan detail pembayaran..."
+          : notification.entity_type === "tenant_termination"
+          ? "Menampilkan data nonaktif tenant..."
           : isTenantApplicationUrl(targetUrl)
           ? "Menampilkan detail permohonan..."
           : "Menampilkan data permohonan...",
@@ -413,10 +474,12 @@ const TopMenu = ({
       if (isInternalUrl(targetUrl)) {
         persistTenantApprovalTarget(targetUrl);
         persistTenantApplicationTarget(targetUrl);
+        persistTenantTerminationTarget(targetUrl);
         persistPaymentTarget(targetUrl);
         router.push(targetUrl);
         window.dispatchEvent(new Event("sewain:tenant-approval-notification-open"));
         window.dispatchEvent(new Event("sewain:tenant-application-notification-open"));
+        window.dispatchEvent(new Event("sewain:tenant-termination-notification-open"));
         window.dispatchEvent(new Event("sewain:payment-notification-open"));
 
         /**
@@ -427,6 +490,7 @@ const TopMenu = ({
         if (
           !isTenantApprovalUrl(targetUrl) &&
           !isTenantApplicationUrl(targetUrl) &&
+          !isTenantTerminationUrl(targetUrl) &&
           !isPaymentUrl(targetUrl)
         ) {
           onHideLoading?.();

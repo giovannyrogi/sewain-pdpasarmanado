@@ -1,7 +1,13 @@
 import pool from "@/lib/dbConfig";
+import { getAuthenticatedUser, unauthorizedResponse } from "@/app/utils/auth";
 
 export async function GET(req) {
   try {
+    const user = await getAuthenticatedUser();
+    if (!user) {
+      return unauthorizedResponse();
+    }
+
     const { searchParams } = new URL(req.url);
     const terminationId = searchParams.get("id"); // tenant_early_termination_id
 

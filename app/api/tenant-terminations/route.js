@@ -2,6 +2,11 @@ import pool from "@/lib/dbConfig";
 import moment from "moment";
 import path from "path";
 import fs from "fs";
+import { getAuthenticatedUser, unauthorizedResponse } from "@/app/utils/auth";
+import {
+  getTerminationNotificationContext,
+  notifyTerminationCreated,
+} from "@/app/utils/notifications";
 
 const uploadDir = path.join(process.cwd(), "uploads/surat_pernyataan");
 // Pastikan folder upload ada
@@ -15,8 +20,14 @@ export async function POST(req) {
     const formData = await req.formData();
     const tenant_application_id = formData.get("tenant_application_id");
     const reason = formData.get("reason");
-    const processed_by = formData.get("processed_by");
     const surat_file = formData.get("statement_file");
+    const authUser = await getAuthenticatedUser();
+
+    if (!authUser) {
+      return unauthorizedResponse();
+    }
+
+    const processed_by = authUser.id;
 
     if (!tenant_application_id || !reason || !surat_file || !processed_by) {
       return new Response(
@@ -114,6 +125,15 @@ export async function POST(req) {
       );
     }
 
+    const notificationContext = await getTerminationNotificationContext(
+      client,
+      terminationId,
+    );
+
+    if (notificationContext) {
+      await notifyTerminationCreated(client, notificationContext);
+    }
+
     await client.query("COMMIT");
 
     // Simpan file ke disk setelah commit
@@ -144,6 +164,11 @@ export async function POST(req) {
 
 export async function GET(req) {
   try {
+    const authUser = await getAuthenticatedUser();
+    if (!authUser) {
+      return unauthorizedResponse();
+    }
+
     const result = await pool.query(
       `
       SELECT

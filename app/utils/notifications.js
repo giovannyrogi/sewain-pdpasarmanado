@@ -280,6 +280,25 @@ async function archiveWaitingApprovalNotifications(client, tenantId, roleId) {
   );
 }
 
+async function archiveWaitingTerminationNotifications(client, terminationId, roleId) {
+  await client.query(
+    `
+    UPDATE notification_recipients nr
+    SET
+      read_at = COALESCE(nr.read_at, NOW()),
+      archived_at = COALESCE(nr.archived_at, NOW())
+    FROM notifications n
+    WHERE n.id = nr.notification_id
+      AND n.type = 'tenant_termination_waiting'
+      AND n.entity_type = 'tenant_termination'
+      AND n.entity_id = $1
+      AND nr.role_id = $2
+      AND nr.archived_at IS NULL
+    `,
+    [terminationId, roleId],
+  );
+}
+
 export async function notifyTenantApprovalActionCompleted(
   client,
   tenant,
@@ -376,6 +395,261 @@ export async function getPaymentNotificationContext(client, paymentId) {
   );
 
   return result.rows[0] || null;
+}
+
+export async function getTerminationNotificationContext(client, terminationId) {
+  const result = await client.query(
+    `
+    SELECT
+      tet.id,
+      tet.tenant_application_id,
+      tet.processed_by,
+      tet.current_step,
+      tet.approval_status,
+      tet.reason,
+      ta.user_id AS tenant_created_by,
+      ta.document_number,
+      ti.full_name AS tenant_name,
+      r.room_number,
+      l.location_name
+    FROM tenant_early_terminations tet
+    JOIN tenant_application ta ON ta.id = tet.tenant_application_id
+    LEFT JOIN tenant_identities ti ON ti.id = ta.tenant_identity_id
+    LEFT JOIN rooms r ON r.id = ta.room_id
+    LEFT JOIN locations l ON l.id = ta.location_id
+    WHERE tet.id = $1
+    LIMIT 1
+    `,
+    [terminationId],
+  );
+
+  return result.rows[0] || null;
+}
+
+export async function notifyTerminationCreated(client, termination) {
+  const firstApprovalRole =
+    APPROVAL_STEP_ROLES[Number(termination.current_step || 1)];
+  const waitingRoleLabel = await buildRoleLabel(client, firstApprovalRole);
+
+  await createNotificationForRolesWithExclusions(client, {
+    type: "tenant_termination_created",
+    title: "Pengajuan nonaktif tenant baru",
+    message: `${buildTenantMessage(termination)} Pengajuan nonaktif tenant baru sedang menunggu approval dari ${waitingRoleLabel}.`,
+    entityType: "tenant_termination",
+    entityId: termination.id,
+    actionUrl: `/tenant-terminations-approval?tenant_early_termination_id=${termination.id}&open=progress`,
+    priority: "high",
+    createdBy: termination.processed_by,
+    roleIds: NON_FINANCE_ROLES,
+    excludeRoleIds: firstApprovalRole ? [firstApprovalRole] : [],
+    excludeUserIds: [termination.processed_by],
+    metadata: {
+      ...termination,
+      documentNumber: compactDocumentNumber(termination.document_number),
+      document_number: compactDocumentNumber(termination.document_number),
+      waiting_role_id: firstApprovalRole,
+      waiting_role_label: waitingRoleLabel,
+    },
+  });
+
+  if (firstApprovalRole) {
+    await createNotificationForRoles(client, {
+      type: "tenant_termination_waiting",
+      title: "Menunggu approval nonaktif tenant",
+      message: `${buildTenantMessage(termination)} Silakan cek dan proses approval nonaktif tenant.`,
+      entityType: "tenant_termination",
+      entityId: termination.id,
+      actionUrl: `/tenant-terminations-approval?tenant_early_termination_id=${termination.id}&open=detail`,
+      priority: "urgent",
+      createdBy: termination.processed_by,
+      roleIds: [firstApprovalRole],
+      metadata: {
+        ...termination,
+        documentNumber: compactDocumentNumber(termination.document_number),
+        document_number: compactDocumentNumber(termination.document_number),
+        current_approval_role_id: firstApprovalRole,
+        waiting_role_label: waitingRoleLabel,
+      },
+    });
+  }
+}
+
+export async function notifyTerminationApprovalActionCompleted(
+  client,
+  termination,
+  actorId,
+  roleId,
+  status,
+) {
+  const actor = await getUserContext(client, actorId);
+  const actorRoleLabel =
+    APPROVAL_ROLE_LABELS[actor?.role_id] || actor?.role_name || "Approver";
+
+  await archiveWaitingTerminationNotifications(client, termination.id, roleId);
+
+  await createNotificationForUsers(client, {
+    type:
+      status === "approved"
+        ? "tenant_termination_approval_completed"
+        : "tenant_termination_rejected_by_you",
+    title:
+      status === "approved"
+        ? "Approval nonaktif berhasil diproses"
+        : "Penolakan nonaktif berhasil diproses",
+    message:
+      status === "approved"
+        ? `${buildTenantMessage(termination)} Anda berhasil melakukan approval nonaktif tenant sebagai ${actorRoleLabel}.`
+        : `${buildTenantMessage(termination)} Anda berhasil menolak pengajuan nonaktif tenant sebagai ${actorRoleLabel}.`,
+    entityType: "tenant_termination",
+    entityId: termination.id,
+    actionUrl: `/tenant-terminations-approval?tenant_early_termination_id=${termination.id}&open=progress`,
+    priority: "normal",
+    createdBy: actorId,
+    userIds: [actorId],
+    metadata: {
+      ...termination,
+      documentNumber: compactDocumentNumber(termination.document_number),
+      document_number: compactDocumentNumber(termination.document_number),
+      approved_by_name: actor?.full_name,
+      approved_by_role: actorRoleLabel,
+      action_status: status,
+    },
+  });
+}
+
+export async function notifyTerminationApprovalMoved(
+  client,
+  termination,
+  approverId,
+  nextRoleId,
+) {
+  const approver = await getUserContext(client, approverId);
+  const approverRoleLabel =
+    APPROVAL_ROLE_LABELS[approver?.role_id] || approver?.role_name || "Approver";
+  const approverLabel = `${approverRoleLabel}${approver?.full_name ? ` (${approver.full_name})` : ""}`;
+
+  if (!nextRoleId) {
+    await createNotificationForRolesWithExclusions(client, {
+      type: "tenant_termination_approved",
+      title: "Nonaktif tenant disetujui final",
+      message: `${buildTenantMessage(termination)} Pengajuan nonaktif tenant disetujui final oleh ${approverLabel}. Ruangan sudah tersedia kembali.`,
+      entityType: "tenant_termination",
+      entityId: termination.id,
+      actionUrl: `/tenant-terminations-approval?tenant_early_termination_id=${termination.id}&open=progress`,
+      priority: "high",
+      createdBy: approverId,
+      roleIds: NON_FINANCE_ROLES,
+      excludeRoleIds: [approver?.role_id],
+      excludeUserIds: [approverId],
+      metadata: {
+        ...termination,
+        documentNumber: compactDocumentNumber(termination.document_number),
+        document_number: compactDocumentNumber(termination.document_number),
+        approved_by_name: approver?.full_name,
+        approved_by_role: approverRoleLabel,
+      },
+    });
+    return;
+  }
+
+  const nextRoleLabel = await buildRoleLabel(client, nextRoleId);
+
+  await createNotificationForRoles(client, {
+    type: "tenant_termination_waiting",
+    title: "Menunggu approval nonaktif tenant",
+    message: `${buildTenantMessage(termination)} Pengajuan nonaktif tenant sudah masuk ke giliran approval Anda.`,
+    entityType: "tenant_termination",
+    entityId: termination.id,
+    actionUrl: `/tenant-terminations-approval?tenant_early_termination_id=${termination.id}&open=detail`,
+    priority: "urgent",
+    createdBy: approverId,
+    roleIds: [nextRoleId],
+    metadata: {
+      ...termination,
+      documentNumber: compactDocumentNumber(termination.document_number),
+      document_number: compactDocumentNumber(termination.document_number),
+      current_approval_role_id: nextRoleId,
+      waiting_role_label: nextRoleLabel,
+    },
+  });
+
+  await createNotificationForRolesWithExclusions(client, {
+    type: "tenant_termination_progress",
+    title: `${approverLabel} sudah approve nonaktif`,
+    message: `${buildTenantMessage(termination)} ${approverLabel} sudah approve pengajuan nonaktif tenant. Menunggu approval dari ${nextRoleLabel}.`,
+    entityType: "tenant_termination",
+    entityId: termination.id,
+    actionUrl: `/tenant-terminations-approval?tenant_early_termination_id=${termination.id}&open=progress`,
+    priority: "normal",
+    createdBy: approverId,
+    roleIds: NON_FINANCE_ROLES,
+    excludeRoleIds: [approver?.role_id],
+    excludeUserIds: [approverId],
+    metadata: {
+      ...termination,
+      documentNumber: compactDocumentNumber(termination.document_number),
+      document_number: compactDocumentNumber(termination.document_number),
+      approved_by_name: approver?.full_name,
+      approved_by_role: approverRoleLabel,
+      waiting_role_id: nextRoleId,
+      waiting_role_label: nextRoleLabel,
+    },
+  });
+}
+
+export async function notifyTerminationRejected(client, termination, approverId, notes) {
+  const approver = await getUserContext(client, approverId);
+  const approverRoleLabel =
+    APPROVAL_ROLE_LABELS[approver?.role_id] || approver?.role_name || "Approver";
+
+  await createNotificationForRolesWithExclusions(client, {
+    type: "tenant_termination_rejected",
+    title: "Pengajuan nonaktif tenant ditolak",
+    message: `${buildTenantMessage(termination)} Pengajuan nonaktif tenant ditolak oleh ${approverRoleLabel}${approver?.full_name ? ` (${approver.full_name})` : ""}.`,
+    entityType: "tenant_termination",
+    entityId: termination.id,
+    actionUrl: `/tenant-terminations-approval?tenant_early_termination_id=${termination.id}&open=progress`,
+    priority: "high",
+    createdBy: approverId,
+    roleIds: NON_FINANCE_ROLES,
+    excludeRoleIds: [approver?.role_id],
+    excludeUserIds: [approverId],
+    metadata: {
+      ...termination,
+      documentNumber: compactDocumentNumber(termination.document_number),
+      document_number: compactDocumentNumber(termination.document_number),
+      rejected_by_name: approver?.full_name,
+      rejected_by_role: approverRoleLabel,
+      rejection_notes: notes || null,
+    },
+  });
+}
+
+export async function notifyTerminationDeleted(client, termination, deletedBy) {
+  const deleter = await getUserContext(client, deletedBy);
+  const deleterRoleLabel =
+    APPROVAL_ROLE_LABELS[deleter?.role_id] || deleter?.role_name || "User";
+  const deleterLabel = `${deleterRoleLabel}${deleter?.full_name ? ` (${deleter.full_name})` : ""}`;
+
+  await createNotificationForRolesWithExclusions(client, {
+    type: "tenant_termination_deleted",
+    title: "Pengajuan nonaktif tenant dihapus",
+    message: `${buildTenantMessage(termination)} Pengajuan nonaktif tenant telah dihapus oleh ${deleterLabel}.`,
+    entityType: "tenant_termination",
+    entityId: termination.id,
+    actionUrl: `/tenant-terminations?tenant_early_termination_id=${termination.id}&open=detail&deleted=1`,
+    priority: "high",
+    createdBy: deletedBy,
+    roleIds: NON_FINANCE_ROLES,
+    excludeUserIds: [deletedBy],
+    metadata: {
+      ...termination,
+      documentNumber: compactDocumentNumber(termination.document_number),
+      document_number: compactDocumentNumber(termination.document_number),
+      deleted_by_name: deleter?.full_name,
+      deleted_by_role: deleterRoleLabel,
+    },
+  });
 }
 
 export async function notifyTenantApplicationCreated(client, tenant) {

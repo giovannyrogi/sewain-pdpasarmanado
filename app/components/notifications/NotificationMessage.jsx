@@ -160,6 +160,72 @@ const NotificationActionText = ({ notification }) => {
           .
         </>
       );
+    case "tenant_termination_created":
+      return (
+        <>
+          Pengajuan nonaktif tenant baru sedang menunggu approval dari{" "}
+          <HighlightText>{metadata.waiting_role_label}</HighlightText>.
+        </>
+      );
+    case "tenant_termination_waiting":
+      return <>Silakan cek dan proses approval nonaktif tenant.</>;
+    case "tenant_termination_approval_completed":
+      return (
+        <>
+          Anda berhasil melakukan approval nonaktif sebagai{" "}
+          <HighlightText>
+            {getRoleUserLabel(metadata.approved_by_role, metadata.approved_by_name)}
+          </HighlightText>
+          .
+        </>
+      );
+    case "tenant_termination_rejected_by_you":
+      return (
+        <>
+          Anda berhasil menolak pengajuan nonaktif sebagai{" "}
+          <HighlightText>
+            {getRoleUserLabel(metadata.approved_by_role, metadata.approved_by_name)}
+          </HighlightText>
+          .
+        </>
+      );
+    case "tenant_termination_progress":
+      return (
+        <>
+          Menunggu approval nonaktif dari{" "}
+          <HighlightText>{metadata.waiting_role_label}</HighlightText>.
+        </>
+      );
+    case "tenant_termination_approved":
+      return (
+        <>
+          Nonaktif tenant disetujui final oleh{" "}
+          <HighlightText>
+            {getRoleUserLabel(metadata.approved_by_role, metadata.approved_by_name)}
+          </HighlightText>
+          . Ruangan sudah tersedia kembali.
+        </>
+      );
+    case "tenant_termination_rejected":
+      return (
+        <>
+          Pengajuan nonaktif tenant ditolak oleh{" "}
+          <HighlightText>
+            {getRoleUserLabel(metadata.rejected_by_role, metadata.rejected_by_name)}
+          </HighlightText>
+          . Tekan notifikasi ini untuk melihat alasan penolakan.
+        </>
+      );
+    case "tenant_termination_deleted":
+      return (
+        <>
+          Pengajuan nonaktif tenant telah dihapus oleh{" "}
+          <HighlightText>
+            {getRoleUserLabel(metadata.deleted_by_role, metadata.deleted_by_name)}
+          </HighlightText>
+          .
+        </>
+      );
     case "payment_submitted":
       return (
         <>
@@ -252,6 +318,16 @@ export const getNotificationTitle = (notification) => {
       metadata.approved_by_role,
       metadata.approved_by_name,
     )} sudah approve`;
+  }
+
+  if (
+    notification?.type === "tenant_termination_progress" &&
+    (metadata.approved_by_role || metadata.approved_by_name)
+  ) {
+    return `${getRoleUserLabel(
+      metadata.approved_by_role,
+      metadata.approved_by_name,
+    )} sudah approve nonaktif`;
   }
 
   return notification?.title;

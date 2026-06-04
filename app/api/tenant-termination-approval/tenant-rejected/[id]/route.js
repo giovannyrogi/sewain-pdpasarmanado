@@ -1,4 +1,10 @@
 import pool from "@/lib/dbConfig";
+import { getAuthenticatedUser, unauthorizedResponse } from "@/app/utils/auth";
+import {
+  getTerminationNotificationContext,
+  notifyTerminationApprovalActionCompleted,
+  notifyTerminationRejected,
+} from "@/app/utils/notifications";
 
 export async function PUT(request, { params }) {
   const client = await pool.connect();
@@ -6,7 +12,14 @@ export async function PUT(request, { params }) {
   try {
     const { id } = await params; // id tenant_termination_approval dari URL
     const body = await request.json();
-    const { notes, status, approver_id, tenant_early_termination_id } = body;
+    const { notes, status, tenant_early_termination_id } = body;
+    const authUser = await getAuthenticatedUser();
+
+    if (!authUser) {
+      return unauthorizedResponse();
+    }
+
+    const approver_id = authUser.id;
 
     if (!notes) {
       return new Response(
@@ -39,6 +52,17 @@ export async function PUT(request, { params }) {
 
     const approvalData = approvalRes.rows[0];
     const stepOrder = approvalData.step_order;
+
+    if (Number(approvalData.role_id) !== Number(authUser.role_id)) {
+      await client.query("ROLLBACK");
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: "Role Anda tidak sesuai dengan step approval ini.",
+        }),
+        { status: 403 }
+      );
+    }
 
     // Ambil current_step dari tenant_early_terminations
     const tenantRes = await client.query(
@@ -105,6 +129,27 @@ export async function PUT(request, { params }) {
           message: "Gagal memperbarui status tenant_early_terminations",
         }),
         { status: 500 }
+      );
+    }
+
+    const notificationContext = await getTerminationNotificationContext(
+      client,
+      tenant_early_termination_id,
+    );
+
+    if (notificationContext) {
+      await notifyTerminationApprovalActionCompleted(
+        client,
+        notificationContext,
+        approver_id,
+        authUser.role_id,
+        status,
+      );
+      await notifyTerminationRejected(
+        client,
+        notificationContext,
+        approver_id,
+        notes,
       );
     }
 
