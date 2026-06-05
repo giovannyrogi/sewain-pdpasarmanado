@@ -27,3 +27,44 @@ export const getDashboardDividerSx = (theme, sx = {}) => ({
   width: "100%",
   ...sx,
 });
+
+/**
+ * Shell untuk section dashboard baru.
+ * Dipakai oleh panel chart/list supaya spacing dan warna tetap konsisten
+ * dengan token theme global, bukan hardcode per komponen.
+ */
+export const getDashboardPanelSx = (theme, sx = {}) => ({
+  bgcolor: theme.ui.dashboardCardBg,
+  border: `1px solid ${theme.ui.dashboardCardBorder}`,
+  borderRadius: 3,
+  boxShadow: theme.ui.dashboardCardShadow,
+  overflow: "hidden",
+  ...sx,
+});
+
+/**
+ * Style item kecil di dalam list dashboard.
+ * Item dibuat interaktif tetapi tetap tenang untuk dashboard operasional.
+ */
+export const getDashboardListItemSx = (theme, sx = {}) => ({
+  display: "flex",
+  alignItems: "center",
+  gap: 1.25,
+  width: "100%",
+  p: 1.25,
+  borderRadius: 2,
+  border: `1px solid ${theme.ui.dashboardCardBorder}`,
+  bgcolor:
+    theme.palette.mode === "dark"
+      ? "rgba(255, 255, 255, 0.035)"
+      : "rgba(17, 24, 39, 0.025)",
+  transition: "background-color 0.2s ease, border-color 0.2s ease",
+  "&:hover": {
+    borderColor: theme.palette.primary.main,
+    bgcolor:
+      theme.palette.mode === "dark"
+        ? "rgba(255, 152, 0, 0.08)"
+        : "rgba(230, 9, 9, 0.06)",
+  },
+  ...sx,
+});
