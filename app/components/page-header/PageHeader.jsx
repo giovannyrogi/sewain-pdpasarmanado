@@ -15,6 +15,7 @@ export default function PageHeader({
   description,
   icon = "solar:chart-2-bold-duotone",
   action,
+  actionSx,
 }) {
   const theme = useTheme();
 
@@ -90,7 +91,7 @@ export default function PageHeader({
           )}
         </Stack>
 
-        {action && <Box sx={{ flex: "0 0 auto" }}>{action}</Box>}
+        {action && <Box sx={{ flex: "0 0 auto", ...actionSx }}>{action}</Box>}
       </Box>
     </Box>
   );

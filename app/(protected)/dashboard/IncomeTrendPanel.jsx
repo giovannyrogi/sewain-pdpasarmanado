@@ -24,6 +24,30 @@ import formatRupiah from "@/app/components/formatrupiah/page";
 import DashboardPanel from "./DashboardPanel";
 import { MONTH_OPTIONS, getYearOptions } from "./dashboardUtils";
 
+const parseBucketDate = (value) => {
+  if (!value) return null;
+
+  const rawValue = String(value);
+  const date = /^\d{4}-\d{2}-\d{2}$/.test(rawValue)
+    ? new Date(`${rawValue}T00:00:00`)
+    : new Date(rawValue);
+
+  return Number.isNaN(date.getTime()) ? null : date;
+};
+
+const formatTooltipLabel = (row, period) => {
+  const date = parseBucketDate(row?.bucket_date);
+
+  if (!date) return row?.tooltip_label || row?.label || "";
+
+  return new Intl.DateTimeFormat("id-ID", {
+    weekday: period === "month" ? "long" : undefined,
+    day: period === "month" ? "2-digit" : undefined,
+    month: "long",
+    year: "numeric",
+  }).format(date);
+};
+
 /**
  * Kontrol filter chart pendapatan.
  * Dibuat controlled dari page agar perubahan filter langsung melakukan fetch ulang.
@@ -107,6 +131,9 @@ export default function IncomeTrendPanel({ data, filters, onFilterChange, loadin
   const isMobile = useMediaQuery("(max-width:700px)");
   const chartRows = Array.isArray(data) ? data : [];
   const xLabels = chartRows.map((item) => item.label);
+  const tooltipLabelByTick = new Map(
+    chartRows.map((item) => [item.label, formatTooltipLabel(item, filters.period)]),
+  );
   const withTaxData = chartRows.map((item) => Number(item.total_with_tax || 0));
   const withoutTaxData = chartRows.map((item) => Number(item.total_without_tax || 0));
   const hasData = withTaxData.some(Boolean) || withoutTaxData.some(Boolean);
@@ -143,6 +170,10 @@ export default function IncomeTrendPanel({ data, filters, onFilterChange, loadin
                 {
                   data: xLabels,
                   scaleType: "point",
+                  valueFormatter: (value, context) =>
+                    context?.location === "tick"
+                      ? value
+                      : tooltipLabelByTick.get(value) || value,
                   tickLabelStyle: {
                     fill: theme.palette.text.secondary,
                     fontSize: isMobile ? 10 : 11,

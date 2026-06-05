@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Box, Button, Grid, Typography, useTheme } from "@mui/material";
+import { Box, Grid, Typography, useTheme } from "@mui/material";
 import { Icon } from "@iconify/react";
 import axios from "axios";
 import LoadingBackdrop from "@/app/components/loading/Backdrop";
@@ -72,7 +72,10 @@ export default function Dashboard() {
       if (!options.silent) {
         setLoading(true);
       }
-      const response = await axios.get(`/api/dashboard/overview?${queryString}`, {
+      const requestParams = new URLSearchParams(queryString);
+      requestParams.set("_ts", String(Date.now()));
+
+      const response = await axios.get(`/api/dashboard/overview?${requestParams}`, {
         signal,
       });
 
@@ -143,33 +146,62 @@ export default function Dashboard() {
             title="Dashboard Monitoring"
             description="Pantau kondisi kontrak, ruangan, pembayaran, persetujuan, terminasi, dan aktivitas terbaru dalam satu halaman."
             icon="solar:chart-2-bold-duotone"
+            actionSx={{
+              width: { xs: "100%", md: "auto" },
+              display: "flex",
+              justifyContent: { xs: "center", md: "flex-end" },
+            }}
             action={
-              <Button
-                variant="outlined"
-                onClick={() => fetchDashboard(undefined)}
-                startIcon={<Icon icon="solar:refresh-bold-duotone" />}
+              <Box
                 sx={{
+                  display: "flex",
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 0.75,
+                  justifyContent: "center",
+                  minHeight: 44,
                   borderRadius: 2,
-                  px: 1.6,
-                  py: 1,
+                  px: { xs: 1.75, sm: 1.9 },
+                  py: { xs: 1.05, sm: 1 },
                   fontWeight: 900,
-                  borderColor: theme.palette.primary.main,
+                  border: `1px solid ${theme.palette.primary.main}`,
                   color: theme.palette.primary.main,
                   bgcolor:
                     theme.palette.mode === "dark"
                       ? "rgba(255, 152, 0, 0.08)"
                       : "rgba(230, 9, 9, 0.06)",
+                  userSelect: "none",
                 }}
               >
-                <Box sx={{ textAlign: "left" }}>
-                  <Typography sx={{ fontWeight: 950, fontSize: 12, lineHeight: 1 }}>
-                    Refresh
-                  </Typography>
-                  <Typography sx={{ fontWeight: 800, fontSize: 11, lineHeight: 1.3 }}>
-                    otomatis {minutes}:{seconds}
-                  </Typography>
+                <Box
+                  component="span"
+                  sx={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: { xs: 20, sm: 18 },
+                    height: { xs: 20, sm: 18 },
+                    flex: "0 0 auto",
+                    lineHeight: 0,
+                  }}
+                >
+                  <Icon
+                    icon="solar:refresh-circle-bold-duotone"
+                    fontSize="100%"
+                  />
                 </Box>
-              </Button>
+                <Typography
+                  component="span"
+                  sx={{
+                    fontWeight: 950,
+                    fontSize: { xs: 12.5, sm: 12 },
+                    lineHeight: { xs: "20px", sm: "18px" },
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  Auto Refresh berikutnya {minutes}:{seconds}
+                </Typography>
+              </Box>
             }
           />
         </Grid>

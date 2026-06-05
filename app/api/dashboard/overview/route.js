@@ -21,7 +21,7 @@ const APPROVAL_ROLES = new Set([
 ]);
 
 const EXPIRING_CONTRACT_DAYS = 30;
-const DUE_PAYMENT_DAYS = 7;
+const DUE_PAYMENT_DAYS = 30;
 const LIST_LIMIT = 6;
 
 const toNumber = (value) => Number(value || 0);
@@ -83,7 +83,9 @@ const queryIncomeChart = ({ period, year, month }) => {
         )
         SELECT
           EXTRACT(DAY FROM d.bucket_date)::int AS bucket_number,
+          d.bucket_date::date AS bucket_date,
           TO_CHAR(d.bucket_date, 'DD') AS label,
+          TO_CHAR(d.bucket_date, 'FMDay, DD Mon YYYY') AS tooltip_label,
           COALESCE(pt.total_with_tax, 0)::float AS total_with_tax,
           COALESCE(pt.total_without_tax, 0)::float AS total_without_tax
         FROM days d
@@ -112,7 +114,9 @@ const queryIncomeChart = ({ period, year, month }) => {
       )
       SELECT
         m.bucket_number,
+        make_date($1::int, m.bucket_number, 1)::date AS bucket_date,
         TO_CHAR(make_date($1::int, m.bucket_number, 1), 'Mon') AS label,
+        TO_CHAR(make_date($1::int, m.bucket_number, 1), 'FMMonth YYYY') AS tooltip_label,
         COALESCE(pt.total_with_tax, 0)::float AS total_with_tax,
         COALESCE(pt.total_without_tax, 0)::float AS total_without_tax
       FROM months m
@@ -148,12 +152,22 @@ export async function GET(request) {
             WHERE ta.approval_status = 'approved'
               AND ta.document_number IS NOT NULL
               AND t.tenant_application_id IS NULL
+              AND NOT EXISTS (
+                SELECT 1
+                FROM tenant_application child
+                WHERE child.renewal_of = ta.id
+              )
               AND ta.end_date::date >= CURRENT_DATE
           )::int AS active,
           COUNT(*) FILTER (
             WHERE ta.approval_status = 'approved'
               AND ta.document_number IS NOT NULL
               AND t.tenant_application_id IS NULL
+              AND NOT EXISTS (
+                SELECT 1
+                FROM tenant_application child
+                WHERE child.renewal_of = ta.id
+              )
               AND ta.end_date::date < CURRENT_DATE
           )::int AS expired,
           COUNT(t.tenant_application_id)::int AS terminated
@@ -194,16 +208,38 @@ export async function GET(request) {
       ),
       due_candidates AS (
         SELECT
+          next_payment.next_payment_number,
           CASE
-            WHEN ta.payment_type = 'cicilan' AND COALESCE(ta.current_payment_step, 1) <= 1 THEN ta.estimated_installment_1_date
-            WHEN ta.payment_type = 'cicilan' AND ta.current_payment_step = 2 THEN ta.estimated_installment_2_date
-            WHEN ta.payment_type = 'cicilan' AND ta.current_payment_step = 3 THEN ta.estimated_installment_3_date
+            WHEN ta.payment_type = 'cicilan' AND next_payment.next_payment_number <= 2 THEN ta.estimated_installment_1_date
+            WHEN ta.payment_type = 'cicilan' AND next_payment.next_payment_number = 3 THEN ta.estimated_installment_2_date
+            WHEN ta.payment_type = 'cicilan' AND next_payment.next_payment_number = 4 THEN ta.estimated_installment_3_date
             ELSE NULL
           END AS due_date
         FROM tenant_application ta
+        LEFT JOIN terminated t ON t.tenant_application_id = ta.id
+        LEFT JOIN LATERAL (
+          SELECT COALESCE(MAX(p.payment_number), 0) + 1 AS next_payment_number
+          FROM payments p
+          WHERE p.tenant_application_id = ta.id
+            AND p.approval_status = 'approved'
+        ) next_payment ON TRUE
         WHERE ta.approval_status = 'approved'
           AND ta.payment_type = 'cicilan'
           AND COALESCE(ta.is_fully_paid, false) = false
+          AND t.tenant_application_id IS NULL
+          AND next_payment.next_payment_number <= 4
+          AND NOT EXISTS (
+            SELECT 1
+            FROM tenant_application child
+            WHERE child.renewal_of = ta.id
+              AND child.approval_status = 'approved'
+          )
+          AND NOT EXISTS (
+            SELECT 1
+            FROM payments pending_payment
+            WHERE pending_payment.tenant_application_id = ta.id
+              AND pending_payment.approval_status IN ('proses', 'rejected')
+          )
       ),
       payment_due AS (
         SELECT
@@ -222,6 +258,11 @@ export async function GET(request) {
         WHERE ta.approval_status = 'approved'
           AND ta.document_number IS NOT NULL
           AND t.tenant_application_id IS NULL
+          AND NOT EXISTS (
+            SELECT 1
+            FROM tenant_application child
+            WHERE child.renewal_of = ta.id
+          )
           AND ta.end_date::date BETWEEN CURRENT_DATE AND CURRENT_DATE + ($2::int * INTERVAL '1 day')
       ),
       contracts_created AS (
@@ -324,37 +365,94 @@ export async function GET(request) {
     `;
 
     const duePaymentsQuery = `
-      WITH due_candidates AS (
+      WITH terminated AS (
+        SELECT tenant_application_id
+        FROM tenant_early_terminations
+        WHERE approval_status = 'approved' AND is_terminated = true
+      ),
+      due_candidates AS (
         SELECT
           ta.id AS tenant_application_id,
           ta.document_number,
           ta.current_payment_step,
           ta.remaining_payment,
+          ta.payment_type,
+          next_payment.next_payment_number,
+          CASE
+            WHEN next_payment.next_payment_number <= 1 THEN 'Uang Muka'
+            ELSE CONCAT('Cicilan ', next_payment.next_payment_number - 1)
+          END AS payment_step_label,
           ti.full_name AS tenant_name,
           l.location_name,
           r.room_number,
           CASE
-            WHEN ta.payment_type = 'cicilan' AND COALESCE(ta.current_payment_step, 1) <= 1 THEN ta.estimated_installment_1_date
-            WHEN ta.payment_type = 'cicilan' AND ta.current_payment_step = 2 THEN ta.estimated_installment_2_date
-            WHEN ta.payment_type = 'cicilan' AND ta.current_payment_step = 3 THEN ta.estimated_installment_3_date
+            WHEN ta.payment_type = 'cicilan' AND next_payment.next_payment_number <= 2 THEN ta.estimated_installment_1_date
+            WHEN ta.payment_type = 'cicilan' AND next_payment.next_payment_number = 3 THEN ta.estimated_installment_2_date
+            WHEN ta.payment_type = 'cicilan' AND next_payment.next_payment_number = 4 THEN ta.estimated_installment_3_date
             ELSE NULL
           END AS due_date
         FROM tenant_application ta
         JOIN tenant_identities ti ON ti.id = ta.tenant_identity_id
         JOIN locations l ON l.id = ta.location_id
         JOIN rooms r ON r.id = ta.room_id
+        LEFT JOIN terminated t ON t.tenant_application_id = ta.id
+        LEFT JOIN LATERAL (
+          SELECT COALESCE(MAX(p.payment_number), 0) + 1 AS next_payment_number
+          FROM payments p
+          WHERE p.tenant_application_id = ta.id
+            AND p.approval_status = 'approved'
+        ) next_payment ON TRUE
         WHERE ta.approval_status = 'approved'
           AND ta.payment_type = 'cicilan'
           AND COALESCE(ta.is_fully_paid, false) = false
+          AND t.tenant_application_id IS NULL
+          AND next_payment.next_payment_number <= 4
+          AND NOT EXISTS (
+            SELECT 1
+            FROM tenant_application child
+            WHERE child.renewal_of = ta.id
+              AND child.approval_status = 'approved'
+          )
+          AND NOT EXISTS (
+            SELECT 1
+            FROM payments pending_payment
+            WHERE pending_payment.tenant_application_id = ta.id
+              AND pending_payment.approval_status IN ('proses', 'rejected')
+          )
+      )
+      , classified AS (
+        SELECT
+          *,
+          (due_date::date - CURRENT_DATE)::int AS days_remaining,
+          CASE
+            WHEN due_date::date < CURRENT_DATE THEN 'overdue'
+            ELSE 'dueSoon'
+          END AS due_status
+        FROM due_candidates
+        WHERE due_date IS NOT NULL
+          AND due_date::date <= CURRENT_DATE + ($1::int * INTERVAL '1 day')
+      ),
+      ranked AS (
+        SELECT
+          *,
+          ROW_NUMBER() OVER (
+            PARTITION BY due_status
+            ORDER BY
+              CASE WHEN due_status = 'overdue' THEN due_date END DESC,
+              CASE WHEN due_status = 'dueSoon' THEN due_date END ASC,
+              tenant_application_id DESC
+          ) AS category_rank
+        FROM classified
       )
       SELECT
         *,
-        (due_date::date - CURRENT_DATE)::int AS days_remaining
-      FROM due_candidates
-      WHERE due_date IS NOT NULL
-        AND due_date::date <= CURRENT_DATE + ($1::int * INTERVAL '1 day')
-      ORDER BY due_date ASC
-      LIMIT $2
+        COUNT(*) OVER (PARTITION BY due_status)::int AS category_total
+      FROM ranked
+      WHERE category_rank <= $2
+      ORDER BY
+        CASE WHEN due_status = 'dueSoon' THEN 0 ELSE 1 END,
+        CASE WHEN due_status = 'dueSoon' THEN due_date END ASC,
+        CASE WHEN due_status = 'overdue' THEN due_date END DESC
     `;
 
     const expiringContractsQuery = `
@@ -363,28 +461,58 @@ export async function GET(request) {
         FROM tenant_early_terminations
         WHERE approval_status = 'approved' AND is_terminated = true
       )
+      , classified AS (
+        SELECT
+          ta.id AS tenant_application_id,
+          ta.document_number,
+          ta.end_date,
+          ti.full_name AS tenant_name,
+          l.location_name,
+          r.room_number,
+          (ta.end_date::date - CURRENT_DATE)::int AS days_remaining,
+          CASE
+            WHEN ta.end_date::date < CURRENT_DATE THEN 'expired'
+            ELSE 'expiringSoon'
+          END AS contract_status
+        FROM tenant_application ta
+        JOIN tenant_identities ti ON ti.id = ta.tenant_identity_id
+        JOIN locations l ON l.id = ta.location_id
+        JOIN rooms r ON r.id = ta.room_id
+        LEFT JOIN terminated t ON t.tenant_application_id = ta.id
+        WHERE ta.approval_status = 'approved'
+          AND ta.document_number IS NOT NULL
+          AND t.tenant_application_id IS NULL
+          AND NOT EXISTS (
+            SELECT 1
+            FROM tenant_application child
+            WHERE child.renewal_of = ta.id
+          )
+          AND (
+            ta.end_date::date < CURRENT_DATE
+            OR ta.end_date::date BETWEEN CURRENT_DATE AND CURRENT_DATE + ($1::int * INTERVAL '1 day')
+          )
+      ),
+      ranked AS (
+        SELECT
+          *,
+          ROW_NUMBER() OVER (
+            PARTITION BY contract_status
+            ORDER BY
+              CASE WHEN contract_status = 'expired' THEN end_date END DESC,
+              CASE WHEN contract_status = 'expiringSoon' THEN end_date END ASC,
+              tenant_application_id DESC
+          ) AS category_rank
+        FROM classified
+      )
       SELECT
-        ta.id AS tenant_application_id,
-        ta.document_number,
-        ta.end_date,
-        ti.full_name AS tenant_name,
-        l.location_name,
-        r.room_number,
-        (ta.end_date::date - CURRENT_DATE)::int AS days_remaining
-      FROM tenant_application ta
-      JOIN tenant_identities ti ON ti.id = ta.tenant_identity_id
-      JOIN locations l ON l.id = ta.location_id
-      JOIN rooms r ON r.id = ta.room_id
-      LEFT JOIN terminated t ON t.tenant_application_id = ta.id
-      WHERE ta.approval_status = 'approved'
-        AND ta.document_number IS NOT NULL
-        AND t.tenant_application_id IS NULL
-        AND ta.end_date::date >= CURRENT_DATE - ($1::int * INTERVAL '1 day')
-        AND ta.end_date::date <= CURRENT_DATE + ($1::int * INTERVAL '1 day')
+        *,
+        COUNT(*) OVER (PARTITION BY contract_status)::int AS category_total
+      FROM ranked
+      WHERE category_rank <= $2
       ORDER BY
-        CASE WHEN ta.end_date::date < CURRENT_DATE THEN 1 ELSE 0 END ASC,
-        ABS((ta.end_date::date - CURRENT_DATE)::int) ASC
-      LIMIT $2
+        CASE WHEN contract_status = 'expiringSoon' THEN 0 ELSE 1 END,
+        CASE WHEN contract_status = 'expiringSoon' THEN end_date END ASC,
+        CASE WHEN contract_status = 'expired' THEN end_date END DESC
     `;
 
     const latestContractsQuery = `
@@ -494,38 +622,45 @@ export async function GET(request) {
     const paymentApprovalRow = paymentApproval.rows[0] || {};
     const terminationApprovalRow = terminationApproval.rows[0] || {};
 
-    return Response.json({
-      success: true,
-      data: {
-        userRole: {
-          id: roleId,
-          name: user.role_name,
+    return Response.json(
+      {
+        success: true,
+        data: {
+          userRole: {
+            id: roleId,
+            name: user.role_name,
+          },
+          access,
+          filters: { period, year, month },
+          summary: summary.rows[0]?.data || {},
+          incomeChart: chart.rows,
+          queues: {
+            tenantApproval: {
+              total: toNumber(tenantApprovalRow.total),
+              items: tenantApprovalRow.items || [],
+            },
+            paymentApproval: {
+              total: toNumber(paymentApprovalRow.total),
+              items: paymentApprovalRow.items || [],
+            },
+            terminationApproval: {
+              total: toNumber(terminationApprovalRow.total),
+              items: terminationApprovalRow.items || [],
+            },
+            duePayments: duePayments.rows,
+            expiringContracts: expiringContracts.rows,
+            latestContracts: latestContracts.rows,
+          },
+          roomsByLocation: roomsByLocation.rows,
+          recentActivity: recentActivity.rows,
         },
-        access,
-        filters: { period, year, month },
-        summary: summary.rows[0]?.data || {},
-        incomeChart: chart.rows,
-        queues: {
-          tenantApproval: {
-            total: toNumber(tenantApprovalRow.total),
-            items: tenantApprovalRow.items || [],
-          },
-          paymentApproval: {
-            total: toNumber(paymentApprovalRow.total),
-            items: paymentApprovalRow.items || [],
-          },
-          terminationApproval: {
-            total: toNumber(terminationApprovalRow.total),
-            items: terminationApprovalRow.items || [],
-          },
-          duePayments: duePayments.rows,
-          expiringContracts: expiringContracts.rows,
-          latestContracts: latestContracts.rows,
-        },
-        roomsByLocation: roomsByLocation.rows,
-        recentActivity: recentActivity.rows,
       },
-    });
+      {
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate",
+        },
+      },
+    );
   } catch (error) {
     console.error("Error fetching dashboard overview:", error);
     return Response.json(

@@ -51,3 +51,11 @@ export const getDaysLabel = (days) => {
   if (total === 0) return "Hari ini";
   return `${total} hari lagi`;
 };
+
+export const getContractDaysLabel = (days) => {
+  const total = Number(days);
+  if (Number.isNaN(total)) return "-";
+  if (total < 0) return `${Math.abs(total)} hari berakhir`;
+  if (total === 0) return "Berakhir hari ini";
+  return `${total} hari lagi`;
+};

@@ -6,10 +6,10 @@ import { Icon } from "@iconify/react";
 import Link from "next/link";
 import DashboardPanel from "./DashboardPanel";
 import { getDashboardListItemSx } from "./dashboardStyles";
-import { formatDate, getDaysLabel } from "./dashboardUtils";
+import { formatDate, getContractDaysLabel, getDaysLabel } from "./dashboardUtils";
 import formatRupiah from "@/app/components/formatrupiah/page";
 
-const FilterButton = ({ active, children, onClick }) => {
+const FilterButton = ({ active, children, count, onClick }) => {
   const theme = useTheme();
 
   return (
@@ -18,21 +18,87 @@ const FilterButton = ({ active, children, onClick }) => {
       onClick={onClick}
       sx={{
         minWidth: 0,
-        px: 1.2,
+        px: 1.15,
         py: 0.55,
         borderRadius: 1.5,
         fontWeight: 900,
         fontSize: 11,
+        gap: 0.75,
         color: active ? theme.palette.primary.main : theme.ui.mutedText,
         bgcolor: active
           ? theme.palette.mode === "dark"
             ? "rgba(255, 152, 0, 0.13)"
             : "rgba(230, 9, 9, 0.10)"
           : "transparent",
+        border: `1px solid ${
+          active ? `${theme.palette.primary.main}44` : "transparent"
+        }`,
+        "&:hover": {
+          bgcolor:
+            theme.palette.mode === "dark"
+              ? "rgba(255, 152, 0, 0.12)"
+              : "rgba(230, 9, 9, 0.08)",
+        },
       }}
     >
-      {children}
+      <Box component="span">{children}</Box>
+      {typeof count === "number" && (
+        <Box
+          component="span"
+          sx={{
+            width: 20,
+            height: 20,
+            minWidth: 20,
+            p: 0,
+            borderRadius: 999,
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: 10,
+            fontWeight: 950,
+            lineHeight: "20px",
+            color: active ? theme.palette.primary.main : theme.palette.text.primary,
+            fontVariantNumeric: "tabular-nums",
+            bgcolor:
+              theme.palette.mode === "dark"
+                ? active
+                  ? "rgba(255, 152, 0, 0.18)"
+                  : "rgba(255,255,255,0.10)"
+                : active
+                ? "rgba(230, 9, 9, 0.12)"
+                : "rgba(17,24,39,0.08)",
+            border: `1px solid ${
+              active
+                ? `${theme.palette.primary.main}55`
+                : theme.ui.dashboardCardBorder
+            }`,
+          }}
+        >
+          {count}
+        </Box>
+      )}
     </Button>
+  );
+};
+
+const EmptyQueueState = ({ text }) => {
+  const theme = useTheme();
+
+  return (
+    <Box
+      sx={{
+        minHeight: 132,
+        display: "grid",
+        placeItems: "center",
+        textAlign: "center",
+        color: theme.ui.mutedText,
+      }}
+    >
+      <Stack alignItems="center" spacing={1}>
+        <Icon icon="solar:check-circle-bold-duotone" fontSize={34} />
+        <Typography sx={{ fontWeight: 800, fontSize: 13 }}>{text}</Typography>
+      </Stack>
+    </Box>
   );
 };
 
@@ -147,7 +213,6 @@ const buildApprovalItems = (queues = {}) => [
  * mengubah keamanan halaman tujuan.
  */
 export default function DashboardQueues({ overview, loading }) {
-  const theme = useTheme();
   const access = overview?.access || {};
   const queues = overview?.queues || {};
   const [paymentFilter, setPaymentFilter] = useState("dueSoon");
@@ -156,16 +221,24 @@ export default function DashboardQueues({ overview, loading }) {
   const dueItems = queues.duePayments || [];
   const expiringItems = queues.expiringContracts || [];
   const paymentValidationItems = queues.paymentApproval?.items || [];
+  const dueSoonCount = dueItems.filter((item) => item.due_status === "dueSoon").length;
+  const overdueCount = dueItems.filter((item) => item.due_status === "overdue").length;
+  const expiringSoonCount = expiringItems.filter(
+    (item) => item.contract_status === "expiringSoon",
+  ).length;
+  const expiredCount = expiringItems.filter(
+    (item) => item.contract_status === "expired",
+  ).length;
 
   const filteredPayments = dueItems.filter((item) =>
     paymentFilter === "dueSoon"
-      ? Number(item.days_remaining) >= 0
-      : Number(item.days_remaining) < 0,
+      ? item.due_status === "dueSoon"
+      : item.due_status === "overdue",
   );
   const filteredContracts = expiringItems.filter((item) =>
     contractFilter === "soon"
-      ? Number(item.days_remaining) >= 0
-      : Number(item.days_remaining) < 0,
+      ? item.contract_status === "expiringSoon"
+      : item.contract_status === "expired",
   );
 
   return (
@@ -224,55 +297,41 @@ export default function DashboardQueues({ overview, loading }) {
       {access.canSeeDuePayments && (
         <DashboardPanel
           title="Jatuh Tempo Pembayaran"
-          caption="Pantau cicilan 7 hari ke depan dan yang sudah terlambat"
+          caption="Pantau pembayaran cicilan yang akan jatuh tempo 30 hari ke depan dan yang sudah terlambat"
           loading={loading}
-          empty={!filteredPayments.length}
-          emptyText="Tidak ada pembayaran pada filter ini."
-          action={
-            <Button
-              size="small"
-              endIcon={<Icon icon="solar:arrow-right-linear" />}
-              sx={{
-                minWidth: 0,
-                px: 1.25,
-                borderRadius: 1.5,
-                fontWeight: 900,
-                color: theme.palette.primary.main,
-                bgcolor:
-                  theme.palette.mode === "dark"
-                    ? "rgba(255, 152, 0, 0.10)"
-                    : "rgba(230, 9, 9, 0.08)",
-              }}
-            >
-              Pantau
-            </Button>
-          }
+          empty={false}
         >
           <Stack spacing={1.25}>
             <Box sx={{ display: "flex", gap: 0.75, flexWrap: "wrap" }}>
               <FilterButton
                 active={paymentFilter === "dueSoon"}
+                count={dueSoonCount}
                 onClick={() => setPaymentFilter("dueSoon")}
               >
-                7 Hari Lagi
+                30 Hari Lagi
               </FilterButton>
               <FilterButton
                 active={paymentFilter === "overdue"}
+                count={overdueCount}
                 onClick={() => setPaymentFilter("overdue")}
               >
                 Terlambat
               </FilterButton>
             </Box>
-            {filteredPayments.slice(0, 6).map((item) => (
-              <QueueItem
-                key={`due-${item.tenant_application_id}`}
-                icon="solar:alarm-bold-duotone"
-                title={item.tenant_name}
-                subtitle={`Cicilan ${item.current_payment_step || "-"} - ${formatDate(item.due_date)}`}
-                meta={getDaysLabel(item.days_remaining)}
-                tone={Number(item.days_remaining) < 0 ? "error" : "warning"}
-              />
-            ))}
+            {filteredPayments.length ? (
+              filteredPayments.slice(0, 6).map((item) => (
+                <QueueItem
+                  key={`due-${item.tenant_application_id}`}
+                  icon="solar:alarm-bold-duotone"
+                  title={item.tenant_name}
+                  subtitle={`${item.location_name} - ${item.room_number} | ${item.payment_step_label || "Pembayaran"} jatuh tempo ${formatDate(item.due_date)}`}
+                  meta={getDaysLabel(item.days_remaining)}
+                  tone={Number(item.days_remaining) < 0 ? "error" : "warning"}
+                />
+              ))
+            ) : (
+              <EmptyQueueState text="Tidak ada pembayaran pada filter ini." />
+            )}
           </Stack>
         </DashboardPanel>
       )}
@@ -280,36 +339,41 @@ export default function DashboardQueues({ overview, loading }) {
       {access.canSeeExpiringContracts && (
         <DashboardPanel
           title="Kontrak Segera Berakhir"
-          caption="Kontrak aktif yang akan berakhir bulan ini dan yang sudah expired"
+          caption="Pantau kontrak aktif yang akan berakhir 30 hari ke depan dan yang sudah berakhir"
           loading={loading}
-          empty={!filteredContracts.length}
-          emptyText="Tidak ada kontrak pada filter ini."
+          empty={false}
         >
           <Stack spacing={1.25}>
             <Box sx={{ display: "flex", gap: 0.75, flexWrap: "wrap" }}>
               <FilterButton
                 active={contractFilter === "soon"}
+                count={expiringSoonCount}
                 onClick={() => setContractFilter("soon")}
               >
-                Bulan Ini
+                30 Hari Lagi
               </FilterButton>
               <FilterButton
                 active={contractFilter === "expired"}
+                count={expiredCount}
                 onClick={() => setContractFilter("expired")}
               >
-                Sudah Expired
+                Sudah Berakhir
               </FilterButton>
             </Box>
-            {filteredContracts.slice(0, 6).map((item) => (
-              <QueueItem
-                key={`exp-${item.tenant_application_id}`}
-                icon="solar:calendar-mark-bold-duotone"
-                title={item.tenant_name}
-                subtitle={`${item.location_name} - ${item.room_number}`}
-                meta={getDaysLabel(item.days_remaining)}
-                tone={Number(item.days_remaining) < 0 ? "error" : "warning"}
-              />
-            ))}
+            {filteredContracts.length ? (
+              filteredContracts.slice(0, 6).map((item) => (
+                <QueueItem
+                  key={`exp-${item.tenant_application_id}`}
+                  icon="solar:calendar-mark-bold-duotone"
+                  title={item.tenant_name}
+                  subtitle={`${item.location_name} - ${item.room_number} | Berakhir ${formatDate(item.end_date)}`}
+                  meta={getContractDaysLabel(item.days_remaining)}
+                  tone={Number(item.days_remaining) < 0 ? "error" : "warning"}
+                />
+              ))
+            ) : (
+              <EmptyQueueState text="Tidak ada kontrak pada filter ini." />
+            )}
           </Stack>
         </DashboardPanel>
       )}
