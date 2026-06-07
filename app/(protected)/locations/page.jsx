@@ -2,16 +2,16 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Box, Button, Chip, Grid, IconButton, Stack, Tooltip, Typography, useTheme } from "@mui/material";
-import { ConfigProvider, Table, Tag, theme as antdTheme } from "antd";
+import { Tag } from "antd";
 import { Icon } from "@iconify/react";
 import axios from "axios";
 import LoadingBackdrop from "@/app/components/loading/Backdrop";
 import Notification from "@/app/components/Notification";
 import PageHeader from "@/app/components/page-header/PageHeader";
 import DataTableShell from "@/app/components/data-table/DataTableShell";
+import ReusableAntTable from "@/app/components/data-table/ReusableAntTable";
 import CrudConfirmModal from "@/app/components/crud/CrudConfirmModal";
 import SummaryStatCard from "@/app/components/stats/SummaryStatCard";
-import { useThemeMode } from "@/app/components/themeprovider/ThemeContext";
 import LocationFormModal from "./LocationFormModal";
 
 const PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
@@ -43,7 +43,6 @@ const getInitialSnackbar = () => ({
  */
 export default function Locations() {
   const theme = useTheme();
-  const { themeMode } = useThemeMode();
   const [locations, setLocations] = useState([]);
   const [searchText, setSearchText] = useState("");
   const [loading, setLoading] = useState(false);
@@ -357,6 +356,20 @@ export default function Locations() {
       <Stack spacing={{ xs: 1.5, lg: 2 }}>
         <PageHeader
           eyebrow="Data Master"
+          breadcrumbs={[
+            {
+              label: "Data Master",
+              value: "data-master",
+              icon: "solar:database-bold-duotone",
+              path: "#",
+            },
+            {
+              label: "Locations",
+              value: "locations",
+              icon: "solar:map-point-wave-bold-duotone",
+              path: "/locations",
+            },
+          ]}
           title="Locations"
           description="Kelola daftar lokasi pasar atau gedung, kode lokasi, wilayah administratif, dan alamat operasional yang dipakai di data ruangan serta transaksi sewa."
           icon="solar:map-point-wave-bold-duotone"
@@ -411,55 +424,15 @@ export default function Locations() {
           searchPlaceholder="Cari lokasi, kode, kota, kecamatan, atau alamat..."
           onSearchChange={setSearchText}
         >
-          <ConfigProvider
-            theme={{
-              algorithm:
-                themeMode === "dark"
-                  ? antdTheme.darkAlgorithm
-                  : antdTheme.defaultAlgorithm,
-              token: {
-                colorPrimary: theme.palette.primary.main,
-                colorBgContainer: theme.ui.dashboardCardBg,
-                colorText: theme.palette.text.primary,
-                colorBorder: theme.ui.dashboardCardBorder,
-                fontFamily: "Poppins, sans-serif",
-                borderRadius: 10,
-              },
-              components: {
-                Table: {
-                  headerBg:
-                    theme.palette.mode === "dark"
-                      ? "rgba(255,255,255,0.045)"
-                      : "rgba(17,24,39,0.035)",
-                  rowHoverBg:
-                    theme.palette.mode === "dark"
-                      ? "rgba(255,152,0,0.08)"
-                      : "rgba(230,9,9,0.05)",
-                },
-              },
-            }}
-          >
-            <Table
-              rowKey="id"
-              columns={columns}
-              dataSource={filteredLocations}
-              loading={loading}
-              showSorterTooltip={{ target: "sorter-icon" }}
-              scroll={{ x: 1280, y: 430 }}
-              onChange={(pagination) => {
-                if (pagination.pageSize !== pageSize) {
-                  setPageSize(pagination.pageSize);
-                }
-              }}
-              pagination={{
-                pageSize,
-                showSizeChanger: true,
-                pageSizeOptions: PAGE_SIZE_OPTIONS,
-                showTotal: (total, range) =>
-                  `${range[0]}-${range[1]} dari ${total} data`,
-              }}
-            />
-          </ConfigProvider>
+          <ReusableAntTable
+            columns={columns}
+            dataSource={filteredLocations}
+            loading={loading}
+            pageSize={pageSize}
+            pageSizeOptions={PAGE_SIZE_OPTIONS}
+            scroll={{ x: 1280, y: 430 }}
+            onPageSizeChange={setPageSize}
+          />
         </DataTableShell>
       </Stack>
 

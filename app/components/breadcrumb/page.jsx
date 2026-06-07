@@ -9,6 +9,7 @@ import {
 } from "@mui/material";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import { usePathname } from "next/navigation";
+import { Icon } from "@iconify/react";
 
 function findBreadcrumbFromMenu(menuList, pathname) {
   for (const menu of menuList) {
@@ -59,26 +60,46 @@ function findBreadcrumbFromMenu(menuList, pathname) {
   ];
 }
 
-const BreadcrumbPage = ({ menuList = [] }) => {
+const renderBreadcrumbIcon = (icon) => {
+  if (!icon) return null;
+  return typeof icon === "string" ? <Icon icon={icon} fontSize={16} /> : icon;
+};
+
+const BreadcrumbPage = ({ menuList = [], items, variant = "default" }) => {
   const theme = useTheme();
   const pathname = usePathname();
 
-  const breadcrumbs = findBreadcrumbFromMenu(menuList, pathname);
+  const breadcrumbs = items?.length ? items : findBreadcrumbFromMenu(menuList, pathname);
+  const isHeaderVariant = variant === "pageHeader";
 
   return (
     <Box
       sx={{
-        p: "10px 15px",
-        width: "100%",
-        bgcolor: "background.default",
+        p: isHeaderVariant ? 0 : "10px 15px",
+        width: isHeaderVariant ? "fit-content" : "100%",
+        maxWidth: "100%",
+        bgcolor: isHeaderVariant ? "transparent" : "background.default",
         overflowX: "auto",
-        mt: 1,
-        mb: 2,
+        mt: isHeaderVariant ? 0 : 1,
+        mb: isHeaderVariant ? 0 : 2,
       }}
     >
       <Breadcrumbs
-        separator={<NavigateNextIcon fontSize="small" />}
+        separator={
+          <NavigateNextIcon
+            fontSize="small"
+            sx={{
+              color: isHeaderVariant ? theme.ui.mutedText : "inherit",
+              fontSize: isHeaderVariant ? 16 : undefined,
+            }}
+          />
+        }
         aria-label="breadcrumb"
+        sx={{
+          "& .MuiBreadcrumbs-ol": {
+            flexWrap: "nowrap",
+          },
+        }}
       >
         {breadcrumbs.map((item, idx) =>
           idx < breadcrumbs.length - 1 ? (
@@ -90,11 +111,18 @@ const BreadcrumbPage = ({ menuList = [] }) => {
               sx={{
                 display: "flex",
                 alignItems: "center",
-                gap: 1,
-                fontSize: "14px",
+                gap: 0.75,
+                fontFamily: "Poppins",
+                fontSize: isHeaderVariant ? "12px" : "14px",
+                fontWeight: isHeaderVariant ? 750 : 400,
+                whiteSpace: "nowrap",
+                color: isHeaderVariant ? theme.ui.mutedText : "inherit",
+                "& svg": {
+                  color: isHeaderVariant ? theme.ui.mutedText : "inherit",
+                },
               }}
             >
-              {item.icon}
+              {renderBreadcrumbIcon(item.icon)}
               {item.label}
             </Link>
           ) : (
@@ -103,13 +131,26 @@ const BreadcrumbPage = ({ menuList = [] }) => {
               sx={{
                 display: "flex",
                 alignItems: "center",
-                gap: 1,
+                gap: 0.75,
                 color: theme.palette.primary.main,
-                fontWeight: "bold",
-                fontSize: "14px",
+                fontFamily: "Poppins",
+                fontWeight: isHeaderVariant ? 850 : "bold",
+                fontSize: isHeaderVariant ? "12px" : "14px",
+                whiteSpace: "nowrap",
+                px: isHeaderVariant ? 1.25 : 0,
+                py: isHeaderVariant ? 0.55 : 0,
+                borderRadius: isHeaderVariant ? 999 : 0,
+                bgcolor: isHeaderVariant
+                  ? theme.palette.mode === "dark"
+                    ? "rgba(255, 152, 0, 0.13)"
+                    : "rgba(230, 9, 9, 0.10)"
+                  : "transparent",
+                "& svg": {
+                  color: theme.palette.primary.main,
+                },
               }}
             >
-              {item.icon}
+              {renderBreadcrumbIcon(item.icon)}
               {item.label}
             </Typography>
           )

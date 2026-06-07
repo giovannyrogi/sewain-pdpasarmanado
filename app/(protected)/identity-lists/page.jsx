@@ -11,7 +11,7 @@ import {
   Typography,
   useTheme,
 } from "@mui/material";
-import { ConfigProvider, Table, Tag, theme as antdTheme } from "antd";
+import { Tag } from "antd";
 import { Icon } from "@iconify/react";
 import axios from "axios";
 import moment from "moment";
@@ -19,10 +19,10 @@ import LoadingBackdrop from "@/app/components/loading/Backdrop";
 import Notification from "@/app/components/Notification";
 import PageHeader from "@/app/components/page-header/PageHeader";
 import DataTableShell from "@/app/components/data-table/DataTableShell";
+import ReusableAntTable from "@/app/components/data-table/ReusableAntTable";
 import CrudConfirmModal from "@/app/components/crud/CrudConfirmModal";
 import SummaryStatCard from "@/app/components/stats/SummaryStatCard";
 import InformationPreviewModal from "@/app/components/informationpreviewmodal/page";
-import { useThemeMode } from "@/app/components/themeprovider/ThemeContext";
 import IdentityFormModal from "./IdentityFormModal";
 
 const PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
@@ -75,7 +75,6 @@ const formatDateTime = (value) =>
  */
 export default function IdentityList() {
   const theme = useTheme();
-  const { themeMode } = useThemeMode();
   const [identities, setIdentities] = useState([]);
   const [searchText, setSearchText] = useState("");
   const [loading, setLoading] = useState(false);
@@ -466,6 +465,20 @@ export default function IdentityList() {
       <Stack spacing={{ xs: 1.5, lg: 2 }}>
         <PageHeader
           eyebrow="Data Master"
+          breadcrumbs={[
+            {
+              label: "Data Master",
+              value: "data-master",
+              icon: "solar:database-bold-duotone",
+              path: "#",
+            },
+            {
+              label: "Identity Lists",
+              value: "identity-lists",
+              icon: "qlementine-icons:id-card-16",
+              path: "/identity-lists",
+            },
+          ]}
           title="Identity Lists"
           description="Kelola data identitas penyewa, NIK, alamat, status blacklist, dan dokumen KTP yang dipakai pada proses permohonan sewa."
           icon="qlementine-icons:id-card-16"
@@ -520,103 +533,23 @@ export default function IdentityList() {
           searchPlaceholder="Cari nama, NIK, pekerjaan, alamat, atau status..."
           onSearchChange={setSearchText}
         >
-          <ConfigProvider
-            theme={{
-              algorithm:
-                themeMode === "dark"
-                  ? antdTheme.darkAlgorithm
-                  : antdTheme.defaultAlgorithm,
-              token: {
-                colorPrimary: theme.palette.primary.main,
-                colorBgContainer: theme.ui.dashboardCardBg,
-                colorText: theme.palette.text.primary,
-                colorBorder: theme.ui.dashboardCardBorder,
-                fontFamily: "Poppins, sans-serif",
-                borderRadius: 10,
-              },
-              components: {
-                Table: {
-                  headerBg:
-                    theme.palette.mode === "dark"
-                      ? "rgba(255,255,255,0.045)"
-                      : "rgba(17,24,39,0.035)",
-                  rowHoverBg:
-                    theme.palette.mode === "dark"
-                      ? "rgba(255,152,0,0.08)"
-                      : "rgba(230,9,9,0.05)",
-                },
-              },
+          <ReusableAntTable
+            columns={columns}
+            dataSource={filteredIdentities}
+            loading={loading}
+            pageSize={pageSize}
+            pageSizeOptions={PAGE_SIZE_OPTIONS}
+            tableLayout="fixed"
+            scroll={{ x: TABLE_SCROLL_WIDTH, y: 430 }}
+            onPageSizeChange={setPageSize}
+            fixedActionColumn={{
+              className: "identity-action-column",
+              buttonsClassName: "identity-action-buttons",
+              buttonsOffsetX: 6,
+              width: ACTION_COLUMN_WIDTH,
+              paddingX: 16,
             }}
-          >
-            <Box
-              sx={{
-                "--identity-action-bg": theme.palette.mode === "dark" ? "#111111" : "#ffffff",
-                "--identity-action-header-bg":
-                  theme.palette.mode === "dark" ? "#1c1c1c" : "#f8f9fb",
-                "--identity-action-hover-bg":
-                  theme.palette.mode === "dark" ? "#2b2317" : "#fff6f6",
-                /*
-                 * Ant Design memakai layer sticky untuk fixed column.
-                 * Background eksplisit ini mencegah isi kolom lain terlihat
-                 * tembus saat table di-scroll horizontal, terutama dark mode.
-                 */
-                "& .identity-action-column": {
-                  width: `${ACTION_COLUMN_WIDTH}px !important`,
-                  minWidth: `${ACTION_COLUMN_WIDTH}px !important`,
-                  maxWidth: `${ACTION_COLUMN_WIDTH}px !important`,
-                  paddingLeft: "16px !important",
-                  paddingRight: "16px !important",
-                  boxSizing: "border-box !important",
-                  zIndex: "8 !important",
-                  background: "var(--identity-action-bg) !important",
-                  backgroundColor: "var(--identity-action-bg) !important",
-                  backgroundImage: "none !important",
-                  backgroundClip: "border-box !important",
-                  opacity: "1 !important",
-                },
-                "& .ant-table-tbody > tr > td.identity-action-column": {
-                  textAlign: "center !important",
-                  verticalAlign: "middle !important",
-                },
-                "& .identity-action-buttons": {
-                  marginInline: "auto",
-                  transform: "translateX(6px)",
-                },
-                "& .ant-table-thead .identity-action-column": {
-                  textAlign: "center !important",
-                  zIndex: "10 !important",
-                  background: "var(--identity-action-header-bg) !important",
-                  backgroundColor: "var(--identity-action-header-bg) !important",
-                },
-                "& .ant-table-tbody > tr:hover > .identity-action-column": {
-                  background: "var(--identity-action-hover-bg) !important",
-                  backgroundColor: "var(--identity-action-hover-bg) !important",
-                },
-              }}
-            >
-              <Table
-                rowKey="id"
-                columns={columns}
-                dataSource={filteredIdentities}
-                loading={loading}
-                tableLayout="fixed"
-                showSorterTooltip={{ target: "sorter-icon" }}
-                scroll={{ x: TABLE_SCROLL_WIDTH, y: 430 }}
-                onChange={(pagination) => {
-                  if (pagination.pageSize !== pageSize) {
-                    setPageSize(pagination.pageSize);
-                  }
-                }}
-                pagination={{
-                  pageSize,
-                  showSizeChanger: true,
-                  pageSizeOptions: PAGE_SIZE_OPTIONS,
-                  showTotal: (total, range) =>
-                    `${range[0]}-${range[1]} dari ${total} data`,
-                }}
-              />
-            </Box>
-          </ConfigProvider>
+          />
         </DataTableShell>
       </Stack>
 

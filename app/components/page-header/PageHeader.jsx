@@ -3,6 +3,7 @@
 import React from "react";
 import { Box, Chip, Stack, Typography, useTheme } from "@mui/material";
 import { Icon } from "@iconify/react";
+import BreadcrumbPage from "@/app/components/breadcrumb/page";
 
 /**
  * Header halaman reusable untuk semua menu.
@@ -14,6 +15,7 @@ export default function PageHeader({
   title,
   description,
   icon = "solar:chart-2-bold-duotone",
+  breadcrumbs,
   action,
   actionSx,
 }) {
@@ -44,7 +46,9 @@ export default function PageHeader({
         }}
       >
         <Stack spacing={1} sx={{ minWidth: 0, maxWidth: 860 }}>
-          {eyebrow && (
+          {breadcrumbs?.length ? (
+            <BreadcrumbPage items={breadcrumbs} variant="pageHeader" />
+          ) : eyebrow && (
             <Chip
               icon={<Icon icon={icon} />}
               label={eyebrow}

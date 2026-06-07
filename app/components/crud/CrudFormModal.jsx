@@ -28,6 +28,9 @@ export default function CrudFormModal({
   submitLabel = "Simpan",
   loadingLabel = "Menyimpan...",
   loading = false,
+  hideFooter = false,
+  width = 720,
+  contentSx,
   onClose,
   onSubmit,
   children,
@@ -60,10 +63,10 @@ export default function CrudFormModal({
         }}
       >
         <Box
-          component="form"
+          component={onSubmit ? "form" : "div"}
           onSubmit={onSubmit}
           sx={{
-            width: isMobile ? "100%" : 720,
+            width: isMobile ? "100%" : width,
             maxWidth: "100%",
             maxHeight: "92vh",
             overflowY: "auto",
@@ -165,54 +168,56 @@ export default function CrudFormModal({
 
           <Divider sx={{ borderColor: theme.ui.dashboardCardBorder }} />
 
-          <Box sx={{ p: { xs: 2.6, sm: 2.75 } }}>{children}</Box>
+          <Box sx={{ p: { xs: 2.6, sm: 2.75 }, ...contentSx }}>{children}</Box>
 
-          <Divider sx={{ borderColor: theme.ui.dashboardCardBorder }} />
+          {!hideFooter && <Divider sx={{ borderColor: theme.ui.dashboardCardBorder }} />}
 
-          <Stack
-            direction={{ xs: "column-reverse", sm: "row" }}
-            justifyContent="flex-end"
-            sx={{
-              gap: { xs: 2, sm: 1.5 },
-              p: { xs: 2.6, sm: 2.75 },
-              pt: { xs: 2.25, sm: 2 },
-            }}
-          >
-            <Button
-              onClick={onClose}
-              disabled={loading}
-              variant="contained"
+          {!hideFooter && (
+            <Stack
+              direction={{ xs: "column-reverse", sm: "row" }}
+              justifyContent="flex-end"
               sx={{
-                borderRadius: 2,
-                fontWeight: 750,
-                textTransform: "none",
-                color: theme.palette.text.primary,
-                bgcolor:
-                  theme.palette.mode === "dark"
-                    ? "rgba(255,255,255,0.10)"
-                    : "rgba(17,24,39,0.08)",
-                border: `1px solid ${theme.ui.dashboardCardBorder}`,
-                boxShadow: "none",
-                "&:hover": {
-                  bgcolor:
-                    theme.palette.mode === "dark"
-                      ? "rgba(255,255,255,0.16)"
-                      : "rgba(17,24,39,0.13)",
-                  boxShadow: "none",
-                },
+                gap: { xs: 2, sm: 1.5 },
+                p: { xs: 2.6, sm: 2.75 },
+                pt: { xs: 2.25, sm: 2 },
               }}
             >
-              Batal
-            </Button>
-            <Button
-              type="submit"
-              disabled={loading}
-              variant="contained"
-              sx={{ borderRadius: 2, fontWeight: 600, textTransform: "none" }}
-            >
-              {submitLabel}
-            </Button>
-          </Stack>
+              <Button
+                onClick={onClose}
+                disabled={loading}
+                variant="contained"
+                sx={{
+                  borderRadius: 2,
+                  fontWeight: 750,
+                  textTransform: "none",
+                  color: theme.palette.text.primary,
+                  bgcolor:
+                    theme.palette.mode === "dark"
+                      ? "rgba(255,255,255,0.10)"
+                      : "rgba(17,24,39,0.08)",
+                  border: `1px solid ${theme.ui.dashboardCardBorder}`,
+                  boxShadow: "none",
+                  "&:hover": {
+                    bgcolor:
+                      theme.palette.mode === "dark"
+                        ? "rgba(255,255,255,0.16)"
+                        : "rgba(17,24,39,0.13)",
+                    boxShadow: "none",
+                  },
+                }}
+              >
+                Batal
+              </Button>
+              <Button
+                type="submit"
+                disabled={loading}
+                variant="contained"
+                sx={{ borderRadius: 2, fontWeight: 600, textTransform: "none" }}
+              >
+                {submitLabel}
+              </Button>
+            </Stack>
+          )}
         </Box>
       </Modal>
 

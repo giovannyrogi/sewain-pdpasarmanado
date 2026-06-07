@@ -4,14 +4,12 @@ import {
   Box,
   Button,
   CircularProgress,
-  Divider,
   FormControl,
   Grid,
   IconButton,
   InputAdornment,
   InputLabel,
   MenuItem,
-  Modal,
   Select,
   TextField,
   Typography,
@@ -31,8 +29,9 @@ import DetailRoomsModal from "@/app/components/detailroomsmodal/page";
 import ViewCalcPPNModal from "@/app/components/view-calc-ppn-modal/ViewCalcPPNModal";
 import InformationPreviewModal from "@/app/components/informationpreviewmodal/page";
 import { calculateAllPayments } from "@/app/utils/calculateAllPayments";
+import CrudFormModal from "@/app/components/crud/CrudFormModal";
 
-const EditTenantApplication = ({
+const TenantApplicationEditForm = ({
   open,
   onClose,
   loadingTrue,
@@ -52,23 +51,6 @@ const EditTenantApplication = ({
   const theme = useTheme();
 
   // console.log('selectedData', selectedData);
-
-  const style = {
-    width: isMobile ? "90vw" : 600,
-    maxWidth: "98vw",
-    bgcolor: "background.paper",
-    color: "text.primary",
-    borderRadius: "10px",
-    boxShadow: 24,
-    p: "18px 20px 18px 20px",
-    maxHeight: "90vh",
-    overflowY: "auto",
-    transition: "box-shadow 0.3s",
-    //hide scrollbar
-    "&::-webkit-scrollbar": {
-      display: "none",
-    },
-  };
 
   const [ktpFilePath, setKtpFilePath] = useState("");
   const [ktpFile, setKtpFile] = useState(null);
@@ -643,47 +625,18 @@ const EditTenantApplication = ({
   };
 
   return (
-    <Modal
+    <CrudFormModal
       open={open}
       onClose={onClose}
-      sx={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        p: 0, // hilangkan padding default
-      }}
-      BackdropProps={{
-        sx: {
-          backgroundColor: "rgba(30,30,30,0.25)",
-          backdropFilter: "blur(6px)",
-          WebkitBackdropFilter: "blur(6px)",
-        },
-      }}
+      title="Ubah Permohonan Sewa"
+      description="Perbarui data permohonan, pembayaran, dokumen, dan masa kontrak dengan tetap mengikuti alur approval yang berjalan."
+      icon="solar:document-medicine-bold-duotone"
+      width={680}
+      loading={loading || isSubmitting}
+      loadingLabel="Menyimpan perubahan..."
+      hideFooter
+      contentSx={{ p: { xs: 2, sm: 2.5 } }}
     >
-      <Box sx={style}>
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <Typography
-            sx={{ fontWeight: "bold", fontSize: isMobile ? "18px" : "20px" }}
-          >
-            Form Ubah Permohonan Sewa Ruangan
-          </Typography>
-        </Box>
-
-        <Divider
-          sx={{
-            mt: 0.5,
-            mb: 3,
-            borderColor: theme.palette.primary.main,
-          }}
-        />
-
         <form onSubmit={handleSubmit}>
           <Grid container spacing={isMobile ? 3 : 2}>
             <Grid size={12}>
@@ -1260,9 +1213,8 @@ const EditTenantApplication = ({
           imageUrl={ktpFilePath}
           alt="Preview KTP"
         />
-      </Box>
-    </Modal>
+    </CrudFormModal>
   );
 };
 
-export default EditTenantApplication;
+export default TenantApplicationEditForm;

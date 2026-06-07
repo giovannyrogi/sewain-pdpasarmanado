@@ -11,7 +11,7 @@ import {
   Typography,
   useTheme,
 } from "@mui/material";
-import { ConfigProvider, Table, Tag, theme as antdTheme } from "antd";
+import { Tag } from "antd";
 import { Icon } from "@iconify/react";
 import axios from "axios";
 import moment from "moment";
@@ -19,9 +19,9 @@ import LoadingBackdrop from "@/app/components/loading/Backdrop";
 import Notification from "@/app/components/Notification";
 import PageHeader from "@/app/components/page-header/PageHeader";
 import DataTableShell from "@/app/components/data-table/DataTableShell";
+import ReusableAntTable from "@/app/components/data-table/ReusableAntTable";
 import CrudConfirmModal from "@/app/components/crud/CrudConfirmModal";
 import SummaryStatCard from "@/app/components/stats/SummaryStatCard";
-import { useThemeMode } from "@/app/components/themeprovider/ThemeContext";
 import FloorFormModal from "./FloorFormModal";
 
 const PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
@@ -55,7 +55,6 @@ const formatDateTime = (value) =>
  */
 export default function FloorPrices() {
   const theme = useTheme();
-  const { themeMode } = useThemeMode();
   const [locations, setLocations] = useState([]);
   const [floors, setFloors] = useState([]);
   const [searchText, setSearchText] = useState("");
@@ -268,7 +267,7 @@ export default function FloorPrices() {
         sorter: (a, b) => String(a.floor).localeCompare(String(b.floor)),
         render: (value) => (
           <Tag
-            color={themeMode === "dark" ? "orange" : "red"}
+            color={theme.palette.mode === "dark" ? "orange" : "red"}
             style={{
               borderRadius: 8,
               fontFamily: "Poppins",
@@ -351,7 +350,7 @@ export default function FloorPrices() {
         ),
       },
     ],
-    [floors, theme, themeMode],
+    [floors, theme],
   );
 
   return (
@@ -367,6 +366,20 @@ export default function FloorPrices() {
       <Stack spacing={{ xs: 1.5, lg: 2 }}>
         <PageHeader
           eyebrow="Data Master"
+          breadcrumbs={[
+            {
+              label: "Data Master",
+              value: "data-master",
+              icon: "solar:database-bold-duotone",
+              path: "#",
+            },
+            {
+              label: "Floor",
+              value: "floor",
+              icon: "solar:tag-bold-duotone",
+              path: "/floor",
+            },
+          ]}
           title="Floor"
           description="Kelola lantai per lokasi untuk membantu pengelompokan ruangan, filter data operasional, dan proses transaksi sewa."
           icon="solar:tag-bold-duotone"
@@ -421,55 +434,15 @@ export default function FloorPrices() {
           searchPlaceholder="Cari lokasi, lantai, atau tanggal..."
           onSearchChange={setSearchText}
         >
-          <ConfigProvider
-            theme={{
-              algorithm:
-                themeMode === "dark"
-                  ? antdTheme.darkAlgorithm
-                  : antdTheme.defaultAlgorithm,
-              token: {
-                colorPrimary: theme.palette.primary.main,
-                colorBgContainer: theme.ui.dashboardCardBg,
-                colorText: theme.palette.text.primary,
-                colorBorder: theme.ui.dashboardCardBorder,
-                fontFamily: "Poppins, sans-serif",
-                borderRadius: 10,
-              },
-              components: {
-                Table: {
-                  headerBg:
-                    theme.palette.mode === "dark"
-                      ? "rgba(255,255,255,0.045)"
-                      : "rgba(17,24,39,0.035)",
-                  rowHoverBg:
-                    theme.palette.mode === "dark"
-                      ? "rgba(255,152,0,0.08)"
-                      : "rgba(230,9,9,0.05)",
-                },
-              },
-            }}
-          >
-            <Table
-              rowKey="id"
-              columns={columns}
-              dataSource={filteredFloors}
-              loading={loading}
-              showSorterTooltip={{ target: "sorter-icon" }}
-              scroll={{ x: 1180, y: 430 }}
-              onChange={(pagination) => {
-                if (pagination.pageSize !== pageSize) {
-                  setPageSize(pagination.pageSize);
-                }
-              }}
-              pagination={{
-                pageSize,
-                showSizeChanger: true,
-                pageSizeOptions: PAGE_SIZE_OPTIONS,
-                showTotal: (total, range) =>
-                  `${range[0]}-${range[1]} dari ${total} data`,
-              }}
-            />
-          </ConfigProvider>
+          <ReusableAntTable
+            columns={columns}
+            dataSource={filteredFloors}
+            loading={loading}
+            pageSize={pageSize}
+            pageSizeOptions={PAGE_SIZE_OPTIONS}
+            scroll={{ x: 1180, y: 430 }}
+            onPageSizeChange={setPageSize}
+          />
         </DataTableShell>
       </Stack>
 

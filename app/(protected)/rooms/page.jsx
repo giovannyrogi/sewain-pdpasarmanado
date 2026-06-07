@@ -11,7 +11,7 @@ import {
   Typography,
   useTheme,
 } from "@mui/material";
-import { ConfigProvider, Table, Tag, theme as antdTheme } from "antd";
+import { Tag } from "antd";
 import { Icon } from "@iconify/react";
 import axios from "axios";
 import moment from "moment";
@@ -19,9 +19,9 @@ import LoadingBackdrop from "@/app/components/loading/Backdrop";
 import Notification from "@/app/components/Notification";
 import PageHeader from "@/app/components/page-header/PageHeader";
 import DataTableShell from "@/app/components/data-table/DataTableShell";
+import ReusableAntTable from "@/app/components/data-table/ReusableAntTable";
 import CrudConfirmModal from "@/app/components/crud/CrudConfirmModal";
 import SummaryStatCard from "@/app/components/stats/SummaryStatCard";
-import { useThemeMode } from "@/app/components/themeprovider/ThemeContext";
 import formatRupiah from "@/app/components/formatrupiah/page";
 import { formatNumber } from "@/app/utils/formatNumber";
 import RoomFormModal from "./RoomFormModal";
@@ -68,7 +68,6 @@ const formatDateTime = (value) =>
  */
 export default function Rooms() {
   const theme = useTheme();
-  const { themeMode } = useThemeMode();
   const [rooms, setRooms] = useState([]);
   const [locations, setLocations] = useState([]);
   const [searchText, setSearchText] = useState("");
@@ -326,7 +325,7 @@ export default function Rooms() {
               {record.location_name || "-"}
             </Typography>
             <Tag
-              color={themeMode === "dark" ? "orange" : "red"}
+              color={theme.palette.mode === "dark" ? "orange" : "red"}
               style={{ width: "fit-content", borderRadius: 8, fontWeight: 800 }}
             >
               {record.room_floor || "-"}
@@ -509,7 +508,7 @@ export default function Rooms() {
         ),
       },
     ],
-    [rooms, theme, themeMode],
+    [rooms, theme],
   );
 
   return (
@@ -525,6 +524,20 @@ export default function Rooms() {
       <Stack spacing={{ xs: 1.5, lg: 2 }}>
         <PageHeader
           eyebrow="Data Master"
+          breadcrumbs={[
+            {
+              label: "Data Master",
+              value: "data-master",
+              icon: "solar:database-bold-duotone",
+              path: "#",
+            },
+            {
+              label: "Rooms",
+              value: "rooms",
+              icon: "solar:home-angle-bold-duotone",
+              path: "/rooms",
+            },
+          ]}
           title="Rooms"
           description="Kelola ruangan per lokasi dan lantai, termasuk dimensi, harga sewa, status ketersediaan, dan catatan operasional."
           icon="solar:home-angle-bold-duotone"
@@ -579,102 +592,22 @@ export default function Rooms() {
           searchPlaceholder="Cari ruangan, lokasi, lantai, status, atau catatan..."
           onSearchChange={setSearchText}
         >
-          <ConfigProvider
-            theme={{
-              algorithm:
-                themeMode === "dark"
-                  ? antdTheme.darkAlgorithm
-                  : antdTheme.defaultAlgorithm,
-              token: {
-                colorPrimary: theme.palette.primary.main,
-                colorBgContainer: theme.ui.dashboardCardBg,
-                colorText: theme.palette.text.primary,
-                colorBorder: theme.ui.dashboardCardBorder,
-                fontFamily: "Poppins, sans-serif",
-                borderRadius: 10,
-              },
-              components: {
-                Table: {
-                  headerBg:
-                    theme.palette.mode === "dark"
-                      ? "rgba(255,255,255,0.045)"
-                      : "rgba(17,24,39,0.035)",
-                  rowHoverBg:
-                    theme.palette.mode === "dark"
-                      ? "rgba(255,152,0,0.08)"
-                      : "rgba(230,9,9,0.05)",
-                },
-              },
+          <ReusableAntTable
+            columns={columns}
+            dataSource={filteredRooms}
+            loading={loading}
+            pageSize={pageSize}
+            pageSizeOptions={PAGE_SIZE_OPTIONS}
+            tableLayout="fixed"
+            scroll={{ x: TABLE_SCROLL_WIDTH, y: 430 }}
+            onPageSizeChange={setPageSize}
+            fixedActionColumn={{
+              className: "rooms-action-column",
+              buttonsClassName: "rooms-action-buttons",
+              width: ACTION_COLUMN_WIDTH,
+              paddingX: 14,
             }}
-          >
-            <Box
-              sx={{
-                "--rooms-action-bg":
-                  theme.palette.mode === "dark" ? "#111111" : "#ffffff",
-                "--rooms-action-header-bg":
-                  theme.palette.mode === "dark" ? "#1c1c1c" : "#f8f9fb",
-                "--rooms-action-hover-bg":
-                  theme.palette.mode === "dark" ? "#2b2317" : "#fff6f6",
-                /*
-                 * Fixed column Ant Design butuh background solid agar isi
-                 * kolom lain tidak terlihat tembus saat scroll atau hover.
-                 */
-                "& .rooms-action-column": {
-                  width: `${ACTION_COLUMN_WIDTH}px !important`,
-                  minWidth: `${ACTION_COLUMN_WIDTH}px !important`,
-                  maxWidth: `${ACTION_COLUMN_WIDTH}px !important`,
-                  paddingLeft: "14px !important",
-                  paddingRight: "14px !important",
-                  boxSizing: "border-box !important",
-                  zIndex: "8 !important",
-                  background: "var(--rooms-action-bg) !important",
-                  backgroundColor: "var(--rooms-action-bg) !important",
-                  backgroundImage: "none !important",
-                  backgroundClip: "border-box !important",
-                  opacity: "1 !important",
-                },
-                "& .ant-table-tbody > tr > td.rooms-action-column": {
-                  textAlign: "center !important",
-                  verticalAlign: "middle !important",
-                },
-                "& .rooms-action-buttons": {
-                  marginInline: "auto",
-                },
-                "& .ant-table-thead .rooms-action-column": {
-                  textAlign: "center !important",
-                  zIndex: "10 !important",
-                  background: "var(--rooms-action-header-bg) !important",
-                  backgroundColor: "var(--rooms-action-header-bg) !important",
-                },
-                "& .ant-table-tbody > tr:hover > .rooms-action-column": {
-                  background: "var(--rooms-action-hover-bg) !important",
-                  backgroundColor: "var(--rooms-action-hover-bg) !important",
-                },
-              }}
-            >
-              <Table
-                rowKey="id"
-                columns={columns}
-                dataSource={filteredRooms}
-                loading={loading}
-                tableLayout="fixed"
-                showSorterTooltip={{ target: "sorter-icon" }}
-                scroll={{ x: TABLE_SCROLL_WIDTH, y: 430 }}
-                onChange={(pagination) => {
-                  if (pagination.pageSize !== pageSize) {
-                    setPageSize(pagination.pageSize);
-                  }
-                }}
-                pagination={{
-                  pageSize,
-                  showSizeChanger: true,
-                  pageSizeOptions: PAGE_SIZE_OPTIONS,
-                  showTotal: (total, range) =>
-                    `${range[0]}-${range[1]} dari ${total} data`,
-                }}
-              />
-            </Box>
-          </ConfigProvider>
+          />
         </DataTableShell>
       </Stack>
 
