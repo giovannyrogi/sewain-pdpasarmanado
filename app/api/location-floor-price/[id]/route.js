@@ -1,140 +1,133 @@
 import pool from "@/lib/dbConfig";
 import { requireRole } from "@/app/utils/auth";
+import {
+  failResponse,
+  handleApiError,
+  jsonResponse,
+  parsePositiveInteger,
+} from "@/app/utils/apiValidation";
+import { validateFloorPayload } from "../validation";
 
 const MASTER_DATA_ROLES = [1, 2];
 
-// UPDATE Rooms
+// UPDATE lantai by id
 export async function PUT(request, { params }) {
   try {
     const { response } = await requireRole(MASTER_DATA_ROLES);
     if (response) return response;
 
-    const { id } = await params; // id dari URL
-    const body = await request.json(); // data dari body
-    const { location_id, floor } = body;
+    const { id } = await params;
+    const parsedId = parsePositiveInteger(id, "ID lantai");
 
-    // validasi field wajib
-    if (!location_id) {
-      return new Response(
-        JSON.stringify({ success: false, message: "Lokasi wajib diisi!" }),
-        { status: 200 }
-      );
+    if (parsedId.error) {
+      return failResponse(parsedId.error, 400);
     }
 
-    if (!floor) {
-      return new Response(
-        JSON.stringify({ success: false, message: "Lantai wajib diisi!" }),
-        { status: 200 }
-      );
+    const body = await request.json();
+    const { payload, error } = validateFloorPayload(body);
+
+    if (error) {
+      return failResponse(error, 400);
     }
 
-    // validasi apakah lantai sudah terdaftar pada lokasi yang dipilih tapi kalau datanya sama tidak perlu update
-    const checkFloor = await pool.query(
-      `SELECT * FROM location_floor_prices WHERE location_id = $1 AND floor = $2 AND id != $3`,
-      [location_id, floor, id]
+    const locationExists = await pool.query(
+      `SELECT 1 FROM locations WHERE id = $1 LIMIT 1`,
+      [payload.location_id],
     );
-    if (checkFloor.rows.length > 0) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          message: "Lokasi dan lantai sudah terdaftar, silahkan pilih yang lain",
-        }),
-        { status: 200 }
-      );
+
+    if (locationExists.rows.length === 0) {
+      return failResponse("Lokasi tidak ditemukan.", 404);
     }
 
-    // Lakukan update
+    const duplicateFloor = await pool.query(
+      `
+      SELECT 1
+      FROM location_floor_prices
+      WHERE location_id = $1
+        AND LOWER(floor) = LOWER($2)
+        AND id != $3
+      LIMIT 1
+      `,
+      [payload.location_id, payload.floor, parsedId.value],
+    );
+
+    if (duplicateFloor.rows.length > 0) {
+      return failResponse("Lokasi dan lantai sudah terdaftar, silakan pilih yang lain.", 409);
+    }
+
     const result = await pool.query(
-      `UPDATE location_floor_prices
-       SET location_id=$1, floor=$2
-       WHERE id=$3
-       RETURNING *`,
-      [location_id, floor, id]
+      `
+      UPDATE location_floor_prices
+      SET
+        location_id = $1,
+        floor = $2,
+        updated_at = NOW()
+      WHERE id = $3
+      RETURNING *
+      `,
+      [payload.location_id, payload.floor, parsedId.value],
     );
 
     if (result.rows.length === 0) {
-      return new Response(
-        JSON.stringify({ success: false, message: "Data tidak ditemukan" }),
-        { status: 404 }
-      );
+      return failResponse("Data lantai tidak ditemukan.", 404);
     }
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: "Berhasil mengubah data Lantai",
-        data: result.rows[0],
-      }),
-      { status: 200 }
-    );
+
+    return jsonResponse({
+      success: true,
+      message: "Berhasil mengubah data Lantai",
+      data: result.rows[0],
+    });
   } catch (err) {
-    console.log("Error update Data", err);
-    return new Response(
-      JSON.stringify({ success: false, message: err.message }),
-      { status: 500 }
-    );
+    return handleApiError("error update floor", err, "Gagal mengubah data lantai.");
   }
 }
 
 // DELETE Floor Price
-export async function DELETE(request, { params }) {
+export async function DELETE(_request, { params }) {
   try {
     const { response } = await requireRole(MASTER_DATA_ROLES);
     if (response) return response;
 
-    const { id } = params;
+    const { id } = await params;
+    const parsedId = parsePositiveInteger(id, "ID lantai");
 
-    // Cek apakah ada room yang terkait dengan floor_id ini
+    if (parsedId.error) {
+      return failResponse(parsedId.error, 400);
+    }
+
     const checkRooms = await pool.query(
-      `SELECT room_number 
-         FROM rooms 
-        WHERE floor_id = $1`, // ganti location_id → floor_id
-      [id]
+      `SELECT room_number FROM rooms WHERE floor_id = $1 ORDER BY room_number ASC`,
+      [parsedId.value],
     );
 
     if (checkRooms.rows.length > 0) {
-      // Buat list room_number jadi string, contoh: "101, 102, 103"
       const roomList = checkRooms.rows.map((r) => r.room_number).join(", ");
 
-      return new Response(
-        JSON.stringify({
-          success: false,
-          message: `Lantai ini tidak bisa dihapus, karena masih terdaftar dengan ruangan: ${roomList}`,
-        }),
-        { status: 200 }
+      return failResponse(
+        `Lantai ini tidak bisa dihapus, karena masih terdaftar dengan ruangan: ${roomList}`,
+        409,
       );
     }
 
-    // Jika aman, hapus data floor price
     const result = await pool.query(
-      `DELETE FROM location_floor_prices
-       WHERE id = $1
-       RETURNING *`,
-      [id]
+      `
+      DELETE FROM location_floor_prices
+      WHERE id = $1
+      RETURNING *
+      `,
+      [parsedId.value],
     );
 
     if (result.rows.length === 0) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          message: "Data Lantai tidak ditemukan atau gagal dihapus",
-        }),
-        { status: 404 }
-      );
+      return failResponse("Data lantai tidak ditemukan atau sudah dihapus.", 404);
     }
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: "Berhasil menghapus data Lantai",
-        data: result.rows[0],
-      }),
-      { status: 200 }
-    );
+    return jsonResponse({
+      success: true,
+      message: "Berhasil menghapus data Lantai",
+      data: result.rows[0],
+    });
   } catch (err) {
-    console.error("Error delete Data", err);
-    return new Response(
-      JSON.stringify({ success: false, message: err.message }),
-      { status: 500 }
-    );
+    return handleApiError("error delete floor", err, "Gagal menghapus data lantai.");
   }
 }

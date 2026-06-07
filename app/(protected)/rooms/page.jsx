@@ -1,492 +1,739 @@
 "use client";
-import { Box, Button, Paper, Typography, useTheme } from "@mui/material";
-import React, { useEffect, useState } from "react";
-import { Table, ConfigProvider, theme as antdTheme, Input, Tag } from "antd";
-import { useThemeMode } from "../../components/themeprovider/ThemeContext";
-import moment from "moment";
-import { Icon } from "@iconify/react";
-import LoadingBackdrop from "../../components/loading/Backdrop";
-import Notification from "../../components/Notification";
-import axios from "axios";
-import BreadcrumbPage from "@/app/components/breadcrumb/page";
-import AddRoom from "./AddRoom";
-import EditRoom from "./EditRoom";
-import DeleteRoom from "./DeleteRoom";
-import formatRupiah from "@/app/components/formatrupiah/page";
-import NotesModal from "./NotesModal";
-import MENU_CONFIG from "@/app/components/menu/MenuConfig";
-import { formatNumber } from "@/app/utils/formatNumber";
 
-const Rooms = () => {
-  const [dataRooms, setDataRooms] = useState([]);
-  const [dataLocations, setDataLocations] = useState([]);
-  const { themeMode } = useThemeMode();
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  Box,
+  Button,
+  Grid,
+  IconButton,
+  Stack,
+  Tooltip,
+  Typography,
+  useTheme,
+} from "@mui/material";
+import { ConfigProvider, Table, Tag, theme as antdTheme } from "antd";
+import { Icon } from "@iconify/react";
+import axios from "axios";
+import moment from "moment";
+import LoadingBackdrop from "@/app/components/loading/Backdrop";
+import Notification from "@/app/components/Notification";
+import PageHeader from "@/app/components/page-header/PageHeader";
+import DataTableShell from "@/app/components/data-table/DataTableShell";
+import CrudConfirmModal from "@/app/components/crud/CrudConfirmModal";
+import SummaryStatCard from "@/app/components/stats/SummaryStatCard";
+import { useThemeMode } from "@/app/components/themeprovider/ThemeContext";
+import formatRupiah from "@/app/components/formatrupiah/page";
+import { formatNumber } from "@/app/utils/formatNumber";
+import RoomFormModal from "./RoomFormModal";
+import RoomNotesModal from "./RoomNotesModal";
+
+const PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
+const TABLE_SCROLL_WIDTH = 1580;
+const ACTION_COLUMN_WIDTH = 128;
+
+const normalizeText = (value) => String(value || "").toLowerCase();
+
+const getInitialSnackbar = () => ({
+  open: false,
+  message: "",
+  severity: "success",
+});
+
+const statusMeta = {
+  available: { label: "Tersedia", color: "green" },
+  occupied: { label: "Sudah Terisi", color: "gold" },
+  maintenance: { label: "Dalam Perbaikan", color: "orange" },
+  unavailable: { label: "Tidak Layak", color: "red" },
+};
+
+const priceTypeLabel = {
+  harga_per_meter: "Harga Per m²",
+  harga_tetap: "Harga Tetap",
+};
+
+const createColumnFilters = (data, key) =>
+  [...new Set(data.map((item) => item[key]).filter(Boolean))]
+    .sort((a, b) => String(a).localeCompare(String(b)))
+    .map((value) => ({ text: value, value }));
+
+const createExactFilter = (key) => (value, record) => record[key] === value;
+
+const formatDateTime = (value) =>
+  value ? moment(value).format("DD MMM YYYY, HH:mm") : "-";
+
+/**
+ * Halaman master data ruangan.
+ * Layout mengikuti pola Locations/Floor/Identity Lists, sedangkan kolom dan
+ * summary disesuaikan untuk operasional ruangan, status, dimensi, dan harga.
+ */
+export default function Rooms() {
   const theme = useTheme();
+  const { themeMode } = useThemeMode();
+  const [rooms, setRooms] = useState([]);
+  const [locations, setLocations] = useState([]);
   const [searchText, setSearchText] = useState("");
   const [loading, setLoading] = useState(false);
-  const [openAddModal, setOpenAddModal] = useState(false);
-  const [openEditModal, setOpenEditModal] = useState(false);
-  const [openDeleteModal, setOpenDeleteModal] = useState(false);
-  const [selectedData, setSelectedData] = useState(null);
+  const [formMode, setFormMode] = useState("create");
+  const [formOpen, setFormOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [notesOpen, setNotesOpen] = useState(false);
+  const [selectedRoom, setSelectedRoom] = useState(null);
   const [pageSize, setPageSize] = useState(5);
-  const [snackbar, setSnackbar] = useState({
-    open: false,
-    message: "",
-    severity: "success",
-  });
-  const [loadingMessage, setLoadingMessage] = useState("Loading...");
-  const [openViewNotesModal, setOpenViewNotesModal] = useState(false);
+  const [snackbar, setSnackbar] = useState(getInitialSnackbar);
 
-  const getRoomsData = async () => {
-    setLoading(true);
-    try {
-      const response = await axios.get("/api/rooms");
-      // console.log("rooms", response);
-      setDataRooms(response.data.data);
-      setTimeout(() => {
-        setLoading(false);
-      }, 1000);
-    } catch (error) {
-      console.log("error", error);
-      setTimeout(() => {
-        setLoading(false);
-      }, 1000);
-    }
+  const showSnackbar = (message, severity = "success") => {
+    setSnackbar({ open: true, message, severity });
   };
 
-  const getLocationsData = async () => {
+  const fetchReferenceData = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await axios.get("/api/locations");
-      // console.log("locations", response);
-      setTimeout(() => {
-        setDataLocations(response.data.data);
-        setLoading(false);
-      }, 1000);
-    } catch (error) {
-      console.log("error", error);
-      setTimeout(() => {
-        setLoading(false);
-      }, 1000);
-    }
-  };
+      const [roomsResponse, locationsResponse] = await Promise.all([
+        axios.get("/api/rooms"),
+        axios.get("/api/locations"),
+      ]);
 
-  useEffect(() => {
-    getRoomsData();
-    getLocationsData();
+      if (roomsResponse.data?.success) {
+        setRooms(roomsResponse.data.data || []);
+      } else {
+        showSnackbar(
+          roomsResponse.data?.message || "Gagal mengambil data ruangan.",
+          "error",
+        );
+      }
+
+      if (locationsResponse.data?.success) {
+        setLocations(locationsResponse.data.data || []);
+      } else {
+        showSnackbar(
+          locationsResponse.data?.message || "Gagal mengambil data lokasi.",
+          "error",
+        );
+      }
+    } catch (error) {
+      showSnackbar(
+        error?.response?.data?.message ||
+          "Terjadi error saat mengambil data ruangan.",
+        "error",
+      );
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const filteredData = dataRooms.filter((item) => {
-    // const isAvailableText =
-    //   item.is_available === false
-    //     ? "tersedia"
-    //     : item.is_available === true
-    //     ? "tidak tersedia"
-    //     : "";
+  useEffect(() => {
+    fetchReferenceData();
+  }, [fetchReferenceData]);
 
-    return (
-      item.room_number?.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.location_name?.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.floor?.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.room_length
-        ?.toString()
-        .toLowerCase()
-        .includes(searchText.toLowerCase()) ||
-      item.room_width
-        ?.toString()
-        .toLowerCase()
-        .includes(searchText.toLowerCase())
-      // isAvailableText.includes(searchText.toLowerCase())
+  const filteredRooms = useMemo(() => {
+    const keyword = normalizeText(searchText);
+    if (!keyword) return rooms;
+
+    return rooms.filter((item) =>
+      [
+        item.room_number,
+        item.location_name,
+        item.room_floor,
+        item.status,
+        statusMeta[item.status]?.label,
+        item.price_type,
+        priceTypeLabel[item.price_type],
+        item.notes,
+        item.room_length,
+        item.room_width,
+        item.room_area,
+        item.price_per_m2,
+      ].some((value) => normalizeText(value).includes(keyword)),
     );
-  });
+  }, [rooms, searchText]);
 
-  const onChange = (pagination, filters, sorter, extra) => {
-    if (pagination.pageSize !== pageSize) {
-      setPageSize(pagination.pageSize);
+  const roomStats = useMemo(() => {
+    const available = rooms.filter(
+      (item) => item.status === "available",
+    ).length;
+    const occupied = rooms.filter((item) => item.status === "occupied").length;
+    const maintenance = rooms.filter(
+      (item) => item.status === "maintenance",
+    ).length;
+    const unavailable = rooms.filter(
+      (item) => item.status === "unavailable",
+    ).length;
+
+    return [
+      {
+        label: "Total Ruangan",
+        value: rooms.length,
+        icon: "solar:home-angle-bold-duotone",
+        color: theme.palette.primary.main,
+      },
+      {
+        label: "Tersedia",
+        value: available,
+        icon: "solar:check-circle-bold-duotone",
+        color: theme.palette.success.main,
+      },
+      {
+        label: "Sudah Terisi",
+        value: occupied,
+        icon: "solar:key-minimalistic-square-bold-duotone",
+        color: theme.palette.warning.main,
+      },
+      {
+        label: "Perlu Tindakan",
+        value: maintenance + unavailable,
+        icon: "solar:danger-triangle-bold-duotone",
+        color: theme.palette.error.main,
+      },
+    ];
+  }, [rooms, theme]);
+
+  const openCreateModal = () => {
+    setSelectedRoom(null);
+    setFormMode("create");
+    setFormOpen(true);
+  };
+
+  const openEditModal = (record) => {
+    setSelectedRoom(record);
+    setFormMode("edit");
+    setFormOpen(true);
+  };
+
+  const openDeleteModal = (record) => {
+    setSelectedRoom(record);
+    setDeleteOpen(true);
+  };
+
+  const openNotesModal = (record) => {
+    setSelectedRoom(record);
+    setNotesOpen(true);
+  };
+
+  const closeFormModal = () => {
+    if (loading) return;
+    setFormOpen(false);
+    setSelectedRoom(null);
+  };
+
+  const handleSaveRoom = async (payload) => {
+    setLoading(true);
+    try {
+      const request =
+        formMode === "edit" && selectedRoom?.id
+          ? axios.put(`/api/rooms/${selectedRoom.id}`, payload)
+          : axios.post("/api/rooms", payload);
+
+      const response = await request;
+
+      if (response.data?.success) {
+        showSnackbar(
+          response.data.message || "Data ruangan berhasil disimpan.",
+        );
+        setFormOpen(false);
+        setSelectedRoom(null);
+        await fetchReferenceData();
+        return;
+      }
+
+      showSnackbar(
+        response.data?.message || "Gagal menyimpan data ruangan.",
+        "error",
+      );
+    } catch (error) {
+      showSnackbar(
+        error?.response?.data?.message ||
+          "Terjadi error saat menyimpan data ruangan.",
+        "error",
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleEdit = (record) => {
-    // console.log("edit record", record);
-    setSelectedData(record);
-    setOpenEditModal(true);
+  const handleDeleteRoom = async () => {
+    if (!selectedRoom?.id) return;
+
+    setLoading(true);
+    try {
+      const response = await axios.delete(`/api/rooms/${selectedRoom.id}`);
+
+      if (response.data?.success) {
+        showSnackbar(response.data.message || "Ruangan berhasil dihapus.");
+        setDeleteOpen(false);
+        setSelectedRoom(null);
+        await fetchReferenceData();
+        return;
+      }
+
+      showSnackbar(
+        response.data?.message || "Gagal menghapus ruangan.",
+        "error",
+      );
+    } catch (error) {
+      showSnackbar(
+        error?.response?.data?.message ||
+          "Terjadi error saat menghapus ruangan.",
+        "error",
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleDelete = (record) => {
-    // console.log("delete record", record);
-    setSelectedData(record);
-    setOpenDeleteModal(true);
-  };
-
-  // Utility untuk filter dinamis
-  function generateFilters(data, key) {
-    return [...new Set(data.map((item) => item[key]))]
-      .filter((val) => val !== undefined && val !== null)
-      .map((val) => ({ text: val, value: val }));
-  }
-
-  function createOnFilter(key) {
-    return (value, record) => record[key] === value;
-  }
-
-  const nameFilters = generateFilters(dataRooms, "location_name");
-  const roomFloorFilter = generateFilters(dataRooms, "room_floor");
-  const statusFilters = [
-    { text: "Tersedia", value: "available" },
-    { text: "Tidak Tersedia", value: "occupied" },
-    { text: "Dalam Perbaikan", value: "maintenance" },
-    { text: "Tidak Layak", value: "unavailable" },
-  ];
-
-  const handleViewNotes = (record) => {
-    setSelectedData(record);
-    setOpenViewNotesModal(true);
-  };
-
-  const columns = [
-    {
-      title: "No",
-      dataIndex: "index",
-      render: (text, record, index) => index + 1,
-      width: 50,
-      align: "center",
-    },
-    {
-      title: "Nama Lokasi",
-      dataIndex: "location_name",
-      filters: nameFilters,
-      onFilter: createOnFilter("location_name"),
-      filterSearch: true,
-      sorter: (a, b) => a.location_name.localeCompare(b.location_name),
-      sortDirections: ["ascend", "descend"],
-      render: (text, record) => (
-        <Typography sx={{ fontWeight: "bold", fontSize: "12px" }}>
-          {record.location_name}
-        </Typography>
-      ),
-      width: 200,
-    },
-    {
-      title: "Nomor Ruangan",
-      dataIndex: "room_number",
-      sorter: (a, b) => a.room_number.localeCompare(b.room_number),
-      sortDirections: ["ascend", "descend"],
-      render: (text, record) => {
-        return (
-          // <Tag
-          //   // warna random berdasarkan angka ganjil genap
-          //   color={record.id % 2 === 0 ? "pink" : "geekblue"}
-          //   key={record.id}
-          //   style={{ fontWeight: "bold" }}
-          // >
-          //   {record.room_number}
-          // </Tag>
-          <Typography sx={{ fontWeight: "bold", fontSize: "12px" }}>
-            {record.room_number}
-          </Typography>
-        );
+  const columns = useMemo(
+    () => [
+      {
+        title: "No",
+        width: 72,
+        align: "center",
+        render: (_, __, index) => index + 1,
       },
-      width: 170,
-    },
-    {
-      title: "Lantai",
-      dataIndex: "room_floor",
-      filters: roomFloorFilter,
-      onFilter: createOnFilter("room_floor"),
-      filterSearch: true,
-      sorter: (a, b) => a.room_floor.localeCompare(b.room_floor),
-      sortDirections: ["ascend", "descend"],
-      render: (text, record) => {
-        return (
+      {
+        title: "Ruangan",
+        dataIndex: "room_number",
+        width: 230,
+        sorter: (a, b) =>
+          String(a.room_number).localeCompare(String(b.room_number)),
+        render: (_, record) => (
+          <Stack spacing={0.45}>
+            <Typography sx={{ fontWeight: 900, fontSize: 13 }}>
+              Ruangan {record.room_number || "-"}
+            </Typography>
+            <Typography
+              sx={{
+                color: theme.ui.mutedText,
+                fontWeight: 700,
+                fontSize: 11.5,
+              }}
+            >
+              {record.location_name || "-"}
+            </Typography>
+          </Stack>
+        ),
+      },
+      {
+        title: "Lokasi & Lantai",
+        dataIndex: "location_name",
+        width: 280,
+        filters: createColumnFilters(rooms, "location_name"),
+        onFilter: createExactFilter("location_name"),
+        filterSearch: true,
+        sorter: (a, b) =>
+          String(a.location_name).localeCompare(String(b.location_name)),
+        render: (_, record) => (
+          <Stack spacing={0.45}>
+            <Typography sx={{ fontWeight: 850, fontSize: 12 }}>
+              {record.location_name || "-"}
+            </Typography>
+            <Tag
+              color={themeMode === "dark" ? "orange" : "red"}
+              style={{ width: "fit-content", borderRadius: 8, fontWeight: 800 }}
+            >
+              {record.room_floor || "-"}
+            </Tag>
+          </Stack>
+        ),
+      },
+      {
+        title: "Dimensi",
+        dataIndex: "room_area",
+        width: 250,
+        render: (_, record) => (
+          <Stack spacing={0.35}>
+            <Typography sx={{ fontWeight: 850, fontSize: 12 }}>
+              {formatNumber(record.room_area)} m²
+            </Typography>
+            <Typography
+              sx={{
+                color: theme.ui.mutedText,
+                fontWeight: 650,
+                fontSize: 11.5,
+              }}
+            >
+              P {formatNumber(record.room_length)} m | L{" "}
+              {formatNumber(record.room_width)} m
+            </Typography>
+          </Stack>
+        ),
+      },
+      {
+        title: "Harga",
+        dataIndex: "price_per_m2",
+        width: 230,
+        sorter: (a, b) =>
+          Number(a.price_per_m2 || 0) - Number(b.price_per_m2 || 0),
+        render: (_, record) => (
+          <Stack spacing={0.35}>
+            <Typography sx={{ fontWeight: 900, fontSize: 12 }}>
+              {formatRupiah(record.price_per_m2)}
+            </Typography>
+            <Typography
+              sx={{
+                color: theme.ui.mutedText,
+                fontWeight: 650,
+                fontSize: 11.5,
+              }}
+            >
+              {priceTypeLabel[record.price_type] || "-"}
+            </Typography>
+          </Stack>
+        ),
+      },
+      {
+        title: "Status",
+        dataIndex: "status",
+        width: 170,
+        filters: Object.entries(statusMeta).map(([value, meta]) => ({
+          text: meta.label,
+          value,
+        })),
+        onFilter: createExactFilter("status"),
+        render: (value) => (
           <Tag
-            // warna random berdasarkan angka ganjil genap
-            color={themeMode === "dark" ? "orange" : "red"}
-            key={record.id}
-            style={{ fontWeight: "bold" }}
-          >
-            {record.room_floor}
-          </Tag>
-        );
-      },
-      width: 110,
-    },
-    {
-      title: "Panjang (m)",
-      dataIndex: "room_length",
-      render: (text, record) => (
-        <Typography sx={{ fontWeight: "bold", fontSize: "12px" }}>
-          {formatNumber(record.room_length)} m
-        </Typography>
-      ),
-      width: 120,
-    },
-    {
-      title: "Lebar (m)",
-      dataIndex: "room_width",
-      render: (text, record) => (
-        <Typography sx={{ fontWeight: "bold", fontSize: "12px" }}>
-          {formatNumber(record.room_width)} m
-        </Typography>
-      ),
-      width: 120,
-    },
-    {
-      title: "Luas (m²)",
-      dataIndex: "room_area",
-      render: (text, record) => (
-        <Typography sx={{ fontWeight: "bold", fontSize: "12px" }}>
-          {formatNumber(record.room_area)} m²
-        </Typography>
-      ),
-      width: 120,
-    },
-    {
-      title: "Jenis Harga",
-      dataIndex: "price_type",
-      render: (text, record) => (
-        <Typography sx={{ fontWeight: "bold", fontSize: "12px" }}>
-          {record.price_type === "harga_per_meter"
-            ? "Harga Per m²"
-            : "Harga Tetap"}
-        </Typography>
-      ),
-      width: 120,
-    },
-    {
-      title: "Harga Sewa Ruangan",
-      dataIndex: "price_per_m2_width",
-      width: 180,
-      render: (text, record) => (
-        <Typography
-          sx={{ fontWeight: "bold", fontSize: "12px", textAlign: "end" }}
-        >
-          {formatRupiah(record.price_per_m2)}
-        </Typography>
-      ),
-    },
-    {
-      title: "Status",
-      dataIndex: "status",
-      filters: statusFilters,
-      onFilter: (value, record) => record.status === value,
-      render: (text, record) => {
-        return (
-          <Tag
-            color={
-              record.status === "available"
-                ? "green"
-                : record.status === "occupied"
-                  ? "yellow"
-                  : record.status === "maintenance"
-                    ? "orange"
-                    : "red"
-            }
-            key={record.id}
-            style={{ fontWeight: "bold" }}
-          >
-            {record.status === "available"
-              ? "Tersedia"
-              : record.status === "occupied"
-                ? "Sudah Terisi"
-                : record.status === "maintenance"
-                  ? "Dalam Perbaikan"
-                  : "Tidak Layak"}
-          </Tag>
-        );
-      },
-      width: 100,
-    },
-    {
-      title: "Catatan",
-      dataIndex: "notes",
-      width: 150,
-      render: (text, record) => (
-        <Tag
-          color="lime"
-          key={record.id}
-          style={{ fontWeight: "bold" }}
-          onClick={() => handleViewNotes(record)}
-        >
-          <Typography
-            sx={{
-              fontWeight: "bold",
-              fontSize: "12px",
-              whiteSpace: "pre-wrap",
-              wordWrap: "break-word",
-              textAlign: "center",
-              cursor: "pointer",
+            color={statusMeta[value]?.color || "default"}
+            style={{
+              borderRadius: 8,
+              fontFamily: "Poppins",
+              fontWeight: 850,
+              padding: "3px 10px",
             }}
           >
-            Lihat Catatan
+            {statusMeta[value]?.label || "-"}
+          </Tag>
+        ),
+      },
+      {
+        title: "Catatan",
+        dataIndex: "notes",
+        width: 150,
+        render: (_, record) => (
+          <Button
+            size="small"
+            variant={record.notes ? "outlined" : "contained"}
+            color={record.notes ? "warning" : "inherit"}
+            onClick={() => openNotesModal(record)}
+            startIcon={<Icon icon="solar:notes-bold-duotone" />}
+            sx={{
+              borderRadius: 2,
+              fontWeight: 800,
+              textTransform: "none",
+              whiteSpace: "nowrap",
+              ...(record.notes
+                ? {}
+                : {
+                    color: theme.ui.mutedText,
+                    bgcolor:
+                      theme.palette.mode === "dark"
+                        ? "rgba(255,255,255,0.08)"
+                        : "rgba(17,24,39,0.06)",
+                    boxShadow: "none",
+                  }),
+            }}
+          >
+            Lihat
+          </Button>
+        ),
+      },
+      {
+        title: "Diperbarui",
+        dataIndex: "updated_at",
+        width: 190,
+        render: (value) => (
+          <Typography sx={{ fontWeight: 650, fontSize: 12 }}>
+            {formatDateTime(value)}
           </Typography>
-        </Tag>
-      ),
-    },
-    {
-      title: "Actions",
-      key: "action",
-      align: "center",
-      width: 100,
-      fixed: "right",
-      render: (text, record) => (
-        <Box sx={{ display: "flex", gap: 1, justifyContent: "center" }}>
-          <Button
-            size="small"
-            variant={themeMode === "dark" ? "outlined" : "contained"}
-            color="info"
-            onClick={() => handleEdit(record)}
-            sx={{ minWidth: 0, px: 1 }}
+        ),
+      },
+      {
+        title: "Aksi",
+        key: "action",
+        width: ACTION_COLUMN_WIDTH,
+        align: "center",
+        fixed: "right",
+        className: "rooms-action-column",
+        onHeaderCell: () => ({ className: "rooms-action-column" }),
+        onCell: () => ({ className: "rooms-action-column" }),
+        render: (_, record) => (
+          <Box
+            className="rooms-action-buttons"
+            sx={{
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 0.75,
+              width: "100%",
+              minWidth: 82,
+              flexWrap: "nowrap",
+            }}
           >
-            <Icon icon="line-md:edit" fontSize={18} />
-          </Button>
-          <Button
-            size="small"
-            variant={themeMode === "dark" ? "outlined" : "contained"}
-            color="error"
-            onClick={() => handleDelete(record)}
-            sx={{ minWidth: 0, px: 1 }}
-          >
-            <Icon icon="line-md:close-circle" fontSize={18} />
-          </Button>
-        </Box>
-      ),
-    },
-  ];
+            <Tooltip title="Ubah ruangan">
+              <IconButton
+                size="small"
+                onClick={() => openEditModal(record)}
+                sx={{
+                  width: 34,
+                  height: 34,
+                  borderRadius: 1.5,
+                  color: theme.palette.info.main,
+                  border: `1px solid ${theme.palette.info.main}55`,
+                  bgcolor:
+                    theme.palette.mode === "dark"
+                      ? "rgba(33,150,243,0.10)"
+                      : "rgba(33,150,243,0.08)",
+                }}
+              >
+                <Icon icon="solar:pen-bold-duotone" fontSize={18} />
+              </IconButton>
+            </Tooltip>
+
+            <Tooltip title="Hapus ruangan">
+              <IconButton
+                size="small"
+                onClick={() => openDeleteModal(record)}
+                sx={{
+                  width: 34,
+                  height: 34,
+                  borderRadius: 1.5,
+                  color: theme.palette.error.main,
+                  border: `1px solid ${theme.palette.error.main}55`,
+                  bgcolor:
+                    theme.palette.mode === "dark"
+                      ? "rgba(244,67,54,0.10)"
+                      : "rgba(244,67,54,0.08)",
+                }}
+              >
+                <Icon icon="solar:trash-bin-trash-bold-duotone" fontSize={18} />
+              </IconButton>
+            </Tooltip>
+          </Box>
+        ),
+      },
+    ],
+    [rooms, theme, themeMode],
+  );
 
   return (
-    <Box sx={{ width: "100%", height: "100%", minHeight: "100%", p: 2 }}>
-      {/* Component Breadcrumbs disini */}
-      <BreadcrumbPage menuList={MENU_CONFIG} />
-
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "flex-end",
-          transition: "all 0.3s",
-          mb: 2,
-          mt: 4,
-        }}
-      >
-        <Button
-          variant={themeMode === "dark" ? "outlined" : "contained"}
-          onClick={() => setOpenAddModal(true)}
-          sx={{
-            textTransform: "none",
+    <Box
+      sx={{
+        width: "100%",
+        minHeight: "calc(100vh - 64px)",
+        bgcolor: theme.ui.pageBg,
+        p: { xs: 1.25, sm: 2, lg: 2.25 },
+        transition: "background-color 0.2s ease",
+      }}
+    >
+      <Stack spacing={{ xs: 1.5, lg: 2 }}>
+        <PageHeader
+          eyebrow="Data Master"
+          title="Rooms"
+          description="Kelola ruangan per lokasi dan lantai, termasuk dimensi, harga sewa, status ketersediaan, dan catatan operasional."
+          icon="solar:home-angle-bold-duotone"
+          actionSx={{
+            width: { xs: "100%", md: "auto" },
             display: "flex",
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 1,
-            fontWeight: "bold",
+            justifyContent: { xs: "stretch", md: "flex-end" },
           }}
+          action={
+            <Button
+              fullWidth
+              variant="contained"
+              startIcon={<Icon icon="solar:home-add-angle-bold-duotone" />}
+              onClick={openCreateModal}
+              sx={{
+                minHeight: 46,
+                px: { xs: 2, sm: 2.5 },
+                borderRadius: 2,
+                fontFamily: "Poppins",
+                fontWeight: 900,
+                textTransform: "none",
+                boxShadow:
+                  theme.palette.mode === "dark"
+                    ? "0 6px 14px rgba(255, 152, 0, 0.18)"
+                    : "0 6px 14px rgba(230, 9, 9, 0.16)",
+                "&:hover": {
+                  boxShadow:
+                    theme.palette.mode === "dark"
+                      ? "0 8px 18px rgba(255, 152, 0, 0.22)"
+                      : "0 8px 18px rgba(230, 9, 9, 0.20)",
+                  transform: "translateY(-1px)",
+                },
+              }}
+            >
+              Tambah Ruangan
+            </Button>
+          }
+        />
+
+        <Grid container spacing={{ xs: 1.25, md: 1.5 }}>
+          {roomStats.map((item) => (
+            <Grid key={item.label} size={{ xs: 6, md: 3 }}>
+              <SummaryStatCard {...item} />
+            </Grid>
+          ))}
+        </Grid>
+
+        <DataTableShell
+          title="Daftar Ruangan"
+          description={`${filteredRooms.length} dari ${rooms.length} ruangan ditampilkan`}
+          searchValue={searchText}
+          searchPlaceholder="Cari ruangan, lokasi, lantai, status, atau catatan..."
+          onSearchChange={setSearchText}
         >
-          Tambah
-          <Icon icon="cil:room" fontSize="20px" />
-        </Button>
-      </Box>
-      <ConfigProvider
-        theme={{
-          algorithm:
-            themeMode === "dark"
-              ? antdTheme.darkAlgorithm
-              : antdTheme.defaultAlgorithm,
-          token: {
-            colorPrimary: theme.palette.primary.main, // warna utama (angka aktif, outline, dsb)
-            // colorText: theme.palette.text.primary, // warna teks default
-            // colorBgContainer: theme.palette.background.default, // background tabel
-          },
-        }}
-      >
-        <Paper
-          elevation={6}
-          sx={{
-            p:
-              filteredData.length > 0
-                ? "10px 15px 0px 15px"
-                : "10px 15px 10px 15px",
-            width: "100%",
-            bgcolor: "background.default",
-            overflowX: "auto",
-          }}
-        >
-          <Input.Search
-            placeholder="Cari..."
-            allowClear
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-            style={{ width: 250, marginBottom: 20, marginTop: 10 }}
-          />
-          <Table
-            rowKey="id"
-            columns={columns}
-            dataSource={filteredData}
-            onChange={onChange}
-            showSorterTooltip={{ target: "sorter-icon" }}
-            scroll={{ x: "max-content", y: 420 }}
-            pagination={{
-              pageSize: pageSize,
-              showSizeChanger: true,
-              pageSizeOptions: [5, 10, 20, 50],
-              showTotal: (total, range) =>
-                `${range[0]}-${range[1]} dari ${total} data`,
+          <ConfigProvider
+            theme={{
+              algorithm:
+                themeMode === "dark"
+                  ? antdTheme.darkAlgorithm
+                  : antdTheme.defaultAlgorithm,
+              token: {
+                colorPrimary: theme.palette.primary.main,
+                colorBgContainer: theme.ui.dashboardCardBg,
+                colorText: theme.palette.text.primary,
+                colorBorder: theme.ui.dashboardCardBorder,
+                fontFamily: "Poppins, sans-serif",
+                borderRadius: 10,
+              },
+              components: {
+                Table: {
+                  headerBg:
+                    theme.palette.mode === "dark"
+                      ? "rgba(255,255,255,0.045)"
+                      : "rgba(17,24,39,0.035)",
+                  rowHoverBg:
+                    theme.palette.mode === "dark"
+                      ? "rgba(255,152,0,0.08)"
+                      : "rgba(230,9,9,0.05)",
+                },
+              },
             }}
-          />
-        </Paper>
-      </ConfigProvider>
-      <AddRoom
-        open={openAddModal}
-        onClose={() => setOpenAddModal(false)}
-        loadingTrue={() => setLoading(true)}
-        loadingFalse={() => setLoading(false)}
+          >
+            <Box
+              sx={{
+                "--rooms-action-bg":
+                  theme.palette.mode === "dark" ? "#111111" : "#ffffff",
+                "--rooms-action-header-bg":
+                  theme.palette.mode === "dark" ? "#1c1c1c" : "#f8f9fb",
+                "--rooms-action-hover-bg":
+                  theme.palette.mode === "dark" ? "#2b2317" : "#fff6f6",
+                /*
+                 * Fixed column Ant Design butuh background solid agar isi
+                 * kolom lain tidak terlihat tembus saat scroll atau hover.
+                 */
+                "& .rooms-action-column": {
+                  width: `${ACTION_COLUMN_WIDTH}px !important`,
+                  minWidth: `${ACTION_COLUMN_WIDTH}px !important`,
+                  maxWidth: `${ACTION_COLUMN_WIDTH}px !important`,
+                  paddingLeft: "14px !important",
+                  paddingRight: "14px !important",
+                  boxSizing: "border-box !important",
+                  zIndex: "8 !important",
+                  background: "var(--rooms-action-bg) !important",
+                  backgroundColor: "var(--rooms-action-bg) !important",
+                  backgroundImage: "none !important",
+                  backgroundClip: "border-box !important",
+                  opacity: "1 !important",
+                },
+                "& .ant-table-tbody > tr > td.rooms-action-column": {
+                  textAlign: "center !important",
+                  verticalAlign: "middle !important",
+                },
+                "& .rooms-action-buttons": {
+                  marginInline: "auto",
+                },
+                "& .ant-table-thead .rooms-action-column": {
+                  textAlign: "center !important",
+                  zIndex: "10 !important",
+                  background: "var(--rooms-action-header-bg) !important",
+                  backgroundColor: "var(--rooms-action-header-bg) !important",
+                },
+                "& .ant-table-tbody > tr:hover > .rooms-action-column": {
+                  background: "var(--rooms-action-hover-bg) !important",
+                  backgroundColor: "var(--rooms-action-hover-bg) !important",
+                },
+              }}
+            >
+              <Table
+                rowKey="id"
+                columns={columns}
+                dataSource={filteredRooms}
+                loading={loading}
+                tableLayout="fixed"
+                showSorterTooltip={{ target: "sorter-icon" }}
+                scroll={{ x: TABLE_SCROLL_WIDTH, y: 430 }}
+                onChange={(pagination) => {
+                  if (pagination.pageSize !== pageSize) {
+                    setPageSize(pagination.pageSize);
+                  }
+                }}
+                pagination={{
+                  pageSize,
+                  showSizeChanger: true,
+                  pageSizeOptions: PAGE_SIZE_OPTIONS,
+                  showTotal: (total, range) =>
+                    `${range[0]}-${range[1]} dari ${total} data`,
+                }}
+              />
+            </Box>
+          </ConfigProvider>
+        </DataTableShell>
+      </Stack>
+
+      <RoomFormModal
+        open={formOpen}
+        mode={formMode}
+        initialData={selectedRoom}
+        locations={locations}
         loading={loading}
-        getRoomsData={getRoomsData}
-        getLocationsData={getLocationsData}
-        dataLocations={dataLocations}
-        onNotify={(notif) => setSnackbar(notif)}
-        setLoadingMessage={(message) => setLoadingMessage(message)}
-      />
-      <EditRoom
-        open={openEditModal}
-        onClose={() => setOpenEditModal(false)}
-        loadingTrue={() => setLoading(true)}
-        loadingFalse={() => setLoading(false)}
-        loading={loading}
-        getRoomsData={getRoomsData}
-        getLocationsData={getLocationsData}
-        dataLocations={dataLocations}
-        onNotify={(notif) => setSnackbar(notif)}
-        selectedData={selectedData}
-        setLoadingMessage={(message) => setLoadingMessage(message)}
-      />
-      <DeleteRoom
-        open={openDeleteModal}
-        onClose={() => setOpenDeleteModal(false)}
-        loadingTrue={() => setLoading(true)}
-        loadingFalse={() => setLoading(false)}
-        loading={loading}
-        getRoomsData={getRoomsData}
-        getLocationsData={getLocationsData}
-        onNotify={(notif) => setSnackbar(notif)}
-        selectedData={selectedData}
-      />
-      <NotesModal
-        open={openViewNotesModal}
-        onClose={() => setOpenViewNotesModal(false)}
-        selectedData={selectedData}
+        onClose={closeFormModal}
+        onSubmit={handleSaveRoom}
+        onNotify={setSnackbar}
       />
 
-      <LoadingBackdrop message={loadingMessage} open={loading} />
-      {/* Snackbar notification */}
+      <CrudConfirmModal
+        open={deleteOpen}
+        title="Hapus Ruangan"
+        description={
+          <>
+            Ruangan{" "}
+            <Box
+              component="strong"
+              sx={{ color: "text.primary", fontWeight: 850 }}
+            >
+              {selectedRoom?.room_number || "-"}
+            </Box>{" "}
+            pada lokasi{" "}
+            <Box
+              component="strong"
+              sx={{ color: "text.primary", fontWeight: 850 }}
+            >
+              {selectedRoom?.location_name || "-"}
+            </Box>{" "}
+            tidak dapat digunakan lagi setelah dihapus.
+          </>
+        }
+        confirmLabel="Hapus Ruangan"
+        loadingLabel="Menghapus..."
+        loading={loading}
+        onClose={() => !loading && setDeleteOpen(false)}
+        onConfirm={handleDeleteRoom}
+      />
+
+      <RoomNotesModal
+        open={notesOpen}
+        onClose={() => setNotesOpen(false)}
+        selectedData={selectedRoom}
+      />
+
+      <LoadingBackdrop
+        message="Loading..."
+        open={loading && !formOpen && !deleteOpen}
+      />
       <Notification
         open={snackbar.open}
         message={snackbar.message}
         severity={snackbar.severity}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        onClose={() => setSnackbar((current) => ({ ...current, open: false }))}
       />
     </Box>
   );
-};
-
-export default Rooms;
+}

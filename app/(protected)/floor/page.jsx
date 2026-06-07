@@ -1,343 +1,518 @@
 "use client";
-import { Box, Button, Paper, Typography, useTheme } from "@mui/material";
-import React, { useEffect, useState } from "react";
-import { Table, ConfigProvider, theme as antdTheme, Input, Tag } from "antd";
-import { useThemeMode } from "../../components/themeprovider/ThemeContext";
-import moment from "moment";
-import { Icon } from "@iconify/react";
-import LoadingBackdrop from "../../components/loading/Backdrop";
-import Notification from "../../components/Notification";
-import axios from "axios";
-import BreadcrumbPage from "@/app/components/breadcrumb/page";
-import AddFloorPrice from "./AddFloorPrice";
-import EditFloorPrice from "./EditFloorPrice";
-import DeleteFloor from "./DeleteFloor";
-import MENU_CONFIG from "@/app/components/menu/MenuConfig";
 
-const FloorPrices = () => {
-  const [dataLocations, setDataLocations] = useState([]);
-  const [dataFloor, setDataFloor] = useState([]);
-  const { themeMode } = useThemeMode();
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  Box,
+  Button,
+  Grid,
+  IconButton,
+  Stack,
+  Tooltip,
+  Typography,
+  useTheme,
+} from "@mui/material";
+import { ConfigProvider, Table, Tag, theme as antdTheme } from "antd";
+import { Icon } from "@iconify/react";
+import axios from "axios";
+import moment from "moment";
+import LoadingBackdrop from "@/app/components/loading/Backdrop";
+import Notification from "@/app/components/Notification";
+import PageHeader from "@/app/components/page-header/PageHeader";
+import DataTableShell from "@/app/components/data-table/DataTableShell";
+import CrudConfirmModal from "@/app/components/crud/CrudConfirmModal";
+import SummaryStatCard from "@/app/components/stats/SummaryStatCard";
+import { useThemeMode } from "@/app/components/themeprovider/ThemeContext";
+import FloorFormModal from "./FloorFormModal";
+
+const PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
+
+const normalizeText = (value) => String(value || "").toLowerCase();
+
+const getInitialSnackbar = () => ({
+  open: false,
+  message: "",
+  severity: "success",
+});
+
+/**
+ * Filter table reusable untuk kolom yang berasal dari dataset aktif.
+ * Nilai kosong dibuang agar dropdown filter tetap bersih dan mudah dipindai.
+ */
+const createColumnFilters = (data, key) =>
+  [...new Set(data.map((item) => item[key]).filter(Boolean))]
+    .sort((a, b) => String(a).localeCompare(String(b)))
+    .map((value) => ({ text: value, value }));
+
+const createExactFilter = (key) => (value, record) => record[key] === value;
+
+const formatDateTime = (value) =>
+  value ? moment(value).format("DD MMM YYYY, HH:mm") : "-";
+
+/**
+ * Halaman master data lantai.
+ * Halaman ini memakai komponen reusable yang sama dengan Locations agar pola
+ * CRUD data master tetap konsisten, responsif, dan mudah dirawat.
+ */
+export default function FloorPrices() {
   const theme = useTheme();
+  const { themeMode } = useThemeMode();
+  const [locations, setLocations] = useState([]);
+  const [floors, setFloors] = useState([]);
   const [searchText, setSearchText] = useState("");
   const [loading, setLoading] = useState(false);
-  const [openAddModal, setOpenAddModal] = useState(false);
-  const [openEditModal, setOpenEditModal] = useState(false);
-  const [openDeleteModal, setOpenDeleteModal] = useState(false);
-  const [selectedData, setSelectedData] = useState(null);
+  const [formMode, setFormMode] = useState("create");
+  const [formOpen, setFormOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [selectedFloor, setSelectedFloor] = useState(null);
   const [pageSize, setPageSize] = useState(5);
-  const [snackbar, setSnackbar] = useState({
-    open: false,
-    message: "",
-    severity: "success",
-  });
+  const [snackbar, setSnackbar] = useState(getInitialSnackbar);
 
-  const getLocationsData = async () => {
-    setLoading(true);
-    try {
-      const response = await axios.get("/api/locations");
-      // console.log("locations", response);
-      setDataLocations(response.data.data);
-      setTimeout(() => {
-        setLoading(false);
-      }, 1000);
-    } catch (error) {
-      console.log("error", error);
-      setTimeout(() => {
-        setLoading(false);
-      }, 1000);
-    }
+  const showSnackbar = (message, severity = "success") => {
+    setSnackbar({ open: true, message, severity });
   };
 
-  const getFloorData = async () => {
+  const fetchReferenceData = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await axios.get("/api/location-floor-price");
-      // console.log("data floor", response);
-      setDataFloor(response.data.data);
-      setTimeout(() => {
-        setLoading(false);
-      }, 1000);
-    } catch (error) {
-      console.log("error", error);
-      setTimeout(() => {
-        setLoading(false);
-      }, 1000);
-    }
-  };
+      const [locationsResponse, floorsResponse] = await Promise.all([
+        axios.get("/api/locations"),
+        axios.get("/api/location-floor-price"),
+      ]);
 
-  useEffect(() => {
-    getLocationsData();
-    getFloorData();
+      if (locationsResponse.data?.success) {
+        setLocations(locationsResponse.data.data || []);
+      } else {
+        showSnackbar(
+          locationsResponse.data?.message || "Gagal mengambil data lokasi.",
+          "error",
+        );
+      }
+
+      if (floorsResponse.data?.success) {
+        setFloors(floorsResponse.data.data || []);
+      } else {
+        showSnackbar(
+          floorsResponse.data?.message || "Gagal mengambil data lantai.",
+          "error",
+        );
+      }
+    } catch (error) {
+      showSnackbar(
+        error?.response?.data?.message || "Terjadi error saat mengambil data lantai.",
+        "error",
+      );
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const filteredData = dataFloor.filter(
-    (item) =>
-      item.location_name?.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.floor?.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.base_price?.toLowerCase().includes(searchText.toLowerCase())
-  );
+  useEffect(() => {
+    fetchReferenceData();
+  }, [fetchReferenceData]);
 
-  const onChange = (pagination, filters, sorter, extra) => {
-    if (pagination.pageSize !== pageSize) {
-      setPageSize(pagination.pageSize);
+  const filteredFloors = useMemo(() => {
+    const keyword = normalizeText(searchText);
+    if (!keyword) return floors;
+
+    return floors.filter((item) =>
+      [item.location_name, item.floor, item.created_at, item.updated_at].some((value) =>
+        normalizeText(value).includes(keyword),
+      ),
+    );
+  }, [floors, searchText]);
+
+  const floorStats = useMemo(() => {
+    const usedLocations = new Set(floors.map((item) => item.location_id).filter(Boolean));
+    const basementCount = floors.filter((item) =>
+      normalizeText(item.floor).includes("basement"),
+    ).length;
+    const standardFloorCount = floors.length - basementCount;
+
+    return [
+      {
+        label: "Total Lantai",
+        value: floors.length,
+        icon: "solar:tag-bold-duotone",
+        color: theme.palette.primary.main,
+      },
+      {
+        label: "Lokasi Terpakai",
+        value: usedLocations.size,
+        icon: "solar:map-point-bold-duotone",
+        color: theme.palette.info.main,
+      },
+      {
+        label: "Lantai Gedung",
+        value: standardFloorCount,
+        icon: "solar:buildings-3-bold-duotone",
+        color: theme.palette.success.main,
+      },
+      {
+        label: "Basement",
+        value: basementCount,
+        icon: "solar:garage-bold-duotone",
+        color: theme.palette.warning.main,
+      },
+    ];
+  }, [floors, theme]);
+
+  const openCreateModal = () => {
+    setSelectedFloor(null);
+    setFormMode("create");
+    setFormOpen(true);
+  };
+
+  const openEditModal = (record) => {
+    setSelectedFloor(record);
+    setFormMode("edit");
+    setFormOpen(true);
+  };
+
+  const openDeleteModal = (record) => {
+    setSelectedFloor(record);
+    setDeleteOpen(true);
+  };
+
+  const closeFormModal = () => {
+    if (loading) return;
+    setFormOpen(false);
+    setSelectedFloor(null);
+  };
+
+  const handleSaveFloor = async (payload) => {
+    setLoading(true);
+    try {
+      const request =
+        formMode === "edit" && selectedFloor?.id
+          ? axios.put(`/api/location-floor-price/${selectedFloor.id}`, payload)
+          : axios.post("/api/location-floor-price", payload);
+
+      const response = await request;
+
+      if (response.data?.success) {
+        showSnackbar(response.data.message || "Data lantai berhasil disimpan.");
+        setFormOpen(false);
+        setSelectedFloor(null);
+        await fetchReferenceData();
+        return;
+      }
+
+      showSnackbar(response.data?.message || "Gagal menyimpan data lantai.", "error");
+    } catch (error) {
+      showSnackbar(
+        error?.response?.data?.message || "Terjadi error saat menyimpan data lantai.",
+        "error",
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleEdit = (record) => {
-    // console.log("edit record", record);
-    setSelectedData(record);
-    setOpenEditModal(true);
+  const handleDeleteFloor = async () => {
+    if (!selectedFloor?.id) return;
+
+    setLoading(true);
+    try {
+      const response = await axios.delete(`/api/location-floor-price/${selectedFloor.id}`);
+
+      if (response.data?.success) {
+        showSnackbar(response.data.message || "Data lantai berhasil dihapus.");
+        setDeleteOpen(false);
+        setSelectedFloor(null);
+        await fetchReferenceData();
+        return;
+      }
+
+      showSnackbar(response.data?.message || "Gagal menghapus data lantai.", "error");
+    } catch (error) {
+      showSnackbar(
+        error?.response?.data?.message || "Terjadi error saat menghapus data lantai.",
+        "error",
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleDelete = (record) => {
-    // console.log("delete record", record);
-    setSelectedData(record);
-    setOpenDeleteModal(true);
-  };
-
-  // Utility untuk filter dinamis
-  function generateFilters(data, key) {
-    return [...new Set(data.map((item) => item[key]))]
-      .filter((val) => val !== undefined && val !== null)
-      .map((val) => ({ text: val, value: val }));
-  }
-
-  function createOnFilter(key) {
-    return (value, record) => record[key] === value;
-  }
-
-  const nameFilters = generateFilters(dataLocations, "location_name");
-  const floorFilters = generateFilters(dataLocations, "floor");
-
-  const columns = [
-     {
-      title: "No",
-      dataIndex: "index",
-      render: (text, record, index) => index + 1,
-      width: 50,
-      align: "center",
-    },
-    {
-      title: "Nama Lokasi",
-      dataIndex: "location_name",
-      filters: nameFilters,
-      onFilter: createOnFilter("location_name"),
-      filterSearch: true,
-      sorter: (a, b) => a.location_name.localeCompare(b.location_name),
-      sortDirections: ["ascend", "descend"],
-      render: (text, record) => (
-        <Typography sx={{ fontWeight: "bold", fontSize: "12px" }}>
-          {record.location_name}
-        </Typography>
-      ),
-      width: 150,
-    },
-    {
-      title: "Lantai",
-      dataIndex: "floor",
-      filters: floorFilters,
-      onFilter: createOnFilter("floor"),
-      filterSearch: true,
-      render: (text, record) => {
-        return (
-          <Tag
-            // warna random berdasarkan angka ganjil genap
-            color={themeMode === "dark" ? "orange" : "red"}
-            key={record.id}
-            style={{ fontWeight: "bold" }}
-          >
-            {record.floor}
-          </Tag>
-        );
+  const columns = useMemo(
+    () => [
+      {
+        title: "No",
+        width: 72,
+        align: "center",
+        render: (_, __, index) => index + 1,
       },
-      width: 100,
-    },
-    // {
-    //   title: "Harga",
-    //   dataIndex: "base_price",
-    //   // onFilter: (value, record) => record.address === value,
-    //   // sorter: (a, b) => a.address.localeCompare(b.address),
-    //   // sortDirections: ["ascend", "descend"],
-    //   render: (text, record) => (
-    //     <Typography sx={{ fontWeight: "bold", fontSize: "12px" }}>
-    //       {formatRupiah(record.base_price)}
-    //     </Typography>
-    //   ),
-    //   width: 150,
-    // },
-    {
-      title: "Diubah Tanggal",
-      dataIndex: "updated_at",
-      render: (text, record) =>
-        moment(record.updated_at).format("DD-MM-YYYY HH:mm:ss"),
-      width: 150,
-    },
-    {
-      title: "Dibuat Tanggal",
-      dataIndex: "created_at",
-      render: (text, record) =>
-        moment(record.created_at).format("DD-MM-YYYY HH:mm:ss"),
-      width: 150,
-    },
-    {
-      title: "Actions",
-      key: "action",
-      align: "center",
-      width: 100,
-      fixed: "right",
-      render: (text, record) => (
-        <Box sx={{ display: "flex", gap: 1, justifyContent: "center" }}>
-          <Button
-            size="small"
-            variant={themeMode === "dark" ? "outlined" : "contained"}
-            color="info"
-            onClick={() => handleEdit(record)}
-            sx={{ minWidth: 0, px: 1 }}
+      {
+        title: "Lokasi",
+        dataIndex: "location_name",
+        width: 320,
+        filters: createColumnFilters(floors, "location_name"),
+        onFilter: createExactFilter("location_name"),
+        filterSearch: true,
+        sorter: (a, b) => a.location_name.localeCompare(b.location_name),
+        render: (_, record) => (
+          <Stack spacing={0.55}>
+            <Typography sx={{ fontFamily: "Poppins", fontWeight: 850, fontSize: 13 }}>
+              {record.location_name || "-"}
+            </Typography>
+          </Stack>
+        ),
+      },
+      {
+        title: "Lantai",
+        dataIndex: "floor",
+        width: 180,
+        filters: createColumnFilters(floors, "floor"),
+        onFilter: createExactFilter("floor"),
+        filterSearch: true,
+        sorter: (a, b) => String(a.floor).localeCompare(String(b.floor)),
+        render: (value) => (
+          <Tag
+            color={themeMode === "dark" ? "orange" : "red"}
+            style={{
+              borderRadius: 8,
+              fontFamily: "Poppins",
+              fontWeight: 800,
+              padding: "3px 9px",
+            }}
           >
-            <Icon icon="line-md:edit" fontSize={18} />
-          </Button>
-          <Button
-            size="small"
-            variant={themeMode === "dark" ? "outlined" : "contained"}
-            color="error"
-            onClick={() => handleDelete(record)}
-            sx={{ minWidth: 0, px: 1 }}
-          >
-            <Icon icon="line-md:close-circle" fontSize={18} />
-          </Button>
-        </Box>
-      ),
-    },
-  ];
+            {value || "-"}
+          </Tag>
+        ),
+      },
+      {
+        title: "Diperbarui",
+        dataIndex: "updated_at",
+        width: 190,
+        render: (value) => (
+          <Typography sx={{ fontFamily: "Poppins", fontWeight: 650, fontSize: 12 }}>
+            {formatDateTime(value)}
+          </Typography>
+        ),
+      },
+      {
+        title: "Dibuat",
+        dataIndex: "created_at",
+        width: 190,
+        render: (value) => (
+          <Typography sx={{ fontFamily: "Poppins", fontWeight: 650, fontSize: 12 }}>
+            {formatDateTime(value)}
+          </Typography>
+        ),
+      },
+      {
+        title: "Aksi",
+        key: "action",
+        width: 116,
+        fixed: "right",
+        align: "center",
+        render: (_, record) => (
+          <Stack direction="row" spacing={0.75} justifyContent="center">
+            <Tooltip title="Ubah lantai">
+              <IconButton
+                size="small"
+                onClick={() => openEditModal(record)}
+                sx={{
+                  width: 34,
+                  height: 34,
+                  borderRadius: 1.5,
+                  color: theme.palette.info.main,
+                  border: `1px solid ${theme.palette.info.main}55`,
+                  bgcolor:
+                    theme.palette.mode === "dark"
+                      ? "rgba(33,150,243,0.10)"
+                      : "rgba(33,150,243,0.08)",
+                }}
+              >
+                <Icon icon="solar:pen-bold-duotone" fontSize={18} />
+              </IconButton>
+            </Tooltip>
+
+            <Tooltip title="Hapus lantai">
+              <IconButton
+                size="small"
+                onClick={() => openDeleteModal(record)}
+                sx={{
+                  width: 34,
+                  height: 34,
+                  borderRadius: 1.5,
+                  color: theme.palette.error.main,
+                  border: `1px solid ${theme.palette.error.main}55`,
+                  bgcolor:
+                    theme.palette.mode === "dark"
+                      ? "rgba(244,67,54,0.10)"
+                      : "rgba(244,67,54,0.08)",
+                }}
+              >
+                <Icon icon="solar:trash-bin-trash-bold-duotone" fontSize={18} />
+              </IconButton>
+            </Tooltip>
+          </Stack>
+        ),
+      },
+    ],
+    [floors, theme, themeMode],
+  );
 
   return (
-    <Box sx={{ width: "100%", height: "100%", minHeight: "100%", p: 2 }}>
-      {/* Component Breadcrumbs disini */}
-      <BreadcrumbPage menuList={MENU_CONFIG} />
-
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "flex-end",
-          transition: "all 0.3s",
-          mb: 2,
-          mt: 4,
-        }}
-      >
-        <Button
-          variant={themeMode === "dark" ? "outlined" : "contained"}
-          onClick={() => setOpenAddModal(true)}
-          sx={{
-            textTransform: "none",
+    <Box
+      sx={{
+        width: "100%",
+        minHeight: "calc(100vh - 64px)",
+        bgcolor: theme.ui.pageBg,
+        p: { xs: 1.25, sm: 2, lg: 2.25 },
+        transition: "background-color 0.2s ease",
+      }}
+    >
+      <Stack spacing={{ xs: 1.5, lg: 2 }}>
+        <PageHeader
+          eyebrow="Data Master"
+          title="Floor"
+          description="Kelola lantai per lokasi untuk membantu pengelompokan ruangan, filter data operasional, dan proses transaksi sewa."
+          icon="solar:tag-bold-duotone"
+          actionSx={{
+            width: { xs: "100%", md: "auto" },
             display: "flex",
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 1,
-            fontWeight: "bold",
+            justifyContent: { xs: "stretch", md: "flex-end" },
           }}
+          action={
+            <Button
+              fullWidth
+              variant="contained"
+              startIcon={<Icon icon="solar:tag-bold-duotone" />}
+              onClick={openCreateModal}
+              sx={{
+                minHeight: 46,
+                px: { xs: 2, sm: 2.5 },
+                borderRadius: 2,
+                fontFamily: "Poppins",
+                fontWeight: 900,
+                textTransform: "none",
+                boxShadow:
+                  theme.palette.mode === "dark"
+                    ? "0 6px 14px rgba(255, 152, 0, 0.18)"
+                    : "0 6px 14px rgba(230, 9, 9, 0.16)",
+                "&:hover": {
+                  boxShadow:
+                    theme.palette.mode === "dark"
+                      ? "0 8px 18px rgba(255, 152, 0, 0.22)"
+                      : "0 8px 18px rgba(230, 9, 9, 0.20)",
+                  transform: "translateY(-1px)",
+                },
+              }}
+            >
+              Tambah Lantai
+            </Button>
+          }
+        />
+
+        <Grid container spacing={{ xs: 1.25, md: 1.5 }}>
+          {floorStats.map((item) => (
+            <Grid key={item.label} size={{ xs: 6, md: 3 }}>
+              <SummaryStatCard {...item} />
+            </Grid>
+          ))}
+        </Grid>
+
+        <DataTableShell
+          title="Daftar Lantai"
+          description={`${filteredFloors.length} dari ${floors.length} lantai ditampilkan`}
+          searchValue={searchText}
+          searchPlaceholder="Cari lokasi, lantai, atau tanggal..."
+          onSearchChange={setSearchText}
         >
-          Tambah
-          <Icon icon="ion:pricetags-outline" fontSize="20px" />
-        </Button>
-      </Box>
-      <ConfigProvider
-        theme={{
-          algorithm:
-            themeMode === "dark"
-              ? antdTheme.darkAlgorithm
-              : antdTheme.defaultAlgorithm,
-          token: {
-            colorPrimary: theme.palette.primary.main, // warna utama (angka aktif, outline, dsb)
-            // colorText: theme.palette.text.primary, // warna teks default
-            // colorBgContainer: theme.palette.background.default, // background tabel
-          },
-        }}
-      >
-        <Paper
-          elevation={6}
-          sx={{
-            p:
-              filteredData.length > 0
-                ? "10px 15px 0px 15px"
-                : "10px 15px 10px 15px",
-            width: "100%",
-            bgcolor: "background.default",
-            overflowX: "auto",
-          }}
-        >
-          <Input.Search
-            placeholder="Cari Data..."
-            allowClear
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-            style={{ width: 250, marginBottom: 20, marginTop: 10 }}
-          />
-          <Table
-            rowKey="id"
-            key={"id"}
-            columns={columns}
-            dataSource={filteredData}
-            onChange={onChange}
-            showSorterTooltip={{ target: "sorter-icon" }}
-            scroll={{ x: "max-content", y: 420 }}
-            pagination={{
-              pageSize: pageSize,
-              showSizeChanger: true,
-              pageSizeOptions: [5, 10, 20, 50],
-              showTotal: (total, range) =>
-                `${range[0]}-${range[1]} dari ${total} data`,
+          <ConfigProvider
+            theme={{
+              algorithm:
+                themeMode === "dark"
+                  ? antdTheme.darkAlgorithm
+                  : antdTheme.defaultAlgorithm,
+              token: {
+                colorPrimary: theme.palette.primary.main,
+                colorBgContainer: theme.ui.dashboardCardBg,
+                colorText: theme.palette.text.primary,
+                colorBorder: theme.ui.dashboardCardBorder,
+                fontFamily: "Poppins, sans-serif",
+                borderRadius: 10,
+              },
+              components: {
+                Table: {
+                  headerBg:
+                    theme.palette.mode === "dark"
+                      ? "rgba(255,255,255,0.045)"
+                      : "rgba(17,24,39,0.035)",
+                  rowHoverBg:
+                    theme.palette.mode === "dark"
+                      ? "rgba(255,152,0,0.08)"
+                      : "rgba(230,9,9,0.05)",
+                },
+              },
             }}
-          />
-        </Paper>
-      </ConfigProvider>
-      <AddFloorPrice
-        open={openAddModal}
-        onClose={() => setOpenAddModal(false)}
-        loadingTrue={() => setLoading(true)}
-        loadingFalse={() => setLoading(false)}
+          >
+            <Table
+              rowKey="id"
+              columns={columns}
+              dataSource={filteredFloors}
+              loading={loading}
+              showSorterTooltip={{ target: "sorter-icon" }}
+              scroll={{ x: 1180, y: 430 }}
+              onChange={(pagination) => {
+                if (pagination.pageSize !== pageSize) {
+                  setPageSize(pagination.pageSize);
+                }
+              }}
+              pagination={{
+                pageSize,
+                showSizeChanger: true,
+                pageSizeOptions: PAGE_SIZE_OPTIONS,
+                showTotal: (total, range) =>
+                  `${range[0]}-${range[1]} dari ${total} data`,
+              }}
+            />
+          </ConfigProvider>
+        </DataTableShell>
+      </Stack>
+
+      <FloorFormModal
+        open={formOpen}
+        mode={formMode}
+        initialData={selectedFloor}
+        locations={locations}
         loading={loading}
-        getFloorData={getFloorData}
-        getLocationsData={getLocationsData}
-        dataLocations={dataLocations}
-        onNotify={(notif) => setSnackbar(notif)}
+        onClose={closeFormModal}
+        onSubmit={handleSaveFloor}
       />
-      <EditFloorPrice
-        open={openEditModal}
-        onClose={() => setOpenEditModal(false)}
-        loadingTrue={() => setLoading(true)}
-        loadingFalse={() => setLoading(false)}
+
+      <CrudConfirmModal
+        open={deleteOpen}
+        title="Hapus Lantai"
+        description={
+          <>
+            Lantai{" "}
+            <Box component="strong" sx={{ color: "text.primary", fontWeight: 850 }}>
+              {selectedFloor?.floor || "-"}
+            </Box>{" "}
+            pada lokasi{" "}
+            <Box component="strong" sx={{ color: "text.primary", fontWeight: 850 }}>
+              {selectedFloor?.location_name || "-"}
+            </Box>{" "}
+            tidak dapat digunakan lagi setelah dihapus.
+          </>
+        }
+        confirmLabel="Hapus Lantai"
+        loadingLabel="Menghapus..."
         loading={loading}
-        getFloorData={getFloorData}
-        getLocationsData={getLocationsData}
-        dataLocations={dataLocations}
-        onNotify={(notif) => setSnackbar(notif)}
-        selectedData={selectedData}
+        onClose={() => !loading && setDeleteOpen(false)}
+        onConfirm={handleDeleteFloor}
       />
-      <DeleteFloor
-        open={openDeleteModal}
-        onClose={() => setOpenDeleteModal(false)}
-        loadingTrue={() => setLoading(true)}
-        loadingFalse={() => setLoading(false)}
-        loading={loading}
-        getFloorData={getFloorData}
-        getLocationsData={getLocationsData}
-        onNotify={(notif) => setSnackbar(notif)}
-        selectedData={selectedData}
-      />
-      <LoadingBackdrop message="Loading..." open={loading} />
-      {/* Snackbar notification */}
+
+      <LoadingBackdrop message="Loading..." open={loading && !formOpen && !deleteOpen} />
       <Notification
         open={snackbar.open}
         message={snackbar.message}
         severity={snackbar.severity}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        onClose={() => setSnackbar((current) => ({ ...current, open: false }))}
       />
     </Box>
   );
-};
-
-export default FloorPrices;
+}

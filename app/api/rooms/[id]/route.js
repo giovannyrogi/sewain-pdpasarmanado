@@ -1,330 +1,238 @@
-import pool from "@/lib/dbConfig";
 import moment from "moment";
+import pool from "@/lib/dbConfig";
 import { requireRole } from "@/app/utils/auth";
+import {
+  failResponse,
+  handleApiError,
+  jsonResponse,
+} from "@/app/utils/apiValidation";
+import { validateRoomId, validateRoomPayload } from "../validation";
 
 const MASTER_DATA_ROLES = [1, 2];
 
+const ensureFloorBelongsToLocation = async (client, locationId, floorId) => {
+  const result = await client.query(
+    `
+    SELECT 1
+    FROM location_floor_prices
+    WHERE id = $1 AND location_id = $2
+    LIMIT 1
+    `,
+    [floorId, locationId],
+  );
+
+  return result.rowCount > 0;
+};
+
+const ensureRoomStatusCanChange = async (client, roomId, nextStatus, currentStatus) => {
+  if (typeof nextStatus === "undefined" || nextStatus === currentStatus) {
+    return null;
+  }
+
+  const tenantResult = await client.query(
+    `
+    SELECT ta.id, ti.full_name AS tenant_name, ta.start_date, ta.end_date
+    FROM tenant_application ta
+    JOIN tenant_identities ti ON ta.tenant_identity_id = ti.id
+    WHERE ta.room_id = $1
+    `,
+    [roomId],
+  );
+
+  if (tenantResult.rowCount === 0) return null;
+
+  const today = moment().format("YYYY-MM-DD");
+
+  for (const tenant of tenantResult.rows) {
+    const start = tenant.start_date
+      ? moment(tenant.start_date).format("YYYY-MM-DD")
+      : null;
+    const end = tenant.end_date ? moment(tenant.end_date).format("YYYY-MM-DD") : null;
+
+    if (!start || !end) {
+      return `Ruangan ini masih terdaftar pada permohonan penyewa "${tenant.tenant_name}". Status tidak dapat diubah.`;
+    }
+
+    const terminationResult = await client.query(
+      `
+      SELECT is_terminated, approval_status
+      FROM tenant_early_terminations
+      WHERE tenant_application_id = $1
+      ORDER BY id DESC
+      LIMIT 1
+      `,
+      [tenant.id],
+    );
+
+    const termination = terminationResult.rows[0] || null;
+    const isTerminatedApproved =
+      termination?.is_terminated === true && termination?.approval_status === "approved";
+
+    if (end >= today && !isTerminatedApproved) {
+      return `Ruangan sedang digunakan oleh "${tenant.tenant_name}" sampai ${end}. Status tidak dapat diubah.`;
+    }
+
+    if (termination && !isTerminatedApproved) {
+      return `Kontrak penyewa "${tenant.tenant_name}" belum disetujui terminasi. Status ruangan tidak dapat diubah.`;
+    }
+  }
+
+  return null;
+};
+
 export async function PUT(request, { params }) {
   const client = await pool.connect();
+
   try {
     const { response } = await requireRole(MASTER_DATA_ROLES);
     if (response) return response;
 
-    const { id } = await params;
+    const { id: rawId } = await params;
+    const { value: roomId, error: idError } = validateRoomId(rawId);
+    if (idError) return failResponse(idError, 400);
+
     const body = await request.json();
-    const {
-      location_id,
-      room_number,
-      floor_id,
-      room_length,
-      room_width,
-      status,
-      price_per_m2,
-      notes,
-      price_type,
-      room_area,
-    } = body;
+    const { values, error } = validateRoomPayload(body);
+    if (error) return failResponse(error, 400);
 
-    // Validasi field wajib
-    if (!location_id) {
-      return new Response(
-        JSON.stringify({ success: false, message: "Lokasi wajib diisi!" }),
-        { status: 400 }
-      );
+    const roomResult = await client.query("SELECT * FROM rooms WHERE id = $1 LIMIT 1", [
+      roomId,
+    ]);
+
+    if (roomResult.rowCount === 0) {
+      return failResponse("Ruangan tidak ditemukan.", 404);
     }
 
-    if (!floor_id) {
-      return new Response(
-        JSON.stringify({ success: false, message: "Lantai wajib diisi!" }),
-        { status: 400 }
-      );
-    }
-
-    if (!room_number) {
-      return new Response(
-        JSON.stringify({ success: false, message: "Nomor kamar wajib diisi!" }),
-        { status: 400 }
-      );
-    }
-
-    // if (!room_length || !room_width) {
-    //   return new Response(
-    //     JSON.stringify({
-    //       success: false,
-    //       message: "Panjang dan lebar kamar wajib diisi!",
-    //     }),
-    //     { status: 400 }
-    //   );
-    // }
-
-    if (!status) {
-      return new Response(
-        JSON.stringify({ success: false, message: "Status wajib diisi!" }),
-        { status: 400 }
-      );
-    }
-
-    if (price_per_m2 < 0) {
-      return new Response(
-        JSON.stringify({ success: false, message: "Harga wajib diisi!" }),
-        { status: 400 }
-      );
-    }
-
-    if (notes) {
-      if (notes.length > 150) {
-        return new Response(
-          JSON.stringify({
-            success: false,
-            message: "Notes maksimal 150 karakter!",
-          }),
-          { status: 400 }
-        );
-      }
-    }
-
-    // Validasi input status
-    if (
-      !["available", "occupied", "unavailable", "maintenance"].includes(status)
-    ) {
-      return new Response(
-        JSON.stringify({ success: false, message: "Status tidak valid" }),
-        { status: 400 }
-      );
-    }
-
-    // Validasi cek apakah ruangan yang sama ada di lokasi ini
-    const checkRoom = await client.query(
-      `SELECT * FROM rooms WHERE location_id = $1 AND room_number = $2 AND id != $3`,
-      [location_id, room_number, id]
+    const floorIsValid = await ensureFloorBelongsToLocation(
+      client,
+      values.location_id,
+      values.floor_id,
     );
 
-    if (checkRoom.rowCount > 0) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          message: "Nomor ruangan sudah terdaftar pada lokasi yang dipilih!",
-        }),
-        { status: 400 }
-      );
+    if (!floorIsValid) {
+      return failResponse("Lantai tidak valid untuk lokasi yang dipilih.", 400);
     }
 
-    // 1. Cek data ruangan
-    const roomRes = await client.query(`SELECT * FROM rooms WHERE id=$1`, [id]);
-    if (roomRes.rowCount === 0) {
-      return Response.json(
-        { success: false, message: "Ruangan tidak ditemukan" },
-        { status: 404 }
-      );
-    }
-
-    const roomData = roomRes.rows[0];
-    const wantsToChangeStatus =
-      typeof status !== "undefined" && status !== roomData.status;
-
-    // 2. Kalau user mau ubah status ruangan
-    if (wantsToChangeStatus) {
-      // Cek apakah ruangan ini pernah / sedang disewa
-      const tenantRes = await client.query(
-        `
-        SELECT ta.id, ti.full_name AS tenant_name, ta.start_date, ta.end_date
-        FROM tenant_application ta
-        JOIN tenant_identities ti ON ta.tenant_identity_id = ti.id
-        WHERE ta.room_id = $1
-        `,
-        [id]
-      );
-
-      if (tenantRes.rowCount > 0) {
-        const today = moment().format("YYYY-MM-DD");
-
-        for (const t of tenantRes.rows) {
-          const start = t.start_date
-            ? moment(t.start_date).format("YYYY-MM-DD")
-            : null;
-          const end = t.end_date
-            ? moment(t.end_date).format("YYYY-MM-DD")
-            : null;
-
-          // Tidak boleh ubah kalau tanggal kontrak belum lengkap
-          if (!start || !end) {
-            return Response.json(
-              {
-                success: false,
-                message: `Ruangan ini masih terdaftar pada permohonan penyewa "${t.tenant_name}". Status tidak dapat diubah.`,
-              },
-              { status: 400 }
-            );
-          }
-
-          // Cek apakah ada terminasi
-          const terminateRes = await client.query(
-            `
-            SELECT is_terminated, approval_status
-            FROM tenant_early_terminations
-            WHERE tenant_application_id = $1
-            ORDER BY id DESC
-            LIMIT 1
-            `,
-            [t.id]
-          );
-
-          const hasTermination = terminateRes.rowCount > 0;
-          const termination = hasTermination ? terminateRes.rows[0] : null;
-          const isTerminatedApproved =
-            hasTermination &&
-            termination.is_terminated === true &&
-            termination.approval_status === "approved";
-
-          // Kalau kontrak masih aktif DAN belum terminasi disetujui
-          if (end >= today && !isTerminatedApproved) {
-            return Response.json(
-              {
-                success: false,
-                message: `Ruangan sedang digunakan oleh "${t.tenant_name}" sampai ${end}. Status tidak dapat diubah.`,
-              },
-              { status: 400 }
-            );
-          }
-
-          // Kalau belum ada terminasi data sama sekali
-          if (end >= today && !hasTermination) {
-            return Response.json(
-              {
-                success: false,
-                message: `Penyewa "${t.tenant_name}" belum memiliki data terminasi kontrak. Status tidak dapat diubah.`,
-              },
-              { status: 400 }
-            );
-          }
-
-          // Kalau ada terminasi tapi belum disetujui
-          if (hasTermination && !isTerminatedApproved) {
-            return Response.json(
-              {
-                success: false,
-                message: `Kontrak penyewa "${t.tenant_name}" belum disetujui terminasi. Status ruangan tidak dapat diubah.`,
-              },
-              { status: 400 }
-            );
-          }
-        }
-      }
-    }
-
-    // 3. Update data room
-    const updateRes = await client.query(
+    const duplicateRoom = await client.query(
       `
-      UPDATE rooms 
-         SET location_id = $1,
-             room_number  = $2,
-             floor_id     = $3,
-             room_length  = $4,
-             room_width   = $5,
-             status       = $6,
-             price_per_m2 = $7,
-             notes        = $8,
-             price_type   = $9,
-             room_area    = $10
-       WHERE id = $11
-       RETURNING *
+      SELECT 1
+      FROM rooms
+      WHERE location_id = $1 AND LOWER(room_number) = LOWER($2) AND id <> $3
+      LIMIT 1
+      `,
+      [values.location_id, values.room_number, roomId],
+    );
+
+    if (duplicateRoom.rowCount > 0) {
+      return failResponse(
+        "Nomor ruangan sudah terdaftar pada lokasi yang dipilih.",
+        409,
+      );
+    }
+
+    const statusBlockMessage = await ensureRoomStatusCanChange(
+      client,
+      roomId,
+      values.status,
+      roomResult.rows[0].status,
+    );
+
+    if (statusBlockMessage) {
+      return failResponse(statusBlockMessage, 409);
+    }
+
+    const updateResult = await client.query(
+      `
+      UPDATE rooms SET
+        location_id = $1,
+        room_number = $2,
+        floor_id = $3,
+        room_length = $4,
+        room_width = $5,
+        status = $6,
+        price_per_m2 = $7,
+        notes = $8,
+        price_type = $9,
+        room_area = $10,
+        updated_at = NOW()
+      WHERE id = $11
+      RETURNING *
       `,
       [
-        location_id,
-        room_number,
-        floor_id,
-        room_length,
-        room_width,
-        typeof status === "undefined" ? roomData.status : status,
-        price_per_m2,
-        notes,
-        price_type,
-        room_area,
-        id,
-      ]
+        values.location_id,
+        values.room_number,
+        values.floor_id,
+        values.room_length,
+        values.room_width,
+        values.status,
+        values.price_per_m2,
+        values.notes,
+        values.price_type,
+        values.room_area,
+        roomId,
+      ],
     );
 
-    return Response.json(
-      {
-        success: true,
-        message: "Berhasil mengubah data Ruangan",
-        data: updateRes.rows[0],
-      },
-      { status: 200 }
-    );
-  } catch (err) {
-    console.error("Error update Ruangan:", err);
-    return Response.json(
-      { success: false, message: err.message },
-      { status: 500 }
+    return jsonResponse({
+      success: true,
+      message: "Data ruangan berhasil diperbarui.",
+      data: updateResult.rows[0],
+    });
+  } catch (error) {
+    return handleApiError(
+      "Error updating room",
+      error,
+      "Terjadi kesalahan saat memperbarui data ruangan.",
     );
   } finally {
     client.release();
   }
 }
 
-// DELETE Rooms
-export async function DELETE(request, context) {
+export async function DELETE(request, { params }) {
   try {
     const { response } = await requireRole(MASTER_DATA_ROLES);
     if (response) return response;
 
-    const { id } = await context.params;
+    const { id: rawId } = await params;
+    const { value: roomId, error } = validateRoomId(rawId);
+    if (error) return failResponse(error, 400);
 
-    // Cek apakah ada tenant yang menggunakan room ini (join tenant_identities)
-    const checkTenant = await pool.query(
+    const tenantResult = await pool.query(
       `
       SELECT ti.full_name AS tenant_name
       FROM tenant_application ta
       JOIN tenant_identities ti ON ta.tenant_identity_id = ti.id
       WHERE ta.room_id = $1
       `,
-      [id]
+      [roomId],
     );
 
-    if (checkTenant.rows.length > 0) {
-      const tenantList = checkTenant.rows.map((t) => t.tenant_name).join(", ");
-
-      return new Response(
-        JSON.stringify({
-          success: false,
-          message: `Ruangan ini tidak bisa dihapus, karena masih dipakai oleh penyewa: ${tenantList}`,
-        }),
-        { status: 200 }
+    if (tenantResult.rowCount > 0) {
+      const tenantList = tenantResult.rows.map((item) => item.tenant_name).join(", ");
+      return failResponse(
+        `Ruangan tidak dapat dihapus karena masih dipakai oleh penyewa: ${tenantList}.`,
+        409,
       );
     }
 
-    // Jika aman, hapus ruangan
-    const result = await pool.query(
-      `DELETE FROM rooms WHERE id = $1 RETURNING *`,
-      [id]
-    );
+    const result = await pool.query("DELETE FROM rooms WHERE id = $1 RETURNING *", [
+      roomId,
+    ]);
 
-    if (result.rows.length === 0) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          message: "Ruangan tidak ditemukan atau gagal dihapus",
-        }),
-        { status: 404 }
-      );
+    if (result.rowCount === 0) {
+      return failResponse("Ruangan tidak ditemukan.", 404);
     }
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: "Berhasil menghapus ruangan",
-      }),
-      { status: 200 }
-    );
-  } catch (err) {
-    console.error("error delete ruangan", err);
-    return new Response(
-      JSON.stringify({
-        success: false,
-        message: err.message,
-      }),
-      { status: 500 }
+    return jsonResponse({
+      success: true,
+      message: "Ruangan berhasil dihapus.",
+    });
+  } catch (error) {
+    return handleApiError(
+      "Error deleting room",
+      error,
+      "Terjadi kesalahan saat menghapus data ruangan.",
     );
   }
 }

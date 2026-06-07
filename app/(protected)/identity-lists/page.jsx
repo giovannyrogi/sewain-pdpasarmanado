@@ -1,378 +1,663 @@
 "use client";
-import { Box, Button, Paper, Typography, useTheme } from "@mui/material";
-import React, { useEffect, useState } from "react";
-import { Table, ConfigProvider, theme as antdTheme, Input, Tag } from "antd";
-import { useThemeMode } from "../../components/themeprovider/ThemeContext";
-import moment from "moment";
-import { Icon } from "@iconify/react";
-import LoadingBackdrop from "../../components/loading/Backdrop";
-import Notification from "../../components/Notification";
-import axios from "axios";
-import BreadcrumbPage from "@/app/components/breadcrumb/page";
-import AddIdentity from "./AddIdentity";
-import EditIdentity from "./EditIdentity";
-import DeleteIdentity from "./DeleteIdentity";
-import InformationPreviewModal from "@/app/components/informationpreviewmodal/page";
-import MENU_CONFIG from "@/app/components/menu/MenuConfig";
 
-const IdentityList = () => {
-  const [dataIdentities, setDataIdentities] = useState([]);
-  const { themeMode } = useThemeMode();
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  Box,
+  Button,
+  Grid,
+  IconButton,
+  Stack,
+  Tooltip,
+  Typography,
+  useTheme,
+} from "@mui/material";
+import { ConfigProvider, Table, Tag, theme as antdTheme } from "antd";
+import { Icon } from "@iconify/react";
+import axios from "axios";
+import moment from "moment";
+import LoadingBackdrop from "@/app/components/loading/Backdrop";
+import Notification from "@/app/components/Notification";
+import PageHeader from "@/app/components/page-header/PageHeader";
+import DataTableShell from "@/app/components/data-table/DataTableShell";
+import CrudConfirmModal from "@/app/components/crud/CrudConfirmModal";
+import SummaryStatCard from "@/app/components/stats/SummaryStatCard";
+import InformationPreviewModal from "@/app/components/informationpreviewmodal/page";
+import { useThemeMode } from "@/app/components/themeprovider/ThemeContext";
+import IdentityFormModal from "./IdentityFormModal";
+
+const PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
+const ACTION_COLUMN_WIDTH = 164;
+const TABLE_SCROLL_WIDTH = 1700;
+
+const normalizeText = (value) => String(value || "").toLowerCase();
+
+const getInitialSnackbar = () => ({
+  open: false,
+  message: "",
+  severity: "success",
+});
+
+const STATUS_LABELS = {
+  active: "Aktif",
+  inactive: "Tidak Aktif",
+  blacklisted: "Blacklist",
+};
+
+const STATUS_COLORS = {
+  active: "green",
+  inactive: "red",
+  blacklisted: "gold",
+};
+
+/**
+ * Filter table reusable untuk kolom Identity Lists.
+ * Nilai kosong dibuang agar filter tidak berisi opsi yang tidak berguna.
+ */
+const createColumnFilters = (data, key) =>
+  [...new Set(data.map((item) => item[key]).filter(Boolean))]
+    .sort((a, b) => String(a).localeCompare(String(b)))
+    .map((value) => ({ text: value, value }));
+
+const createExactFilter = (key) => (value, record) => record[key] === value;
+
+const formatBirth = (record) => {
+  if (!record?.birth_date) return record?.birth_place || "-";
+  return `${record.birth_place || "-"}, ${moment(record.birth_date).format("DD MMMM YYYY")}`;
+};
+
+const formatDateTime = (value) =>
+  value ? moment(value).format("DD MMM YYYY, HH:mm") : "-";
+
+/**
+ * Halaman master data identitas penyewa.
+ * Pola UI mengikuti Locations/Floor, tetapi isi tabel dan modal disesuaikan
+ * untuk data personal, status blacklist, alamat lengkap, dan foto KTP.
+ */
+export default function IdentityList() {
   const theme = useTheme();
+  const { themeMode } = useThemeMode();
+  const [identities, setIdentities] = useState([]);
   const [searchText, setSearchText] = useState("");
   const [loading, setLoading] = useState(false);
-  const [openAddModal, setOpenAddModal] = useState(false);
-  const [openEditModal, setOpenEditModal] = useState(false);
-  const [openDeleteModal, setOpenDeleteModal] = useState(false);
-  const [selectedData, setSelectedData] = useState(null);
+  const [formMode, setFormMode] = useState("create");
+  const [formOpen, setFormOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [selectedIdentity, setSelectedIdentity] = useState(null);
   const [pageSize, setPageSize] = useState(5);
-  const [snackbar, setSnackbar] = useState({
-    open: false,
-    message: "",
-    severity: "success",
-  });
-  const [loadingMessage, setLoadingMessage] = useState("Loading...");
-  const [openViewInformationModal, setOpenViewInformationModal] =
-    useState(false);
+  const [snackbar, setSnackbar] = useState(getInitialSnackbar);
 
-  const getDataIdentities = async () => {
+  const showSnackbar = (message, severity = "success") => {
+    setSnackbar({ open: true, message, severity });
+  };
+
+  const fetchIdentities = useCallback(async () => {
     setLoading(true);
     try {
       const response = await axios.get("/api/identity-list");
-      // console.log("data identitas", response);
-      setDataIdentities(response.data.data);
-      setTimeout(() => {
-        setLoading(false);
-      }, 1000);
+      if (response.data?.success) {
+        setIdentities(response.data.data || []);
+      } else {
+        showSnackbar(
+          response.data?.message || "Gagal mengambil data identitas.",
+          "error",
+        );
+      }
     } catch (error) {
-      console.log("error", error);
-      setTimeout(() => {
-        setLoading(false);
-      }, 1000);
+      showSnackbar(
+        error?.response?.data?.message ||
+          "Terjadi error saat mengambil data identitas.",
+        "error",
+      );
+    } finally {
+      setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    getDataIdentities();
   }, []);
 
-  const filteredData = dataIdentities.filter((item) => {
-    // const isAvailableText =
-    //   item.is_available === false
-    //     ? "tersedia"
-    //     : item.is_available === true
-    //     ? "tidak tersedia"
-    //     : "";
-    return (
-      item.full_name?.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.nik?.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.occupation?.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.nationality?.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.birth_place?.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.status?.toLowerCase().includes(searchText.toLowerCase())
-    );
-  });
+  useEffect(() => {
+    fetchIdentities();
+  }, [fetchIdentities]);
 
-  const onChange = (pagination, filters, sorter, extra) => {
-    if (pagination.pageSize !== pageSize) {
-      setPageSize(pagination.pageSize);
+  const filteredIdentities = useMemo(() => {
+    const keyword = normalizeText(searchText);
+    if (!keyword) return identities;
+
+    return identities.filter((item) =>
+      [
+        item.full_name,
+        item.nik,
+        item.occupation,
+        item.nationality,
+        item.birth_place,
+        item.phone,
+        item.status,
+        item.street_address,
+        item.kelurahan,
+        item.district,
+        item.city,
+        item.province,
+      ].some((value) => normalizeText(value).includes(keyword)),
+    );
+  }, [identities, searchText]);
+
+  const identityStats = useMemo(() => {
+    const active = identities.filter((item) => item.status === "active").length;
+    const inactive = identities.filter((item) => item.status === "inactive").length;
+    const blacklisted = identities.filter((item) => item.status === "blacklisted").length;
+
+    return [
+      {
+        label: "Total Identitas",
+        value: identities.length,
+        icon: "qlementine-icons:id-card-16",
+        color: theme.palette.primary.main,
+      },
+      {
+        label: "Aktif",
+        value: active,
+        icon: "solar:user-check-bold-duotone",
+        color: theme.palette.success.main,
+      },
+      {
+        label: "Tidak Aktif",
+        value: inactive,
+        icon: "solar:user-cross-bold-duotone",
+        color: theme.palette.error.main,
+      },
+      {
+        label: "Blacklist",
+        value: blacklisted,
+        icon: "solar:shield-warning-bold-duotone",
+        color: theme.palette.warning.main,
+      },
+    ];
+  }, [identities, theme]);
+
+  const openCreateModal = () => {
+    setSelectedIdentity(null);
+    setFormMode("create");
+    setFormOpen(true);
+  };
+
+  const openEditModal = (record) => {
+    setSelectedIdentity(record);
+    setFormMode("edit");
+    setFormOpen(true);
+  };
+
+  const openDeleteModal = (record) => {
+    setSelectedIdentity(record);
+    setDeleteOpen(true);
+  };
+
+  const openPreviewModal = (record) => {
+    setSelectedIdentity(record);
+    setPreviewOpen(true);
+  };
+
+  const closeFormModal = () => {
+    if (loading) return;
+    setFormOpen(false);
+    setSelectedIdentity(null);
+  };
+
+  const handleSaveIdentity = async (payload) => {
+    setLoading(true);
+    try {
+      const request =
+        formMode === "edit" && selectedIdentity?.id
+          ? axios.put("/api/identity-list/update-identity", payload)
+          : axios.post("/api/identity-list", payload);
+
+      const response = await request;
+
+      if (response.data?.success) {
+        showSnackbar(response.data.message || "Data identitas berhasil disimpan.");
+        setFormOpen(false);
+        setSelectedIdentity(null);
+        await fetchIdentities();
+        return;
+      }
+
+      showSnackbar(response.data?.message || "Gagal menyimpan data identitas.", "error");
+    } catch (error) {
+      showSnackbar(
+        error?.response?.data?.message ||
+          "Terjadi error saat menyimpan data identitas.",
+        "error",
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleEdit = (record) => {
-    // console.log("edit record", record);
-    setSelectedData(record);
-    setOpenEditModal(true);
+  const handleDeleteIdentity = async () => {
+    if (!selectedIdentity?.id) return;
+
+    setLoading(true);
+    try {
+      const response = await axios.delete(`/api/identity-list/${selectedIdentity.id}`);
+
+      if (response.data?.success) {
+        showSnackbar(response.data.message || "Data identitas berhasil dihapus.");
+        setDeleteOpen(false);
+        setSelectedIdentity(null);
+        await fetchIdentities();
+        return;
+      }
+
+      showSnackbar(response.data?.message || "Gagal menghapus data identitas.", "error");
+    } catch (error) {
+      showSnackbar(
+        error?.response?.data?.message ||
+          "Terjadi error saat menghapus data identitas.",
+        "error",
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleDelete = (record) => {
-    // console.log("delete record", record);
-    setSelectedData(record);
-    setOpenDeleteModal(true);
-  };
-
-  const handleViewInformation = (record) => {
-    // console.log("delete record", record);
-    setSelectedData(record);
-    setOpenViewInformationModal(true);
-  };
-
-  // Utility untuk filter dinamis
-  function generateFilters(data, key) {
-    return [...new Set(data.map((item) => item[key]))]
-      .filter((val) => val !== undefined && val !== null)
-      .map((val) => ({ text: val, value: val }));
-  }
-
-  function createOnFilter(key) {
-    return (value, record) => record[key] === value;
-  }
-
-  const nameFilters = generateFilters(dataIdentities, "full_name");
-  const statusFilters = [
-    { text: "Aktif", value: "active" },
-    { text: "Tidak Aktif", value: "inactive" },
-    { text: "Blacklist", value: "blacklisted" },
-  ];
-
-  const columns = [
-    {
-      title: "No",
-      dataIndex: "index",
-      render: (text, record, index) => index + 1,
-      width: 50,
-      align: "center",
-    },
-    {
-      title: "Nama Lengkap",
-      dataIndex: "full_name",
-      filters: nameFilters,
-      onFilter: createOnFilter("full_name"),
-      filterSearch: true,
-      sorter: (a, b) => a.full_name.localeCompare(b.full_name),
-      sortDirections: ["ascend", "descend"],
-      render: (text, record) => (
-        <Typography sx={{ fontWeight: "bold", fontSize: "12px" }}>
-          {record.full_name}
-        </Typography>
-      ),
-      width: 200,
-    },
-    {
-      title: "NIK",
-      dataIndex: "nik",
-      render: (text, record) => (
-        <Typography sx={{ fontWeight: "bold", fontSize: "12px" }}>
-          {record.nik}
-        </Typography>
-      ),
-      width: 100,
-    },
-    {
-      title: "Tempat, Tanggal Lahir",
-      dataIndex: "nik",
-      render: (text, record) => (
-        <Typography sx={{ fontWeight: "bold", fontSize: "12px" }}>
-          {record.birth_place},{" "}
-          {moment(record.birth_date).format("D MMMM YYYY")}
-        </Typography>
-      ),
-      width: 200,
-    },
-    {
-      title: "Pekerjaan",
-      dataIndex: "occupation",
-      render: (text, record) => (
-        <Typography sx={{ fontWeight: "bold", fontSize: "12px" }}>
-          {record.occupation}
-        </Typography>
-      ),
-      width: 100,
-    },
-    // {
-    //   title: "Kewarganegaraan",
-    //   dataIndex: "nationality",
-    //   render: (text, record) => (
-    //     <Typography sx={{ fontWeight: "bold", fontSize: "12px" }}>
-    //       {record.nationality}
-    //     </Typography>
-    //   ),
-    //   width: 120,
-    // },
-    {
-      title: "Status",
-      dataIndex: "status",
-      filters: statusFilters,
-      onFilter: (value, record) => record.status === value,
-      render: (text, record) => {
-        return (
-          <Tag
-            color={
-              record.status === "active"
-                ? "green"
-                : record.status === "inactive"
-                  ? "red"
-                  : "yellow"
-            }
-            key={record.id}
-            style={{ fontWeight: "bold" }}
-          >
-            {record.status === "active"
-              ? "Aktif"
-              : record.status === "inactive"
-                ? "Tidak Aktif"
-                : "Blacklist"}
-          </Tag>
-        );
+  const columns = useMemo(
+    () => [
+      {
+        title: "No",
+        width: 72,
+        align: "center",
+        render: (_, __, index) => index + 1,
       },
-      width: 100,
-    },
-    {
-      title: "Actions",
-      key: "action",
-      align: "center",
-      width: 100,
-      fixed: "right",
-      render: (text, record) => (
-        <Box sx={{ display: "flex", gap: 1, justifyContent: "center" }}>
-          <Button
-            size="small"
-            variant={themeMode === "dark" ? "outlined" : "contained"}
-            color="info"
-            onClick={() => handleEdit(record)}
-            sx={{ minWidth: 0, px: 1 }}
+      {
+        title: "Identitas",
+        dataIndex: "full_name",
+        width: 300,
+        filters: createColumnFilters(identities, "full_name"),
+        onFilter: createExactFilter("full_name"),
+        filterSearch: true,
+        sorter: (a, b) => a.full_name.localeCompare(b.full_name),
+        render: (_, record) => (
+          <Stack spacing={0.45}>
+            <Typography sx={{ fontWeight: 900, fontSize: 13 }}>
+              {record.full_name || "-"}
+            </Typography>
+            <Typography sx={{ color: theme.ui.mutedText, fontWeight: 700, fontSize: 11.5 }}>
+              NIK {record.nik || "-"}
+            </Typography>
+          </Stack>
+        ),
+      },
+      {
+        title: "Tempat, Tanggal Lahir",
+        dataIndex: "birth_place",
+        width: 240,
+        render: (_, record) => (
+          <Typography sx={{ fontWeight: 700, fontSize: 12 }}>
+            {formatBirth(record)}
+          </Typography>
+        ),
+      },
+      {
+        title: "Kontak & Pekerjaan",
+        dataIndex: "occupation",
+        width: 230,
+        filters: createColumnFilters(identities, "occupation"),
+        onFilter: createExactFilter("occupation"),
+        filterSearch: true,
+        render: (_, record) => (
+          <Stack spacing={0.35}>
+            <Typography sx={{ fontWeight: 850, fontSize: 12 }}>
+              {record.occupation || "-"}
+            </Typography>
+            <Typography sx={{ color: theme.ui.mutedText, fontWeight: 650, fontSize: 11.5 }}>
+              {record.phone || "-"} | {record.nationality || "-"}
+            </Typography>
+          </Stack>
+        ),
+      },
+      {
+        title: "Alamat",
+        dataIndex: "city",
+        width: 300,
+        render: (_, record) => (
+          <Stack spacing={0.35}>
+            <Typography sx={{ fontWeight: 800, fontSize: 12 }}>
+              {record.street_address || "-"}
+            </Typography>
+            <Typography sx={{ color: theme.ui.mutedText, fontWeight: 650, fontSize: 11.5 }}>
+              {record.kelurahan || "-"}, {record.district || "-"}, {record.city || "-"}
+            </Typography>
+          </Stack>
+        ),
+      },
+      {
+        title: "Status",
+        dataIndex: "status",
+        width: 135,
+        filters: [
+          { text: "Aktif", value: "active" },
+          { text: "Tidak Aktif", value: "inactive" },
+          { text: "Blacklist", value: "blacklisted" },
+        ],
+        onFilter: createExactFilter("status"),
+        render: (value) => (
+          <Tag
+            color={STATUS_COLORS[value] || "default"}
+            style={{
+              borderRadius: 8,
+              fontFamily: "Poppins",
+              fontWeight: 850,
+              padding: "3px 10px",
+            }}
           >
-            <Icon icon="line-md:edit" fontSize={18} />
-          </Button>
-          <Button
-            size="small"
-            variant={themeMode === "dark" ? "outlined" : "contained"}
-            color="success"
-            onClick={() => handleViewInformation(record)}
-            sx={{ minWidth: 0, px: 1 }}
+            {STATUS_LABELS[value] || "-"}
+          </Tag>
+        ),
+      },
+      {
+        title: "Diperbarui",
+        dataIndex: "updated_at",
+        width: 190,
+        render: (value) => (
+          <Typography sx={{ fontWeight: 650, fontSize: 12 }}>
+            {formatDateTime(value)}
+          </Typography>
+        ),
+      },
+      {
+        title: "Aksi",
+        key: "action",
+        width: ACTION_COLUMN_WIDTH,
+        fixed: "right",
+        align: "center",
+        className: "identity-action-column",
+        onHeaderCell: () => ({ className: "identity-action-column" }),
+        onCell: () => ({ className: "identity-action-column" }),
+        render: (_, record) => (
+          <Box
+            className="identity-action-buttons"
+            sx={{
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 0.85,
+              width: "100%",
+              minWidth: 118,
+              flexWrap: "nowrap",
+            }}
           >
-            <Icon icon="line-md:chat-round-alert" fontSize={18} />
-          </Button>
-          <Button
-            size="small"
-            variant={themeMode === "dark" ? "outlined" : "contained"}
-            color="error"
-            onClick={() => handleDelete(record)}
-            sx={{ minWidth: 0, px: 1 }}
-          >
-            <Icon icon="line-md:close-circle" fontSize={18} />
-          </Button>
-        </Box>
-      ),
-    },
-  ];
+            <Tooltip title="Ubah identitas">
+              <IconButton
+                size="small"
+                onClick={() => openEditModal(record)}
+                sx={{
+                  flex: "0 0 auto",
+                  width: 34,
+                  height: 34,
+                  borderRadius: 1.5,
+                  color: theme.palette.info.main,
+                  border: `1px solid ${theme.palette.info.main}55`,
+                  bgcolor:
+                    theme.palette.mode === "dark"
+                      ? "rgba(33,150,243,0.10)"
+                      : "rgba(33,150,243,0.08)",
+                }}
+              >
+                <Icon icon="solar:pen-bold-duotone" fontSize={18} />
+              </IconButton>
+            </Tooltip>
+
+            <Tooltip title="Lihat detail identitas">
+              <IconButton
+                size="small"
+                onClick={() => openPreviewModal(record)}
+                sx={{
+                  flex: "0 0 auto",
+                  width: 34,
+                  height: 34,
+                  borderRadius: 1.5,
+                  color: theme.palette.success.main,
+                  border: `1px solid ${theme.palette.success.main}55`,
+                  bgcolor:
+                    theme.palette.mode === "dark"
+                      ? "rgba(76,175,80,0.10)"
+                      : "rgba(76,175,80,0.08)",
+                }}
+              >
+                <Icon icon="solar:eye-bold-duotone" fontSize={18} />
+              </IconButton>
+            </Tooltip>
+
+            <Tooltip title="Hapus identitas">
+              <IconButton
+                size="small"
+                onClick={() => openDeleteModal(record)}
+                sx={{
+                  flex: "0 0 auto",
+                  width: 34,
+                  height: 34,
+                  borderRadius: 1.5,
+                  color: theme.palette.error.main,
+                  border: `1px solid ${theme.palette.error.main}55`,
+                  bgcolor:
+                    theme.palette.mode === "dark"
+                      ? "rgba(244,67,54,0.10)"
+                      : "rgba(244,67,54,0.08)",
+                }}
+              >
+                <Icon icon="solar:trash-bin-trash-bold-duotone" fontSize={18} />
+              </IconButton>
+            </Tooltip>
+          </Box>
+        ),
+      },
+    ],
+    [identities, theme],
+  );
 
   return (
-    <Box sx={{ width: "100%", height: "100%", minHeight: "100%", p: 2 }}>
-      {/* Component Breadcrumbs disini */}
-      <BreadcrumbPage menuList={MENU_CONFIG} />
-
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "flex-end",
-          transition: "all 0.3s",
-          mb: 2,
-          mt: 4,
-        }}
-      >
-        <Button
-          variant={themeMode === "dark" ? "outlined" : "contained"}
-          onClick={() => setOpenAddModal(true)}
-          sx={{
-            textTransform: "none",
+    <Box
+      sx={{
+        width: "100%",
+        minHeight: "calc(100vh - 64px)",
+        bgcolor: theme.ui.pageBg,
+        p: { xs: 1.25, sm: 2, lg: 2.25 },
+        transition: "background-color 0.2s ease",
+      }}
+    >
+      <Stack spacing={{ xs: 1.5, lg: 2 }}>
+        <PageHeader
+          eyebrow="Data Master"
+          title="Identity Lists"
+          description="Kelola data identitas penyewa, NIK, alamat, status blacklist, dan dokumen KTP yang dipakai pada proses permohonan sewa."
+          icon="qlementine-icons:id-card-16"
+          actionSx={{
+            width: { xs: "100%", md: "auto" },
             display: "flex",
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 1,
-            fontWeight: "bold",
+            justifyContent: { xs: "stretch", md: "flex-end" },
           }}
+          action={
+            <Button
+              fullWidth
+              variant="contained"
+              startIcon={<Icon icon="solar:user-plus-bold-duotone" />}
+              onClick={openCreateModal}
+              sx={{
+                minHeight: 46,
+                px: { xs: 2, sm: 2.5 },
+                borderRadius: 2,
+                fontFamily: "Poppins",
+                fontWeight: 900,
+                textTransform: "none",
+                boxShadow:
+                  theme.palette.mode === "dark"
+                    ? "0 6px 14px rgba(255, 152, 0, 0.18)"
+                    : "0 6px 14px rgba(230, 9, 9, 0.16)",
+                "&:hover": {
+                  boxShadow:
+                    theme.palette.mode === "dark"
+                      ? "0 8px 18px rgba(255, 152, 0, 0.22)"
+                      : "0 8px 18px rgba(230, 9, 9, 0.20)",
+                  transform: "translateY(-1px)",
+                },
+              }}
+            >
+              Tambah Identitas
+            </Button>
+          }
+        />
+
+        <Grid container spacing={{ xs: 1.25, md: 1.5 }}>
+          {identityStats.map((item) => (
+            <Grid key={item.label} size={{ xs: 6, md: 3 }}>
+              <SummaryStatCard {...item} />
+            </Grid>
+          ))}
+        </Grid>
+
+        <DataTableShell
+          title="Daftar Identitas"
+          description={`${filteredIdentities.length} dari ${identities.length} identitas ditampilkan`}
+          searchValue={searchText}
+          searchPlaceholder="Cari nama, NIK, pekerjaan, alamat, atau status..."
+          onSearchChange={setSearchText}
         >
-          Tambah
-          <Icon icon="qlementine-icons:id-card-16" fontSize="20px" />
-        </Button>
-      </Box>
-      <ConfigProvider
-        theme={{
-          algorithm:
-            themeMode === "dark"
-              ? antdTheme.darkAlgorithm
-              : antdTheme.defaultAlgorithm,
-          token: {
-            colorPrimary: theme.palette.primary.main, // warna utama (angka aktif, outline, dsb)
-            // colorText: theme.palette.text.primary, // warna teks default
-            // colorBgContainer: theme.palette.background.default, // background tabel
-          },
-        }}
-      >
-        <Paper
-          elevation={6}
-          sx={{
-            p:
-              filteredData.length > 0
-                ? "10px 15px 0px 15px"
-                : "10px 15px 10px 15px",
-            width: "100%",
-            bgcolor: "background.default",
-            overflowX: "auto",
-          }}
-        >
-          <Input.Search
-            placeholder="Cari..."
-            allowClear
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-            style={{ width: 250, marginBottom: 20, marginTop: 10 }}
-          />
-          <Table
-            rowKey="id"
-            columns={columns}
-            dataSource={filteredData}
-            onChange={onChange}
-            showSorterTooltip={{ target: "sorter-icon" }}
-            scroll={{ x: "max-content", y: 420 }}
-            pagination={{
-              pageSize: pageSize,
-              showSizeChanger: true,
-              pageSizeOptions: [5, 10, 20, 50],
-              showTotal: (total, range) =>
-                `${range[0]}-${range[1]} dari ${total} data`,
+          <ConfigProvider
+            theme={{
+              algorithm:
+                themeMode === "dark"
+                  ? antdTheme.darkAlgorithm
+                  : antdTheme.defaultAlgorithm,
+              token: {
+                colorPrimary: theme.palette.primary.main,
+                colorBgContainer: theme.ui.dashboardCardBg,
+                colorText: theme.palette.text.primary,
+                colorBorder: theme.ui.dashboardCardBorder,
+                fontFamily: "Poppins, sans-serif",
+                borderRadius: 10,
+              },
+              components: {
+                Table: {
+                  headerBg:
+                    theme.palette.mode === "dark"
+                      ? "rgba(255,255,255,0.045)"
+                      : "rgba(17,24,39,0.035)",
+                  rowHoverBg:
+                    theme.palette.mode === "dark"
+                      ? "rgba(255,152,0,0.08)"
+                      : "rgba(230,9,9,0.05)",
+                },
+              },
             }}
-          />
-        </Paper>
-      </ConfigProvider>
-      <AddIdentity
-        open={openAddModal}
-        onClose={() => setOpenAddModal(false)}
-        onNotify={(onNotify) => setSnackbar(onNotify)}
-        loadingTrue={() => setLoading(true)}
-        loadingFalse={() => setLoading(false)}
+          >
+            <Box
+              sx={{
+                "--identity-action-bg": theme.palette.mode === "dark" ? "#111111" : "#ffffff",
+                "--identity-action-header-bg":
+                  theme.palette.mode === "dark" ? "#1c1c1c" : "#f8f9fb",
+                "--identity-action-hover-bg":
+                  theme.palette.mode === "dark" ? "#2b2317" : "#fff6f6",
+                /*
+                 * Ant Design memakai layer sticky untuk fixed column.
+                 * Background eksplisit ini mencegah isi kolom lain terlihat
+                 * tembus saat table di-scroll horizontal, terutama dark mode.
+                 */
+                "& .identity-action-column": {
+                  width: `${ACTION_COLUMN_WIDTH}px !important`,
+                  minWidth: `${ACTION_COLUMN_WIDTH}px !important`,
+                  maxWidth: `${ACTION_COLUMN_WIDTH}px !important`,
+                  paddingLeft: "16px !important",
+                  paddingRight: "16px !important",
+                  boxSizing: "border-box !important",
+                  zIndex: "8 !important",
+                  background: "var(--identity-action-bg) !important",
+                  backgroundColor: "var(--identity-action-bg) !important",
+                  backgroundImage: "none !important",
+                  backgroundClip: "border-box !important",
+                  opacity: "1 !important",
+                },
+                "& .ant-table-tbody > tr > td.identity-action-column": {
+                  textAlign: "center !important",
+                  verticalAlign: "middle !important",
+                },
+                "& .identity-action-buttons": {
+                  marginInline: "auto",
+                  transform: "translateX(6px)",
+                },
+                "& .ant-table-thead .identity-action-column": {
+                  textAlign: "center !important",
+                  zIndex: "10 !important",
+                  background: "var(--identity-action-header-bg) !important",
+                  backgroundColor: "var(--identity-action-header-bg) !important",
+                },
+                "& .ant-table-tbody > tr:hover > .identity-action-column": {
+                  background: "var(--identity-action-hover-bg) !important",
+                  backgroundColor: "var(--identity-action-hover-bg) !important",
+                },
+              }}
+            >
+              <Table
+                rowKey="id"
+                columns={columns}
+                dataSource={filteredIdentities}
+                loading={loading}
+                tableLayout="fixed"
+                showSorterTooltip={{ target: "sorter-icon" }}
+                scroll={{ x: TABLE_SCROLL_WIDTH, y: 430 }}
+                onChange={(pagination) => {
+                  if (pagination.pageSize !== pageSize) {
+                    setPageSize(pagination.pageSize);
+                  }
+                }}
+                pagination={{
+                  pageSize,
+                  showSizeChanger: true,
+                  pageSizeOptions: PAGE_SIZE_OPTIONS,
+                  showTotal: (total, range) =>
+                    `${range[0]}-${range[1]} dari ${total} data`,
+                }}
+              />
+            </Box>
+          </ConfigProvider>
+        </DataTableShell>
+      </Stack>
+
+      <IdentityFormModal
+        open={formOpen}
+        mode={formMode}
+        initialData={selectedIdentity}
         loading={loading}
-        getDataIdentities={getDataIdentities}
+        onClose={closeFormModal}
+        onSubmit={handleSaveIdentity}
+        onNotify={setSnackbar}
       />
-      <EditIdentity
-        open={openEditModal}
-        onClose={() => setOpenEditModal(false)}
-        onNotify={(onNotify) => setSnackbar(onNotify)}
-        loadingTrue={() => setLoading(true)}
-        loadingFalse={() => setLoading(false)}
+
+      <CrudConfirmModal
+        open={deleteOpen}
+        title="Hapus Identitas"
+        description="Data identitas yang dihapus tidak dapat digunakan lagi pada transaksi baru. Anda yakin ingin menghapus"
+        highlight={selectedIdentity?.full_name}
+        confirmLabel="Hapus Identitas"
+        loadingLabel="Menghapus..."
         loading={loading}
-        getDataIdentities={getDataIdentities}
-        selectedData={selectedData}
+        onClose={() => !loading && setDeleteOpen(false)}
+        onConfirm={handleDeleteIdentity}
       />
-      <DeleteIdentity
-        open={openDeleteModal}
-        onClose={() => setOpenDeleteModal(false)}
-        onNotify={(onNotify) => setSnackbar(onNotify)}
-        loadingTrue={() => setLoading(true)}
-        loadingFalse={() => setLoading(false)}
-        loading={loading}
-        selectedData={selectedData}
-        getDataIdentities={getDataIdentities}
-      />
+
       <InformationPreviewModal
-        open={openViewInformationModal}
-        onClose={() => setOpenViewInformationModal(false)}
-        selectedData={selectedData}
+        open={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+        selectedData={selectedIdentity}
       />
-      <LoadingBackdrop message={loadingMessage} open={loading} />
-      {/* Snackbar notification */}
+
+      <LoadingBackdrop
+        message="Loading..."
+        open={loading && !formOpen && !deleteOpen}
+      />
       <Notification
         open={snackbar.open}
         message={snackbar.message}
         severity={snackbar.severity}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        onClose={() => setSnackbar((current) => ({ ...current, open: false }))}
       />
     </Box>
   );
-};
-
-export default IdentityList;
+}

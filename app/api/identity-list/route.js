@@ -1,278 +1,136 @@
-import fs from "fs";
-import path from "path";
-import pool from "@/lib/dbConfig";
 import moment from "moment";
+import pool from "@/lib/dbConfig";
 import { requireAuthenticatedUser, requireRole } from "@/app/utils/auth";
+import {
+  failResponse,
+  handleApiError,
+  jsonResponse,
+} from "@/app/utils/apiValidation";
+import { prepareKtpUpload, removeKtpFile, saveKtpFile } from "./fileHelpers";
+import { validateIdentityFormData } from "./validation";
 
 const MASTER_DATA_ROLES = [1, 2];
-const MAX_KTP_FILE_SIZE = 5 * 1024 * 1024;
 
-const sanitizeFilenamePart = (value) =>
-  String(value || "tenant")
-    .replace(/[^a-zA-Z0-9-_]/g, "_")
-    .slice(0, 80);
-
-const uploadDir = path.join(process.cwd(), "uploads/ktp");
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
+const mapIdentityRow = (row) => ({
+  id: row.id,
+  user_id: row.user_id,
+  nik: row.nik,
+  full_name: row.full_name,
+  ktp_file_path: row.ktp_file_path,
+  birth_place: row.birth_place,
+  birth_date: row.birth_date,
+  nationality: row.nationality,
+  religion: row.religion,
+  occupation: row.occupation,
+  street_address: row.street_address,
+  rt: row.rt,
+  rw: row.rw,
+  kelurahan: row.kelurahan,
+  district: row.district,
+  city: row.city,
+  province: row.province,
+  postal_code: row.postal_code,
+  phone: row.phone,
+  status: row.status,
+  notes: row.notes,
+  updated_at: row.updated_at
+    ? moment(row.updated_at).format("YYYY-MM-DD HH:mm:ss")
+    : null,
+  created_at: row.created_at
+    ? moment(row.created_at).format("YYYY-MM-DD HH:mm:ss")
+    : null,
+});
 
 export async function POST(req) {
+  let uploadedPath = null;
+
   try {
     const { response } = await requireRole(MASTER_DATA_ROLES);
     if (response) return response;
 
     const formData = await req.formData();
+    const { values, ktpFile, error } = validateIdentityFormData(formData, {
+      requireFile: true,
+    });
 
-    // Ambil fields dari formData
-    const nik = formData.get("nomorIndukKependudukan");
-    const full_name = formData.get("namaLengkap");
-    const birth_place = formData.get("tempatLahir");
-    const birth_date = formData.get("tanggalLahir");
-    const religion = formData.get("agama");
-    const occupation = formData.get("pekerjaan");
-    const nationality = formData.get("wargaNegara");
-    const phone = formData.get("phone");
-    const status = formData.get("status");
-    const notes = formData.get("notes");
-
-    const street_address = formData.get("alamatJalan");
-    const rt = formData.get("rt");
-    const rw = formData.get("rw");
-    const province = formData.get("provinsi");
-    const city = formData.get("kabupaten");
-    const district = formData.get("kecamatan");
-    const kelurahan = formData.get("kelurahan");
-
-    const ktpFile = formData.get("ktpFile");
-
-    // validasi field wajib
-    if (!nik) {
-      return Response.json(
-        { success: false, message: "NIK wajib diisi!" },
-        { status: 400 }
-      );
+    if (error) {
+      return failResponse(error, 400);
     }
 
-    if (!full_name) {
-      return Response.json(
-        { success: false, message: "Nama Lengkap wajib diisi!" },
-        { status: 400 }
-      );
-    }
-
-    if (!status) {
-      return Response.json(
-        { success: false, message: "Status wajib diisi!" },
-        { status: 400 }
-      );
-    }
-
-    if (!phone) {
-      return Response.json(
-        { success: false, message: "Nomor Telepon wajib diisi!" },
-        { status: 400 }
-      );
-    }
-
-    if (!street_address) {
-      return Response.json(
-        { success: false, message: "Alamat wajib diisi!" },
-        { status: 400 }
-      );
-    }
-
-    if (!province) {
-      return Response.json(
-        { success: false, message: "Provinsi wajib diisi!" },
-        { status: 400 }
-      );
-    }
-
-    if (!city) {
-      return Response.json(
-        { success: false, message: "Kota wajib diisi!" },
-        { status: 400 }
-      );
-    }
-
-    if (!district) {
-      return Response.json(
-        { success: false, message: "Kecamatan wajib diisi!" },
-        { status: 400 }
-      );
-    }
-
-    if (!kelurahan) {
-      return Response.json(
-        { success: false, message: "Kelurahan wajib diisi!" },
-        { status: 400 }
-      );
-    }
-
-    if (!ktpFile) {
-      return Response.json(
-        { success: false, message: "Silahkan upload KTP!" },
-        { status: 400 }
-      );
-    }
-
-    if (!birth_date) {
-      return Response.json(
-        { success: false, message: "Tanggal Lahir wajib diisi!" },
-        { status: 400 }
-      );
-    }
-
-    if (!birth_place) {
-      return Response.json(
-        { success: false, message: "Tempat Lahir wajib diisi!" },
-        { status: 400 }
-      );
-    }
-
-    if (!religion) {
-      return Response.json(
-        { success: false, message: "Agama wajib diisi!" },
-        { status: 400 }
-      );
-    }
-
-    if (!occupation) {
-      return Response.json(
-        { success: false, message: "Pekerjaan wajib diisi!" },
-        { status: 400 }
-      );
-    }
-
-    if (!nationality) {
-      return Response.json(
-        { success: false, message: "Warga Negara wajib diisi!" },
-        { status: 400 }
-      );
-    }
-
-    //cek duplikasi NIK
-    const checkNIK = await pool.query(
-      "SELECT 1 FROM tenant_identities WHERE nik = $1",
-      [nik]
+    const duplicateNik = await pool.query(
+      "SELECT 1 FROM tenant_identities WHERE nik = $1 LIMIT 1",
+      [values.nik],
     );
-    if (checkNIK.rows.length > 0) {
-      return Response.json(
-        { success: false, message: "NIK sudah terdaftar!" },
-        { status: 400 }
-      );
+
+    if (duplicateNik.rowCount > 0) {
+      return failResponse("NIK sudah terdaftar.", 409);
     }
 
-    // Validasi NIK harus 16 Digit
-    if (nik.length !== 16) {
-      return Response.json(
-        { success: false, message: "Nomor NIK tidak valid, harus 16 digit!" },
-        { status: 400 }
-      );
+    const preparedFile = await prepareKtpUpload(ktpFile, values.full_name);
+    if (preparedFile.error) {
+      return failResponse(preparedFile.error, 400);
     }
 
-    let ktp_file_path = null;
-    let fileBuffer = null;
-    let filename = null;
+    await saveKtpFile(preparedFile.filename, preparedFile.fileBuffer);
+    uploadedPath = preparedFile.ktp_file_path;
 
-    if (ktpFile && ktpFile.name) {
-      if (ktpFile.size > MAX_KTP_FILE_SIZE) {
-        return Response.json(
-          { success: false, message: "Ukuran file KTP maksimal 5MB." },
-          { status: 400 }
-        );
-      }
+    const result = await pool.query(
+      `
+      INSERT INTO tenant_identities (
+        nik, full_name, ktp_file_path, birth_place, birth_date, nationality,
+        religion, occupation, street_address, rt, rw, kelurahan, district,
+        city, province, phone, status, notes
+      )
+      VALUES (
+        $1, $2, $3, $4, $5, $6,
+        $7, $8, $9, $10, $11, $12, $13,
+        $14, $15, $16, $17, $18
+      )
+      RETURNING *
+      `,
+      [
+        values.nik,
+        values.full_name,
+        preparedFile.ktp_file_path,
+        values.birth_place,
+        values.birth_date,
+        values.nationality,
+        values.religion,
+        values.occupation,
+        values.street_address,
+        values.rt,
+        values.rw,
+        values.kelurahan,
+        values.district,
+        values.city,
+        values.province,
+        values.phone,
+        values.status,
+        values.notes,
+      ],
+    );
 
-      const arrayBuffer = await ktpFile.arrayBuffer();
-      fileBuffer = Buffer.from(arrayBuffer);
-
-      const ext = path.extname(ktpFile.name).toLowerCase() || ".jpg";
-      if (![".jpg", ".jpeg", ".png", ".pdf"].includes(ext)) {
-        return Response.json(
-          { success: false, message: "Format file KTP tidak valid." },
-          { status: 400 }
-        );
-      }
-
-      filename = `ktp_${sanitizeFilenamePart(full_name)}_${moment().format(
-        "YYYY_MM_DD_HH_mm_ss"
-      )}${ext}`;
-      ktp_file_path = `/uploads/ktp/${filename}`;
-    }
-
-    const client = await pool.connect();
-    try {
-      await client.query("BEGIN");
-
-      const result = await client.query(
-        `
-        INSERT INTO tenant_identities (
-          nik, full_name, ktp_file_path, birth_place, birth_date, nationality,
-          religion, occupation, street_address, rt, rw, kelurahan, district,
-          city, province, phone, status, notes
-        )
-        VALUES (
-          $1, $2, $3, $4, $5, $6,
-          $7, $8, $9, $10, $11, $12, $13,
-          $14, $15, $16, $17, $18
-        )
-        RETURNING *
-        `,
-        [
-          nik,
-          full_name,
-          ktp_file_path,
-          birth_place,
-          moment(birth_date).format("YYYY-MM-DD"),
-          nationality,
-          religion,
-          occupation,
-          street_address,
-          rt,
-          rw,
-          kelurahan,
-          district,
-          city,
-          province,
-          phone,
-          status,
-          notes,
-        ]
-      );
-
-      await client.query("COMMIT");
-
-      // Simpan file setelah commit sukses
-      if (fileBuffer && filename) {
-        const filepath = path.join(uploadDir, filename);
-        await fs.promises.writeFile(filepath, fileBuffer);
-      }
-
-      return Response.json(
-        {
-          success: true,
-          message: "Data berhasil disimpan.",
-          data: result.rows[0],
-        },
-        { status: 201 }
-      );
-    } catch (dbErr) {
-      await client.query("ROLLBACK");
-      throw dbErr;
-    } finally {
-      client.release();
-    }
-  } catch (err) {
-    console.error("Error upload/insert:", err);
-    return Response.json(
-      { success: false, message: "Terjadi error: " + err.message },
-      { status: 500 }
+    return jsonResponse(
+      {
+        success: true,
+        message: "Data identitas berhasil ditambahkan.",
+        data: mapIdentityRow(result.rows[0]),
+      },
+      201,
+    );
+  } catch (error) {
+    await removeKtpFile(uploadedPath).catch((fileError) =>
+      console.warn("Gagal membersihkan file KTP setelah error:", fileError),
+    );
+    return handleApiError(
+      "Error creating identity",
+      error,
+      "Terjadi kesalahan saat menambah data identitas.",
     );
   }
 }
 
-export async function GET(req) {
+export async function GET() {
   try {
     const { response } = await requireAuthenticatedUser();
     if (response) return response;
@@ -280,80 +138,25 @@ export async function GET(req) {
     const result = await pool.query(
       `
       SELECT 
-        id,
-        user_id,
-        nik,
-        full_name,
-        ktp_file_path,
-        birth_place,
-        birth_date,
-        nationality,
-        religion,
-        occupation,
-        street_address,
-        rt,
-        rw,
-        kelurahan,
-        district,
-        city,
-        province,
-        postal_code,
-        phone,
-        status,
-        notes,
-        created_at,
-        updated_at
-      FROM tenant_identities 
+        id, user_id, nik, full_name, ktp_file_path, birth_place, birth_date,
+        nationality, religion, occupation, street_address, rt, rw, kelurahan,
+        district, city, province, postal_code, phone, status, notes,
+        created_at, updated_at
+      FROM tenant_identities
       ORDER BY created_at DESC
-      `
+      `,
     );
 
-    const rows = result.rows.map((row) => ({
-      id: row.id,
-      user_id: row.user_id,
-      nik: row.nik,
-      full_name: row.full_name,
-      ktp_file_path: row.ktp_file_path,
-      birth_place: row.birth_place,
-      birth_date: row.birth_date,
-      nationality: row.nationality,
-      religion: row.religion,
-      occupation: row.occupation,
-      status: row.status,
-      phone: row.phone,
-      notes: row.notes,
-
-      // alamat detail
-      street_address: row.street_address,
-      rt: row.rt,
-      rw: row.rw,
-      kelurahan: row.kelurahan,
-      district: row.district,
-      city: row.city,
-      province: row.province,
-      postal_code: row.postal_code,
-
-      updated_at: row.updated_at
-        ? moment(row.updated_at).format("YYYY-MM-DD HH:mm:ss")
-        : null,
-      created_at: row.created_at
-        ? moment(row.created_at).format("YYYY-MM-DD HH:mm:ss")
-        : null,
-    }));
-
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: "Berhasil mengambil data tenant identities",
-        data: rows,
-      }),
-      { status: 200 }
-    );
-  } catch (err) {
-    console.error("error", err);
-    return new Response(
-      JSON.stringify({ success: false, message: err.message }),
-      { status: 500 }
+    return jsonResponse({
+      success: true,
+      message: "Berhasil mengambil data identitas penyewa.",
+      data: result.rows.map(mapIdentityRow),
+    });
+  } catch (error) {
+    return handleApiError(
+      "Error fetching identities",
+      error,
+      "Terjadi kesalahan saat mengambil data identitas.",
     );
   }
 }

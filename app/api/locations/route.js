@@ -1,6 +1,12 @@
 import pool from "@/lib/dbConfig";
 import moment from "moment";
 import { requireAuthenticatedUser, requireRole } from "@/app/utils/auth";
+import {
+  failResponse,
+  handleApiError,
+  jsonResponse,
+} from "@/app/utils/apiValidation";
+import { validateLocationPayload } from "./validation";
 
 const MASTER_DATA_ROLES = [1, 2];
 
@@ -11,120 +17,73 @@ export async function POST(req) {
     if (response) return response;
 
     const body = await req.json();
-    const { location_name, city, street_address, location_code, kelurahan, district, province } = body;
+    const { payload, error } = validateLocationPayload(body);
 
-    // Validasi field wajib
-    if (!location_name) {
-      return new Response(
-        JSON.stringify({ success: false, message: "Semua field wajib diisi!" }),
-        { status: 400 }
-      );
+    if (error) {
+      return failResponse(error, 400);
     }
 
-    if (!city) {
-      return new Response(
-        JSON.stringify({ success: false, message: "Semua field wajib diisi!" }),
-        { status: 400 }
-      );
-    }
-
-    if (!street_address) {
-      return new Response(
-        JSON.stringify({ success: false, message: "Semua field wajib diisi!" }),
-        { status: 400 }
-      );
-    }
-
-    if (!location_code) {
-      return new Response(
-        JSON.stringify({ success: false, message: "Semua field wajib diisi!" }),
-        { status: 400 }
-      );
-    }
-
-    if (!kelurahan) {
-      return new Response(
-        JSON.stringify({ success: false, message: "Semua field wajib diisi!" }),
-        { status: 400 }
-      );
-    }
-
-    if (!district) {
-      return new Response(
-        JSON.stringify({ success: false, message: "Semua field wajib diisi!" }),
-        { status: 400 }
-      );
-    }
-
-    if (!province) {
-      return new Response(
-        JSON.stringify({ success: false, message: "Semua field wajib diisi!" }),
-        { status: 400 }
-      );
-    }
-
-    // Cek duplikasi Nama Lokasi
-    const checkUser = await pool.query(
-      `SELECT 1 FROM locations WHERE location_name = $1`,
-      [location_name]
+    const duplicateName = await pool.query(
+      `SELECT 1 FROM locations WHERE LOWER(location_name) = LOWER($1) LIMIT 1`,
+      [payload.location_name],
     );
-    if (checkUser.rows.length > 0) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          message: "Lokasi sudah terdaftar!",
-        }),
-        { status: 400 }
-      );
+
+    if (duplicateName.rows.length > 0) {
+      return failResponse("Lokasi sudah terdaftar.", 409);
     }
 
-    // Cek duplikasi Kode Lokasi
-    // const checkCode = await pool.query(
-    //   `SELECT 1 FROM locations WHERE location_code = $1`,
-    //   [location_code]
-    // );
-    // if (checkCode.rows.length > 0) {
-    //   return new Response(
-    //     JSON.stringify({
-    //       success: false,
-    //       message: "Kode lokasi sudah terdaftar!",
-    //     }),
-    //     { status: 400 }
-    //   );
-    // }
+    const duplicateCode = await pool.query(
+      `SELECT 1 FROM locations WHERE LOWER(location_code) = LOWER($1) LIMIT 1`,
+      [payload.location_code],
+    );
 
-
+    if (duplicateCode.rows.length > 0) {
+      return failResponse("Kode lokasi sudah terdaftar.", 409);
+    }
 
     const result = await pool.query(
-      `INSERT INTO locations (location_name, city, street_address, location_code, kelurahan, district, province)
-       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
-      [location_name, city, street_address, location_code, kelurahan, district, province]
+      `INSERT INTO locations (
+        location_name,
+        city,
+        street_address,
+        location_code,
+        kelurahan,
+        district,
+        province
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      RETURNING *`,
+      [
+        payload.location_name,
+        payload.city,
+        payload.street_address,
+        payload.location_code,
+        payload.kelurahan,
+        payload.district,
+        payload.province,
+      ],
     );
-    return new Response(
-      JSON.stringify({
+
+    return jsonResponse(
+      {
         success: true,
         message: "Berhasil menambah lokasi baru",
         data: result.rows[0],
-      }),
-      { status: 201 }
+      },
+      201,
     );
   } catch (err) {
-    return new Response(
-      JSON.stringify({ success: false, message: err.message }),
-      { status: 500 }
-    );
+    return handleApiError("error create location", err, "Gagal menambah lokasi.");
   }
 }
 
 // READ Data Location
-export async function GET(req) {
+export async function GET() {
   try {
     const { response } = await requireAuthenticatedUser();
     if (response) return response;
 
-    const result = await pool.query(
-      `SELECT * FROM locations ORDER BY created_at DESC`
-    );
+    const result = await pool.query(`SELECT * FROM locations ORDER BY created_at DESC`);
     const rows = result.rows.map((row) => ({
       id: row.id,
       location_name: row.location_name,
@@ -141,18 +100,13 @@ export async function GET(req) {
         ? moment(row.created_at).format("YYYY-MM-DD HH:mm:ss")
         : null,
     }));
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: "Berhasil mengambil data lokasi",
-        data: rows,
-      }),
-      { status: 200 }
-    );
+
+    return jsonResponse({
+      success: true,
+      message: "Berhasil mengambil data lokasi",
+      data: rows,
+    });
   } catch (err) {
-    return new Response(
-      JSON.stringify({ success: false, message: err.message }),
-      { status: 500 }
-    );
+    return handleApiError("error get locations", err, "Gagal mengambil data lokasi.");
   }
 }

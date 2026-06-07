@@ -1,3 +1,5 @@
+import { calculateRoomRent } from "./calculateRoomRent";
+
 export const buildPaymentDetail = (data) => {
   if (!data) {
     return {
@@ -24,14 +26,7 @@ export const buildPaymentDetail = (data) => {
   // =========================
   //  TOTAL SEWA
   // =========================
-  let totalSewaKontrakRuangan = Number(data?.total_payment_room);
-
-  if (data?.price_type === "harga_per_meter") {
-    totalSewaKontrakRuangan =
-      Number(data?.price_per_m2 || 0) * Number(data?.room_area || 0);
-  } else {
-    totalSewaKontrakRuangan = Number(data?.price_per_m2 || 0);
-  }
+  const totalSewaKontrakRuangan = calculateRoomRent(data);
 
   // =========================
   //  PPN

@@ -1,3 +1,5 @@
+import { calculateRoomRent } from "./calculateRoomRent";
+
 export const calculateAllPayments = ({
   room,
   paymentType,
@@ -7,12 +9,7 @@ export const calculateAllPayments = ({
 }) => {
   const TAX = 0.11;
 
-  const price = Number(room?.price_per_m2 || 0);
-  const area = Number(room?.room_length || 0) * Number(room?.room_width || 0);
-
-  const totalSewa =
-    room?.price_type === "harga_per_meter" ? area * price : price;
-
+  const totalSewa = calculateRoomRent(room);
   const totalPPN = totalSewa * TAX;
   const totalPayment = totalSewa + totalPPN + adminFee;
 

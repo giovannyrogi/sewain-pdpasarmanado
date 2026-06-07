@@ -2,6 +2,13 @@ import React from "react";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 
 export const lightTheme = createTheme({
+  typography: {
+    fontFamily: '"Poppins", sans-serif',
+    button: {
+      fontFamily: '"Poppins", sans-serif',
+      textTransform: "none",
+    },
+  },
   palette: {
     mode: "light",
     primary: { main: "#E60909" },
@@ -64,6 +71,13 @@ export const lightTheme = createTheme({
 });
 
 export const darkTheme = createTheme({
+  typography: {
+    fontFamily: '"Poppins", sans-serif',
+    button: {
+      fontFamily: '"Poppins", sans-serif',
+      textTransform: "none",
+    },
+  },
   palette: {
     mode: "dark",
     primary: { main: "#FF9800" },

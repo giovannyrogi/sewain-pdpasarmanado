@@ -1,70 +1,76 @@
 import pool from "@/lib/dbConfig";
 import moment from "moment";
 import { requireAuthenticatedUser, requireRole } from "@/app/utils/auth";
+import {
+  failResponse,
+  handleApiError,
+  jsonResponse,
+} from "@/app/utils/apiValidation";
+import { validateFloorPayload } from "./validation";
 
 const MASTER_DATA_ROLES = [1, 2];
 
-// CREATE lokasi
+// CREATE lantai
 export async function POST(req) {
   try {
     const { response } = await requireRole(MASTER_DATA_ROLES);
     if (response) return response;
 
     const body = await req.json();
-    const { location_id, floor } = body;
+    const { payload, error } = validateFloorPayload(body);
 
-    // validasi field wajib
-    if (!location_id) {
-      return new Response(
-        JSON.stringify({ success: false, message: "Lokasi wajib diisi!" }),
-        { status: 200 }
-      );
+    if (error) {
+      return failResponse(error, 400);
     }
 
-    if (!floor) {
-      return new Response(
-        JSON.stringify({ success: false, message: "Lantai wajib diisi!" }),
-        { status: 200 }
-      );
-    }
-
-    // validasi apakah lantai sudah terdaftar pada lokasi yang dipilih
-    const checkFloor = await pool.query(
-      `SELECT 1 FROM location_floor_prices WHERE location_id = $1 AND floor = $2`,
-      [location_id, floor]
+    const locationExists = await pool.query(
+      `SELECT 1 FROM locations WHERE id = $1 LIMIT 1`,
+      [payload.location_id],
     );
-    if (checkFloor.rows.length > 0) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          message: "Lantai sudah terdaftar pada lokasi ini!",
-        }),
-        { status: 200 }
-      );
+
+    if (locationExists.rows.length === 0) {
+      return failResponse("Lokasi tidak ditemukan.", 404);
+    }
+
+    const duplicateFloor = await pool.query(
+      `
+      SELECT 1
+      FROM location_floor_prices
+      WHERE location_id = $1
+        AND LOWER(floor) = LOWER($2)
+      LIMIT 1
+      `,
+      [payload.location_id, payload.floor],
+    );
+
+    if (duplicateFloor.rows.length > 0) {
+      return failResponse("Lantai sudah terdaftar pada lokasi ini.", 409);
     }
 
     const result = await pool.query(
-      `INSERT INTO location_floor_prices (location_id, floor) VALUES ($1, $2) RETURNING *`,
-      [location_id, floor]
+      `
+      INSERT INTO location_floor_prices (location_id, floor)
+      VALUES ($1, $2)
+      RETURNING *
+      `,
+      [payload.location_id, payload.floor],
     );
-    return new Response(
-      JSON.stringify({
+
+    return jsonResponse(
+      {
         success: true,
         message: "Berhasil menambah Lantai baru",
         data: result.rows[0],
-      }),
-      { status: 201 }
+      },
+      201,
     );
   } catch (err) {
-    return new Response(
-      JSON.stringify({ success: false, message: err.message }),
-      { status: 500 }
-    );
+    return handleApiError("error create floor", err, "Gagal menambah lantai.");
   }
 }
 
 // READ Data floor
-export async function GET(req) {
+export async function GET() {
   try {
     const { response } = await requireAuthenticatedUser();
     if (response) return response;
@@ -79,7 +85,7 @@ export async function GET(req) {
         lfp.updated_at
       FROM location_floor_prices lfp
       JOIN locations loc ON loc.id = lfp.location_id
-      ORDER BY lfp.created_at DESC`
+      ORDER BY lfp.created_at DESC`,
     );
 
     const rows = result.rows.map((row) => ({
@@ -95,18 +101,12 @@ export async function GET(req) {
         : null,
     }));
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: "Berhasil mengambil data lokasi dan lantai",
-        data: rows,
-      }),
-      { status: 200 }
-    );
+    return jsonResponse({
+      success: true,
+      message: "Berhasil mengambil data lokasi dan lantai",
+      data: rows,
+    });
   } catch (err) {
-    return new Response(
-      JSON.stringify({ success: false, message: err.message }),
-      { status: 500 }
-    );
+    return handleApiError("error get floors", err, "Gagal mengambil data lantai.");
   }
 }

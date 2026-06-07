@@ -54,12 +54,16 @@ export default function PageHeader({
                 height: 30,
                 px: 0.5,
                 borderRadius: 999,
-                fontWeight: 900,
+                fontFamily: "Poppins",
+                fontWeight: 800,
                 color: theme.palette.primary.main,
                 bgcolor:
                   theme.palette.mode === "dark"
                     ? "rgba(255, 152, 0, 0.13)"
                     : "rgba(230, 9, 9, 0.10)",
+                "& .MuiChip-icon": {
+                  color: theme.palette.primary.main,
+                },
               }}
             />
           )}
@@ -68,9 +72,9 @@ export default function PageHeader({
             component="h1"
             sx={{
               fontFamily: "Poppins",
-              fontWeight: 950,
-              fontSize: { xs: 25, sm: 32, lg: 38 },
-              lineHeight: 1.14,
+              fontWeight: 820,
+              fontSize: { xs: 24, sm: 30, lg: 35 },
+              lineHeight: 1.16,
               letterSpacing: 0,
             }}
           >
@@ -81,7 +85,8 @@ export default function PageHeader({
             <Typography
               sx={{
                 color: theme.ui.mutedText,
-                fontWeight: 650,
+                fontFamily: "Poppins",
+                fontWeight: 600,
                 fontSize: { xs: 13, sm: 14 },
                 lineHeight: 1.7,
               }}
