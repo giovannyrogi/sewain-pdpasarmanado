@@ -21,6 +21,7 @@ import moment from "moment";
 import ApprovedOverlay from "./ApprovedOverlay";
 import Image from "next/image";
 import { getUploadApiUrl } from "@/app/utils/uploadPath";
+import { buildPaymentDetail } from "@/app/utils/buildPaymentDetail";
 
 const TenantApprovalModal = ({
   open,
@@ -86,61 +87,23 @@ const TenantApprovalModal = ({
     position: "relative",
   };
 
-  const handleCalculateTotal = () => {
-    // Konversi nilai ke number
-    const totalPayment = Number(selectedData?.total_payment || 0);
-    const downPayment = Number(selectedData?.down_payment || 0);
-    const installment1 = Number(selectedData?.estimated_installment_1 || 0);
-    const installment2 = Number(selectedData?.estimated_installment_2 || 0);
-    const installment3 = Number(selectedData?.estimated_installment_3 || 0);
-    const remainingPayment = Number(selectedData?.remaining_payment || 0);
-
-    const totalSewaKontrakRuangan =
-      selectedData?.price_per_m2 * selectedData?.room_area;
-
-    // Hitung Nilai Kontrak
-    const nilaiKontrak = downPayment / 1.11;
-
-    // Hitung PPN Down Payment
-    const PPNDownPayment = nilaiKontrak * 0.11;
-
-    // Hitung Total Uang Muka (DP)
-    const totalDownPayment = nilaiKontrak + PPNDownPayment;
-
-    // Hitung total PPN
-    const totalPPN = totalSewaKontrakRuangan * 0.11;
-
-    // Total cicilan semua + PPN
-    const totalInstallment = installment1 + installment2 + installment3;
-
-    return {
-      totalPayment,
-      totalSewaKontrakRuangan,
-      PPNDownPayment,
-      totalDownPayment,
-      nilaiKontrak,
-      totalPPN,
-      downPayment,
-      totalInstallment,
-      remainingPayment,
-    };
-  };
-
   const {
     totalPayment,
+    annualRoomRent,
+    leaseDurationYears,
     totalSewaKontrakRuangan,
     PPNDownPayment,
-    totalDownPayment,
     nilaiKontrak,
     totalPPN,
     downPayment,
     totalInstallment,
     remainingPayment,
-  } = handleCalculateTotal() || {
+  } = buildPaymentDetail(selectedData) || {
     totalPayment: 0,
+    annualRoomRent: 0,
+    leaseDurationYears: 1,
     totalSewaKontrakRuangan: 0,
     PPNDownPayment: 0,
-    totalDownPayment: 0,
     nilaiKontrak: 0,
     totalPPN: 0,
     downPayment: 0,
@@ -675,6 +638,64 @@ const TenantApprovalModal = ({
                 }}
               >
                 {selectedData?.payment_type === "cicilan" ? "Cicilan" : "Lunas"}
+              </Typography>
+            </Grid>
+
+            <Grid
+              size={12}
+              sx={{
+                display: "flex",
+                flexDirection: "row",
+                justifyContent: "space-between",
+              }}
+            >
+              <Typography
+                sx={{
+                  fontWeight: "bold",
+                  fontSize: "13px",
+                }}
+              >
+                Harga Sewa per Tahun
+              </Typography>
+              <Typography
+                sx={{
+                  fontWeight: "bold",
+                  fontSize: "13px",
+                  wordBreak: "break-word",
+                  whiteSpace: "normal",
+                  overflowWrap: "anywhere",
+                }}
+              >
+                {annualRoomRent ? formatRupiah(annualRoomRent) : "-"}
+              </Typography>
+            </Grid>
+
+            <Grid
+              size={12}
+              sx={{
+                display: "flex",
+                flexDirection: "row",
+                justifyContent: "space-between",
+              }}
+            >
+              <Typography
+                sx={{
+                  fontWeight: "bold",
+                  fontSize: "13px",
+                }}
+              >
+                Durasi Sewa
+              </Typography>
+              <Typography
+                sx={{
+                  fontWeight: "bold",
+                  fontSize: "13px",
+                  wordBreak: "break-word",
+                  whiteSpace: "normal",
+                  overflowWrap: "anywhere",
+                }}
+              >
+                {leaseDurationYears} Tahun
               </Typography>
             </Grid>
 

@@ -31,6 +31,8 @@ const ViewCalcPPNModal = ({
   estimatedInstallment3,
   remainingPayment,
   paymentType,
+  annualRoomRent,
+  leaseDurationYears,
   totalSewaKontrakRuangan,
   totalPPN,
   estimatedInstallmentDate1,
@@ -159,6 +161,64 @@ const ViewCalcPPNModal = ({
                 }}
               >
                 {paymentType === "cicilan" ? "Cicilan" : "Lunas"}
+              </Typography>
+            </Grid>
+
+            <Grid
+              size={12}
+              sx={{
+                display: "flex",
+                flexDirection: "row",
+                justifyContent: "space-between",
+              }}
+            >
+              <Typography
+                sx={{
+                  fontWeight: "bold",
+                  fontSize: "13px",
+                }}
+              >
+                Harga Sewa per Tahun
+              </Typography>
+              <Typography
+                sx={{
+                  fontWeight: "bold",
+                  fontSize: "13px",
+                  wordBreak: "break-word",
+                  whiteSpace: "normal",
+                  overflowWrap: "anywhere",
+                }}
+              >
+                {annualRoomRent ? formatRupiah(annualRoomRent) : "-"}
+              </Typography>
+            </Grid>
+
+            <Grid
+              size={12}
+              sx={{
+                display: "flex",
+                flexDirection: "row",
+                justifyContent: "space-between",
+              }}
+            >
+              <Typography
+                sx={{
+                  fontWeight: "bold",
+                  fontSize: "13px",
+                }}
+              >
+                Durasi Sewa
+              </Typography>
+              <Typography
+                sx={{
+                  fontWeight: "bold",
+                  fontSize: "13px",
+                  wordBreak: "break-word",
+                  whiteSpace: "normal",
+                  overflowWrap: "anywhere",
+                }}
+              >
+                {leaseDurationYears || 1} Tahun
               </Typography>
             </Grid>
 

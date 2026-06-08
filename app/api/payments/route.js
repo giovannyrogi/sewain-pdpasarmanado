@@ -280,6 +280,9 @@ export async function GET() {
         ta.estimated_installment_3_date,   
         ta.current_payment_step,   
         ta.total_payment_room,
+        ta.annual_room_rent,
+        ta.lease_duration_years,
+        ta.total_ppn,
         ta.admin_fee,
 
         -- tenant_identities 
@@ -389,6 +392,9 @@ export async function GET() {
           estimated_installment_3_date: row.estimated_installment_3_date,
           current_payment_step: row.current_payment_step,
           total_payment_room: row.total_payment_room,
+          annual_room_rent: row.annual_room_rent,
+          lease_duration_years: row.lease_duration_years,
+          total_ppn: row.total_ppn,
           admin_fee: row.admin_fee,
         },
         payments: {

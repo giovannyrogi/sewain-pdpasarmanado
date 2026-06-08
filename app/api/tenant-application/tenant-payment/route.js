@@ -32,6 +32,9 @@ export async function GET() {
       ta.current_payment_step,
       ta.admin_fee,
       ta.total_payment_room,
+      ta.annual_room_rent,
+      ta.lease_duration_years,
+      ta.total_ppn,
 
       -- ambil data identitas tenant
       ti.full_name AS tenant_name,

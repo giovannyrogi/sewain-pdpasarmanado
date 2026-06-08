@@ -29,6 +29,7 @@ import DetailRoomsModal from "@/app/components/detailroomsmodal/page";
 import ViewCalcPPNModal from "@/app/components/view-calc-ppn-modal/ViewCalcPPNModal";
 import InformationPreviewModal from "@/app/components/informationpreviewmodal/page";
 import { calculateAllPayments } from "@/app/utils/calculateAllPayments";
+import { calculateLeaseEndDate } from "@/app/utils/calculateRoomRent";
 import CrudFormModal from "@/app/components/crud/CrudFormModal";
 
 const TenantApplicationEditForm = ({
@@ -61,6 +62,8 @@ const TenantApplicationEditForm = ({
   const [paymentType, setPaymentType] = useState("lunas");
   const [totalPayment, setTotalPayment] = useState("");
   const [totalSewaKontrakRuangan, setTotalSewaKontrakRuangan] = useState("");
+  const [annualRoomRent, setAnnualRoomRent] = useState(0);
+  const [leaseDurationYears, setLeaseDurationYears] = useState(1);
   const [totalPPN, setTotalPPN] = useState("");
   const [downPayment, setDownPayment] = useState("");
   const [remainingPayment, setRemainingPayment] = useState("");
@@ -144,6 +147,13 @@ const TenantApplicationEditForm = ({
         >{`/PM/SKR/${monthRoman}/${year}`}</Typography>
       </InputAdornment>
     );
+  };
+
+  // Durasi sewa disimpan sebagai angka tahun agar edit kontrak lama/baru tetap
+  // memakai rumus yang sama dengan form pembuatan permohonan.
+  const handleLeaseDurationChange = (event) => {
+    const value = Math.floor(Number(event.target.value));
+    setLeaseDurationYears(value > 0 ? value : 1);
   };
 
   const installments = [
@@ -327,6 +337,8 @@ const TenantApplicationEditForm = ({
       setEndDate(
         selectedData?.end_date ? moment(selectedData?.end_date) : null,
       );
+      setLeaseDurationYears(selectedData?.lease_duration_years || 1);
+      setAnnualRoomRent(selectedData?.annual_room_rent || 0);
       setTenantType(selectedData?.application_type || "permohonan_baru");
       getListIdentities();
       getHighestDocumentNumber();
@@ -346,6 +358,7 @@ const TenantApplicationEditForm = ({
 
     const result = calculateAllPayments({
       room: selectedDataRooms,
+      leaseDurationYears,
       paymentType,
       downPayment,
       chooseTenor,
@@ -353,6 +366,7 @@ const TenantApplicationEditForm = ({
     });
 
     // total utama
+    setAnnualRoomRent(result.annualRoomRent);
     setTotalSewaKontrakRuangan(result.totalSewa);
     setTotalPPN(result.totalPPN);
     setTotalPayment(result.totalPayment);
@@ -394,11 +408,27 @@ const TenantApplicationEditForm = ({
     }
   }, [
     selectedDataRooms,
+    leaseDurationYears,
     paymentType,
     downPayment,
     chooseTenor,
     biayaAdministrasi,
   ]);
+
+  useEffect(() => {
+    if (!startDate) {
+      setEndDate(null);
+      setDurasiKontrak(0);
+      return;
+    }
+
+    const calculatedEndDate = calculateLeaseEndDate(
+      moment(startDate).toDate(),
+      leaseDurationYears,
+    );
+
+    setEndDate(calculatedEndDate ? moment(calculatedEndDate.toDate()) : null);
+  }, [startDate, leaseDurationYears]);
 
   useEffect(() => {
     if (startDate && endDate) {
@@ -502,6 +532,8 @@ const TenantApplicationEditForm = ({
       formData.append("current_step", 1);
       formData.append("tenant_type", tenantType);
       formData.append("tenant_identity_id", identityID);
+      formData.append("annual_room_rent", annualRoomRent);
+      formData.append("lease_duration_years", leaseDurationYears);
       formData.append("total_payment_room", totalSewaKontrakRuangan);
       formData.append("admin_fee", biayaAdministrasi);
       formData.append("total_ppn", totalPPN);
@@ -1018,7 +1050,7 @@ const TenantApplicationEditForm = ({
                 </Typography>
               </Grid>
             )}
-            <Grid size={isMobile ? 12 : 6}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <DatePicker
                 label="Tanggal Mulai Kontrak"
                 value={startDate}
@@ -1048,32 +1080,48 @@ const TenantApplicationEditForm = ({
                 }}
               />
             </Grid>
-            <Grid size={isMobile ? 12 : 6}>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <TextField
+                label="Durasi Sewa"
+                value={leaseDurationYears}
+                onChange={handleLeaseDurationChange}
+                type="number"
+                variant="filled"
+                fullWidth
+                required
+                disabled={!startDate}
+                slotProps={{
+                  htmlInput: {
+                    min: 1,
+                    step: 1,
+                  },
+                }}
+                helperText="Dalam tahun"
+              />
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }}>
               <DatePicker
                 label="Tanggal Berakhir Kontrak"
                 value={endDate}
-                onChange={(newValue) => {
-                  setEndDate(newValue);
-                }}
                 // minDate={moment()}
-                disabled={tenantType === "perpanjang_tenant"}
+                disabled
                 slotProps={{
                   textField: {
                     variant: "filled",
                     fullWidth: true,
                     required: true,
                     color: "primary",
-                    disabled: tenantType === "perpanjang_tenant",
+                    disabled: true,
                   },
                 }}
               />
             </Grid>
             <Grid size={12}>
               <TextField
-                label="Durasi Kontrak (hari)"
+                label="Durasi Kontrak"
                 variant="filled"
                 fullWidth
-                value={`${durasiKontrak} hari`}
+                value={`${leaseDurationYears} tahun (${durasiKontrak} hari)`}
                 // onChange={(e) => {
                 // }}
                 disabled
@@ -1189,6 +1237,8 @@ const TenantApplicationEditForm = ({
           estimatedInstallment3={estimatedInstallment3}
           remainingPayment={remainingPayment}
           paymentType={paymentType}
+          annualRoomRent={annualRoomRent}
+          leaseDurationYears={leaseDurationYears}
           totalSewaKontrakRuangan={totalSewaKontrakRuangan}
           totalPPN={totalPPN}
           estimatedInstallmentDate1={estimatedInstallmentDate1}

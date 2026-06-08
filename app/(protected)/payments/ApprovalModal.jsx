@@ -144,8 +144,15 @@ const ApprovalModal = ({
     const totalPaymentInstallment = contract_amount + ppn_amount;
     const remainingPaymentAfterInstallment = remainingPayment;
 
+    const annualRoomRent =
+      Number(selectedData?.tenant_application?.annual_room_rent || 0) ||
+      Number(selectedData?.room?.price_per_m2 || 0) *
+        Number(selectedData?.room?.room_area || 0);
+    const leaseDurationYears =
+      Number(selectedData?.tenant_application?.lease_duration_years || 0) || 1;
     const totalSewaKontrakRuangan =
-      selectedData?.room?.price_per_m2 * selectedData?.room?.room_area;
+      Number(selectedData?.tenant_application?.total_payment_room || 0) ||
+      annualRoomRent * leaseDurationYears;
 
     // console.log('payment_amount', payment_amount);
 
@@ -159,7 +166,9 @@ const ApprovalModal = ({
     const totalDownPayment = nilaiKontrak + PPNDownPayment;
 
     // Hitung total PPN
-    const totalPPN = totalSewaKontrakRuangan * 0.11;
+    const totalPPN =
+      Number(selectedData?.tenant_application?.total_ppn || 0) ||
+      totalSewaKontrakRuangan * 0.11;
 
     // Grand total (tambahan biaya administrasi 50.000)
     const grandTotal = totalSewaKontrakRuangan + totalPPN + 50000;
@@ -284,6 +293,8 @@ const ApprovalModal = ({
       ppn_amount,
       totalPaymentInstallment,
       totalPayment,
+      annualRoomRent,
+      leaseDurationYears,
       totalSewaKontrakRuangan,
       PPNDownPayment,
       totalDownPayment,
@@ -333,6 +344,8 @@ const ApprovalModal = ({
     ppn_amount,
     totalPaymentInstallment,
     totalPayment,
+    annualRoomRent,
+    leaseDurationYears,
     totalSewaKontrakRuangan,
     PPNDownPayment,
     totalDownPayment,
@@ -379,6 +392,8 @@ const ApprovalModal = ({
     ppn_amount: 0,
     totalPaymentInstallment: 0,
     totalPayment: 0,
+    annualRoomRent: 0,
+    leaseDurationYears: 1,
     totalSewaKontrakRuangan: 0,
     PPNDownPayment: 0,
     totalDownPayment: 0,
@@ -876,7 +891,65 @@ const ApprovalModal = ({
               >
                 {selectedData?.tenant_application?.payment_type === "cicilan"
                   ? "Cicilan"
-                  : "Lunas"}
+                : "Lunas"}
+              </Typography>
+            </Grid>
+
+            <Grid
+              size={12}
+              sx={{
+                display: "flex",
+                flexDirection: "row",
+                justifyContent: "space-between",
+              }}
+            >
+              <Typography
+                sx={{
+                  fontWeight: "bold",
+                  fontSize: "13px",
+                }}
+              >
+                Harga Sewa per Tahun
+              </Typography>
+              <Typography
+                sx={{
+                  fontWeight: "bold",
+                  fontSize: "13px",
+                  wordBreak: "break-word",
+                  whiteSpace: "normal",
+                  overflowWrap: "anywhere",
+                }}
+              >
+                {annualRoomRent ? formatRupiah(annualRoomRent) : "-"}
+              </Typography>
+            </Grid>
+
+            <Grid
+              size={12}
+              sx={{
+                display: "flex",
+                flexDirection: "row",
+                justifyContent: "space-between",
+              }}
+            >
+              <Typography
+                sx={{
+                  fontWeight: "bold",
+                  fontSize: "13px",
+                }}
+              >
+                Durasi Sewa
+              </Typography>
+              <Typography
+                sx={{
+                  fontWeight: "bold",
+                  fontSize: "13px",
+                  wordBreak: "break-word",
+                  whiteSpace: "normal",
+                  overflowWrap: "anywhere",
+                }}
+              >
+                {leaseDurationYears} Tahun
               </Typography>
             </Grid>
 

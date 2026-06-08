@@ -4,8 +4,13 @@ import pool from "@/lib/dbConfig";
 import moment from "moment";
 import { getAuthenticatedUser, requireRole, unauthorizedResponse } from "@/app/utils/auth";
 import { notifyTenantApplicationCreated } from "@/app/utils/notifications";
+import { calculateAllPayments } from "@/app/utils/calculateAllPayments";
+import { calculateLeaseEndDate, normalizeLeaseDurationYears } from "@/app/utils/calculateRoomRent";
 
 const TENANT_APPLICATION_ROLES = [1, 2];
+
+const isMoneyEqual = (left, right) =>
+  Math.abs(Number(left || 0) - Number(right || 0)) < 1;
 
 export async function POST(req) {
   try {
@@ -47,53 +52,15 @@ export async function POST(req) {
     );
     const tenant_type = formData.get("tenant_type");
     const total_payment_room = formData.get("total_payment_room");
+    const annual_room_rent = formData.get("annual_room_rent");
+    const lease_duration_years = normalizeLeaseDurationYears(
+      formData.get("lease_duration_years"),
+    );
     const admin_fee = formData.get("admin_fee");
     const choose_tenor = Number(formData.get("choose_tenor")) || 1;
     const document_number = formData.get("document_number");
 
-    const total = Number(total_payment) || 0;
-    const minDp = Math.round(total * 0.4);
     const dp = Number(down_payment) || 0;
-
-    // Validasi DP minimal 40% dari total
-    if (payment_type === "cicilan" && dp < minDp) {
-      return Response.json(
-        { success: false, message: "DP minimal 40% dari total pembayaran." },
-        { status: 400 },
-      );
-    }
-
-    // Validasi DP tidak boleh lebih besar dari total
-    if (dp > total) {
-      return Response.json(
-        {
-          success: false,
-          message: "DP tidak boleh lebih besar dari total pembayaran.",
-        },
-        { status: 400 },
-      );
-    }
-
-    if (payment_type === "cicilan") {
-      const cicilan = [
-        Number(estimated_installment_1) || 0,
-        Number(estimated_installment_2) || 0,
-        Number(estimated_installment_3) || 0,
-      ];
-
-      const usedCicilan = cicilan.slice(0, choose_tenor);
-      const totalCicilan = usedCicilan.reduce((a, b) => a + b, 0);
-
-      if (totalCicilan !== Number(remaining_payment)) {
-        return Response.json(
-          {
-            success: false,
-            message: "Total cicilan tidak sesuai dengan sisa pembayaran.",
-          },
-          { status: 200 },
-        );
-      }
-    }
 
     // Validasi wajib
     if (!location_id) {
@@ -124,6 +91,20 @@ export async function POST(req) {
       );
     }
 
+    if (!start_date) {
+      return Response.json(
+        { success: false, message: "Tanggal mulai kontrak wajib diisi." },
+        { status: 400 },
+      );
+    }
+
+    if (!end_date) {
+      return Response.json(
+        { success: false, message: "Tanggal akhir kontrak wajib diisi." },
+        { status: 400 },
+      );
+    }
+
     // Validasi room + lokasi
     const roomCheck = await pool.query(
       "SELECT * FROM rooms WHERE id = $1 AND location_id = $2",
@@ -137,6 +118,89 @@ export async function POST(req) {
         },
         { status: 400 },
       );
+    }
+
+    const calculatedEndDate = calculateLeaseEndDate(
+      moment(start_date).toDate(),
+      lease_duration_years,
+    );
+    const normalizedEndDate = calculatedEndDate?.format("YYYY-MM-DD");
+
+    if (normalizedEndDate !== moment(end_date).format("YYYY-MM-DD")) {
+      return Response.json(
+        {
+          success: false,
+          message:
+            "Tanggal akhir kontrak tidak sesuai dengan durasi sewa yang dipilih.",
+        },
+        { status: 400 },
+      );
+    }
+
+    const paymentCalculation = calculateAllPayments({
+      room: roomCheck.rows[0],
+      leaseDurationYears: lease_duration_years,
+      paymentType: payment_type,
+      downPayment: dp,
+      chooseTenor: choose_tenor,
+      adminFee: Number(admin_fee || 0),
+    });
+
+    const minDp = Math.round(paymentCalculation.totalPayment * 0.4);
+
+    if (
+      !isMoneyEqual(total_payment, paymentCalculation.totalPayment) ||
+      !isMoneyEqual(total_payment_room, paymentCalculation.totalSewa) ||
+      !isMoneyEqual(total_ppn, paymentCalculation.totalPPN) ||
+      !isMoneyEqual(annual_room_rent, paymentCalculation.annualRoomRent)
+    ) {
+      return Response.json(
+        {
+          success: false,
+          message: "Total pembayaran tidak sesuai dengan kalkulasi sistem.",
+        },
+        { status: 400 },
+      );
+    }
+
+    // Validasi DP minimal 40% dari total kontrak yang dihitung backend.
+    if (payment_type === "cicilan" && dp < minDp) {
+      return Response.json(
+        { success: false, message: "DP minimal 40% dari total pembayaran." },
+        { status: 400 },
+      );
+    }
+
+    // Validasi DP tidak boleh lebih besar dari total kontrak.
+    if (dp > paymentCalculation.totalPayment) {
+      return Response.json(
+        {
+          success: false,
+          message: "DP tidak boleh lebih besar dari total pembayaran.",
+        },
+        { status: 400 },
+      );
+    }
+
+    if (payment_type === "cicilan") {
+      const cicilan = [
+        Number(estimated_installment_1) || 0,
+        Number(estimated_installment_2) || 0,
+        Number(estimated_installment_3) || 0,
+      ];
+
+      const usedCicilan = cicilan.slice(0, choose_tenor);
+      const totalCicilan = usedCicilan.reduce((a, b) => a + b, 0);
+
+      if (totalCicilan !== Number(remaining_payment)) {
+        return Response.json(
+          {
+            success: false,
+            message: "Total cicilan tidak sesuai dengan sisa pembayaran.",
+          },
+          { status: 200 },
+        );
+      }
     }
 
     //check document number duplication
@@ -189,6 +253,8 @@ export async function POST(req) {
           start_date,
           end_date,
           total_payment_room,
+          annual_room_rent,
+          lease_duration_years,
           admin_fee,
           total_ppn,
           current_tenor,
@@ -197,7 +263,7 @@ export async function POST(req) {
         )
         VALUES (
           $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13,
-          $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25
+          $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27
         )
         RETURNING *
         `,
@@ -222,6 +288,8 @@ export async function POST(req) {
           start_date,
           end_date,
           total_payment_room,
+          annual_room_rent,
+          lease_duration_years,
           admin_fee,
           total_ppn,
           choose_tenor,
@@ -360,6 +428,8 @@ export async function GET(req) {
         ta.is_fully_paid,
         ta.admin_fee,
         ta.total_payment_room,
+        ta.annual_room_rent,
+        ta.lease_duration_years,
         ta.total_ppn,
         ta.current_tenor,
         ta.application_type,
@@ -430,6 +500,8 @@ export async function GET(req) {
       down_payment: row.down_payment,
       admin_fee: row.admin_fee,
       total_payment_room: row.total_payment_room,
+      annual_room_rent: row.annual_room_rent,
+      lease_duration_years: row.lease_duration_years,
       total_ppn: row.total_ppn,
       remaining_payment: row.remaining_payment,
       approval_status: row.approval_status,

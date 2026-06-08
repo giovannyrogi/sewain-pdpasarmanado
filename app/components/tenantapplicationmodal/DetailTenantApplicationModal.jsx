@@ -90,6 +90,8 @@ const DetailTenantApplicationModal = ({
 
   const {
     totalPayment,
+    annualRoomRent,
+    leaseDurationYears,
     totalSewaKontrakRuangan,
     PPNDownPayment,
     nilaiKontrak,
@@ -99,6 +101,8 @@ const DetailTenantApplicationModal = ({
     downPayment,
   } = buildPaymentDetail(selectedData) || {
     totalPayment: 0,
+    annualRoomRent: 0,
+    leaseDurationYears: 1,
     totalSewaKontrakRuangan: 0,
     PPNDownPayment: 0,
     nilaiKontrak: 0,
@@ -601,6 +605,64 @@ const DetailTenantApplicationModal = ({
           </Grid>
 
           <Grid container spacing={0.2}>
+            <Grid
+              size={12}
+              sx={{
+                display: "flex",
+                flexDirection: "row",
+                justifyContent: "space-between",
+              }}
+            >
+              <Typography
+                sx={{
+                  fontWeight: "bold",
+                  fontSize: "13px",
+                }}
+              >
+                Harga Sewa per Tahun
+              </Typography>
+              <Typography
+                sx={{
+                  fontWeight: "bold",
+                  fontSize: "13px",
+                  wordBreak: "break-word",
+                  whiteSpace: "normal",
+                  overflowWrap: "anywhere",
+                }}
+              >
+                {annualRoomRent ? formatRupiah(annualRoomRent) : "-"}
+              </Typography>
+            </Grid>
+
+            <Grid
+              size={12}
+              sx={{
+                display: "flex",
+                flexDirection: "row",
+                justifyContent: "space-between",
+              }}
+            >
+              <Typography
+                sx={{
+                  fontWeight: "bold",
+                  fontSize: "13px",
+                }}
+              >
+                Durasi Sewa
+              </Typography>
+              <Typography
+                sx={{
+                  fontWeight: "bold",
+                  fontSize: "13px",
+                  wordBreak: "break-word",
+                  whiteSpace: "normal",
+                  overflowWrap: "anywhere",
+                }}
+              >
+                {leaseDurationYears} Tahun
+              </Typography>
+            </Grid>
+
             <Grid
               size={12}
               sx={{

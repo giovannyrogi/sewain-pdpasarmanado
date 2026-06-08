@@ -1,15 +1,22 @@
-import { calculateRoomRent } from "./calculateRoomRent";
+import {
+  calculateAnnualRoomRent,
+  calculateContractRoomRent,
+  normalizeLeaseDurationYears,
+} from "./calculateRoomRent";
 
 export const calculateAllPayments = ({
   room,
+  leaseDurationYears = 1,
   paymentType,
   downPayment,
   chooseTenor,
   adminFee = 0,
 }) => {
   const TAX = 0.11;
+  const durationYears = normalizeLeaseDurationYears(leaseDurationYears);
 
-  const totalSewa = calculateRoomRent(room);
+  const annualRoomRent = calculateAnnualRoomRent(room);
+  const totalSewa = calculateContractRoomRent(room, durationYears);
   const totalPPN = totalSewa * TAX;
   const totalPayment = totalSewa + totalPPN + adminFee;
 
@@ -32,6 +39,8 @@ export const calculateAllPayments = ({
   }
 
   return {
+    annualRoomRent,
+    leaseDurationYears: durationYears,
     totalSewa,
     totalPPN,
     totalPayment,

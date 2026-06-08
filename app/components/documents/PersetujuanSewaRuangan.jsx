@@ -4,10 +4,9 @@ import moment from "moment";
 import React, { forwardRef } from "react";
 import formatRupiah from "../formatrupiah/page";
 import Image from "next/image";
-import getDurationInYears from "../date_duration_in_years/getDurationInYears";
-import { parse } from "pg-protocol";
 import { formatNumber } from "@/app/utils/formatNumber";
 import DocumentHeader2 from "./DocumentHeader2";
+import { buildPaymentDetail } from "@/app/utils/buildPaymentDetail";
 
 const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
   if (!data) return null;
@@ -15,57 +14,17 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
   // console.log("data", data);
 
   const handleCalculateTotal = () => {
-    // Konversi nilai ke number
-    const totalPayment = Number(data?.total_payment || 0);
-    const downPayment = Number(data?.down_payment || 0);
-    const installment1 = Number(data?.estimated_installment_1 || 0);
-    const installment2 = Number(data?.estimated_installment_2 || 0);
-    const installment3 = Number(data?.estimated_installment_3 || 0);
-    const remainingPayment = Number(data?.remaining_payment || 0);
-    const roomPrice = Number(data?.price_per_m2 || 0);
     const roomArea = Number(data?.room_area || 0);
     const priceType = data?.price_type || "";
-
-    let totalSewaKontrakRuangan = 0;
-    if (priceType === "harga_per_meter") {
-      totalSewaKontrakRuangan = roomPrice * roomArea;
-    } else {
-      totalSewaKontrakRuangan = data?.price_per_m2;
-    }
+    const paymentDetail = buildPaymentDetail(data);
 
     const dataRuangan =
       priceType === "harga_per_meter"
         ? `${data.room_length} M X ${data.room_width} m²`
         : roomArea + " m²";
 
-    // Hitung Nilai Kontrak
-    const nilaiKontrak = downPayment / 1.11;
-
-    // Hitung PPN Down Payment
-    const PPNDownPayment = nilaiKontrak * 0.11;
-
-    // Hitung Total Uang Muka (DP)
-    const totalDownPayment = nilaiKontrak + PPNDownPayment;
-
-    // Hitung total PPN
-    const totalPPN = totalSewaKontrakRuangan * 0.11;
-
-    // Grand total (tambahan biaya administrasi 50.000)
-    const grandTotal = totalSewaKontrakRuangan + totalPPN + 50000;
-
-    // Total cicilan semua + PPN
-    const totalInstallment = installment1 + installment2 + installment3;
-
     return {
-      totalPayment,
-      totalSewaKontrakRuangan,
-      PPNDownPayment,
-      totalDownPayment,
-      nilaiKontrak,
-      totalPPN,
-      grandTotal,
-      totalInstallment,
-      remainingPayment,
+      ...paymentDetail,
       dataRuangan,
       roomArea,
     };
@@ -73,24 +32,24 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
 
   const {
     totalPayment,
+    annualRoomRent,
+    leaseDurationYears,
     totalSewaKontrakRuangan,
     PPNDownPayment,
-    totalDownPayment,
     nilaiKontrak,
     totalPPN,
-    grandTotal,
     totalInstallment,
     remainingPayment,
     dataRuangan,
     roomArea,
   } = handleCalculateTotal() || {
     totalPayment: 0,
+    annualRoomRent: 0,
+    leaseDurationYears: 1,
     totalSewaKontrakRuangan: 0,
     PPNDownPayment: 0,
-    totalDownPayment: 0,
     nilaiKontrak: 0,
     totalPPN: 0,
-    grandTotal: 0,
     totalInstallment: 0,
     remainingPayment: 0,
     dataRuangan: 0,
@@ -429,10 +388,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
                 }}
               >
                 {data.start_date && data.end_date
-                  ? `${getDurationInYears(
-                      data.start_date,
-                      data.end_date,
-                    )} TAHUN (${moment(data.start_date).format(
+                  ? `${leaseDurationYears} TAHUN (${moment(data.start_date).format(
                       "D MMMM YYYY",
                     )} S/D ${moment(data.end_date).format("D MMMM YYYY")})`
                   : ""}
@@ -495,6 +451,39 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
                 {totalSewaKontrakRuangan
                   ? formatRupiah(parseInt(totalSewaKontrakRuangan))
                   : "-"}
+                , -
+              </Typography>
+            </Grid>
+          </Grid>
+
+          {/* Harga Sewa per Tahun */}
+          <Grid container size={12}>
+            <Grid size={3} display={"flex"} flexDirection={"row"} gap={3.2}>
+              <Typography
+                sx={{
+                  fontSize: "11pt",
+                  textAlign: "justify",
+                  fontFamily: "Bernard MT Condensed bold",
+                }}
+              >
+                <span style={{ marginRight: "20px" }}></span>Harga Sewa / Tahun
+              </Typography>
+            </Grid>
+            <Grid
+              size={2}
+              display={"flex"}
+              flexDirection={"column"}
+              alignItems={"end"}
+            >
+              <Typography
+                sx={{
+                  fontSize: "11pt",
+                  textAlign: "justify",
+                  fontWeight: "bold",
+                  fontFamily: "Bernard MT Condensed bold",
+                }}
+              >
+                {annualRoomRent ? formatRupiah(parseInt(annualRoomRent)) : "-"}
                 , -
               </Typography>
             </Grid>
@@ -642,7 +631,7 @@ const PersetujuanSewaRuangan = forwardRef(({ data }, ref) => {
                   fontFamily: "Bernard MT Condensed bold",
                 }}
               >
-                {grandTotal ? formatRupiah(data?.total_payment) : "-"}, -
+                {totalPayment ? formatRupiah(totalPayment) : "-"}, -
               </Typography>
             </Grid>
           </Grid>

@@ -18,6 +18,8 @@ export async function GET(req) {
         ta.tenant_identity_id,
         ta.start_date,
         ta.end_date,
+        ta.annual_room_rent,
+        ta.lease_duration_years,
         ta.approval_status,
         ti.full_name AS tenant_name,
         l.location_name,
@@ -53,6 +55,8 @@ export async function GET(req) {
         ? moment(row.start_date).format("YYYY-MM-DD")
         : null,
       end_date: row.end_date ? moment(row.end_date).format("YYYY-MM-DD") : null,
+      annual_room_rent: row.annual_room_rent,
+      lease_duration_years: row.lease_duration_years,
       approval_status: row.approval_status,
       tenant_name: row.tenant_name,
       location_name: row.location_name,

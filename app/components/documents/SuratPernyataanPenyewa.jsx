@@ -5,83 +5,30 @@ import React, { forwardRef } from "react";
 import formatRupiah from "../formatrupiah/page";
 import Image from "next/image";
 import { formatNumber } from "@/app/utils/formatNumber";
+import { buildPaymentDetail } from "@/app/utils/buildPaymentDetail";
 
 const SuratPernyataanPenyewa = forwardRef(({ data }, ref) => {
   if (!data) return null;
   // console.log("data", data);
 
-  const handleCalculateTotal = () => {
-    // Konversi nilai ke number
-    const totalPayment = Number(data?.total_payment || 0);
-    const downPayment = Number(data?.down_payment || 0);
-    const installment1 = Number(data?.estimated_installment_1 || 0);
-    const installment2 = Number(data?.estimated_installment_2 || 0);
-    const installment3 = Number(data?.estimated_installment_3 || 0);
-    const remainingPayment = Number(data?.remaining_payment || 0);
-    const roomPrice = Number(data?.price_per_m2 || 0);
-    const roomArea = Number(data?.room_area || 0);
-
-    // console.log('total payment', totalPayment);
-    // console.log('down payment', downPayment);
-    // console.log('installment 1', installment1);
-    // console.log('installment 2', installment2);
-    // console.log('installment 3', installment3);
-    // console.log('remaining payment', remainingPayment);
-    // console.log('room price', roomPrice);
-    // console.log('room area', roomArea);
-    
-
-    const totalSewaKontrakRuangan = roomPrice * roomArea;
-
-    // Hitung Nilai Kontrak
-    const nilaiKontrak = downPayment / 1.11;
-
-    // Hitung PPN Down Payment
-    const PPNDownPayment = nilaiKontrak * 0.11;
-
-    // Hitung Total Uang Muka (DP)
-    const totalDownPayment = nilaiKontrak + PPNDownPayment;
-
-    // Hitung total PPN
-    const totalPPN = totalSewaKontrakRuangan * 0.11;
-
-    // Grand total (tambahan biaya administrasi 50.000)
-    const grandTotal = totalSewaKontrakRuangan + totalPPN + 50000;
-
-    // Total cicilan semua + PPN
-    const totalInstallment = installment1 + installment2 + installment3;
-
-    return {
-      totalPayment,
-      totalSewaKontrakRuangan,
-      PPNDownPayment,
-      totalDownPayment,
-      nilaiKontrak,
-      totalPPN,
-      grandTotal,
-      totalInstallment,
-      remainingPayment,
-    };
-  };
-
   const {
     totalPayment,
+    annualRoomRent,
+    leaseDurationYears,
     totalSewaKontrakRuangan,
     PPNDownPayment,
-    totalDownPayment,
     nilaiKontrak,
     totalPPN,
-    grandTotal,
     totalInstallment,
     remainingPayment,
-  } = handleCalculateTotal() || {
+  } = buildPaymentDetail(data) || {
     totalPayment: 0,
+    annualRoomRent: 0,
+    leaseDurationYears: 1,
     totalSewaKontrakRuangan: 0,
     PPNDownPayment: 0,
-    totalDownPayment: 0,
     nilaiKontrak: 0,
     totalPPN: 0,
-    grandTotal: 0,
     totalInstallment: 0,
     remainingPayment: 0,
   };
@@ -329,7 +276,7 @@ const SuratPernyataanPenyewa = forwardRef(({ data }, ref) => {
                     width: "80pt",
                   }}
                 >
-                  Harga Ruangan
+                  Harga Ruangan / Tahun
                 </th>
                 <th
                   style={{
@@ -385,9 +332,7 @@ const SuratPernyataanPenyewa = forwardRef(({ data }, ref) => {
                     textAlign: "right",
                   }}
                 >
-                  {data?.price_per_m2
-                    ? formatRupiah(data?.price_per_m2) + "/m²"
-                    : "-"}
+                  {annualRoomRent ? formatRupiah(annualRoomRent) : "-"}
                 </td>
                 <td
                   style={{
@@ -402,7 +347,34 @@ const SuratPernyataanPenyewa = forwardRef(({ data }, ref) => {
                     width: "120px",
                   }}
                 >
-                  {formatRupiah(data?.total_payment_room)},-
+                  {formatRupiah(totalSewaKontrakRuangan)},-
+                </td>
+              </tr>
+
+              <tr>
+                <td
+                  colSpan={3}
+                  style={{
+                    border: "1px solid black",
+                    fontFamily: "calibri",
+                    padding: "5px",
+                    fontSize: "11pt",
+                    fontWeight: "bold",
+                  }}
+                >
+                  Durasi Sewa
+                </td>
+                <td
+                  style={{
+                    border: "1px solid black",
+                    fontFamily: "calibri",
+                    padding: "5px",
+                    fontSize: "11pt",
+                    textAlign: "right",
+                    fontWeight: "bold",
+                  }}
+                >
+                  {leaseDurationYears} Tahun
                 </td>
               </tr>
 

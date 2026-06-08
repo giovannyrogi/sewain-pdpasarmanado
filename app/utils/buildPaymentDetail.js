@@ -1,9 +1,15 @@
-import { calculateRoomRent } from "./calculateRoomRent";
+import {
+  calculateAnnualRoomRent,
+  calculateContractRoomRent,
+  normalizeLeaseDurationYears,
+} from "./calculateRoomRent";
 
 export const buildPaymentDetail = (data) => {
   if (!data) {
     return {
       totalPayment: 0,
+      annualRoomRent: 0,
+      leaseDurationYears: 1,
       totalSewaKontrakRuangan: 0,
       PPNDownPayment: 0,
       nilaiKontrak: 0,
@@ -22,16 +28,23 @@ export const buildPaymentDetail = (data) => {
   const totalPayment = Number(data?.total_payment || 0);
   const downPayment = Number(data?.down_payment || 0);
   const remainingPayment = Number(data?.remaining_payment || 0);
+  const leaseDurationYears = normalizeLeaseDurationYears(
+    data?.lease_duration_years,
+  );
 
   // =========================
   //  TOTAL SEWA
   // =========================
-  const totalSewaKontrakRuangan = calculateRoomRent(data);
+  const annualRoomRent =
+    Number(data?.annual_room_rent || 0) || calculateAnnualRoomRent(data);
+  const totalSewaKontrakRuangan =
+    Number(data?.total_payment_room || 0) ||
+    calculateContractRoomRent(data, leaseDurationYears);
 
   // =========================
   //  PPN
   // =========================
-  const totalPPN = Number(data?.total_ppn);
+  const totalPPN = Number(data?.total_ppn || totalSewaKontrakRuangan * TAX);
 
   // =========================
   //  DP BREAKDOWN
@@ -57,6 +70,8 @@ export const buildPaymentDetail = (data) => {
   // =========================
   return {
     totalPayment,
+    annualRoomRent,
+    leaseDurationYears,
     totalSewaKontrakRuangan,
     PPNDownPayment,
     nilaiKontrak,

@@ -56,6 +56,10 @@ export async function GET(req) {
         ta.estimated_installment_2_date,
         ta.estimated_installment_3_date,   
         ta.current_payment_step,   
+        ta.total_payment_room,
+        ta.annual_room_rent,
+        ta.lease_duration_years,
+        ta.total_ppn,
 
         rm.id AS room_id,
         rm.room_number,
