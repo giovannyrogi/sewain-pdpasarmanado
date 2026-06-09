@@ -22,6 +22,7 @@ import ApprovedOverlay from "./ApprovedOverlay";
 import Image from "next/image";
 import { getUploadApiUrl } from "@/app/utils/uploadPath";
 import { buildPaymentDetail } from "@/app/utils/buildPaymentDetail";
+import { formatNumber } from "@/app/utils/formatNumber";
 
 const TenantApprovalModal = ({
   open,
@@ -46,7 +47,7 @@ const TenantApprovalModal = ({
     {
       label: selectedData?.estimated_installment_1
         ? `Cicilan 1 (Bulan ${moment(
-            selectedData?.estimated_installment_1_date
+            selectedData?.estimated_installment_1_date,
           ).format("MMM YYYY")})`
         : "Pilih tanggal pembayaran",
       amount: formatRupiah(selectedData?.estimated_installment_1),
@@ -54,7 +55,7 @@ const TenantApprovalModal = ({
     {
       label: selectedData?.estimated_installment_2
         ? `Cicilan 2 (Bulan ${moment(
-            selectedData?.estimated_installment_2_date
+            selectedData?.estimated_installment_2_date,
           ).format("MMM YYYY")})`
         : "Pilih tanggal pembayaran",
       amount: formatRupiah(selectedData?.estimated_installment_2),
@@ -62,7 +63,7 @@ const TenantApprovalModal = ({
     {
       label: selectedData?.estimated_installment_3
         ? `Cicilan 3 (Bulan ${moment(
-            selectedData?.estimated_installment_3_date
+            selectedData?.estimated_installment_3_date,
           ).format("MMM YYYY")})`
         : "Pilih tanggal pembayaran",
       amount: formatRupiah(selectedData?.estimated_installment_3),
@@ -121,7 +122,7 @@ const TenantApprovalModal = ({
           tenant_application_id: selectedData?.tenant_application_id,
           status: "approved",
           approver_id: user.id,
-        }
+        },
       );
       // console.log("response", response.data);
 
@@ -463,7 +464,10 @@ const TenantApprovalModal = ({
                   overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
                 }}
               >
-                {selectedData?.room_length ? selectedData.room_length : "-"} M
+                {selectedData?.room_length
+                  ? formatNumber(selectedData.room_length || 0)
+                  : "-"}{" "}
+                M
               </Typography>
             </Grid>
 
@@ -486,7 +490,10 @@ const TenantApprovalModal = ({
                   overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
                 }}
               >
-                {selectedData?.room_width ? selectedData.room_width : "-"} M
+                {selectedData?.room_width
+                  ? formatNumber(selectedData.room_width || 0)
+                  : "-"}{" "}
+                M
               </Typography>
             </Grid>
 
@@ -509,7 +516,9 @@ const TenantApprovalModal = ({
                   overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
                 }}
               >
-                {selectedData?.room_area ? selectedData.room_area + " M" : "-"}
+                {selectedData?.room_area
+                  ? formatNumber(selectedData.room_area) + " M"
+                  : "-"}
               </Typography>
             </Grid>
 
