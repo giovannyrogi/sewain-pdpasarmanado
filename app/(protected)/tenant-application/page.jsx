@@ -190,9 +190,7 @@ const Applications = () => {
             requestedAt: parsed.requestedAt,
           };
         } catch {
-          window.sessionStorage.removeItem(
-            "sewain:tenant-application-target",
-          );
+          window.sessionStorage.removeItem("sewain:tenant-application-target");
         }
       }
 
@@ -371,7 +369,8 @@ const Applications = () => {
       setSnackbar({
         open: true,
         message:
-          error?.response?.data?.message || "Terjadi error saat menghapus permohonan.",
+          error?.response?.data?.message ||
+          "Terjadi error saat menghapus permohonan.",
         severity: "error",
       });
     } finally {
@@ -524,7 +523,11 @@ const Applications = () => {
           searchPlaceholder="Cari penyewa, dokumen, lokasi, ruangan, pembayaran..."
           onSearchChange={setSearchText}
           action={
-            <Box align="center">
+            <Box
+              sx={{
+                width: "100%",
+              }}
+            >
               <Button
                 size="small"
                 variant={themeMode === "dark" ? "outlined" : "contained"}
@@ -641,15 +644,24 @@ const Applications = () => {
         description={
           <>
             Permohonan atas nama{" "}
-            <Box component="strong" sx={{ color: "text.primary", fontWeight: 850 }}>
+            <Box
+              component="strong"
+              sx={{ color: "text.primary", fontWeight: 850 }}
+            >
               {selectedData?.tenant_name || "-"}
             </Box>
             , lokasi{" "}
-            <Box component="strong" sx={{ color: "text.primary", fontWeight: 850 }}>
+            <Box
+              component="strong"
+              sx={{ color: "text.primary", fontWeight: 850 }}
+            >
               {selectedData?.location_name || "-"}
             </Box>
             , ruangan{" "}
-            <Box component="strong" sx={{ color: "text.primary", fontWeight: 850 }}>
+            <Box
+              component="strong"
+              sx={{ color: "text.primary", fontWeight: 850 }}
+            >
               No. {selectedData?.room_number || "-"}
             </Box>{" "}
             akan dihapus dari sistem.

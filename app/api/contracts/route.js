@@ -1,9 +1,33 @@
 import pool from "@/lib/dbConfig";
 import moment from "moment";
-import { getAuthenticatedUser, requireRole, unauthorizedResponse } from "@/app/utils/auth";
+import {
+  getAuthenticatedUser,
+  requireRole,
+  unauthorizedResponse,
+} from "@/app/utils/auth";
 import { notifyContractCreated } from "@/app/utils/notifications";
 
 const CONTRACT_ACCESS_ROLES = [1, 2, 3, 4, 5, 6, 7];
+
+const ROMAN_MONTHS = [
+  "I",
+  "II",
+  "III",
+  "IV",
+  "V",
+  "VI",
+  "VII",
+  "VIII",
+  "IX",
+  "X",
+  "XI",
+  "XII",
+];
+
+function toRomanMonth(date) {
+  const monthIndex = moment(date).month();
+  return ROMAN_MONTHS[monthIndex];
+}
 
 export async function POST(req) {
   try {
@@ -11,114 +35,151 @@ export async function POST(req) {
     if (roleResponse) return roleResponse;
 
     const body = await req.json();
-    const { tenant_application_id, contract_number } = body;
+    const { tenant_application_id, document_number } = body;
+
     const authUser = await getAuthenticatedUser();
-    if (!authUser) {
-      return unauthorizedResponse();
-    }
+    if (!authUser) return unauthorizedResponse();
 
     if (!tenant_application_id) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          message: "tenant_application_id  wajib diisi",
-        }),
-        { status: 400 }
+      return Response.json(
+        { success: false, message: "tenant_application_id wajib diisi" },
+        { status: 400 },
       );
     }
 
-    if (!contract_number) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          message: "contract_number wajib diisi",
-        }),
-        { status: 400 }
+    if (!document_number) {
+      return Response.json(
+        { success: false, message: "Nomor kontrak wajib diisi" },
+        { status: 400 },
       );
     }
 
-    // Ambil angka awal dari contract number sebelum simbol "/"
-    const contractNumberPrefix = contract_number.split("/")[0].trim();
+    const client = await pool.connect();
 
-    // Cek apakah prefix angka sudah ada di database
-    const checkContractNumber = await pool.query(
-      `
-        SELECT id 
+    try {
+      await client.query("BEGIN");
+
+      const tenantResult = await client.query(
+        `
+        SELECT
+          ta.id,
+          ta.is_fully_paid,
+          ta.approval_status,
+          loc.location_code
+        FROM tenant_application ta
+        LEFT JOIN locations loc ON loc.id = ta.location_id
+        WHERE ta.id = $1
+        LIMIT 1
+        `,
+        [tenant_application_id],
+      );
+
+      const tenant = tenantResult.rows[0];
+
+      if (!tenant) {
+        await client.query("ROLLBACK");
+        return Response.json(
+          { success: false, message: "Data tenant tidak ditemukan" },
+          { status: 404 },
+        );
+      }
+
+      if (
+        tenant.approval_status !== "approved" ||
+        tenant.is_fully_paid !== true
+      ) {
+        await client.query("ROLLBACK");
+        return Response.json(
+          { success: false, message: "Tenant belum approved atau belum lunas" },
+          { status: 400 },
+        );
+      }
+
+      const paymentResult = await client.query(
+        `
+        SELECT p.payment_date
+        FROM payments p
+        WHERE p.tenant_application_id = $1
+          AND p.approval_status = 'approved'
+        ORDER BY p.payment_date DESC, p.payment_number DESC, p.id DESC
+        LIMIT 1
+        `,
+        [tenant_application_id],
+      );
+
+      const fullyPaidDate = paymentResult.rows[0]?.payment_date;
+
+      if (!fullyPaidDate) {
+        await client.query("ROLLBACK");
+        return Response.json(
+          {
+            success: false,
+            message: "Tanggal pembayaran lunas tidak ditemukan",
+          },
+          { status: 400 },
+        );
+      }
+
+      const monthRoman = toRomanMonth(fullyPaidDate);
+      const year = moment(fullyPaidDate).format("YYYY");
+      const locationCode = tenant.location_code || "-";
+
+      const contract_number = `${document_number} / PM / SK / - ${locationCode} / ${monthRoman} / ${year}`;
+
+      const checkContractNumber = await client.query(
+        `
+        SELECT id
         FROM contracts
         WHERE trim(split_part(contract_number, '/', 1)) = $1
-      `,
-      [contractNumberPrefix]
-    );
-
-    if (checkContractNumber.rows.length > 0) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          message: `Nomor kontrak ${contractNumberPrefix} sudah terdaftar!`,
-        }),
-        { status: 200 }
+        LIMIT 1
+        `,
+        [String(document_number).trim()],
       );
-    }
 
-    // tanggal kontrak otomatis dari backend
-    const contract_date = moment().format("YYYY-MM-DD");
+      if (checkContractNumber.rows.length > 0) {
+        await client.query("ROLLBACK");
+        return Response.json(
+          {
+            success: false,
+            message: `Nomor kontrak ${document_number} sudah terdaftar!`,
+          },
+          { status: 200 },
+        );
+      }
 
-    const insertQuery = `
-      INSERT INTO contracts (tenant_application_id, contract_number, contract_date)
-      VALUES ($1, $2, $3)
-      RETURNING id, tenant_application_id, contract_number, contract_date, created_at, updated_at
-    `;
+      const contractDate = moment(fullyPaidDate).format("YYYY-MM-DD");
 
-    const values = [tenant_application_id, contract_number, contract_date];
-
-    const result = await pool.query(insertQuery, values);
-    const newContract = result.rows[0];
-
-    const contractContext = await pool.query(
-      `
-      SELECT
-        c.id AS contract_id,
-        c.contract_number,
-        c.tenant_application_id AS id,
-        ta.user_id,
-        ta.document_number,
-        ti.full_name AS tenant_name,
-        r.room_number,
-        l.location_name
-      FROM contracts c
-      LEFT JOIN tenant_application ta ON ta.id = c.tenant_application_id
-      LEFT JOIN tenant_identities ti ON ti.id = ta.tenant_identity_id
-      LEFT JOIN rooms r ON r.id = ta.room_id
-      LEFT JOIN locations l ON l.id = ta.location_id
-      WHERE c.id = $1
-      LIMIT 1
-      `,
-      [newContract.id],
-    );
-
-    // Kontrak final tidak melibatkan bagian keuangan, sehingga notifikasi
-    // dikirim ke role non-keuangan sesuai akses menu contracts.
-    if (contractContext.rows[0]) {
-      await notifyContractCreated(
-        pool,
-        contractContext.rows[0],
-        authUser.id,
+      const result = await client.query(
+        `
+        INSERT INTO contracts 
+          (tenant_application_id, contract_number, contract_date)
+        VALUES ($1, $2, $3)
+        RETURNING id, tenant_application_id, contract_number, contract_date, created_at, updated_at
+        `,
+        [tenant_application_id, contract_number, contractDate],
       );
-    }
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: "Contract berhasil dibuat",
-        data: newContract,
-      }),
-      { status: 201 }
-    );
+      await client.query("COMMIT");
+
+      return Response.json(
+        {
+          success: true,
+          message: "Contract berhasil dibuat",
+          data: result.rows[0],
+        },
+        { status: 201 },
+      );
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
+    }
   } catch (err) {
     console.error("error", err);
-    return new Response(
-      JSON.stringify({ success: false, message: err.message }),
-      { status: 500 }
+    return Response.json(
+      { success: false, message: err.message },
+      { status: 500 },
     );
   }
 }
@@ -358,13 +419,13 @@ export async function GET() {
         message: "Berhasil mengambil data contracts",
         data: Object.values(grouped),
       }),
-      { status: 200 }
+      { status: 200 },
     );
   } catch (err) {
     console.error("error", err);
     return new Response(
       JSON.stringify({ success: false, message: err.message }),
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

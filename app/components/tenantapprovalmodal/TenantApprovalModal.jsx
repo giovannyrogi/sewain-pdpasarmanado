@@ -517,7 +517,7 @@ const TenantApprovalModal = ({
                 }}
               >
                 {selectedData?.room_area
-                  ? formatNumber(selectedData.room_area) + " M"
+                  ? formatNumber(selectedData.room_area) + " m²"
                   : "-"}
               </Typography>
             </Grid>

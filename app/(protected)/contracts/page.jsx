@@ -21,7 +21,6 @@ import { useReactToPrint } from "react-to-print";
 import PizZip from "pizzip";
 import Docxtemplater from "docxtemplater";
 import { saveAs } from "file-saver";
-import UpdateDocumentContract from "./UpdateDocumentContract";
 import AddContract from "./AddContract";
 import formatRupiah from "@/app/components/formatrupiah/page";
 import MENU_CONFIG from "@/app/components/menu/MenuConfig";
@@ -114,11 +113,6 @@ const Contract = () => {
     setPrintData(record);
   };
 
-  const handleUpdateDocument = (record) => {
-    setSelectedData(record);
-    setOpenUpdateModal(true);
-  };
-
   // Utility untuk filter dinamis
   const filteredData = dataPayments.filter((item) => {
     if (!searchText) return true;
@@ -168,7 +162,7 @@ const Contract = () => {
   ]);
 
   const columns = [
-     {
+    {
       title: "No",
       dataIndex: "index",
       render: (text, record, index) => index + 1,
@@ -183,7 +177,7 @@ const Contract = () => {
       filterSearch: true,
       sorter: (a, b) =>
         a.tenant_identities.full_name.localeCompare(
-          b.tenant_identities.full_name
+          b.tenant_identities.full_name,
         ),
       sortDirections: ["ascend", "descend"],
       render: (text, record) => (
@@ -437,6 +431,14 @@ const Contract = () => {
     ];
     const monthInRomawi = romawi[month - 1];
 
+    // get this year format YYYY
+    const thisYear = moment().format("YYYY");
+
+    // format tenant name to UPPERCASE
+    const tenantName = record.tenant_identities?.full_name
+      ? record.tenant_identities.full_name.toUpperCase()
+      : "-";
+
     try {
       // Ambil template docx dari folder public/documents
       const response = await fetch("/documents/contract-template.docx");
@@ -457,7 +459,7 @@ const Contract = () => {
         month_name: monthName || "-",
         year_number: yearNumber || "-",
         year_in_words: yearInWords || "-",
-        tenant_name: record.tenant_identities?.full_name || "-",
+        tenant_name: tenantName || "-",
         room_number: record.rooms?.room_number || "-",
         location_name: record.locations?.location_name || "-",
         currentYear: currentYear || "-",
@@ -506,6 +508,7 @@ const Contract = () => {
         totalPPNInWords: totalPPNInWords || "-",
         biayaAdministrasi: formatRupiah(biayaAdministrasi) || "-",
         biayaAdministrasiInWords: biayaAdministrasiInWords || "-",
+        thisYear: thisYear || "-",
       };
 
       // Render ke docx
@@ -521,7 +524,7 @@ const Contract = () => {
       setTimeout(() => {
         saveAs(
           out,
-          `Contract_${record?.tenant_identities?.full_name}_${record?.locations?.location_name}_${record?.rooms?.room_number}.docx`
+          `Contract_${record?.tenant_identities?.full_name}_${record?.locations?.location_name}_${record?.rooms?.room_number}.docx`,
         );
         setLoading(false);
       }, 1000);
@@ -626,16 +629,6 @@ const Contract = () => {
         loadingFalse={() => setLoading(false)}
         loadingMessage={loadingMessage}
         setLoadingMessage={setLoadingMessage}
-        onNotify={(notify) => setSnackbar(notify)}
-      />
-
-      <UpdateDocumentContract
-        open={openUpdateModal}
-        onClose={() => setOpenUpdateModal(false)}
-        getDataContract={getDataContract}
-        loading={loading}
-        setLoading={setLoading}
-        loadingMessage={loadingMessage}
         onNotify={(notify) => setSnackbar(notify)}
       />
 

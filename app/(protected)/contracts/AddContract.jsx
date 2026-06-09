@@ -104,6 +104,9 @@ const AddContract = ({
           notes: item.tenant_identities.notes,
           room_number: item.rooms.room_number,
           location_name: item.locations.location_name,
+          fully_paid_date: item.payments?.fully_paid_date,
+          fully_paid_month_roman: item.payments?.fully_paid_month_roman,
+          fully_paid_year: item.payments?.fully_paid_year,
         }));
 
         setListAvailableTenant(mapped);
@@ -136,21 +139,10 @@ const AddContract = ({
     setIsSubmitting(true);
     loadingTrue();
 
-    // gabungkan nomor + prefix
-    const now = new Date();
-    const monthRoman = toRoman(now.getMonth() + 1);
-    const year = now.getFullYear();
-    const prefix = `${" "}/ PM / SK / - ${
-      selectedTenantData?.location_code
-        ? selectedTenantData?.location_code
-        : "-"
-    } / ${monthRoman} / ${year}`;
-    const finalContractNumber = `${documentNumber}${prefix}`;
-
     try {
       const response = await axios.post(`/api/contracts`, {
         tenant_application_id: selectedTenantId,
-        contract_number: finalContractNumber,
+        document_number: documentNumber,
       });
       // console.log("response", response);
 
@@ -202,29 +194,9 @@ const AddContract = ({
     setListAvailableTenant([]);
   };
 
-  const toRoman = (num) => {
-    const roman = [
-      "",
-      "I",
-      "II",
-      "III",
-      "IV",
-      "V",
-      "VI",
-      "VII",
-      "VIII",
-      "IX",
-      "X",
-      "XI",
-      "XII",
-    ];
-    return roman[num] || "";
-  };
-
   const getPrefix = () => {
-    const now = new Date();
-    const monthRoman = toRoman(now.getMonth() + 1);
-    const year = now.getFullYear();
+    const monthRoman = selectedTenantData?.fully_paid_month_roman || "-";
+    const year = selectedTenantData?.fully_paid_year || "-";
     return (
       <InputAdornment
         position="end"
@@ -305,7 +277,7 @@ const AddContract = ({
                 }
                 value={
                   listAvailableTenant.find(
-                    (item) => item.tenant_application_id === selectedTenantId
+                    (item) => item.tenant_application_id === selectedTenantId,
                   ) || null
                 }
                 onChange={(event, newValue) => {
@@ -316,7 +288,7 @@ const AddContract = ({
                     return;
                   }
                   setSelectedTenantId(
-                    newValue ? newValue.tenant_application_id : null
+                    newValue ? newValue.tenant_application_id : null,
                   );
                   setSelectedTenantData(newValue);
                 }}
@@ -358,7 +330,7 @@ const AddContract = ({
             )}
             <Grid size={12}>
               <TextField
-                label="Nomor Kontrak"
+                label="No. Kontrak"
                 // placeholder="Cth: 001"
                 variant="filled"
                 fullWidth

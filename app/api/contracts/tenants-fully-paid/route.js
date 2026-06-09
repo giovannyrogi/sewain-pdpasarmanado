@@ -4,6 +4,26 @@ import { requireRole } from "@/app/utils/auth";
 
 const CONTRACT_ACCESS_ROLES = [1, 2];
 
+const ROMAN_MONTHS = [
+  "I",
+  "II",
+  "III",
+  "IV",
+  "V",
+  "VI",
+  "VII",
+  "VIII",
+  "IX",
+  "X",
+  "XI",
+  "XII",
+];
+
+const getRomanMonth = (date) => {
+  if (!date) return null;
+  return ROMAN_MONTHS[moment(date).month()] || null;
+};
+
 export async function GET() {
   try {
     const { response } = await requireRole(CONTRACT_ACCESS_ROLES);
@@ -12,11 +32,20 @@ export async function GET() {
     const sql = `
       WITH max_contract AS (
         SELECT c.id, c.contract_number,
-               CAST(NULLIF(regexp_replace(c.contract_number, '^([0-9]+).*$', '\\1'), '') AS INT) AS contract_num_only
+              CAST(NULLIF(regexp_replace(c.contract_number, '^([0-9]+).*$', '\\1'), '') AS INT) AS contract_num_only
         FROM contracts c
         WHERE c.contract_number ~ '^[0-9]+'
         ORDER BY contract_num_only DESC
         LIMIT 1
+      ),
+     latest_paid_payment AS (
+        SELECT DISTINCT ON (p.tenant_application_id)
+          p.tenant_application_id,
+          p.payment_date AS fully_paid_date
+        FROM payments p
+        WHERE p.approval_status = 'approved'
+          AND COALESCE(p.remaining_balance, 0) = 0
+        ORDER BY p.tenant_application_id, p.payment_date DESC, p.payment_number DESC, p.id DESC
       )
       SELECT 
         -- tenant_application
@@ -42,6 +71,9 @@ export async function GET() {
         ta.created_at AS tenant_created_at,
         ta.is_fully_paid,
         ta.renewal_of,
+
+        -- latest_paid_payment
+        lpp.fully_paid_date,
 
         -- tenant_identities
         ti.id AS tenant_identity_id2,
@@ -85,18 +117,15 @@ export async function GET() {
         loc.kelurahan,
 
         -- contracts (ambil nomor kontrak terbesar)
-        mc.contract_number AS latest_contract_number,
-        mc.contract_num_only AS latest_contract_number_only,
-
-       -- tetap tampilkan nomor kontrak terbesar
-        mc.contract_number AS latest_contract_number,
-        mc.contract_num_only AS latest_contract_number_only
+       mc.contract_number AS latest_contract_number,
+       mc.contract_num_only AS latest_contract_number_only
 
       FROM tenant_application ta
       LEFT JOIN tenant_identities ti ON ta.tenant_identity_id = ti.id
       LEFT JOIN rooms rm ON rm.id = ta.room_id
       LEFT JOIN locations loc ON loc.id = ta.location_id
       LEFT JOIN max_contract mc ON TRUE
+      LEFT JOIN latest_paid_payment lpp ON lpp.tenant_application_id = ta.id
 
       WHERE 
         ta.is_fully_paid = TRUE
@@ -125,6 +154,9 @@ export async function GET() {
           WHERE tet.tenant_application_id = ta.id
             AND tet.is_terminated = TRUE
         )
+
+        -- belum dibuatkan kontrak di tabel contracts
+        AND lpp.fully_paid_date IS NOT NULL
 
       ORDER BY ta.created_at DESC;
     `;
@@ -209,6 +241,17 @@ export async function GET() {
         latest_contract_number: row.latest_contract_number,
         latest_contract_number_only: row.latest_contract_number_only,
       },
+      payments: {
+        fully_paid_date: row.fully_paid_date
+          ? moment(row.fully_paid_date).format("YYYY-MM-DD")
+          : null,
+        fully_paid_month_roman: row.fully_paid_date
+          ? getRomanMonth(row.fully_paid_date)
+          : null,
+        fully_paid_year: row.fully_paid_date
+          ? moment(row.fully_paid_date).format("YYYY")
+          : null,
+      },
     }));
 
     return new Response(
@@ -217,13 +260,13 @@ export async function GET() {
         message: "Berhasil mengambil daftar tenant",
         data,
       }),
-      { status: 200 }
+      { status: 200 },
     );
   } catch (err) {
     console.error("error", err);
     return new Response(
       JSON.stringify({ success: false, message: err.message }),
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

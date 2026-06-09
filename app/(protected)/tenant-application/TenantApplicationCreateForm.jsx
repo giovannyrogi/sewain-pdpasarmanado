@@ -463,7 +463,6 @@ const TenantApplicationCreateForm = ({
           )}.`,
           severity: "error",
         });
-      loadingFalse && loadingFalse();
       setIsSubmitting(false);
       return;
     }
@@ -475,7 +474,6 @@ const TenantApplicationCreateForm = ({
           message: "Silakan isi total pembayaran terlebih dahulu.",
           severity: "error",
         });
-      loadingFalse && loadingFalse();
       setIsSubmitting(false);
       return;
     }
@@ -671,400 +669,227 @@ const TenantApplicationCreateForm = ({
     <CrudFormModal
       open={open}
       onClose={onClose}
+      onSubmit={handleSubmit}
       title="Tambah Permohonan Sewa"
       description="Lengkapi data penyewa, lokasi, ruangan, masa kontrak, pembayaran, dan dokumen pendukung untuk pengajuan sewa ruangan."
       icon="solar:document-add-bold-duotone"
       width={680}
-      loading={loading || isSubmitting}
+      loading={isSubmitting}
       loadingLabel="Memproses permohonan..."
-      hideFooter
+      // hideFooter
       contentSx={{ p: { xs: 2, sm: 2.5 } }}
     >
-      <form onSubmit={handleSubmit}>
-        <Grid container spacing={isMobile ? 3 : 2}>
-          <Grid size={12}>
-            <Autocomplete
-              options={tenantOptions}
-              getOptionLabel={(option) => option.label}
-              value={
-                tenantOptions.find((item) => item.value === tenantType) || null
+      <Grid container spacing={isMobile ? 3 : 2}>
+        <Grid size={12}>
+          <Autocomplete
+            options={tenantOptions}
+            getOptionLabel={(option) => option.label}
+            value={
+              tenantOptions.find((item) => item.value === tenantType) || null
+            }
+            onChange={(event, newValue) => {
+              // simpan value ke state
+              if (newValue?.value === "perpanjang_tenant") {
+                clearForm();
+                getListTenantExtends();
+                getHighestDocumentNumber();
+              } else {
+                clearForm();
+                setListDataTenantExtends([]);
+                setSelectedDataTenantExtends(null);
+                getListIdentities();
               }
-              onChange={(event, newValue) => {
-                // simpan value ke state
-                if (newValue?.value === "perpanjang_tenant") {
-                  clearForm();
-                  getListTenantExtends();
-                  getHighestDocumentNumber();
-                } else {
-                  clearForm();
-                  setListDataTenantExtends([]);
-                  setSelectedDataTenantExtends(null);
-                  getListIdentities();
-                }
-                setTenantType(newValue ? newValue.value : null);
-              }}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="Pilih Jenis Permohonan"
-                  variant="filled"
-                  required
-                />
-              )}
-            />
-          </Grid>
-          {tenantType === "perpanjang_tenant" ? (
-            <Grid size={12}>
-              <Autocomplete
-                disabled={!tenantType || tenantType === "permohonan_baru"}
-                options={listDataTenantExtends || []}
-                getOptionLabel={(option) =>
-                  option?.tenant_name +
-                    " - " +
-                    option?.location_name +
-                    " - " +
-                    option?.room_number || ""
-                }
-                value={selectedDataTenantExtends}
-                onChange={(event, newValue) => {
-                  setSelectedDataTenantExtends(newValue ?? null);
-                  // console.log("newValue perpanjang_tenant", newValue);
-
-                  // clear form setelah menghapus data tenant lama
-                  if (!newValue) {
-                    clearForm();
-                  } else {
-                    getCurrentExtendTenant(newValue?.tenant_application_id);
-                    setStartDate(moment(newValue?.end_date).add(1, "day"));
-                    setIdentityID(newValue?.tenant_identity_id);
-                  }
-                }}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label="Pilih Data Penyewa"
-                    variant="filled"
-                    required
-                  />
-                )}
-              />
-            </Grid>
-          ) : (
-            <Grid size={12}>
-              <Autocomplete
-                options={listDataIdentity || []}
-                getOptionLabel={(option) => option.full_name || ""}
-                value={
-                  listDataIdentity.find((item) => item.id === identityID) ||
-                  null
-                }
-                onChange={(event, newValue) => {
-                  // console.log("newValue", newValue);
-                  setIdentityID(newValue ? newValue.id : null);
-                  setSelectedDataIdentity(newValue ?? "");
-                }}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label="Pilih Data Penyewa"
-                    variant="filled"
-                    required
-                  />
-                )}
-              />
-            </Grid>
-          )}
-          {identityID && (
-            <Grid
-              container
-              size={12}
-              sx={{
-                mt: isMobile ? -2 : -1.2,
-              }}
-            >
-              <Grid size={isMobile ? 12 : 6}>
-                <Typography
-                  sx={{
-                    fontWeight: "bold",
-                    fontSize: "12px",
-                    cursor: "pointer",
-                    color: theme.palette.primary.main,
-                    "&:hover": {
-                      textDecoration: "underline",
-                    },
-                  }}
-                  onClick={() => setOpenViewInformationModal(true)}
-                >
-                  Lihat Data Penyewa
-                </Typography>
-              </Grid>
-            </Grid>
-          )}
-          <Grid size={isMobile ? 12 : 6}>
-            <Autocomplete
-              options={dataLocations || []}
-              getOptionLabel={(option) =>
-                option.location_name
-                  ? option.location_name.charAt(0).toUpperCase() +
-                    option.location_name.slice(1)
-                  : ""
-              }
-              value={
-                dataLocations
-                  ? dataLocations.find((item) => item.id === locationId) || null
-                  : null
-              }
-              onChange={(event, newValue) => {
-                const selectedLocationId = newValue ? newValue.id : "";
-
-                if (!selectedLocationId) {
-                  setLocationId("");
-                  setRoomId("");
-                  setStartDate(null);
-                  setEndDate(null);
-                  setPaymentType("lunas");
-                  setTotalPayment("");
-                  setDownPayment("");
-                  setRemainingPayment("");
-                  setEstimatedInstallment1("");
-                  setEstimatedInstallment2("");
-                  setEstimatedInstallment3("");
-                  setEstimatedInstallmentDate1(null);
-                  setEstimatedInstallmentDate2(null);
-                  setEstimatedInstallmentDate3(null);
-                } else {
-                  setLocationId("");
-                  setRoomId("");
-                  setStartDate(null);
-                  setEndDate(null);
-                  setPaymentType("lunas");
-                  setTotalPayment("");
-                  setDownPayment("");
-                  setRemainingPayment("");
-                  setEstimatedInstallment1("");
-                  setEstimatedInstallment2("");
-                  setEstimatedInstallment3("");
-                  setEstimatedInstallmentDate1(null);
-                  setEstimatedInstallmentDate2(null);
-                  setEstimatedInstallmentDate3(null);
-                  setLocationId(selectedLocationId);
-                  getRoomsData(selectedLocationId); // <-- load rooms sesuai lokasi
-                }
-              }}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="Pilih Lokasi"
-                  variant="filled"
-                  required
-                />
-              )}
-            />
-          </Grid>
-          <Grid size={isMobile ? 12 : 6}>
-            <Autocomplete
-              options={dataAvailableRooms}
-              getOptionLabel={(option) =>
-                "Ruangan No. " + option?.room_number || ""
-              }
-              value={
-                dataAvailableRooms.find((room) => room.id === roomId) || null
-              }
-              onChange={(event, newValue) => {
-                // console.log("newValue.id", newValue.id);
-
-                setRoomId(newValue ? newValue.id : "");
-                setSelectedDataRooms(newValue || {});
-              }}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="Pilih Ruangan"
-                  variant="filled"
-                  required
-                />
-              )}
-              disabled={!locationId}
-            />
-          </Grid>
-
-          {roomId && (
-            <Grid container size={12}>
-              {!isMobile && <Grid size={6}></Grid>}
-              <Grid
-                size={isMobile ? 12 : 6}
-                sx={{
-                  mt: isMobile ? -1.5 : -1,
-                  mb: isMobile ? -2 : -1,
-                }}
-              >
-                <Typography
-                  sx={{
-                    fontWeight: "bold",
-                    fontSize: "12px",
-                    cursor: "pointer",
-                    color: theme.palette.primary.main,
-                    "&:hover": {
-                      textDecoration: "underline",
-                    },
-                  }}
-                  onClick={() => setOpenViewDetailRoomModal(true)}
-                >
-                  Lihat Detail Ruangan
-                </Typography>
-              </Grid>
-            </Grid>
-          )}
-          <Grid size={isMobile ? 12 : 6}>
-            <FormControl fullWidth variant="filled" required disabled={!roomId}>
-              <InputLabel id="demo-simple-select-filled-label">
-                Tipe Pembayaran
-              </InputLabel>
-              <Select
-                value={paymentType}
-                defaultValue={true}
-                onChange={(e) => {
-                  setPaymentType(e.target.value);
-                }}
-              >
-                <MenuItem value={"lunas"}>Lunas</MenuItem>
-                <MenuItem value={"cicilan"}>Cicilan</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
-          {paymentType === "cicilan" && (
-            <Grid size={isMobile ? 12 : 6}>
-              <FormControl
-                fullWidth
+              setTenantType(newValue ? newValue.value : null);
+            }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Pilih Jenis Permohonan"
                 variant="filled"
                 required
-                disabled={!paymentType}
-              >
-                <InputLabel id="demo-simple-select-filled-label">
-                  Pilih Tenor Pembayaran
-                </InputLabel>
-                <Select
-                  value={chooseTenor}
-                  defaultValue={true}
-                  onChange={(e) => {
-                    setChooseTenor(e.target.value);
-                  }}
-                >
-                  <MenuItem value={1}>Menyicil 1x</MenuItem>
-                  <MenuItem value={2}>Menyicil 2x</MenuItem>
-                  <MenuItem value={3}>Menyicil 3x</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-          )}
-          <Grid size={isMobile ? 12 : 6}>
-            <TextField
-              label="Total Pembayaran"
-              variant="filled"
-              fullWidth
-              value={formatRupiah(totalPayment)}
-              onChange={(e) => {
-                setTotalPayment(e.target.value.replace(/[^0-9]/g, ""));
+              />
+            )}
+          />
+        </Grid>
+        {tenantType === "perpanjang_tenant" ? (
+          <Grid size={12}>
+            <Autocomplete
+              disabled={!tenantType || tenantType === "permohonan_baru"}
+              options={listDataTenantExtends || []}
+              getOptionLabel={(option) =>
+                option?.tenant_name +
+                  " - " +
+                  option?.location_name +
+                  " - " +
+                  option?.room_number || ""
+              }
+              value={selectedDataTenantExtends}
+              onChange={(event, newValue) => {
+                setSelectedDataTenantExtends(newValue ?? null);
+                // console.log("newValue perpanjang_tenant", newValue);
+
+                // clear form setelah menghapus data tenant lama
+                if (!newValue) {
+                  clearForm();
+                } else {
+                  getCurrentExtendTenant(newValue?.tenant_application_id);
+                  setStartDate(moment(newValue?.end_date).add(1, "day"));
+                  setIdentityID(newValue?.tenant_identity_id);
+                }
               }}
-              required
-              disabled
-              color="primary"
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Pilih Data Penyewa"
+                  variant="filled"
+                  required
+                />
+              )}
             />
           </Grid>
-          {paymentType === "cicilan" && (
-            <>
-              <Grid size={6}>
+        ) : (
+          <Grid size={12}>
+            <Autocomplete
+              options={listDataIdentity || []}
+              getOptionLabel={(option) => option.full_name || ""}
+              value={
+                listDataIdentity.find((item) => item.id === identityID) || null
+              }
+              onChange={(event, newValue) => {
+                // console.log("newValue", newValue);
+                setIdentityID(newValue ? newValue.id : null);
+                setSelectedDataIdentity(newValue ?? "");
+              }}
+              renderInput={(params) => (
                 <TextField
-                  label="Uang Muka (DP)"
+                  {...params}
+                  label="Pilih Data Penyewa"
                   variant="filled"
-                  fullWidth
-                  value={formatRupiah(downPayment)}
-                  onChange={(e) => {
-                    setDownPayment(e.target.value.replace(/[^0-9]/g, ""));
-                  }}
                   required
-                  color="primary"
                 />
-              </Grid>
-              <Grid size={6}>
-                <TextField
-                  label="Sisa Tagihan"
-                  variant="filled"
-                  fullWidth
-                  value={formatRupiah(remainingPayment)}
-                  disabled
-                  required
-                  color="primary"
-                />
-              </Grid>
-              <Grid
-                size={isMobile ? 12 : 6}
+              )}
+            />
+          </Grid>
+        )}
+        {identityID && (
+          <Grid
+            container
+            size={12}
+            sx={{
+              mt: isMobile ? -2 : -1.2,
+            }}
+          >
+            <Grid size={isMobile ? 12 : 6}>
+              <Typography
                 sx={{
-                  p: 1,
-                  bgcolor:
-                    themeMode === "dark"
-                      ? alpha(theme.palette.primary.main, 0.12)
-                      : alpha(theme.palette.primary.main, 0.12),
-                  borderRadius: 1,
-                  alignContent: "center",
+                  fontWeight: "bold",
+                  fontSize: "12px",
+                  cursor: "pointer",
+                  color: theme.palette.primary.main,
+                  "&:hover": {
+                    textDecoration: "underline",
+                  },
                 }}
+                onClick={() => setOpenViewInformationModal(true)}
               >
-                <Typography
-                  sx={{
-                    fontSize: "12px",
-                    fontWeight: "bold",
-                    color: "primary.main",
-                    textAlign: "justify",
-                  }}
-                >
-                  DP minimal 40% ({formatRupiah(totalPayment * 0.4)}) dari total
-                  pembayaran {formatRupiah(totalPayment)}.
-                </Typography>
-              </Grid>
-              {/* {isMobile ? undefined : <Grid size={6}></Grid>} */}
+                Lihat Data Penyewa
+              </Typography>
+            </Grid>
+          </Grid>
+        )}
+        <Grid size={isMobile ? 12 : 6}>
+          <Autocomplete
+            options={dataLocations || []}
+            getOptionLabel={(option) =>
+              option.location_name
+                ? option.location_name.charAt(0).toUpperCase() +
+                  option.location_name.slice(1)
+                : ""
+            }
+            value={
+              dataLocations
+                ? dataLocations.find((item) => item.id === locationId) || null
+                : null
+            }
+            onChange={(event, newValue) => {
+              const selectedLocationId = newValue ? newValue.id : "";
 
-              {installments.slice(0, chooseTenor).map((item, index) => (
-                <React.Fragment key={index}>
-                  <Grid size={6}>
-                    <TextField
-                      label={item.label}
-                      variant="filled"
-                      fullWidth
-                      disabled
-                      value={formatRupiah(item.amount)}
-                      onChange={(e) => {
-                        item.setAmount(e.target.value.replace(/[^0-9]/g, ""));
-                      }}
-                      required
-                      color="primary"
-                    />
-                  </Grid>
+              if (!selectedLocationId) {
+                setLocationId("");
+                setRoomId("");
+                setStartDate(null);
+                setEndDate(null);
+                setPaymentType("lunas");
+                setTotalPayment("");
+                setDownPayment("");
+                setRemainingPayment("");
+                setEstimatedInstallment1("");
+                setEstimatedInstallment2("");
+                setEstimatedInstallment3("");
+                setEstimatedInstallmentDate1(null);
+                setEstimatedInstallmentDate2(null);
+                setEstimatedInstallmentDate3(null);
+              } else {
+                setLocationId("");
+                setRoomId("");
+                setStartDate(null);
+                setEndDate(null);
+                setPaymentType("lunas");
+                setTotalPayment("");
+                setDownPayment("");
+                setRemainingPayment("");
+                setEstimatedInstallment1("");
+                setEstimatedInstallment2("");
+                setEstimatedInstallment3("");
+                setEstimatedInstallmentDate1(null);
+                setEstimatedInstallmentDate2(null);
+                setEstimatedInstallmentDate3(null);
+                setLocationId(selectedLocationId);
+                getRoomsData(selectedLocationId); // <-- load rooms sesuai lokasi
+              }
+            }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Pilih Lokasi"
+                variant="filled"
+                required
+              />
+            )}
+          />
+        </Grid>
+        <Grid size={isMobile ? 12 : 6}>
+          <Autocomplete
+            options={dataAvailableRooms}
+            getOptionLabel={(option) =>
+              "Ruangan No. " + option?.room_number || ""
+            }
+            value={
+              dataAvailableRooms.find((room) => room.id === roomId) || null
+            }
+            onChange={(event, newValue) => {
+              // console.log("newValue.id", newValue.id);
 
-                  <Grid size={6}>
-                    <DatePicker
-                      label={`Tanggal ${item.label}`}
-                      value={item.date}
-                      onChange={(newValue) => item.setDate(newValue)}
-                      views={["year", "month"]}
-                      // minDate={moment()}
-                      slotProps={{
-                        textField: {
-                          variant: "filled",
-                          fullWidth: true,
-                          required: true,
-                          disabled: loading,
-                          color: "primary",
-                        },
-                      }}
-                    />
-                  </Grid>
-                </React.Fragment>
-              ))}
-            </>
-          )}
-          {totalPayment > 0 && (
+              setRoomId(newValue ? newValue.id : "");
+              setSelectedDataRooms(newValue || {});
+            }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Pilih Ruangan"
+                variant="filled"
+                required
+              />
+            )}
+            disabled={!locationId}
+          />
+        </Grid>
+
+        {roomId && (
+          <Grid container size={12}>
+            {!isMobile && <Grid size={6}></Grid>}
             <Grid
-              size={12}
+              size={isMobile ? 12 : 6}
               sx={{
                 mt: isMobile ? -1.5 : -1,
                 mb: isMobile ? -2 : -1,
@@ -1080,122 +905,97 @@ const TenantApplicationCreateForm = ({
                     textDecoration: "underline",
                   },
                 }}
-                onClick={() => setOpenViewDetailCalculatePPNModal(true)}
+                onClick={() => setOpenViewDetailRoomModal(true)}
               >
-                Lihat detail perhitungan biaya dan PPN
+                Lihat Detail Ruangan
               </Typography>
             </Grid>
-          )}
-
-          <Grid size={{ xs: 12, md: 4 }}>
-            <DatePicker
-              label="Mulai Kontrak"
-              value={startDate}
-              onChange={(newValue) => {
-                setStartDate(newValue);
-                // console.log("startdate", newValue);
-
-                // if (newValue) {
-                //   // Tambahkan 365 hari ke tanggal mulai
-                //   const end = moment(newValue).add(365, "days");
-
-                //   setEndDate(end);
-                // } else {
-                //   setEndDate(null);
-                // }
-              }}
-              // minDate={moment()}
-              disabled={tenantType === "perpanjang_tenant"}
-              slotProps={{
-                textField: {
-                  variant: "filled",
-                  fullWidth: true,
-                  required: true,
-                  disabled: tenantType === "perpanjang_tenant",
-                  color: "primary",
-                },
-              }}
-            />
           </Grid>
-          <Grid size={{ xs: 12, md: 4 }}>
-            <TextField
-              label="Durasi Sewa"
-              value={leaseDurationYears}
-              onChange={handleLeaseDurationChange}
-              type="text"
-              variant="filled"
-              fullWidth
-              required
-              disabled={!startDate}
-              slotProps={{
-                htmlInput: {
-                  min: 1,
-                  step: 1,
-                },
-              }}
-              helperText="Durasi sewa dalam tahun"
-              //styling hypertext menghilangkan margin bawaaan jadi 0
-              sx={{
-                "& .MuiFormHelperText-root": {
-                  m: "8px 0 0 0",
-                  fontWeight: "600",
-                  color: "primary.main",
-                },
-              }}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, md: 4 }}>
-            <DatePicker
-              label="Kontrak Berakhir"
-              value={endDate}
-              // minDate={moment()}
-              disabled
-              slotProps={{
-                textField: {
-                  variant: "filled",
-                  fullWidth: true,
-                  required: true,
-                  color: "primary",
-                  disabled: true,
-                },
-              }}
-            />
-          </Grid>
-          <Grid size={12}>
-            <TextField
-              label="Durasi Kontrak"
-              variant="filled"
-              fullWidth
-              value={`${leaseDurationYears} tahun (${durasiKontrak} hari)`}
-              // onChange={(e) => {
-              // }}
-              disabled
-              required
-              color="primary"
-            />
-          </Grid>
-
-          <Grid size={12}>
-            <TextField
-              label="Nomor Dokumen"
-              // placeholder="Cth: 001"
-              variant="filled"
-              fullWidth
-              value={documentNumber}
+        )}
+        <Grid size={isMobile ? 12 : 6}>
+          <FormControl fullWidth variant="filled" required disabled={!roomId}>
+            <InputLabel id="demo-simple-select-filled-label">
+              Tipe Pembayaran
+            </InputLabel>
+            <Select
+              value={paymentType}
+              defaultValue={true}
               onChange={(e) => {
-                // document number hanya boleh angka
-                setDocumentNumber(e.target.value.replace(/[^0-9]/g, ""));
+                setPaymentType(e.target.value);
               }}
-              InputProps={{
-                endAdornment: getPrefix(),
-              }}
+            >
+              <MenuItem value={"lunas"}>Lunas</MenuItem>
+              <MenuItem value={"cicilan"}>Cicilan</MenuItem>
+            </Select>
+          </FormControl>
+        </Grid>
+        {paymentType === "cicilan" && (
+          <Grid size={isMobile ? 12 : 6}>
+            <FormControl
+              fullWidth
+              variant="filled"
               required
-              color="primary"
-            />
+              disabled={!paymentType}
+            >
+              <InputLabel id="demo-simple-select-filled-label">
+                Pilih Tenor Pembayaran
+              </InputLabel>
+              <Select
+                value={chooseTenor}
+                defaultValue={true}
+                onChange={(e) => {
+                  setChooseTenor(e.target.value);
+                }}
+              >
+                <MenuItem value={1}>Menyicil 1x</MenuItem>
+                <MenuItem value={2}>Menyicil 2x</MenuItem>
+                <MenuItem value={3}>Menyicil 3x</MenuItem>
+              </Select>
+            </FormControl>
           </Grid>
-          {highestDocumentNumber && (
+        )}
+        <Grid size={isMobile ? 12 : 6}>
+          <TextField
+            label="Total Pembayaran"
+            variant="filled"
+            fullWidth
+            value={formatRupiah(totalPayment)}
+            onChange={(e) => {
+              setTotalPayment(e.target.value.replace(/[^0-9]/g, ""));
+            }}
+            required
+            disabled
+            color="primary"
+          />
+        </Grid>
+        {paymentType === "cicilan" && (
+          <>
+            <Grid size={6}>
+              <TextField
+                label="Uang Muka (DP)"
+                variant="filled"
+                fullWidth
+                value={formatRupiah(downPayment)}
+                onChange={(e) => {
+                  setDownPayment(e.target.value.replace(/[^0-9]/g, ""));
+                }}
+                required
+                color="primary"
+              />
+            </Grid>
+            <Grid size={6}>
+              <TextField
+                label="Sisa Tagihan"
+                variant="filled"
+                fullWidth
+                value={formatRupiah(remainingPayment)}
+                disabled
+                required
+                color="primary"
+              />
+            </Grid>
             <Grid
-              size={12}
+              size={isMobile ? 12 : 6}
               sx={{
                 p: 1,
                 bgcolor:
@@ -1203,50 +1003,226 @@ const TenantApplicationCreateForm = ({
                     ? alpha(theme.palette.primary.main, 0.12)
                     : alpha(theme.palette.primary.main, 0.12),
                 borderRadius: 1,
-                // mt: -1,
-                mb: -1,
-                display: "flex",
-                flexDirection: "row",
-                gap: 1,
+                alignContent: "center",
               }}
             >
               <Typography
                 sx={{
-                  fontSize: "14px",
+                  fontSize: "12px",
                   fontWeight: "bold",
                   color: "primary.main",
+                  textAlign: "justify",
                 }}
               >
-                Nomor Dokumen terakhir adalah{" "}
-                {highestDocumentNumber?.highest_document_number
-                  .split("/")[0]
-                  .trim() || "-"}
+                DP minimal 40% ({formatRupiah(totalPayment * 0.4)}) dari total
+                pembayaran {formatRupiah(totalPayment)}.
               </Typography>
             </Grid>
-          )}
+            {/* {isMobile ? undefined : <Grid size={6}></Grid>} */}
 
-          <Grid size={12}>
-            <Button
-              type="submit"
-              variant="contained"
-              color="primary"
-              fullWidth
+            {installments.slice(0, chooseTenor).map((item, index) => (
+              <React.Fragment key={index}>
+                <Grid size={6}>
+                  <TextField
+                    label={item.label}
+                    variant="filled"
+                    fullWidth
+                    disabled
+                    value={formatRupiah(item.amount)}
+                    onChange={(e) => {
+                      item.setAmount(e.target.value.replace(/[^0-9]/g, ""));
+                    }}
+                    required
+                    color="primary"
+                  />
+                </Grid>
+
+                <Grid size={6}>
+                  <DatePicker
+                    label={`Tanggal ${item.label}`}
+                    value={item.date}
+                    onChange={(newValue) => item.setDate(newValue)}
+                    views={["year", "month"]}
+                    // minDate={moment()}
+                    slotProps={{
+                      textField: {
+                        variant: "filled",
+                        fullWidth: true,
+                        required: true,
+                        disabled: loading,
+                        color: "primary",
+                      },
+                    }}
+                  />
+                </Grid>
+              </React.Fragment>
+            ))}
+          </>
+        )}
+        {totalPayment > 0 && (
+          <Grid
+            size={12}
+            sx={{
+              mt: isMobile ? -1.5 : -1,
+              mb: isMobile ? -2 : -1,
+            }}
+          >
+            <Typography
               sx={{
-                mt: 2,
                 fontWeight: "bold",
-                fontSize: 16,
-                textTransform: "none",
+                fontSize: "12px",
+                cursor: "pointer",
+                color: theme.palette.primary.main,
+                "&:hover": {
+                  textDecoration: "underline",
+                },
               }}
-              disabled={isSubmitting}
-              startIcon={
-                isSubmitting && <CircularProgress size={22} color="inherit" />
-              }
+              onClick={() => setOpenViewDetailCalculatePPNModal(true)}
             >
-              {isSubmitting ? "Mengirim..." : "Submit Data"}
-            </Button>
+              Lihat detail perhitungan biaya dan PPN
+            </Typography>
           </Grid>
+        )}
+
+        <Grid size={{ xs: 12, md: 4 }}>
+          <DatePicker
+            label="Mulai Kontrak"
+            value={startDate}
+            onChange={(newValue) => {
+              setStartDate(newValue);
+              // console.log("startdate", newValue);
+
+              // if (newValue) {
+              //   // Tambahkan 365 hari ke tanggal mulai
+              //   const end = moment(newValue).add(365, "days");
+
+              //   setEndDate(end);
+              // } else {
+              //   setEndDate(null);
+              // }
+            }}
+            // minDate={moment()}
+            disabled={tenantType === "perpanjang_tenant" || totalPayment < 1}
+            slotProps={{
+              textField: {
+                variant: "filled",
+                fullWidth: true,
+                required: true,
+                disabled:
+                  tenantType === "perpanjang_tenant" || totalPayment < 1,
+                color: "primary",
+              },
+            }}
+          />
         </Grid>
-      </form>
+        <Grid size={{ xs: 12, md: 4 }}>
+          <TextField
+            label="Durasi Sewa"
+            value={leaseDurationYears}
+            onChange={handleLeaseDurationChange}
+            type="text"
+            variant="filled"
+            fullWidth
+            required
+            disabled={!startDate}
+            slotProps={{
+              htmlInput: {
+                min: 1,
+                step: 1,
+              },
+            }}
+            helperText="Durasi sewa dalam tahun"
+            //styling hypertext menghilangkan margin bawaaan jadi 0
+            sx={{
+              "& .MuiFormHelperText-root": {
+                m: "8px 0 0 0",
+                fontWeight: "600",
+                color: "primary.main",
+              },
+            }}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, md: 4 }}>
+          <DatePicker
+            label="Kontrak Berakhir"
+            value={endDate}
+            // minDate={moment()}
+            disabled
+            slotProps={{
+              textField: {
+                variant: "filled",
+                fullWidth: true,
+                required: true,
+                color: "primary",
+                disabled: true,
+              },
+            }}
+          />
+        </Grid>
+        <Grid size={12}>
+          <TextField
+            label="Durasi Kontrak"
+            variant="filled"
+            fullWidth
+            value={`${leaseDurationYears} tahun (${durasiKontrak} hari)`}
+            // onChange={(e) => {
+            // }}
+            disabled
+            required
+            color="primary"
+          />
+        </Grid>
+
+        <Grid size={12}>
+          <TextField
+            label="Nomor Dokumen"
+            // placeholder="Cth: 001"
+            variant="filled"
+            fullWidth
+            value={documentNumber}
+            onChange={(e) => {
+              // document number hanya boleh angka
+              setDocumentNumber(e.target.value.replace(/[^0-9]/g, ""));
+            }}
+            InputProps={{
+              endAdornment: getPrefix(),
+            }}
+            required
+            color="primary"
+          />
+        </Grid>
+        {highestDocumentNumber && (
+          <Grid
+            size={12}
+            sx={{
+              p: 1,
+              bgcolor:
+                themeMode === "dark"
+                  ? alpha(theme.palette.primary.main, 0.12)
+                  : alpha(theme.palette.primary.main, 0.12),
+              borderRadius: 1,
+              // mt: -1,
+              mb: -1,
+              display: "flex",
+              flexDirection: "row",
+              gap: 1,
+            }}
+          >
+            <Typography
+              sx={{
+                fontSize: "14px",
+                fontWeight: "bold",
+                color: "primary.main",
+              }}
+            >
+              Nomor Dokumen terakhir adalah{" "}
+              {highestDocumentNumber?.highest_document_number
+                .split("/")[0]
+                .trim() || "-"}
+            </Typography>
+          </Grid>
+        )}
+      </Grid>
       <DetailRoomsModal
         open={openViewDetailRoomModal}
         onClose={() => setOpenViewDetailRoomModal(false)}
