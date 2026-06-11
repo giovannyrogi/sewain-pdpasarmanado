@@ -8,6 +8,7 @@ import {
   Menu,
   MenuItem,
   Stack,
+  useMediaQuery,
   useTheme,
 } from "@mui/material";
 import React, { useEffect, useMemo, useRef, useState } from "react";
@@ -22,11 +23,11 @@ import ReusableAntTable from "@/app/components/data-table/ReusableAntTable";
 import SummaryStatCard from "@/app/components/stats/SummaryStatCard";
 import TenantApplicationFormModal from "./TenantApplicationFormModal";
 import CrudConfirmModal from "@/app/components/crud/CrudConfirmModal";
-import ApprovalModal from "@/app/components/approvalmodal/page";
+import ApprovalTrackingModal from "@/app/components/modals/ApprovalTrackingModal";
 import { useUser } from "@/app/utils/useUser";
 import { useReactToPrint } from "react-to-print";
 import UpdateDocumentDate from "./UpdateDocumentDate";
-import DetailTenantApplicationModal from "@/app/components/tenantapplicationmodal/DetailTenantApplicationModal";
+import TenantApplicationDetailModal from "@/app/components/modals/TenantApplicationDetailModal";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import PrintDocumentTenant from "@/app/components/documents/PrintDocumentTenant";
@@ -42,6 +43,7 @@ const ACTION_COLUMN_WIDTH = 190;
 const TABLE_SCROLL_WIDTH = 1700;
 
 const Applications = () => {
+  const isMobile = useMediaQuery("(max-width:600px)");
   const router = useRouter();
   // Ref untuk dokumen print
   const printRef = useRef();
@@ -119,7 +121,7 @@ const Applications = () => {
     setTenantApplicationsLoaded(false);
     try {
       const response = await axios.get("/api/tenant-application");
-      // console.log("tenant application", response);
+      console.log("tenant application", response);
       setDataTenantApplication(response.data.data);
       setTenantApplicationsLoaded(true);
       setTimeout(() => {
@@ -412,6 +414,7 @@ const Applications = () => {
     () =>
       getTenantApplicationColumns({
         data: dataTenantApplication,
+        isMobile: isMobile,
         theme,
         themeMode,
         actionColumnWidth: ACTION_COLUMN_WIDTH,
@@ -685,26 +688,19 @@ const Applications = () => {
         selectedData={selectedData}
         user={user}
       />
-      <ApprovalModal
+      <ApprovalTrackingModal
         open={openApprovalModal}
         onClose={() => setOpenApprovalModal(false)}
         selectedData={selectedData}
+        variant="tenant"
         loadingTrue={() => setLoading(true)}
         loadingFalse={() => setLoading(false)}
-        loading={loading}
         setLoadingMessage={setLoadingMessage}
       />
-      <DetailTenantApplicationModal
+      <TenantApplicationDetailModal
         open={openTenantApprovalInformationModal}
         onClose={() => setOpenTenantApprovalInformationModal(false)}
         selectedData={selectedData}
-        loadingTrue={() => setLoading(true)}
-        loadingFalse={() => setLoading(false)}
-        loading={loading}
-        setLoadingMessage={setLoadingMessage}
-        // getDataApprovals={getDataApprovals}
-        user={user}
-        onNotify={(notif) => setSnackbar(notif)}
       />
       <LoadingBackdrop message={loadingMessage} open={loading} />
       {/* Snackbar notification */}

@@ -22,7 +22,7 @@ import { Icon } from "@iconify/react";
 import moment from "moment";
 import wilayah from "daftar-wilayah-indonesia";
 import CrudFormModal from "@/app/components/crud/CrudFormModal";
-import ImagePreviewModal from "@/app/components/imagepreviewmodal/page";
+import ImagePreviewModal from "@/app/components/modals/ImagePreviewModal";
 import {
   getUploadApiUrl,
   normalizeStoredUploadPath,

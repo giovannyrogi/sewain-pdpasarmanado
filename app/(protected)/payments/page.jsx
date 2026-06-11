@@ -19,15 +19,15 @@ import BreadcrumbPage from "@/app/components/breadcrumb/page";
 import formatRupiah from "@/app/components/formatrupiah/page";
 import AddPayment from "./AddPayment";
 import { useUser } from "@/app/utils/useUser";
-import ImagePreviewModal from "@/app/components/imagepreviewmodal/page";
-import PaymentApprovalModal from "@/app/components/payment-approval-modal/PaymentApprovalModa";
+import ImagePreviewModal from "@/app/components/modals/ImagePreviewModal";
+import ApprovalTrackingModal from "@/app/components/modals/ApprovalTrackingModal";
 import DeletePayment from "./DeletePayment";
 import { useReactToPrint } from "react-to-print";
 import BuktiPembayaran from "@/app/components/documents/BuktiPembayaran";
 import EditPayment from "./EditPayment";
 import MENU_CONFIG from "@/app/components/menu/MenuConfig";
 import ApprovalModal from "./ApprovalModal";
-import RejectedModal from "./RejectedModal";
+import RejectReasonModal from "@/app/components/modals/RejectReasonModal";
 import KwitansiPembayaran from "@/app/components/documents/KwitansiPembayaran";
 import KwitansiPph from "@/app/components/documents/KwitansiPph";
 
@@ -147,7 +147,9 @@ const Payments = () => {
       if (typeof window === "undefined") return null;
 
       const params = new URLSearchParams(window.location.search);
-      const storageValue = window.sessionStorage.getItem("sewain:payment-target");
+      const storageValue = window.sessionStorage.getItem(
+        "sewain:payment-target",
+      );
 
       if (storageValue) {
         try {
@@ -216,7 +218,9 @@ const Payments = () => {
          * Admin Kontrak memperbarui bukti pembayaran menjadi proses lagi.
          */
         const response = await axios.get("/api/payments");
-        const freshPayments = response.data?.success ? response.data.data || [] : [];
+        const freshPayments = response.data?.success
+          ? response.data.data || []
+          : [];
         setDataPayments(freshPayments);
 
         const selectedPayment = freshPayments.find(
@@ -292,6 +296,50 @@ const Payments = () => {
     setOpenRejectedModal(true);
   };
 
+  const handleRejectPayment = async (notes) => {
+    setLoading(true);
+
+    try {
+      const response = await axios.put(
+        `/api/payment-approval/payment-rejected/${selectedData?.payment_approval?.id}`,
+        {
+          notes,
+          status: "rejected",
+          payment_id: selectedData?.payments?.payment_id,
+          approver_id: user?.id,
+          role_id: user?.role_id,
+        }
+      );
+
+      if (response?.data.success) {
+        setSnackbar({
+          open: true,
+          message: response.data.message || "Berhasil menolak bukti pembayaran.",
+          severity: "success",
+        });
+        await getDataPayments();
+        setOpenRejectedModal(false);
+        return;
+      }
+
+      setSnackbar({
+        open: true,
+        message: response?.data.message || "Gagal menolak bukti pembayaran.",
+        severity: "error",
+      });
+    } catch (error) {
+      console.error("Error rejecting payment approval:", error);
+      setSnackbar({
+        open: true,
+        message:
+          error?.response?.data?.message || "Gagal menolak bukti pembayaran.",
+        severity: "error",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleVerification = (record) => {
     // console.log("verification record", record);
     setSelectedData(record);
@@ -316,7 +364,7 @@ const Payments = () => {
     documentTitle: "Kwitansi Pembayaran",
     pageStyle: `
       @page {
-        size: A5 landscape;
+        size: letter portrait;
         margin: 0;
       }
 
@@ -324,6 +372,9 @@ const Payments = () => {
         html, body {
           margin: 0;
           padding: 0;
+          width: 216mm;
+          height: 279mm;
+          overflow: hidden;
         }
       }
     `,
@@ -370,6 +421,8 @@ const Payments = () => {
   };
 
   const handlePrintReceipt = (record, type) => {
+    console.log("print receipt", record);
+
     setReceiptPrintData(record);
     setReceiptPrintType(type);
   };
@@ -666,22 +719,22 @@ const Payments = () => {
               </Button>
             </Tooltip>
           )}
-          <Tooltip title="Print Kwitansi Penerimaan (3 rangkap)">
+          <Tooltip title="Print Kwitansi Penerimaan">
             <Button
               size="small"
               variant={themeMode === "dark" ? "outlined" : "contained"}
-              color="warning"
+              color="inherit"
               onClick={() => handlePrintReceipt(record, "contract")}
               sx={{ minWidth: 0, px: 1 }}
             >
               <Icon icon="mdi:receipt-text-send-outline" fontSize={18} />
             </Button>
           </Tooltip>
-          <Tooltip title="Print Kwitansi Pembayaran PPH (2 rangkap)">
+          <Tooltip title="Print Kwitansi Pembayaran PPH">
             <Button
               size="small"
               variant={themeMode === "dark" ? "outlined" : "contained"}
-              color="secondary"
+              color="warning"
               onClick={() => handlePrintReceipt(record, "pph")}
               sx={{ minWidth: 0, px: 1 }}
             >
@@ -859,23 +912,20 @@ const Payments = () => {
         getDataPayments={getDataPayments}
         onNotify={(notify) => setSnackbar(notify)}
       />
-      <RejectedModal
+      <RejectReasonModal
         open={openRejectedModal}
         onClose={() => setOpenRejectedModal(false)}
-        selectedData={selectedData}
+        title="Tolak Bukti Pembayaran"
+        description="Tuliskan alasan agar riwayat validasi pembayaran tercatat jelas."
+        confirmLabel="Tolak Bukti Pembayaran"
         loading={loading}
-        loadingTrue={() => setLoading(true)}
-        loadingFalse={() => setLoading(false)}
-        setLoadingMessage={setLoadingMessage}
-        user={user}
-        getDataPayments={getDataPayments}
-        onNotify={(notify) => setSnackbar(notify)}
+        onSubmit={handleRejectPayment}
       />
-      <PaymentApprovalModal
+      <ApprovalTrackingModal
         open={openVerificationModal}
         onClose={() => setOpenVerificationModal(false)}
         selectedData={selectedData}
-        loading={loading}
+        variant="payment"
         loadingTrue={() => setLoading(true)}
         loadingFalse={() => setLoading(false)}
         setLoadingMessage={setLoadingMessage}

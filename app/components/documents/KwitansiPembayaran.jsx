@@ -7,7 +7,7 @@ const KwitansiPembayaran = forwardRef(({ data }, ref) => {
   if (!data) return null;
 
   const receipt = data?.receipts?.contract;
-  const copies = ["white", "white", "white"];
+  const copies = ["white"];
 
   return (
     <div ref={ref}>
@@ -18,7 +18,8 @@ const KwitansiPembayaran = forwardRef(({ data }, ref) => {
           receipt={receipt}
           variant={variant}
           type="contract"
-          breakAfter={index < copies.length - 1}
+          breakAfter={false}
+          // breakAfter={index < copies.length - 1}
         />
       ))}
     </div>

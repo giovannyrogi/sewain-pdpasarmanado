@@ -1,7 +1,14 @@
 "use client";
 
 import React from "react";
-import { Box, Chip, IconButton, Stack, Tooltip, Typography } from "@mui/material";
+import {
+  Box,
+  Chip,
+  IconButton,
+  Stack,
+  Tooltip,
+  Typography,
+} from "@mui/material";
 import { Tag } from "antd";
 import { Icon } from "@iconify/react";
 import formatRupiah from "@/app/components/formatrupiah/page";
@@ -18,9 +25,15 @@ const generateFilters = (data, key) =>
 const createOnFilter = (key) => (value, record) => record[key] === value;
 
 export const buildTenantApplicationStats = (data, theme) => {
-  const approved = data.filter((item) => item.approval_status === "approved").length;
-  const process = data.filter((item) => item.approval_status === "proses").length;
-  const rejected = data.filter((item) => item.approval_status === "rejected").length;
+  const approved = data.filter(
+    (item) => item.approval_status === "approved",
+  ).length;
+  const process = data.filter(
+    (item) => item.approval_status === "proses",
+  ).length;
+  const rejected = data.filter(
+    (item) => item.approval_status === "rejected",
+  ).length;
 
   return [
     {
@@ -64,12 +77,17 @@ export const filterTenantApplications = (data, searchText) => {
       item.total_payment,
       item.remaining_payment,
       item.document_number,
-    ].some((value) => String(value || "").toLowerCase().includes(keyword)),
+    ].some((value) =>
+      String(value || "")
+        .toLowerCase()
+        .includes(keyword),
+    ),
   );
 };
 
 export const getTenantApplicationColumns = ({
   data,
+  isMobile,
   theme,
   themeMode,
   actionColumnWidth,
@@ -112,17 +130,24 @@ export const getTenantApplicationColumns = ({
 
         return (
           <Stack spacing={0.65}>
-            <Typography sx={{ fontWeight: 900, fontSize: 13 }}>
+            <Typography
+              sx={{ fontWeight: 600, fontSize: 13, letterSpacing: 0.5 }}
+            >
               {record.tenant_name || "-"}
             </Typography>
-            <Stack direction="row" spacing={0.75} alignItems="center" flexWrap="wrap">
+            <Stack
+              direction="row"
+              spacing={0.75}
+              alignItems="center"
+              flexWrap="wrap"
+            >
               <Chip
                 size="small"
                 label={`Dokumen ${documentNumberOnly}`}
                 sx={{
                   height: 22,
                   borderRadius: 1.2,
-                  fontWeight: 850,
+                  fontWeight: 600,
                   color: theme.palette.primary.main,
                   bgcolor:
                     theme.palette.mode === "dark"
@@ -130,7 +155,13 @@ export const getTenantApplicationColumns = ({
                       : "rgba(230,9,9,0.10)",
                 }}
               />
-              <Typography sx={{ color: theme.ui.mutedText, fontSize: 12, fontWeight: 650 }}>
+              <Typography
+                sx={{
+                  color: theme.ui.mutedText,
+                  fontSize: 12,
+                  fontWeight: 500,
+                }}
+              >
                 {record.document_number || "-"}
               </Typography>
             </Stack>
@@ -149,17 +180,24 @@ export const getTenantApplicationColumns = ({
       width: 330,
       render: (_, record) => (
         <Stack spacing={0.55}>
-          <Typography sx={{ fontWeight: 850, fontSize: 13 }}>
+          <Typography sx={{ fontWeight: 700, fontSize: 13 }}>
             {record.location_name || "-"}
           </Typography>
-          <Stack direction="row" spacing={0.75} alignItems="center" flexWrap="wrap">
+          <Stack
+            direction="row"
+            spacing={0.75}
+            alignItems="center"
+            flexWrap="wrap"
+          >
             <Tag
               color={theme.palette.mode === "dark" ? "orange" : "red"}
-              style={{ borderRadius: 8, fontWeight: 800, marginInlineEnd: 0 }}
+              style={{ borderRadius: 8, fontWeight: 600, marginInlineEnd: 0 }}
             >
               Ruangan No. {record.room_number || "-"}
             </Tag>
-            <Typography sx={{ color: theme.ui.mutedText, fontSize: 12, fontWeight: 650 }}>
+            <Typography
+              sx={{ color: theme.ui.mutedText, fontSize: 12, fontWeight: 650 }}
+            >
               {record.floor || "-"}
             </Typography>
           </Stack>
@@ -175,18 +213,28 @@ export const getTenantApplicationColumns = ({
       width: 320,
       render: (_, record) => (
         <Stack spacing={0.65}>
-          <Stack direction="row" spacing={0.75} alignItems="center" flexWrap="wrap">
+          <Stack
+            direction="row"
+            spacing={0.75}
+            alignItems="center"
+            flexWrap="wrap"
+          >
             <Tag
               color={record.payment_type === "cicilan" ? "blue" : "green"}
-              style={{ borderRadius: 8, fontWeight: 800, marginInlineEnd: 0 }}
+              style={{ borderRadius: 8, fontWeight: 700, marginInlineEnd: 0 }}
             >
-              {record.payment_type === "cicilan" ? "Cicilan" : "Lunas"}
+              {record.payment_type === "cicilan" ? "Cicilan" : "Lunas"}{" "}
+              {record?.lease_duration_years || "-"} Tahun
             </Tag>
-            <Typography sx={{ fontWeight: 900, fontSize: 13 }}>
+            <Typography
+              sx={{ fontWeight: 600, fontSize: 13, letterSpacing: 0.5 }}
+            >
               {formatRupiah(Number(record.total_payment))}
             </Typography>
           </Stack>
-          <Typography sx={{ color: theme.ui.mutedText, fontSize: 12, fontWeight: 650 }}>
+          <Typography
+            sx={{ color: theme.ui.mutedText, fontSize: 12, fontWeight: 500 }}
+          >
             DP {formatRupiah(record.down_payment)} | Sisa{" "}
             {formatRupiah(record.remaining_payment)}
           </Typography>
@@ -233,7 +281,7 @@ export const getTenantApplicationColumns = ({
       key: "action",
       align: "center",
       width: actionColumnWidth,
-      fixed: "right",
+      fixed: isMobile ? false : "right",
       className: "tenant-application-action-column",
       onHeaderCell: () => ({ className: "tenant-application-action-column" }),
       onCell: () => ({ className: "tenant-application-action-column" }),

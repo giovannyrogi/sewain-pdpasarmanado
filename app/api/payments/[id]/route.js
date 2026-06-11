@@ -8,6 +8,7 @@ import {
   notifyPaymentDeleted,
   notifyPaymentUpdated,
 } from "@/app/utils/notifications";
+import { calculatePaymentPphAmount } from "@/app/utils/calculatePphAmount";
 
 const uploadDir = path.join(process.cwd(), "uploads", "bukti_transfer");
 if (!fs.existsSync(uploadDir)) {
@@ -82,6 +83,40 @@ export async function PUT(req, { params }) {
     const payment_approval_id = formData.get("payment_approval_id");
     const paymentType = formData.get("payment_type");
     const paymentNumber = formData.get("payment_number") || oldData.payment_number;
+
+    // Ambil data tenant application dari database supaya nilai kontrak tidak
+    // bergantung pada payload frontend. Lunas harus memakai total sewa ruangan
+    // sebelum PPN/admin sebagai contract_amount dan dasar PPH.
+    const tenantApplicationResult = await client.query(
+      `
+      SELECT payment_type, total_payment_room, total_ppn
+      FROM tenant_application
+      WHERE id = $1
+      `,
+      [oldData.tenant_application_id]
+    );
+
+    if (tenantApplicationResult.rowCount === 0) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: "Data permohonan sewa tidak ditemukan.",
+        }),
+        { status: 404 }
+      );
+    }
+
+    const tenantApplication = tenantApplicationResult.rows[0];
+    const effectivePaymentType =
+      tenantApplication.payment_type || paymentType || oldData.payment_type;
+    const contractAmountValue =
+      effectivePaymentType === "lunas"
+        ? Number(tenantApplication.total_payment_room || 0)
+        : Number(contractAmount) || Number(amount || 0) / 1.11;
+    const ppnAmountValue =
+      effectivePaymentType === "lunas"
+        ? Number(tenantApplication.total_ppn || ppnAmount || 0)
+        : Number(ppnAmount) || Number(amount || 0) - contractAmountValue;
 
     // validasi status hanya proses atau rejected
     if (!approvalStatus === "proses" || !approvalStatus === "rejected") {
@@ -191,8 +226,8 @@ export async function PUT(req, { params }) {
     `;
     const updateValues = [
       amount,
-      contractAmount,
-      ppnAmount,
+      contractAmountValue,
+      ppnAmountValue,
       remainingBalance,
       uploadedBy,
       approvalStatus,
@@ -217,7 +252,13 @@ export async function PUT(req, { params }) {
     const receiptSequence = padReceiptNumber(id);
     const contractReceiptNumber = `PEN-${receiptYear}-${receiptSequence}`;
     const pphReceiptNumber = `PEM-${receiptYear}-${receiptSequence}`;
-    const paymentLabel = getPaymentLabel(paymentType, paymentNumber);
+    const paymentLabel = getPaymentLabel(effectivePaymentType, paymentNumber);
+    const pphAmount = calculatePaymentPphAmount({
+      paymentType: effectivePaymentType,
+      paymentAmount: amount,
+      contractAmount: contractAmountValue,
+      totalPaymentRoom: contractAmountValue,
+    });
 
     await client.query(
       `
@@ -238,7 +279,7 @@ export async function PUT(req, { params }) {
       )
       VALUES
         ($1, 'contract', $2, $3, '4-250', $4, $5, $6, 0, $7, 'draft', NOW(), NOW()),
-        ($1, 'pph', $8, $3, '5-192', 0, 0, 0, 0, $9, 'draft', NOW(), NOW())
+        ($1, 'pph', $8, $3, '5-192', 0, $5, 0, $9, $10, 'draft', NOW(), NOW())
       ON CONFLICT (payment_id, receipt_type)
       DO UPDATE SET
         receipt_date = EXCLUDED.receipt_date,
@@ -257,10 +298,11 @@ export async function PUT(req, { params }) {
         contractReceiptNumber,
         moment(paymentDate).format("YYYY-MM-DD"),
         amount,
-        contractAmount,
-        ppnAmount,
+        contractAmountValue,
+        ppnAmountValue,
         `${paymentLabel} sewa kontrak ruangan atas nama ${tenantName}`,
         pphReceiptNumber,
+        pphAmount,
         `Pajak PPH Psl 4(2) atas nama ${tenantName}`,
       ]
     );

@@ -18,13 +18,13 @@ import axios from "axios";
 import formatRupiah from "@/app/components/formatrupiah/page";
 import { useUser } from "@/app/utils/useUser";
 import { useReactToPrint } from "react-to-print";
-import InformationPreviewModal from "@/app/components/informationpreviewmodal/page";
+import TenantIdentityPreviewModal from "@/app/components/modals/TenantIdentityPreviewModal";
 import BreadcrumbPage from "@/app/components/breadcrumb/page";
 import TenantTerminationsModal from "./TenantTerminationsModal";
 import TerminationReasonModal from "@/app/components/terminationreasonmodal/TerminationReasonModal";
-import TerminationApprovalModal from "@/app/components/approvalmodal/TerminationApprovalModal";
+import ApprovalTrackingModal from "@/app/components/modals/ApprovalTrackingModal";
 import CancelTenantTermination from "./CancelTenantTermination";
-import PreviewTenantInformationModal from "@/app/components/tenant-termination-modal/PreviewTenantInformationModal";
+import TenantApplicationDetailModal from "@/app/components/modals/TenantApplicationDetailModal";
 import MENU_CONFIG from "@/app/components/menu/MenuConfig";
 
 const TenantTerminations = () => {
@@ -612,16 +612,17 @@ const TenantTerminations = () => {
         user={user}
         onNotify={(notif) => setSnackbar(notif)}
       />
-      <InformationPreviewModal
+      <TenantIdentityPreviewModal
         open={openInformationModal}
         onClose={() => setOpenInformationModal(false)}
         selectedData={selectedData}
         title="Preview Informasi Pemohon"
       />
-      <PreviewTenantInformationModal
+      <TenantApplicationDetailModal
         open={openTenantApprovalInformationModal}
         onClose={() => setOpenTenantApprovalInformationModal(false)}
         selectedData={selectedData}
+        showTerminationDetail
       />
       <TerminationReasonModal
         open={openTerminationReasonModal}
@@ -634,16 +635,14 @@ const TenantTerminations = () => {
         user={user}
         onNotify={(notif) => setSnackbar(notif)}
       />
-      <TerminationApprovalModal
+      <ApprovalTrackingModal
         open={openTerminationApprovalModal}
         onClose={() => setOpenTerminationApprovalModal(false)}
         selectedData={selectedData}
+        variant="termination"
         loadingTrue={() => setLoading(true)}
         loadingFalse={() => setLoading(false)}
-        loading={loading}
         setLoadingMessage={setLoadingMessage}
-        user={user}
-        onNotify={(notif) => setSnackbar(notif)}
       />
       <LoadingBackdrop message={loadingMessage} open={loading} />
       {/* Snackbar notification */}

@@ -7,7 +7,7 @@ const KwitansiPph = forwardRef(({ data }, ref) => {
   if (!data) return null;
 
   const receipt = data?.receipts?.pph;
-  const copies = ["yellow", "yellow"];
+  const copies = ["yellow"];
 
   return (
     <div ref={ref}>
@@ -18,7 +18,8 @@ const KwitansiPph = forwardRef(({ data }, ref) => {
           receipt={receipt}
           variant={variant}
           type="pph"
-          breakAfter={index < copies.length - 1}
+          breakAfter={false}
+          // breakAfter={index < copies.length - 1}
         />
       ))}
     </div>

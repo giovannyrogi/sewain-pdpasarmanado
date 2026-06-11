@@ -24,8 +24,7 @@ import moment from "moment";
 import formatRupiah from "@/app/components/formatrupiah/page";
 import { useThemeMode } from "@/app/components/themeprovider/ThemeContext";
 import { Icon } from "@iconify/react";
-import ImagePreviewModal from "@/app/components/imagepreviewmodal/page";
-import DetailTenantApplicationModal from "@/app/components/tenantapplicationmodal/DetailTenantApplicationModal";
+import ImagePreviewModal from "@/app/components/modals/ImagePreviewModal";
 import { calculateContractAndPPN } from "@/app/components/calc-contract-and-ppn/CaclContractAndPPN";
 
 const EditPayment = ({

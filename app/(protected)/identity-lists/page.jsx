@@ -22,7 +22,7 @@ import DataTableShell from "@/app/components/data-table/DataTableShell";
 import ReusableAntTable from "@/app/components/data-table/ReusableAntTable";
 import CrudConfirmModal from "@/app/components/crud/CrudConfirmModal";
 import SummaryStatCard from "@/app/components/stats/SummaryStatCard";
-import InformationPreviewModal from "@/app/components/informationpreviewmodal/page";
+import TenantIdentityPreviewModal from "@/app/components/modals/TenantIdentityPreviewModal";
 import IdentityFormModal from "./IdentityFormModal";
 
 const PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
@@ -575,7 +575,7 @@ export default function IdentityList() {
         onConfirm={handleDeleteIdentity}
       />
 
-      <InformationPreviewModal
+      <TenantIdentityPreviewModal
         open={previewOpen}
         onClose={() => setPreviewOpen(false)}
         selectedData={selectedIdentity}

@@ -20,9 +20,9 @@ import { useUser } from "@/app/utils/useUser";
 import { useReactToPrint } from "react-to-print";
 import BreadcrumbPage from "@/app/components/breadcrumb/page";
 import TerminationReasonModal from "@/app/components/terminationreasonmodal/TerminationReasonModal";
-import TerminationApprovalModal from "@/app/components/approvalmodal/TerminationApprovalModal";
-import TenantTerminationApprovalModal from "@/app/components/tenant-termination-approval-modal/TenantTerminationApprovalModal";
-import TenantRejectTerminationModal from "@/app/components/tenant-termination-approval-modal/TenantRejectTerminationModal";
+import ApprovalTrackingModal from "@/app/components/modals/ApprovalTrackingModal";
+import TenantApplicationDetailModal from "@/app/components/modals/TenantApplicationDetailModal";
+import RejectReasonModal from "@/app/components/modals/RejectReasonModal";
 import MENU_CONFIG from "@/app/components/menu/MenuConfig";
 
 const TenantTerminations = () => {
@@ -293,10 +293,97 @@ const TenantTerminations = () => {
     setCancelTenantTerminationsModal(true);
   };
 
+  const handleRejectTermination = async (notes) => {
+    setLoading(true);
+
+    try {
+      const response = await axios.put(
+        `/api/tenant-termination-approval/tenant-rejected/${selectedData?.termination_approval_id}`,
+        {
+          notes,
+          status: "rejected",
+          tenant_early_termination_id: selectedData?.tenant_early_termination_id,
+          approver_id: user?.id,
+        }
+      );
+
+      if (response?.data.success) {
+        setSnackbar({
+          open: true,
+          message: response.data.message || "Berhasil menolak permintaan non-aktif.",
+          severity: "success",
+        });
+        await getDataTenantTerminations();
+        setCancelTenantTerminationsModal(false);
+        return;
+      }
+
+      setSnackbar({
+        open: true,
+        message: response?.data.message || "Gagal menolak permintaan non-aktif.",
+        severity: "error",
+      });
+    } catch (error) {
+      console.error("Error rejecting tenant termination:", error);
+      setSnackbar({
+        open: true,
+        message:
+          error?.response?.data?.message || "Gagal menolak permintaan non-aktif.",
+        severity: "error",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleTerminationApproval = (record) => {
     // console.log("delete record", record);
     setSelectedData(record);
     setOpenTerminationApprovalModal(true);
+  };
+
+  const handleApproveTermination = async () => {
+    if (!selectedData || !user?.id) return;
+
+    setLoading(true);
+    try {
+      const response = await axios.put(
+        `/api/tenant-termination-approval/${selectedData.termination_approval_id}`,
+        {
+          tenant_early_termination_id: selectedData.tenant_early_termination_id,
+          status: "approved",
+          approver_id: user.id,
+          room_id: selectedData.room_id,
+          tenant_identity_id: selectedData?.tenant_identity_id,
+        }
+      );
+
+      if (response.data.success) {
+        setSnackbar({
+          open: true,
+          message: response.data.message || "Berhasil menyetujui permintaan non-aktif.",
+          severity: "success",
+        });
+        await getDataTenantTerminations();
+        setOpenTenantApprovalInformationModal(false);
+      } else {
+        setSnackbar({
+          open: true,
+          message: response.data.message || "Gagal menyetujui permintaan non-aktif.",
+          severity: "error",
+        });
+      }
+    } catch (error) {
+      setSnackbar({
+        open: true,
+        message:
+          error?.response?.data?.message ||
+          "Terjadi error saat menyetujui permintaan non-aktif.",
+        severity: "error",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Utility untuk filter dinamis
@@ -558,28 +645,23 @@ const TenantTerminations = () => {
           />
         </Paper>
       </ConfigProvider>
-      <TenantTerminationApprovalModal
+      <TenantApplicationDetailModal
         open={openTenantApprovalInformationModal}
         onClose={() => setOpenTenantApprovalInformationModal(false)}
         selectedData={selectedData}
-        loadingTrue={() => setLoading(true)}
-        loadingFalse={() => setLoading(false)}
-        loading={loading}
-        setLoadingMessage={setLoadingMessage}
-        getDataTenantTerminations={getDataTenantTerminations}
-        user={user}
-        onNotify={(notif) => setSnackbar(notif)}
+        canApprove
+        approving={loading}
+        onApprove={handleApproveTermination}
+        showTerminationDetail
       />
-      <TenantRejectTerminationModal
+      <RejectReasonModal
         open={cancelTenantTerminationsModal}
         onClose={() => setCancelTenantTerminationsModal(false)}
-        loadingTrue={() => setLoading(true)}
-        loadingFalse={() => setLoading(false)}
+        title="Tolak Permintaan Non-Aktif"
+        description="Catat alasan penolakan agar riwayat keputusan terminasi jelas."
+        confirmLabel="Tolak Permintaan"
         loading={loading}
-        onNotify={(notif) => setSnackbar(notif)}
-        selectedData={selectedData}
-        getDataApprovals={getDataTenantTerminations}
-        user={user}
+        onSubmit={handleRejectTermination}
       />
       <TerminationReasonModal
         open={openTerminationReasonModal}
@@ -592,16 +674,14 @@ const TenantTerminations = () => {
         user={user}
         onNotify={(notif) => setSnackbar(notif)}
       />
-      <TerminationApprovalModal
+      <ApprovalTrackingModal
         open={openTerminationApprovalModal}
         onClose={() => setOpenTerminationApprovalModal(false)}
         selectedData={selectedData}
+        variant="termination"
         loadingTrue={() => setLoading(true)}
         loadingFalse={() => setLoading(false)}
-        loading={loading}
         setLoadingMessage={setLoadingMessage}
-        user={user}
-        onNotify={(notif) => setSnackbar(notif)}
       />
       <LoadingBackdrop message={loadingMessage} open={loading} />
       {/* Snackbar notification */}

@@ -24,7 +24,7 @@ import moment from "moment";
 import axios from "axios";
 import { useThemeMode } from "@/app/components/themeprovider/ThemeContext";
 import dayjs from "dayjs";
-import InformationPreviewModal from "@/app/components/informationpreviewmodal/page";
+import TenantIdentityPreviewModal from "@/app/components/modals/TenantIdentityPreviewModal";
 import { Tag } from "antd";
 
 const AddContract = ({
@@ -404,7 +404,7 @@ const AddContract = ({
           </Grid>
         </form>
 
-        <InformationPreviewModal
+        <TenantIdentityPreviewModal
           open={openPreviewModal}
           onClose={() => setOpenPreviewModal(false)}
           selectedData={selectedTenantData}

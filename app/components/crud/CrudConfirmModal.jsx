@@ -5,13 +5,13 @@ import {
   Box,
   Button,
   Divider,
-  Modal,
   Stack,
   Typography,
   useTheme,
 } from "@mui/material";
 import { Icon } from "@iconify/react";
 import LoadingBackdrop from "@/app/components/loading/Backdrop";
+import AppModal from "@/app/components/modals/AppModal";
 
 /**
  * Modal konfirmasi reusable untuk aksi destruktif seperti delete.
@@ -35,36 +35,17 @@ export default function CrudConfirmModal({
 
   return (
     <>
-      <Modal
+      <AppModal
         open={open}
         onClose={loading ? undefined : onClose}
-        sx={{ display: "flex", alignItems: "center", justifyContent: "center", p: 2 }}
-        slotProps={{
-          backdrop: {
-            sx: {
-              backgroundColor:
-                theme.palette.mode === "dark"
-                  ? "rgba(0,0,0,0.58)"
-                  : "rgba(15,23,42,0.18)",
-              backdropFilter: "blur(10px)",
-            },
-          },
-        }}
+        title={title}
+        description={description}
+        icon="ion:trash-outline"
+        width={430}
+        showCloseButton={!loading}
       >
-        <Box
-          sx={{
-            width: 430,
-            maxWidth: "100%",
-            bgcolor: theme.ui.menuPaperBg,
-            color: "text.primary",
-            border: `1px solid ${theme.ui.dashboardCardBorder}`,
-            borderRadius: 3,
-            boxShadow: theme.ui.shellShadow,
-            outline: "none",
-            overflow: "hidden",
-          }}
-        >
-          <Stack alignItems="center" spacing={1.5} sx={{ p: { xs: 2.5, sm: 3 } }}>
+        <Stack spacing={2.2}>
+          <Stack alignItems="center" spacing={1.5}>
             <Box
               sx={{
                 width: 72,
@@ -81,11 +62,11 @@ export default function CrudConfirmModal({
               <Icon icon="ion:trash-outline" fontSize={38} />
             </Box>
             <Box sx={{ textAlign: "center" }}>
-              <Typography sx={{ fontFamily: "Poppins", fontWeight: 850, fontSize: 21 }}>
-                {title}
-              </Typography>
-              {description && (
-                <Typography
+                <Typography sx={{ fontFamily: "Poppins", fontWeight: 850, fontSize: 21 }}>
+                  {title}
+                </Typography>
+                {description && (
+                  <Typography
                   sx={{
                     mt: 0.75,
                     color: theme.ui.mutedText,
@@ -94,16 +75,16 @@ export default function CrudConfirmModal({
                     fontSize: 13,
                     lineHeight: 1.7,
                   }}
-                >
-                  {description}{" "}
-                  {highlight && (
-                    <Box component="strong" sx={{ color: "text.primary", fontWeight: 850 }}>
-                      {highlight}
-                    </Box>
-                  )}
-                </Typography>
-              )}
-            </Box>
+                  >
+                    {description}{" "}
+                    {highlight && (
+                      <Box component="strong" sx={{ color: "text.primary", fontWeight: 850 }}>
+                        {highlight}
+                      </Box>
+                    )}
+                  </Typography>
+                )}
+              </Box>
           </Stack>
 
           <Divider sx={{ borderColor: theme.ui.dashboardCardBorder }} />
@@ -153,8 +134,8 @@ export default function CrudConfirmModal({
               {confirmLabel}
             </Button>
           </Stack>
-        </Box>
-      </Modal>
+        </Stack>
+      </AppModal>
 
       <LoadingBackdrop open={open && loading} message={loadingLabel} />
     </>

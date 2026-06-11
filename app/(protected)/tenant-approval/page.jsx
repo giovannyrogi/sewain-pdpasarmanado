@@ -19,9 +19,9 @@ import Notification from "../../components/Notification";
 import axios from "axios";
 import BreadcrumbPage from "@/app/components/breadcrumb/page";
 import { useUser } from "@/app/utils/useUser";
-import ApprovalModal from "@/app/components/approvalmodal/page";
-import TenantRejectModal from "@/app/components/tenantapprovalmodal/TenantRejectModal";
-import TenantApprovalModal from "@/app/components/tenantapprovalmodal/TenantApprovalModal";
+import ApprovalTrackingModal from "@/app/components/modals/ApprovalTrackingModal";
+import RejectReasonModal from "@/app/components/modals/RejectReasonModal";
+import TenantApplicationDetailModal from "@/app/components/modals/TenantApplicationDetailModal";
 import MENU_CONFIG from "@/app/components/menu/MenuConfig";
 
 const TenantApproval = () => {
@@ -49,6 +49,8 @@ const TenantApproval = () => {
   ] = useState(false);
   const [openTenantRejectModal, setOpenTenantRejectModal] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState("Loading...");
+  const [isTenantApprovalSubmitting, setIsTenantApprovalSubmitting] =
+    useState(false);
   const [handledNotificationTarget, setHandledNotificationTarget] =
     useState(null);
   const [notificationOpenSignal, setNotificationOpenSignal] = useState(0);
@@ -289,10 +291,100 @@ const TenantApproval = () => {
     setOpenTenantApprovalInformationModal(true);
   };
 
+  /**
+   * Mengirim keputusan approve untuk baris approval yang sedang dibuka.
+   * Logic ini ditempatkan di halaman pemakai agar modal detail tetap benar-benar
+   * reusable dan tidak membawa ketergantungan endpoint khusus tenant approval.
+   */
+  const handleApproveTenantApplication = async () => {
+    setLoading(true);
+    setIsTenantApprovalSubmitting(true);
+
+    try {
+      const response = await axios.put(`/api/tenant-approval/${selectedData?.id}`, {
+        tenant_application_id: selectedData?.tenant_application_id,
+        status: "approved",
+        approver_id: user?.id,
+      });
+
+      if (response.data.success) {
+        setSnackbar({
+          open: true,
+          message: response.data.message || "Berhasil Menyetujui Sewa Ruangan!",
+          severity: "success",
+        });
+        await getDataApprovals();
+        setOpenTenantApprovalInformationModal(false);
+        return;
+      }
+
+      setSnackbar({
+        open: true,
+        message: response.data.message || "Gagal Menyetujui Sewa Ruangan.",
+        severity: "error",
+      });
+    } catch (error) {
+      console.log("error", error);
+      setSnackbar({
+        open: true,
+        message:
+          error?.response?.data?.message ||
+          "Terjadi error saat menyetujui sewa ruangan.",
+        severity: "error",
+      });
+    } finally {
+      setLoading(false);
+      setIsTenantApprovalSubmitting(false);
+    }
+  };
+
   const handleReject = (record) => {
     // console.log("delete record", record);
     setSelectedData(record);
     setOpenTenantRejectModal(true);
+  };
+
+  const handleRejectTenantApplication = async (notes) => {
+    setLoading(true);
+
+    try {
+      const response = await axios.put(
+        `/api/tenant-approval/tenant-rejected/${selectedData?.id}`,
+        {
+          notes,
+          status: "rejected",
+          tenant_application_id: selectedData?.tenant_application_id,
+          approver_id: user?.id,
+        }
+      );
+
+      if (response?.data.success) {
+        setSnackbar({
+          open: true,
+          message: response.data.message || "Berhasil menolak permohonan sewa.",
+          severity: "success",
+        });
+        await getDataApprovals();
+        setOpenTenantRejectModal(false);
+        return;
+      }
+
+      setSnackbar({
+        open: true,
+        message: response?.data.message || "Gagal menolak permohonan sewa.",
+        severity: "error",
+      });
+    } catch (error) {
+      console.error("Error rejecting tenant approval:", error);
+      setSnackbar({
+        open: true,
+        message:
+          error?.response?.data?.message || "Gagal menolak permohonan sewa.",
+        severity: "error",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleApproval = (record) => {
@@ -631,36 +723,30 @@ const TenantApproval = () => {
           />
         </Paper>
       </ConfigProvider>
-      <TenantApprovalModal
+      <TenantApplicationDetailModal
         open={openTenantApprovalInformationModal}
         onClose={() => setOpenTenantApprovalInformationModal(false)}
         selectedData={selectedData}
-        loadingTrue={() => setLoading(true)}
-        loadingFalse={() => setLoading(false)}
-        loading={loading}
-        setLoadingMessage={setLoadingMessage}
-        getDataApprovals={getDataApprovals}
-        user={user}
-        onNotify={(notif) => setSnackbar(notif)}
+        canApprove
+        approving={isTenantApprovalSubmitting}
+        onApprove={handleApproveTenantApplication}
       />
-      <TenantRejectModal
+      <RejectReasonModal
         open={openTenantRejectModal}
         onClose={() => setOpenTenantRejectModal(false)}
-        selectedData={selectedData}
-        loadingTrue={() => setLoading(true)}
-        loadingFalse={() => setLoading(false)}
+        title="Tolak Permohonan Sewa"
+        description="Berikan alasan singkat agar keputusan penolakan tercatat jelas."
+        confirmLabel="Tolak Permohonan"
         loading={loading}
-        getDataApprovals={getDataApprovals}
-        user={user}
-        onNotify={(notif) => setSnackbar(notif)}
+        onSubmit={handleRejectTenantApplication}
       />
-      <ApprovalModal
+      <ApprovalTrackingModal
         open={openApprovalModal}
         onClose={() => setOpenApprovalModal(false)}
         selectedData={selectedData}
+        variant="tenant"
         loadingTrue={() => setLoading(true)}
         loadingFalse={() => setLoading(false)}
-        loading={loading}
         setLoadingMessage={setLoadingMessage}
       />
       <LoadingBackdrop message={loadingMessage} open={loading} />

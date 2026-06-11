@@ -15,7 +15,7 @@ import {
 import React, { useEffect, useState } from "react";
 import { Icon } from "@iconify/react";
 import axios from "axios";
-import ImagePreviewModal from "../../components/imagepreviewmodal/page";
+import ImagePreviewModal from "../../components/modals/ImagePreviewModal";
 import formatRupiah from "../../components/formatrupiah/page";
 import moment from "moment";
 import PaymentApprovedOverlay from "./PaymentsApprovedOverlay";

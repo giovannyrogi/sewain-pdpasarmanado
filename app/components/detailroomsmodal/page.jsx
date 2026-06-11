@@ -1,272 +1,180 @@
 "use client";
 
-import {
-  Box,
-  Modal,
-  Typography,
-  useMediaQuery,
-  Fade,
-  Divider,
-  Grid,
-  useTheme,
-} from "@mui/material";
-import React, { useEffect, useState } from "react";
+import React from "react";
+import { Box, Button, Grid, Stack, Typography, useTheme } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import { Icon } from "@iconify/react";
-import axios from "axios";
-import moment from "moment";
-import formatRupiah from "../formatrupiah/page";
+import AppModal from "@/app/components/modals/AppModal";
+import formatRupiah from "@/app/components/formatrupiah/page";
 import { formatNumber } from "@/app/utils/formatNumber";
 
-const DetailRoomsModal = ({
-  open,
-  onClose,
-  loading,
-  loadingTrue,
-  loadingFalse,
-  setLoadingMessage,
-  selectedDataRooms,
-}) => {
-  const isMobile = useMediaQuery("(max-width:600px)");
+const emptyValue = "-";
+
+const displayValue = (value) => {
+  if (value === 0) return 0;
+  return value ? value : emptyValue;
+};
+
+/**
+ * Kartu informasi ringkas untuk detail ruangan.
+ * Dipakai agar label, icon, dan nilai ruangan tetap konsisten serta responsif.
+ */
+function RoomInfoCard({ icon, label, value }) {
   const theme = useTheme();
-  const [approvalList, setApprovalList] = useState([]);
-  const [openPreview, setOpenPreview] = useState(false);
-
-  // console.log('selectedDataRooms di DetailRoomsModal:', selectedDataRooms);
-
-  const style = {
-    width: isMobile ? "90vw" : 500,
-    maxWidth: "98vw",
-    bgcolor: "background.paper",
-    color: "text.primary",
-    borderRadius: "10px",
-    boxShadow: 24,
-    p: "18px 20px 18px 20px",
-    maxHeight: "90vh",
-    overflowY: "auto",
-    //hide scrollbar
-    "&::-webkit-scrollbar": {
-      display: "none",
-    },
-  };
 
   return (
-    <Modal
-      open={open}
-      onClose={onClose}
-      sx={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        p: 0, // hilangkan padding default
-      }}
-      BackdropProps={{
-        sx: {
-          backgroundColor: "rgba(30,30,30,0.25)",
-          backdropFilter: "blur(6px)",
-          WebkitBackdropFilter: "blur(6px)",
-        },
-      }}
-    >
-      <Fade in={open}>
-        <Box sx={style}>
-          <Typography
+    <Grid size={{ xs: 12, sm: 6 }}>
+      <Box
+        sx={{
+          height: "100%",
+          p: 1.5,
+          borderRadius: 2,
+          border: `1px solid ${theme.ui?.dashboardCardBorder || theme.palette.divider}`,
+          bgcolor:
+            theme.palette.mode === "dark"
+              ? "rgba(255,255,255,0.035)"
+              : "rgba(17,24,39,0.025)",
+        }}
+      >
+        <Stack direction="row" spacing={1.2} alignItems="flex-start">
+          <Box
             sx={{
-              fontSize: isMobile ? 18 : 20,
-              fontWeight: "bold",
-              mb: isMobile ? 0.5 : undefined,
+              width: 32,
+              height: 32,
+              flex: "0 0 auto",
+              borderRadius: 1.5,
+              display: "grid",
+              placeItems: "center",
+              color: theme.palette.primary.main,
+              bgcolor: alpha(theme.palette.primary.main, 0.12),
             }}
           >
-            Detail Informasi Ruangan
-          </Typography>
+            <Icon icon={icon} fontSize={18} />
+          </Box>
+          <Box sx={{ minWidth: 0 }}>
+            <Typography sx={{ color: theme.ui?.mutedText, fontSize: 11, fontWeight: 750 }}>
+              {label}
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: 13,
+                fontWeight: 850,
+                mt: 0.25,
+                wordBreak: "break-word",
+                overflowWrap: "anywhere",
+              }}
+            >
+              {value}
+            </Typography>
+          </Box>
+        </Stack>
+      </Box>
+    </Grid>
+  );
+}
 
-          <Divider sx={{ mb: 1, borderColor: theme.palette.primary.main }} />
+/**
+ * Modal detail ruangan reusable untuk form permohonan.
+ * Props lama tetap dipertahankan agar pemanggil existing tidak perlu berubah.
+ */
+const DetailRoomsModal = ({ open, onClose, selectedDataRooms }) => {
+  const theme = useTheme();
+  const totalAnnualRent =
+    Number(selectedDataRooms?.room_width || 0) *
+    Number(selectedDataRooms?.room_length || 0) *
+    Number(selectedDataRooms?.price_per_m2 || 0);
 
-          <Grid container size={isMobile ? 12 : 6} spacing={2}>
-            <Grid size={6} sx={{ display: "flex", flexDirection: "column" }}>
-              <Typography
+  return (
+    <AppModal
+      open={open}
+      onClose={onClose}
+      title="Detail Informasi Ruangan"
+      description="Nomor, ukuran, lantai, dan estimasi harga sewa ruangan per tahun."
+      icon="cil:room"
+      width={620}
+    >
+      <Stack spacing={2.25}>
+        <Grid container spacing={1.25}>
+          <RoomInfoCard
+            icon="cil:room"
+            label="Nomor Ruangan"
+            value={selectedDataRooms?.room_number ? `No. ${selectedDataRooms.room_number}` : emptyValue}
+          />
+          <RoomInfoCard icon="solar:layers-bold-duotone" label="Lantai" value={displayValue(selectedDataRooms?.floor)} />
+          <RoomInfoCard
+            icon="solar:ruler-bold-duotone"
+            label="Panjang Ruangan"
+            value={selectedDataRooms?.room_length ? `${formatNumber(selectedDataRooms.room_length)} m` : emptyValue}
+          />
+          <RoomInfoCard
+            icon="solar:ruler-cross-pen-bold-duotone"
+            label="Lebar Ruangan"
+            value={selectedDataRooms?.room_width ? `${formatNumber(selectedDataRooms.room_width)} m` : emptyValue}
+          />
+          <RoomInfoCard
+            icon="solar:widget-5-bold-duotone"
+            label="Luas Ruangan"
+            value={selectedDataRooms?.room_area ? `${formatNumber(selectedDataRooms.room_area)} m²` : emptyValue}
+          />
+          <RoomInfoCard
+            icon="solar:tag-price-bold-duotone"
+            label="Harga Sewa / m²"
+            value={selectedDataRooms?.price_per_m2 ? formatRupiah(selectedDataRooms.price_per_m2) : emptyValue}
+          />
+          {selectedDataRooms?.price_type === "harga_per_meter" && (
+            <Grid size={12}>
+              <Box
                 sx={{
-                  fontWeight: "bold",
-                  fontSize: "14px",
-                  color: theme.palette.primary.main,
+                  p: 1.6,
+                  borderRadius: 2,
+                  border: `1px solid ${alpha(theme.palette.primary.main, 0.35)}`,
+                  bgcolor: alpha(theme.palette.primary.main, theme.palette.mode === "dark" ? 0.08 : 0.06),
                 }}
               >
-                Nomor Ruangan
-              </Typography>
-              <Typography
-                sx={{
-                  fontWeight: "bold",
-                  fontSize: "13px",
-                  wordBreak: "break-word", // <-- biar kata panjang pecah
-                  whiteSpace: "normal", // <-- biar bisa turun baris
-                  overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
-                }}
-              >
-                No.{" "}
-                {selectedDataRooms?.room_number
-                  ? selectedDataRooms.room_number
-                  : "-"}
-              </Typography>
-            </Grid>
-
-            <Grid size={6} sx={{ display: "flex", flexDirection: "column" }}>
-              <Typography
-                sx={{
-                  fontWeight: "bold",
-                  fontSize: "14px",
-                  color: theme.palette.primary.main,
-                }}
-              >
-                Lantai
-              </Typography>
-              <Typography
-                sx={{
-                  fontWeight: "bold",
-                  fontSize: "13px",
-                  wordBreak: "break-word", // <-- biar kata panjang pecah
-                  whiteSpace: "normal", // <-- biar bisa turun baris
-                  overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
-                }}
-              >
-                {selectedDataRooms?.floor ? selectedDataRooms.floor : "-"}
-              </Typography>
-            </Grid>
-
-            <Grid size={6} sx={{ display: "flex", flexDirection: "column" }}>
-              <Typography
-                sx={{
-                  fontWeight: "bold",
-                  fontSize: "14px",
-                  color: theme.palette.primary.main,
-                }}
-              >
-                Panjang Ruangan (m)
-              </Typography>
-              <Typography
-                sx={{
-                  fontWeight: "bold",
-                  fontSize: "13px",
-                  wordBreak: "break-word", // <-- biar kata panjang pecah
-                  whiteSpace: "normal", // <-- biar bisa turun baris
-                  overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
-                }}
-              >
-                {selectedDataRooms?.room_length
-                  ? formatNumber(selectedDataRooms.room_length)
-                  : "-"}{" "}
-                m
-              </Typography>
-            </Grid>
-
-            <Grid size={6} sx={{ display: "flex", flexDirection: "column" }}>
-              <Typography
-                sx={{
-                  fontWeight: "bold",
-                  fontSize: "14px",
-                  color: theme.palette.primary.main,
-                }}
-              >
-                Lebar Ruangan (m)
-              </Typography>
-              <Typography
-                sx={{
-                  fontWeight: "bold",
-                  fontSize: "13px",
-                  wordBreak: "break-word", // <-- biar kata panjang pecah
-                  whiteSpace: "normal", // <-- biar bisa turun baris
-                  overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
-                }}
-              >
-                {selectedDataRooms?.room_width
-                  ? formatNumber(selectedDataRooms.room_width)
-                  : "-"}{" "}
-                m
-              </Typography>
-            </Grid>
-
-            <Grid size={6} sx={{ display: "flex", flexDirection: "column" }}>
-              <Typography
-                sx={{
-                  fontWeight: "bold",
-                  fontSize: "14px",
-                  color: theme.palette.primary.main,
-                }}
-              >
-                Luas Ruangan (m)
-              </Typography>
-              <Typography
-                sx={{
-                  fontWeight: "bold",
-                  fontSize: "13px",
-                  wordBreak: "break-word", // <-- biar kata panjang pecah
-                  whiteSpace: "normal", // <-- biar bisa turun baris
-                  overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
-                }}
-              >
-                {selectedDataRooms?.room_area
-                  ? formatNumber(selectedDataRooms.room_area)
-                  : "-"}{" "}
-                m²
-              </Typography>
-            </Grid>
-
-            <Grid size={6} sx={{ display: "flex", flexDirection: "column" }}>
-              <Typography
-                sx={{
-                  fontWeight: "bold",
-                  fontSize: "14px",
-                  color: theme.palette.primary.main,
-                }}
-              >
-                Harga Sewa Ruangan (m)
-              </Typography>
-              <Typography
-                sx={{
-                  fontWeight: "bold",
-                  fontSize: "13px",
-                  wordBreak: "break-word", // <-- biar kata panjang pecah
-                  whiteSpace: "normal", // <-- biar bisa turun baris
-                  overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
-                }}
-              >
-                {selectedDataRooms?.price_per_m2
-                  ? formatRupiah(selectedDataRooms.price_per_m2)
-                  : "-"}
-              </Typography>
-            </Grid>
-            {selectedDataRooms?.price_type === "harga_per_meter" && (
-              <Grid size={6} sx={{ display: "flex", flexDirection: "column" }}>
-                <Typography
-                  sx={{
-                    fontWeight: "bold",
-                    fontSize: "14px",
-                    color: theme.palette.primary.main,
-                  }}
+                <Stack
+                  direction={{ xs: "column", sm: "row" }}
+                  justifyContent="space-between"
+                  alignItems={{ xs: "flex-start", sm: "center" }}
+                  spacing={0.75}
                 >
-                  Total Harga Sewa
-                </Typography>
-                <Typography
-                  sx={{
-                    fontWeight: "bold",
-                    fontSize: "13px",
-                    wordBreak: "break-word", // <-- biar kata panjang pecah
-                    whiteSpace: "normal", // <-- biar bisa turun baris
-                    overflowWrap: "anywhere", // <-- tambahan supaya lebih fleksibel
-                  }}
-                >
-                  {selectedDataRooms?.price_per_m2
-                    ? formatRupiah(
-                        selectedDataRooms?.room_width *
-                          selectedDataRooms?.room_length *
-                          selectedDataRooms?.price_per_m2,
-                      )
-                    : "-"}
-                </Typography>
-              </Grid>
-            )}
-          </Grid>
-        </Box>
-      </Fade>
-    </Modal>
+                  <Box>
+                    <Typography sx={{ fontSize: 12, fontWeight: 750, color: theme.ui?.mutedText }}>
+                      Total Harga Sewa per Tahun
+                    </Typography>
+                    <Typography sx={{ fontSize: 13, fontWeight: 650, color: theme.ui?.mutedText }}>
+                      Panjang x lebar x harga per m²
+                    </Typography>
+                  </Box>
+                  <Typography sx={{ fontSize: 18, fontWeight: 950 }}>
+                    {totalAnnualRent > 0 ? formatRupiah(totalAnnualRent) : emptyValue}
+                  </Typography>
+                </Stack>
+              </Box>
+            </Grid>
+          )}
+        </Grid>
+
+        <Stack direction={{ xs: "column-reverse", sm: "row" }} justifyContent="flex-end">
+          <Button
+            variant="contained"
+            onClick={onClose}
+            sx={{
+              borderRadius: 2,
+              fontWeight: 850,
+              px: 3,
+              color: theme.palette.text.primary,
+              bgcolor:
+                theme.palette.mode === "dark"
+                  ? "rgba(255,255,255,0.10)"
+                  : "rgba(17,24,39,0.08)",
+              boxShadow: "none",
+            }}
+          >
+            Kembali
+          </Button>
+        </Stack>
+      </Stack>
+    </AppModal>
   );
 };
 

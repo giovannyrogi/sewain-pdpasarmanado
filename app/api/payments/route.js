@@ -7,6 +7,7 @@ import {
   getPaymentNotificationContext,
   notifyPaymentSubmitted,
 } from "@/app/utils/notifications";
+import { calculatePaymentPphAmount } from "@/app/utils/calculatePphAmount";
 
 // Konfigurasi upload folder
 const uploadDir = path.join(
@@ -54,14 +55,49 @@ export async function POST(req) {
     const ppnAmount = formData.get("ppn_amount");
     const payment_type = formData.get("payment_type");
     const contract_amount = formData.get("contract_amount");
+
+    // Backend menjadi sumber kebenaran untuk nilai kontrak. Khusus pembayaran
+    // lunas, contract_amount wajib memakai total sewa ruangan sebelum PPN dan
+    // iuran administrasi agar kwitansi PPH selalu punya dasar hitung yang benar.
+    const tenantApplicationResult = await client.query(
+      `
+      SELECT payment_type, total_payment_room, total_ppn
+      FROM tenant_application
+      WHERE id = $1
+      `,
+      [tenantApplicationId]
+    );
+
+    if (tenantApplicationResult.rowCount === 0) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: "Data permohonan sewa tidak ditemukan.",
+        }),
+        { status: 404 }
+      );
+    }
+
+    const tenantApplication = tenantApplicationResult.rows[0];
+    const paymentType = tenantApplication.payment_type || payment_type;
     const contractAmountValue =
-      Number(contract_amount) || Number(amount || 0) / 1.11;
+      paymentType === "lunas"
+        ? Number(tenantApplication.total_payment_room || 0)
+        : Number(contract_amount) || Number(amount || 0) / 1.11;
     const ppnAmountValue =
-      Number(ppnAmount) || Number(amount || 0) - contractAmountValue;
+      paymentType === "lunas"
+        ? Number(tenantApplication.total_ppn || ppnAmount || 0)
+        : Number(ppnAmount) || Number(amount || 0) - contractAmountValue;
+    const pphAmountValue = calculatePaymentPphAmount({
+      paymentType,
+      paymentAmount: amount,
+      contractAmount: contractAmountValue,
+      totalPaymentRoom: contractAmountValue,
+    });
 
     // Kondisi untuk remaining balance
     let remainingBalance = 0;
-    if (payment_type === "cicilan") {
+    if (paymentType === "cicilan") {
       remainingBalance = formData.get("remaining_balance") || 0;
     }
 
@@ -128,7 +164,7 @@ export async function POST(req) {
 
     const paymentResult = await client.query(insertPaymentQuery, paymentValues);
     const paymentId = paymentResult.rows[0].id;
-    const paymentLabel = getPaymentLabel(payment_type, paymentNumber);
+    const paymentLabel = getPaymentLabel(paymentType, paymentNumber);
     const receiptYear = moment(paymentDate).format("YYYY");
     const receiptSequence = padReceiptNumber(paymentId);
 
@@ -164,7 +200,7 @@ export async function POST(req) {
       )
       VALUES
         ($1, 'contract', $2, $3, '4-250', $4, $5, $6, 0, $7, 'draft', NOW(), NOW()),
-        ($1, 'pph', $8, $3, '5-192', 0, 0, 0, 0, $9, 'draft', NOW(), NOW())
+        ($1, 'pph', $8, $3, '5-192', 0, $5, 0, $9, $10, 'draft', NOW(), NOW())
       ON CONFLICT (payment_id, receipt_type) DO NOTHING
       `,
       [
@@ -176,6 +212,7 @@ export async function POST(req) {
         ppnAmountValue,
         contractDescription,
         pphReceiptNumber,
+        pphAmountValue,
         pphDescription,
       ]
     );

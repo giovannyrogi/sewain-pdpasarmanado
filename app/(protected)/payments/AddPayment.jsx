@@ -24,8 +24,8 @@ import moment from "moment";
 import formatRupiah from "@/app/components/formatrupiah/page";
 import { useThemeMode } from "@/app/components/themeprovider/ThemeContext";
 import { Icon } from "@iconify/react";
-import ImagePreviewModal from "@/app/components/imagepreviewmodal/page";
-import DetailTenantApplicationModal from "@/app/components/tenantapplicationmodal/DetailTenantApplicationModal";
+import ImagePreviewModal from "@/app/components/modals/ImagePreviewModal";
+import TenantApplicationDetailModal from "@/app/components/modals/TenantApplicationDetailModal";
 import { calculateContractAndPPN } from "@/app/components/calc-contract-and-ppn/CaclContractAndPPN";
 
 const AddPayment = ({
@@ -687,7 +687,7 @@ const AddPayment = ({
             </Grid>
           </Grid>
         </form>
-        <DetailTenantApplicationModal
+        <TenantApplicationDetailModal
           open={openDetailTenant}
           onClose={() => setOpenDetailTenant(false)}
           selectedData={selectedData}

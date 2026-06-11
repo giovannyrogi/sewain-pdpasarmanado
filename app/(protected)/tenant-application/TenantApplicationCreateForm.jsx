@@ -22,15 +22,15 @@ import axios from "axios";
 import moment from "moment";
 import { Add } from "@mui/icons-material";
 import { Icon } from "@iconify/react";
-import ImagePreviewModal from "@/app/components/imagepreviewmodal/page";
+import ImagePreviewModal from "@/app/components/modals/ImagePreviewModal";
 import { DatePicker } from "@mui/x-date-pickers";
 import dayjs from "dayjs";
 import formatRupiah from "@/app/components/formatrupiah/page";
 import LoadingBackdrop from "@/app/components/loading/Backdrop";
 import { useThemeMode } from "@/app/components/themeprovider/ThemeContext";
 import DetailRoomsModal from "@/app/components/detailroomsmodal/page";
-import ViewCalcPPNModal from "@/app/components/view-calc-ppn-modal/ViewCalcPPNModal";
-import InformationPreviewModal from "@/app/components/informationpreviewmodal/page";
+import PaymentCalculationDetailModal from "@/app/components/modals/PaymentCalculationDetailModal";
+import TenantIdentityPreviewModal from "@/app/components/modals/TenantIdentityPreviewModal";
 import { calculateAllPayments } from "@/app/utils/calculateAllPayments";
 import { calculateLeaseEndDate } from "@/app/utils/calculateRoomRent";
 import CrudFormModal from "@/app/components/crud/CrudFormModal";
@@ -1232,7 +1232,7 @@ const TenantApplicationCreateForm = ({
         setLoadingMessage={setLoadingMessage}
         selectedDataRooms={selectedDataRooms}
       />
-      <ViewCalcPPNModal
+      <PaymentCalculationDetailModal
         open={openViewDetailCalculatePPNModal}
         onClose={() => setOpenViewDetailCalculatePPNModal(false)}
         loading={loading}
@@ -1260,7 +1260,7 @@ const TenantApplicationCreateForm = ({
         totalInstallment={totalInstallment}
         chooseTenor={chooseTenor}
       />
-      <InformationPreviewModal
+      <TenantIdentityPreviewModal
         open={openViewInformationModal}
         onClose={() => setOpenViewInformationModal(false)}
         selectedData={selectedDataIdentity}
