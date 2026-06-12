@@ -29,6 +29,13 @@ export async function GET(request) {
       );
     }
 
+    if (moment(startDate).isAfter(endDate)) {
+      return new Response(
+        JSON.stringify({ success: false, message: "Tanggal mulai tidak boleh melewati tanggal selesai." }),
+        { status: 400 }
+      );
+    }
+
     const sql = `
     /*
       Perhitungan:
@@ -241,6 +248,6 @@ export async function GET(request) {
     });
   } catch (err) {
     console.error("Error in accounting-summary:", err);
-    return new Response(JSON.stringify({ success: false, message: err.message }), { status: 500 });
+    return new Response(JSON.stringify({ success: false, message: "Server error" }), { status: 500 });
   }
 }

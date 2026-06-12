@@ -1,83 +1,85 @@
+"use client";
+
+import React, { useEffect, useMemo, useState } from "react";
 import {
-  alpha,
   Autocomplete,
   Box,
   Button,
+  Chip,
   CircularProgress,
   Divider,
-  FormControl,
   Grid,
-  IconButton,
   InputAdornment,
-  InputLabel,
-  MenuItem,
-  Modal,
-  Select,
+  Stack,
   TextField,
   Typography,
-  useMediaQuery,
   useTheme,
 } from "@mui/material";
-import React, { useEffect, useState } from "react";
-import { DatePicker } from "@mui/x-date-pickers/DatePicker";
-import moment from "moment";
+import { alpha } from "@mui/material/styles";
+import { Icon } from "@iconify/react";
 import axios from "axios";
-import { useThemeMode } from "@/app/components/themeprovider/ThemeContext";
-import dayjs from "dayjs";
+import AppModal from "@/app/components/modals/AppModal";
 import TenantIdentityPreviewModal from "@/app/components/modals/TenantIdentityPreviewModal";
-import { Tag } from "antd";
 
-const AddContract = ({
+const emptyList = [];
+
+const getContractNumberOnly = (contractNumber) =>
+  String(contractNumber || "-").split("/")[0].trim();
+
+/**
+ * Modal pembuatan kontrak untuk tenant yang sudah approved dan lunas.
+ * Fetch daftar tenant dilakukan saat modal dibuka agar data pilihan selalu
+ * terbaru, sementara submit hanya mengirim id permohonan dan nomor kontrak.
+ */
+export default function AddContract({
   open,
   onClose,
   loadingTrue,
   loadingFalse,
-  loading,
   getDataContract,
   onNotify,
-  selectedData,
   setLoadingMessage,
-}) => {
-  const isMobile = useMediaQuery("(max-width:600px)");
-
-  const { themeMode } = useThemeMode();
+}) {
   const theme = useTheme();
-
-  const style = {
-    width: isMobile ? "90vw" : 400,
-    maxWidth: "98vw",
-    bgcolor: "background.paper",
-    color: "text.primary",
-    borderRadius: "10px",
-    boxShadow: 24,
-    p: "18px 20px 18px 20px",
-    maxHeight: "90vh",
-    overflowY: "auto",
-    transition: "box-shadow 0.3s",
-    //hide scrollbar
-    "&::-webkit-scrollbar": {
-      display: "none",
-    },
-  };
-
   const [documentNumber, setDocumentNumber] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [listAvailableTenant, setListAvailableTenant] = useState([]);
+  const [isLoadingTenants, setIsLoadingTenants] = useState(false);
+  const [listAvailableTenant, setListAvailableTenant] = useState(emptyList);
   const [selectedTenantId, setSelectedTenantId] = useState(null);
   const [selectedTenantData, setSelectedTenantData] = useState(null);
   const [openPreviewModal, setOpenPreviewModal] = useState(false);
 
-  // console.log("selectedData", selectedData);
+  const contractSuffix = useMemo(() => {
+    const monthRoman = selectedTenantData?.fully_paid_month_roman || "-";
+    const year = selectedTenantData?.fully_paid_year || "-";
+    const locationCode = selectedTenantData?.location_code || "-";
+
+    return `/ PM / SK / - ${locationCode} / ${monthRoman} / ${year}`;
+  }, [selectedTenantData]);
+
+  const clearForm = () => {
+    setDocumentNumber("");
+    setSelectedTenantData(null);
+    setSelectedTenantId(null);
+    setListAvailableTenant(emptyList);
+  };
+
+  const handleClose = () => {
+    if (isSubmitting) return;
+    clearForm();
+    onClose?.();
+  };
 
   const getListTenantFullyPaid = async () => {
-    loadingTrue();
-    try {
-      const response = await axios.get(`/api/contracts/tenants-fully-paid`);
-      // console.log("response", response);
+    setIsLoadingTenants(true);
+    setLoadingMessage?.("Mengambil daftar tenant lunas...");
+    loadingTrue?.();
 
-      if (response.data.success) {
-        // mapping biar gampang dipakai di Autocomplete
-        const mapped = response.data.data.map((item) => ({
+    try {
+      const response = await axios.get("/api/contracts/tenants-fully-paid");
+
+      if (response.data?.success) {
+        const mapped = (response.data.data || []).map((item) => ({
           tenant_application_id: item.tenant_application.id,
           full_name: item.tenant_identities.full_name,
           nik: item.tenant_identities.nik,
@@ -98,8 +100,7 @@ const AddContract = ({
           province: item.tenant_identities.province,
           location_code: item.locations.location_code,
           latest_contract_number: item.contracts.latest_contract_number,
-          latest_contract_number_only:
-            item.contracts.latest_contract_number_only,
+          latest_contract_number_only: item.contracts.latest_contract_number_only,
           status: item.tenant_identities.status,
           notes: item.tenant_identities.notes,
           room_number: item.rooms.room_number,
@@ -110,308 +111,315 @@ const AddContract = ({
         }));
 
         setListAvailableTenant(mapped);
-        setTimeout(() => {
-          loadingFalse();
-        }, 1000);
-      } else {
-        console.log("error", response);
-        setTimeout(() => {
-          loadingFalse();
-        }, 1000);
+        return;
       }
+
+      onNotify?.({
+        open: true,
+        message: response.data?.message || "Gagal mengambil daftar tenant.",
+        severity: "error",
+      });
     } catch (error) {
-      console.log("error", error);
-      setTimeout(() => {
-        loadingFalse();
-      }, 1000);
+      console.error("Error fetch fully paid tenants:", error);
+      onNotify?.({
+        open: true,
+        message:
+          error?.response?.data?.message || "Gagal mengambil daftar tenant.",
+        severity: "error",
+      });
+    } finally {
+      setIsLoadingTenants(false);
+      loadingFalse?.();
+      setLoadingMessage?.("Loading...");
     }
   };
 
   useEffect(() => {
     if (open) {
-      setLoadingMessage("Loading...");
       getListTenantFullyPaid();
     }
   }, [open]);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+
+    if (!selectedTenantId || !documentNumber) return;
+
     setIsSubmitting(true);
-    loadingTrue();
+    setLoadingMessage?.("Membuat data kontrak...");
+    loadingTrue?.();
 
     try {
-      const response = await axios.post(`/api/contracts`, {
+      const response = await axios.post("/api/contracts", {
         tenant_application_id: selectedTenantId,
         document_number: documentNumber,
       });
-      // console.log("response", response);
 
-      if (response.data.success) {
-        getDataContract();
-        onNotify &&
-          onNotify({
-            open: true,
-            message: response.data.message || "Berhasil Membuat Kontrak",
-            severity: "success",
-          });
-        setTimeout(() => {
-          clearForm();
-          onClose();
-          loadingFalse();
-          setIsSubmitting(false);
-        }, 1000);
-      } else {
-        onNotify &&
-          onNotify({
-            open: true,
-            message: response.data.message || "Gagal Membuat Kontrak",
-            severity: "error",
-          });
-        setTimeout(() => {
-          loadingFalse();
-          setIsSubmitting(false);
-        }, 1000);
-      }
-    } catch (error) {
-      console.error(error);
-      onNotify &&
-        onNotify({
+      if (response.data?.success) {
+        await getDataContract?.();
+        onNotify?.({
           open: true,
-          message: error.response.data.message || "Gagal Membuat kontrak",
-          severity: "error",
+          message: response.data.message || "Kontrak berhasil dibuat.",
+          severity: "success",
         });
-      setTimeout(() => {
-        loadingFalse();
-        setIsSubmitting(false);
-      }, 1000);
+        clearForm();
+        onClose?.();
+        return;
+      }
+
+      onNotify?.({
+        open: true,
+        message: response.data?.message || "Gagal membuat kontrak.",
+        severity: "error",
+      });
+    } catch (error) {
+      console.error("Error create contract:", error);
+      onNotify?.({
+        open: true,
+        message: error?.response?.data?.message || "Gagal membuat kontrak.",
+        severity: "error",
+      });
+    } finally {
+      setIsSubmitting(false);
+      loadingFalse?.();
+      setLoadingMessage?.("Loading...");
     }
   };
 
-  const clearForm = () => {
-    setDocumentNumber("");
-    setSelectedTenantData(null);
-    setSelectedTenantId(null);
-    setListAvailableTenant([]);
-  };
-
-  const getPrefix = () => {
-    const monthRoman = selectedTenantData?.fully_paid_month_roman || "-";
-    const year = selectedTenantData?.fully_paid_year || "-";
-    return (
-      <InputAdornment
-        position="end"
-        sx={{
-          whiteSpace: "nowrap",
-          color: theme.palette.primary.main,
-        }}
-      >
-        <Typography
-          sx={{
-            whiteSpace: "nowrap",
-            fontWeight: "bold",
-            fontSize: "14px",
-            // letterSpacing: "1px",
-          }}
-        >{`/ PM / SK / - ${
-          selectedTenantData?.location_code
-            ? selectedTenantData?.location_code
-            : "-"
-        } / ${monthRoman} / ${year}`}</Typography>
-      </InputAdornment>
-    );
-  };
-
   return (
-    <Modal
-      open={open}
-      onClose={onClose}
-      sx={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        p: 0, // hilangkan padding default
-      }}
-      BackdropProps={{
-        sx: {
-          backgroundColor: "rgba(30,30,30,0.25)",
-          backdropFilter: "blur(6px)",
-          WebkitBackdropFilter: "blur(6px)",
-        },
-      }}
-    >
-      <Box sx={style}>
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <Typography
-            sx={{ fontWeight: "bold", fontSize: isMobile ? "18px" : "20px" }}
-          >
-            Tambah Kontrak Baru
-          </Typography>
-        </Box>
-
-        <Divider
-          sx={{
-            mt: 0.5,
-            mb: 3,
-            borderColor: theme.palette.primary.main,
-          }}
-        />
-
-        <form onSubmit={handleSubmit}>
-          <Grid container spacing={isMobile ? 3 : 2}>
-            <Grid size={12}>
-              <Autocomplete
-                options={listAvailableTenant || []}
-                getOptionLabel={(option) =>
-                  option.full_name +
-                    " - " +
-                    option.location_name +
-                    " - " +
-                    option.room_number || ""
-                }
-                value={
-                  listAvailableTenant.find(
-                    (item) => item.tenant_application_id === selectedTenantId,
-                  ) || null
-                }
-                onChange={(event, newValue) => {
-                  // console.log("newValue", newValue);
-                  if (!newValue) {
-                    setSelectedTenantId(null);
-                    setSelectedTenantData(null);
-                    return;
+    <>
+      <AppModal
+        open={open}
+        onClose={handleClose}
+        title="Buat Kontrak Baru"
+        description="Pilih tenant yang sudah lunas, isi nomor kontrak, lalu sistem akan membentuk format nomor kontrak otomatis."
+        icon="solar:document-add-bold-duotone"
+        width={720}
+        contentSx={{ p: 0 }}
+      >
+        <Box component="form" onSubmit={handleSubmit}>
+          <Box sx={{ p: { xs: 2.4, sm: 2.75 } }}>
+            <Grid container spacing={2}>
+              <Grid size={12}>
+                <Autocomplete
+                  options={listAvailableTenant || emptyList}
+                  loading={isLoadingTenants}
+                  getOptionLabel={(option) =>
+                    option
+                      ? `${option.full_name || "-"} - ${option.location_name || "-"} - ${option.room_number || "-"}`
+                      : ""
                   }
-                  setSelectedTenantId(
-                    newValue ? newValue.tenant_application_id : null,
-                  );
-                  setSelectedTenantData(newValue);
-                }}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label="Pilih Data Penyewa"
-                    variant="filled"
-                    required
-                  />
-                )}
-              />
-            </Grid>
-            {selectedTenantId && (
-              <Grid
-                container
-                size={12}
-                sx={{
-                  mt: isMobile ? -2 : -1.2,
-                }}
-              >
-                <Grid size={isMobile ? 12 : 6}>
-                  <Typography
-                    sx={{
-                      fontWeight: "bold",
-                      fontSize: "12px",
-                      cursor: "pointer",
-                      color: theme.palette.primary.main,
-                      "&:hover": {
-                        textDecoration: "underline",
-                      },
-                    }}
-                    onClick={() => setOpenPreviewModal(true)}
-                  >
-                    Lihat Data Penyewa
-                  </Typography>
-                </Grid>
-              </Grid>
-            )}
-            <Grid size={12}>
-              <TextField
-                label="No. Kontrak"
-                // placeholder="Cth: 001"
-                variant="filled"
-                fullWidth
-                value={documentNumber}
-                onChange={(e) => {
-                  // document number hanya boleh angka
-                  setDocumentNumber(e.target.value.replace(/[^0-9]/g, ""));
-                }}
-                InputProps={{
-                  endAdornment: getPrefix(),
-                }}
-                required
-                color="primary"
-              />
-            </Grid>
-            {selectedTenantData &&
-            selectedTenantData?.latest_contract_number ? (
-              <Grid
-                size={12}
-                sx={{
-                  p: 1,
-                  bgcolor:
-                    themeMode === "dark"
-                      ? alpha(theme.palette.primary.main, 0.12)
-                      : alpha(theme.palette.primary.main, 0.12),
-                  borderRadius: 1,
-                  // mt: -1,
-                  mb: -1,
-                  display: "flex",
-                  flexDirection: "row",
-                  gap: 1,
-                }}
-              >
-                <Typography
-                  sx={{
-                    fontSize: "14px",
-                    fontWeight: "bold",
-                    color: "primary.main",
+                  value={
+                    listAvailableTenant.find(
+                      (item) => item.tenant_application_id === selectedTenantId,
+                    ) || null
+                  }
+                  onChange={(_event, newValue) => {
+                    setSelectedTenantId(newValue?.tenant_application_id || null);
+                    setSelectedTenantData(newValue || null);
                   }}
-                >
-                  Nomor kontrak terakhir adalah{" "}
-                  {selectedTenantData?.latest_contract_number
-                    ? selectedTenantData?.latest_contract_number
-                        .split("/")[0]
-                        .trim()
-                    : "-"}
-                </Typography>
+                  noOptionsText={
+                    isLoadingTenants
+                      ? "Memuat data..."
+                      : "Belum ada tenant lunas yang siap dibuat kontrak"
+                  }
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Pilih Data Penyewa"
+                      placeholder="Cari nama tenant, lokasi, atau ruangan"
+                      required
+                      InputProps={{
+                        ...params.InputProps,
+                        endAdornment: (
+                          <>
+                            {isLoadingTenants ? (
+                              <CircularProgress color="inherit" size={18} />
+                            ) : null}
+                            {params.InputProps.endAdornment}
+                          </>
+                        ),
+                      }}
+                    />
+                  )}
+                />
               </Grid>
-            ) : undefined}
-            <Grid size={12}>
-              <Button
-                type="submit"
-                variant="contained"
-                color="primary"
-                fullWidth
-                size="small"
-                sx={{
-                  mt: 2,
-                  fontWeight: "bold",
-                  fontSize: 16,
-                  textTransform: "none",
-                }}
-                disabled={isSubmitting}
-                startIcon={
-                  isSubmitting && <CircularProgress size={22} color="inherit" />
-                }
-              >
-                {isSubmitting ? "Mengirim..." : "Submit Data"}
-              </Button>
+
+              {selectedTenantData && (
+                <Grid size={12}>
+                  <Box
+                    sx={{
+                      p: 1.5,
+                      borderRadius: 2,
+                      border: `1px solid ${theme.ui.dashboardCardBorder}`,
+                      bgcolor:
+                        theme.palette.mode === "dark"
+                          ? "rgba(255,255,255,0.035)"
+                          : "rgba(17,24,39,0.025)",
+                    }}
+                  >
+                    <Stack
+                      direction={{ xs: "column", sm: "row" }}
+                      alignItems={{ xs: "flex-start", sm: "center" }}
+                      justifyContent="space-between"
+                      spacing={1.5}
+                    >
+                      <Box sx={{ minWidth: 0 }}>
+                        <Typography
+                          sx={{
+                            fontFamily: "Poppins",
+                            fontWeight: 850,
+                            fontSize: 14,
+                            textTransform: "capitalize",
+                          }}
+                        >
+                          {selectedTenantData.full_name}
+                        </Typography>
+                        <Stack direction="row" spacing={0.75} flexWrap="wrap" useFlexGap sx={{ mt: 0.75 }}>
+                          <Chip
+                            size="small"
+                            label={selectedTenantData.location_name || "-"}
+                            sx={{
+                              fontWeight: 750,
+                              color: theme.palette.primary.main,
+                              bgcolor: alpha(theme.palette.primary.main, 0.1),
+                            }}
+                          />
+                          <Chip
+                            size="small"
+                            label={`Ruangan ${selectedTenantData.room_number || "-"}`}
+                            sx={{
+                              fontWeight: 750,
+                              color: theme.palette.info.main,
+                              bgcolor: alpha(theme.palette.info.main, 0.1),
+                            }}
+                          />
+                        </Stack>
+                      </Box>
+
+                      <Button
+                        variant="outlined"
+                        startIcon={<Icon icon="solar:user-id-bold-duotone" />}
+                        onClick={() => setOpenPreviewModal(true)}
+                        sx={{
+                          borderRadius: 2,
+                          fontWeight: 800,
+                          textTransform: "none",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        Lihat Penyewa
+                      </Button>
+                    </Stack>
+                  </Box>
+                </Grid>
+              )}
+
+              <Grid size={12}>
+                <TextField
+                  label="Nomor Kontrak"
+                  placeholder="Contoh: 001"
+                  fullWidth
+                  value={documentNumber}
+                  onChange={(event) => {
+                    setDocumentNumber(event.target.value.replace(/[^0-9]/g, ""));
+                  }}
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <Typography
+                          sx={{
+                            color: theme.palette.primary.main,
+                            fontWeight: 850,
+                            fontSize: { xs: 11, sm: 12 },
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {contractSuffix}
+                        </Typography>
+                      </InputAdornment>
+                    ),
+                  }}
+                  required
+                />
+              </Grid>
+
+              {selectedTenantData?.latest_contract_number && (
+                <Grid size={12}>
+                  <Box
+                    sx={{
+                      p: 1.4,
+                      borderRadius: 2,
+                      color: theme.palette.primary.main,
+                      bgcolor: alpha(theme.palette.primary.main, 0.1),
+                      border: `1px solid ${alpha(theme.palette.primary.main, 0.22)}`,
+                    }}
+                  >
+                    <Typography sx={{ fontSize: 13, fontWeight: 800 }}>
+                      Nomor kontrak terakhir:{" "}
+                      {getContractNumberOnly(selectedTenantData.latest_contract_number)}
+                    </Typography>
+                  </Box>
+                </Grid>
+              )}
             </Grid>
-          </Grid>
-        </form>
+          </Box>
 
-        <TenantIdentityPreviewModal
-          open={openPreviewModal}
-          onClose={() => setOpenPreviewModal(false)}
-          selectedData={selectedTenantData}
-        />
-      </Box>
-    </Modal>
+          <Divider sx={{ borderColor: theme.ui.dashboardCardBorder }} />
+
+          <Stack
+            direction={{ xs: "column-reverse", sm: "row" }}
+            justifyContent="flex-end"
+            spacing={1.25}
+            sx={{ p: { xs: 2.4, sm: 2.75 }, pt: 2 }}
+          >
+            <Button
+              variant="contained"
+              onClick={handleClose}
+              disabled={isSubmitting}
+              sx={{
+                borderRadius: 2,
+                fontWeight: 800,
+                textTransform: "none",
+                color: theme.palette.text.primary,
+                bgcolor:
+                  theme.palette.mode === "dark"
+                    ? "rgba(255,255,255,0.10)"
+                    : "rgba(17,24,39,0.08)",
+                boxShadow: "none",
+              }}
+            >
+              Batal
+            </Button>
+            <Button
+              type="submit"
+              variant="contained"
+              disabled={isSubmitting || !selectedTenantId || !documentNumber}
+              startIcon={
+                isSubmitting ? (
+                  <CircularProgress color="inherit" size={18} />
+                ) : (
+                  <Icon icon="solar:document-add-bold-duotone" />
+                )
+              }
+              sx={{
+                borderRadius: 2,
+                fontWeight: 850,
+                textTransform: "none",
+                boxShadow: theme.ui.buttonShadow,
+              }}
+            >
+              {isSubmitting ? "Menyimpan..." : "Simpan Kontrak"}
+            </Button>
+          </Stack>
+        </Box>
+      </AppModal>
+
+      <TenantIdentityPreviewModal
+        open={openPreviewModal}
+        onClose={() => setOpenPreviewModal(false)}
+        selectedData={selectedTenantData}
+      />
+    </>
   );
-};
-
-export default AddContract;
+}

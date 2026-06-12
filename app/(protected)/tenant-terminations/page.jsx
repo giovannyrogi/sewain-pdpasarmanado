@@ -4,6 +4,7 @@ import {
   Button,
   Grid,
   Stack,
+  useMediaQuery,
   useTheme,
 } from "@mui/material";
 import React, { useEffect, useMemo, useState } from "react";
@@ -30,6 +31,7 @@ const ACTION_COLUMN_WIDTH = 150;
 const normalizeText = (value) => String(value || "").toLowerCase();
 
 const TenantTerminations = () => {
+  const isMobile = useMediaQuery("(max-width:600px)");
   const { user } = useUser();
   const [dataTenantTerminations, setDataTenantTerminations] = useState([]);
   const theme = useTheme();
@@ -206,8 +208,7 @@ const TenantTerminations = () => {
         setDataTenantTerminations(freshTerminations);
 
         const selectedTermination = freshTerminations.find(
-          (item) =>
-            Number(item?.tenant_early_termination_id) === terminationId,
+          (item) => Number(item?.tenant_early_termination_id) === terminationId,
         );
 
         await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -299,6 +300,7 @@ const TenantTerminations = () => {
         onViewDetail: handleViewDetailInformation,
         onViewProgress: handleTerminationApproval,
         onCancel: handleCancel,
+        isMobile: isMobile,
       }),
     [dataTenantTerminations, theme],
   );
@@ -357,7 +359,9 @@ const TenantTerminations = () => {
       if (response?.data?.success) {
         setSnackbar({
           open: true,
-          message: response.data.message || "Proses nonaktif tenant berhasil dibatalkan.",
+          message:
+            response.data.message ||
+            "Proses nonaktif tenant berhasil dibatalkan.",
           severity: "success",
         });
         await getDataTenantTerminations();
@@ -366,7 +370,8 @@ const TenantTerminations = () => {
       } else {
         setSnackbar({
           open: true,
-          message: response?.data?.message || "Gagal membatalkan nonaktif tenant.",
+          message:
+            response?.data?.message || "Gagal membatalkan nonaktif tenant.",
           severity: "error",
         });
       }
@@ -388,7 +393,14 @@ const TenantTerminations = () => {
   };
 
   return (
-    <Box sx={{ width: "100%", height: "100%", minHeight: "100%", p: { xs: 1.25, sm: 2 } }}>
+    <Box
+      sx={{
+        width: "100%",
+        height: "100%",
+        minHeight: "100%",
+        p: { xs: 1.25, sm: 2 },
+      }}
+    >
       <Stack spacing={{ xs: 1.5, lg: 2 }}>
         <PageHeader
           breadcrumbs={[
@@ -417,7 +429,9 @@ const TenantTerminations = () => {
             <Button
               fullWidth
               variant="contained"
-              startIcon={<Icon icon="solar:lock-keyhole-minimalistic-bold-duotone" />}
+              startIcon={
+                <Icon icon="solar:lock-keyhole-minimalistic-bold-duotone" />
+              }
               onClick={() => setOpenTenantTerminationsModal(true)}
               sx={{
                 minHeight: 46,
@@ -491,15 +505,24 @@ const TenantTerminations = () => {
         description={
           <>
             Proses nonaktif untuk{" "}
-            <Box component="strong" sx={{ color: "text.primary", fontWeight: 850 }}>
+            <Box
+              component="strong"
+              sx={{ color: "text.primary", fontWeight: 850 }}
+            >
               {selectedData?.tenant_name || "-"}
             </Box>{" "}
             pada{" "}
-            <Box component="strong" sx={{ color: "text.primary", fontWeight: 850 }}>
+            <Box
+              component="strong"
+              sx={{ color: "text.primary", fontWeight: 850 }}
+            >
               Ruangan {selectedData?.room_number || "-"}
             </Box>
             , lokasi{" "}
-            <Box component="strong" sx={{ color: "text.primary", fontWeight: 850 }}>
+            <Box
+              component="strong"
+              sx={{ color: "text.primary", fontWeight: 850 }}
+            >
               {selectedData?.location_name || "-"}
             </Box>{" "}
             akan dihapus dari daftar pengajuan.

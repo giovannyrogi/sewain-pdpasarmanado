@@ -255,6 +255,7 @@ export async function GET() {
         -- location
         loc.id AS location_id,
         loc.location_name,
+        loc.location_code,
         loc.street_address,
         loc.city,
         loc.province,
@@ -376,6 +377,7 @@ export async function GET() {
           locations: {
             id: row.location_id,
             location_name: row.location_name,
+            location_code: row.location_code,
             street_address: row.street_address,
             city: row.city,
             province: row.province,

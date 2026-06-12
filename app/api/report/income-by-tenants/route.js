@@ -273,7 +273,6 @@ export async function GET(request) {
       JSON.stringify({
         success: false,
         message: "Server error",
-        error: error.message,
       }),
       { status: 500 }
     );

@@ -311,17 +311,26 @@ export default function ApprovalTrackingModal({
                     </Stack>
                   )}
                   {item.status === "rejected" && item.notes && (
-                    <Box
+                    <Stack
+                      direction={{ xs: "column", sm: "row" }}
+                      spacing={0.65}
+                      alignItems={{ xs: "flex-start", sm: "baseline" }}
                       sx={{
-                        mt: 1,
-                        p: 1,
-                        borderRadius: 1.5,
-                        bgcolor: alpha(theme.palette.error.main, theme.palette.mode === "dark" ? 0.14 : 0.08),
-                        border: `1px solid ${alpha(theme.palette.error.main, 0.2)}`,
+                        mt: 0.8,
+                        pt: 0.75,
+                        borderTop: `1px dashed ${alpha(statusMeta.color, 0.28)}`,
                       }}
                     >
-                      <Typography sx={{ fontFamily: "Poppins", fontSize: 12, fontWeight: 600, color: theme.palette.error.main }}>
-                        Catatan Penolakan
+                      <Typography
+                        sx={{
+                          flex: "0 0 auto",
+                          fontFamily: "Poppins",
+                          fontSize: 12,
+                          fontWeight: 800,
+                          color: statusMeta.color,
+                        }}
+                      >
+                        Catatan:
                       </Typography>
                       <Typography
                         sx={{
@@ -335,7 +344,7 @@ export default function ApprovalTrackingModal({
                       >
                         {item.notes}
                       </Typography>
-                    </Box>
+                    </Stack>
                   )}
                 </Box>
               </Stack>

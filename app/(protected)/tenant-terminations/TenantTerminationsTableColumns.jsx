@@ -1,8 +1,9 @@
 "use client";
 
 import React from "react";
-import { Box, Chip, Stack, Typography } from "@mui/material";
+import { Box, Chip, Stack, Typography, useMediaQuery } from "@mui/material";
 import { alpha } from "@mui/material/styles";
+import moment from "moment";
 import ApprovalStatusChip from "@/app/components/status/ApprovalStatusChip";
 import TableActionButton from "@/app/components/data-table/TableActionButton";
 
@@ -16,6 +17,11 @@ const createColumnFilters = (data, key) =>
 
 const createExactFilter = (key) => (value, record) => record?.[key] === value;
 
+const formatDate = (value) => (value ? moment(value).format("DD MMM YYYY") : "-");
+
+const formatDateRange = (startDate, endDate) =>
+  `${formatDate(startDate)} s/d ${formatDate(endDate)}`;
+
 /**
  * Definisi kolom termination dipisahkan dari page agar page fokus ke state,
  * request API, dan modal. Kolom ini tetap presentasional dan semua aksi bisnis
@@ -28,6 +34,7 @@ export function createTenantTerminationColumns({
   onViewDetail,
   onViewProgress,
   onCancel,
+  isMobile,
 }) {
   return [
     {
@@ -133,25 +140,13 @@ export function createTenantTerminationColumns({
       ),
     },
     {
-      title: "Kontrak",
+      title: "Masa Berlaku",
       dataIndex: "start_date",
-      width: 250,
+      width: 230,
       render: (_text, record) => (
         <Box>
           <Typography sx={{ fontFamily: "Poppins", fontWeight: 600, fontSize: 13 }}>
-            {record.start_date ? String(record.start_date).slice(0, 10) : "-"} s/d{" "}
-            {record.end_date ? String(record.end_date).slice(0, 10) : "-"}
-          </Typography>
-          <Typography
-            sx={{
-              color: theme.ui.mutedText,
-              fontFamily: "Poppins",
-              fontWeight: 600,
-              fontSize: 12,
-              mt: 0.25,
-            }}
-          >
-            Diproses oleh {record.termination_processed_by_full_name || "-"}
+            {formatDateRange(record.start_date, record.end_date)}
           </Typography>
         </Box>
       ),
@@ -166,7 +161,7 @@ export function createTenantTerminationColumns({
         { text: "Dibatalkan", value: "cancelled" },
       ],
       onFilter: createExactFilter("termination_approval_status"),
-      width: 170,
+      width: 230,
       render: (_text, record) => (
         <ApprovalStatusChip
           status={record.termination_approval_status}
@@ -180,11 +175,24 @@ export function createTenantTerminationColumns({
     {
       title: "Dibuat",
       dataIndex: "termination_created_at",
-      width: 170,
-      render: (value) => (
-        <Typography sx={{ fontFamily: "Poppins", fontWeight: 750, fontSize: 12.5 }}>
-          {value || "-"}
-        </Typography>
+      width: 230,
+      render: (value, record) => (
+        <Box>
+          <Typography sx={{ fontFamily: "Poppins", fontWeight: 750, fontSize: 12.5 }}>
+            {formatDate(value)}
+          </Typography>
+          <Typography
+            sx={{
+              color: theme.ui.mutedText,
+              fontFamily: "Poppins",
+              fontWeight: 650,
+              fontSize: 12,
+              mt: 0.25,
+            }}
+          >
+            Oleh {record.termination_processed_by_full_name || "-"}
+          </Typography>
+        </Box>
       ),
     },
     {
@@ -192,7 +200,7 @@ export function createTenantTerminationColumns({
       key: "action",
       align: "center",
       width: 150,
-      fixed: "right",
+      fixed: isMobile ? false : "right",
       className: "tenant-terminations-action-column",
       render: (_text, record) => (
         <Stack

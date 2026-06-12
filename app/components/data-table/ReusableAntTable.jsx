@@ -73,10 +73,65 @@ export default function ReusableAntTable({
 
       return {
         ...column,
-        render: (_value, _record, index) => startIndex + index + 1,
+        render: (_value, record, index) =>
+          record?.__isTotal ? "" : startIndex + index + 1,
       };
     });
   }, [columns, currentPage, effectivePageSize, pagination]);
+
+  const fixedColumnSx = {
+    "--reusable-fixed-bg":
+      muiTheme.palette.mode === "dark" ? "#111111" : "#ffffff",
+    "--reusable-fixed-header-bg":
+      muiTheme.palette.mode === "dark" ? "#1c1c1c" : "#f8f9fb",
+    "--reusable-fixed-hover-bg":
+      muiTheme.palette.mode === "dark" ? "#2b2317" : "#fff6f6",
+    /**
+     * Semua fixed column Ant Design harus punya background solid.
+     * Tanpa ini, kolom fixed akan terlihat transparan saat horizontal scroll
+     * dan data di belakangnya bisa menimpa teks fixed column.
+     */
+    "& .ant-table-cell-fix-left, & .ant-table-cell-fix-left-first, & .ant-table-cell-fix-left-last, & .ant-table-cell-fix-right, & .ant-table-cell-fix-right-first, & .ant-table-cell-fix-right-last": {
+      background: "var(--reusable-fixed-bg) !important",
+      backgroundColor: "var(--reusable-fixed-bg) !important",
+      backgroundImage: "none !important",
+      backgroundClip: "border-box !important",
+      opacity: "1 !important",
+      zIndex: "20 !important",
+      isolation: "isolate",
+    },
+    "& .ant-table-thead .ant-table-cell-fix-left, & .ant-table-thead .ant-table-cell-fix-left-first, & .ant-table-thead .ant-table-cell-fix-left-last, & .ant-table-thead .ant-table-cell-fix-right, & .ant-table-thead .ant-table-cell-fix-right-first, & .ant-table-thead .ant-table-cell-fix-right-last": {
+      background: "var(--reusable-fixed-header-bg) !important",
+      backgroundColor: "var(--reusable-fixed-header-bg) !important",
+      zIndex: "24 !important",
+    },
+    "& .ant-table-tbody > tr.ant-table-row > td.ant-table-cell-fix-left, & .ant-table-tbody > tr.ant-table-row > td.ant-table-cell-fix-left-first, & .ant-table-tbody > tr.ant-table-row > td.ant-table-cell-fix-left-last, & .ant-table-tbody > tr.ant-table-row > td.ant-table-cell-fix-right, & .ant-table-tbody > tr.ant-table-row > td.ant-table-cell-fix-right-first, & .ant-table-tbody > tr.ant-table-row > td.ant-table-cell-fix-right-last": {
+      background: "var(--reusable-fixed-bg) !important",
+      backgroundColor: "var(--reusable-fixed-bg) !important",
+    },
+    "& .ant-table-tbody > tr:hover > td.ant-table-cell-fix-left, & .ant-table-tbody > tr:hover > td.ant-table-cell-fix-left-first, & .ant-table-tbody > tr:hover > td.ant-table-cell-fix-left-last, & .ant-table-tbody > tr:hover > td.ant-table-cell-fix-right, & .ant-table-tbody > tr:hover > td.ant-table-cell-fix-right-first, & .ant-table-tbody > tr:hover > td.ant-table-cell-fix-right-last": {
+      background: "var(--reusable-fixed-hover-bg) !important",
+      backgroundColor: "var(--reusable-fixed-hover-bg) !important",
+    },
+    "& .ant-table-cell-fix-left-last::after, & .ant-table-cell-fix-right-first::after": {
+      pointerEvents: "none",
+      zIndex: 1,
+    },
+    "& .ant-table-tbody > tr.report-total-row > td": {
+      background:
+        muiTheme.palette.mode === "dark"
+          ? "rgba(255, 152, 0, 0.10) !important"
+          : "rgba(230, 9, 9, 0.06) !important",
+      borderTop: `1px solid ${muiTheme.palette.primary.main} !important`,
+      fontWeight: "700 !important",
+    },
+    "& .ant-table-tbody > tr.report-total-row > td.ant-table-cell-fix-left, & .ant-table-tbody > tr.report-total-row > td.ant-table-cell-fix-right": {
+      background:
+        muiTheme.palette.mode === "dark"
+          ? "#21190c !important"
+          : "#fff3f3 !important",
+    },
+  };
 
   const actionColumnSx = fixedActionColumn
     ? {
@@ -183,7 +238,7 @@ export default function ReusableAntTable({
         },
       }}
     >
-      <Box sx={[actionColumnSx, sx]}>
+      <Box sx={[fixedColumnSx, actionColumnSx, sx]}>
         <Table
           rowKey={rowKey}
           columns={columnsWithAutoNumber}
