@@ -27,7 +27,7 @@ import ApprovalTrackingModal from "@/app/components/modals/ApprovalTrackingModal
 import { useUser } from "@/app/utils/useUser";
 import { useReactToPrint } from "react-to-print";
 import UpdateDocumentDate from "./UpdateDocumentDate";
-import TenantApplicationDetailModal from "@/app/components/modals/TenantApplicationDetailModal";
+import TenantLeaseDetailModal from "@/app/components/modals/TenantLeaseDetailModal";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import PrintDocumentTenant from "@/app/components/documents/PrintDocumentTenant";
@@ -697,7 +697,7 @@ const Applications = () => {
         loadingFalse={() => setLoading(false)}
         setLoadingMessage={setLoadingMessage}
       />
-      <TenantApplicationDetailModal
+      <TenantLeaseDetailModal
         open={openTenantApprovalInformationModal}
         onClose={() => setOpenTenantApprovalInformationModal(false)}
         selectedData={selectedData}

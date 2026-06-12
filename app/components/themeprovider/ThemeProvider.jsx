@@ -4,8 +4,10 @@ import { ThemeProvider, createTheme } from "@mui/material/styles";
 export const lightTheme = createTheme({
   typography: {
     fontFamily: '"Poppins", sans-serif',
+    letterSpacing: "0.4px",
     button: {
       fontFamily: '"Poppins", sans-serif',
+      letterSpacing: "0.4px",
       textTransform: "none",
     },
   },
@@ -73,8 +75,10 @@ export const lightTheme = createTheme({
 export const darkTheme = createTheme({
   typography: {
     fontFamily: '"Poppins", sans-serif',
+    letterSpacing: "0.4px",
     button: {
       fontFamily: '"Poppins", sans-serif',
+      letterSpacing: "0.4px",
       textTransform: "none",
     },
   },

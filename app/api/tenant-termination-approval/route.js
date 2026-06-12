@@ -21,11 +21,11 @@ export async function GET(req) {
     }
 
     const { searchParams } = new URL(req.url);
-    const terminationId = searchParams.get("id"); // tenant_early_termination_id
+    const terminationId = Number(searchParams.get("id")); // tenant_early_termination_id
 
-    if (!terminationId) {
+    if (!Number.isInteger(terminationId) || terminationId <= 0) {
       return new Response(
-        JSON.stringify({ success: false, message: "Parameter id (tenant_early_termination_id) wajib diisi" }),
+        JSON.stringify({ success: false, message: "Parameter id nonaktif tenant tidak valid" }),
         { status: 400 }
       );
     }
@@ -64,7 +64,10 @@ export async function GET(req) {
   } catch (err) {
     console.error("Error GET tenant termination approval:", err);
     return new Response(
-      JSON.stringify({ success: false, message: err.message }),
+      JSON.stringify({
+        success: false,
+        message: "Terjadi kesalahan saat mengambil progress approval terminasi.",
+      }),
       { status: 500 }
     );
   }

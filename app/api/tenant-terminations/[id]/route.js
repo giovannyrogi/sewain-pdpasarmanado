@@ -12,6 +12,7 @@ const STATEMENT_UPLOAD_DIR = path.join(process.cwd(), "uploads/surat_pernyataan"
 
 export async function DELETE(request, context) {
   const { id } = await context.params; // termination_id
+  const terminationId = Number(id);
   const client = await pool.connect();
 
   try {
@@ -23,11 +24,11 @@ export async function DELETE(request, context) {
       return unauthorizedResponse();
     }
 
-    if (!id) {
+    if (!Number.isInteger(terminationId) || terminationId <= 0) {
       return new Response(
         JSON.stringify({
           success: false,
-          message: "ID termination wajib diisi",
+          message: "ID termination tidak valid",
         }),
         { status: 400 }
       );
@@ -38,7 +39,7 @@ export async function DELETE(request, context) {
     // Ambil data termination (untuk dapatkan path file)
     const terminationRes = await client.query(
       `SELECT statement_file_path FROM tenant_early_terminations WHERE id = $1`,
-      [id]
+      [terminationId]
     );
     if (terminationRes.rows.length === 0) {
       await client.query("ROLLBACK");
@@ -52,7 +53,7 @@ export async function DELETE(request, context) {
     }
 
     const { statement_file_path } = terminationRes.rows[0];
-    const notificationContext = await getTerminationNotificationContext(client, id);
+    const notificationContext = await getTerminationNotificationContext(client, terminationId);
 
     if (notificationContext) {
       await notifyTerminationDeleted(client, notificationContext, authUser.id);
@@ -61,12 +62,12 @@ export async function DELETE(request, context) {
     // Hapus data approval yang terkait dulu
     await client.query(
       `DELETE FROM tenant_termination_approval WHERE tenant_early_termination_id = $1`,
-      [id]
+      [terminationId]
     );
 
     // Hapus data dari tenant_early_terminations
     await client.query(`DELETE FROM tenant_early_terminations WHERE id = $1`, [
-      id,
+      terminationId,
     ]);
 
     await client.query("COMMIT");
@@ -95,7 +96,10 @@ export async function DELETE(request, context) {
     await client.query("ROLLBACK");
     console.error("Error DELETE Tenant Early Termination:", err);
     return new Response(
-      JSON.stringify({ success: false, message: err.message }),
+      JSON.stringify({
+        success: false,
+        message: "Terjadi kesalahan saat membatalkan nonaktif tenant",
+      }),
       { status: 500 }
     );
   } finally {

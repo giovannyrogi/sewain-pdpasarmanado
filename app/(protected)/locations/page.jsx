@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Box, Button, Chip, Grid, IconButton, Stack, Tooltip, Typography, useTheme } from "@mui/material";
+import { Box, Button, Chip, Grid, Stack, Typography, useTheme } from "@mui/material";
 import { Tag } from "antd";
 import { Icon } from "@iconify/react";
 import axios from "axios";
@@ -10,6 +10,7 @@ import Notification from "@/app/components/Notification";
 import PageHeader from "@/app/components/page-header/PageHeader";
 import DataTableShell from "@/app/components/data-table/DataTableShell";
 import ReusableAntTable from "@/app/components/data-table/ReusableAntTable";
+import TableActionButton from "@/app/components/data-table/TableActionButton";
 import CrudConfirmModal from "@/app/components/crud/CrudConfirmModal";
 import SummaryStatCard from "@/app/components/stats/SummaryStatCard";
 import LocationFormModal from "./LocationFormModal";
@@ -298,44 +299,18 @@ export default function Locations() {
         align: "center",
         render: (_, record) => (
           <Stack direction="row" spacing={0.75} justifyContent="center">
-            <Tooltip title="Ubah lokasi">
-              <IconButton
-                size="small"
-                onClick={() => openEditModal(record)}
-                sx={{
-                  width: 34,
-                  height: 34,
-                  borderRadius: 1.5,
-                  color: theme.palette.info.main,
-                  border: `1px solid ${theme.palette.info.main}55`,
-                  bgcolor:
-                    theme.palette.mode === "dark"
-                      ? "rgba(33,150,243,0.10)"
-                      : "rgba(33,150,243,0.08)",
-                }}
-              >
-                <Icon icon="solar:pen-bold-duotone" fontSize={18} />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Hapus lokasi">
-              <IconButton
-                size="small"
-                onClick={() => openDeleteModal(record)}
-                sx={{
-                  width: 34,
-                  height: 34,
-                  borderRadius: 1.5,
-                  color: theme.palette.error.main,
-                  border: `1px solid ${theme.palette.error.main}55`,
-                  bgcolor:
-                    theme.palette.mode === "dark"
-                      ? "rgba(244,67,54,0.10)"
-                      : "rgba(244,67,54,0.08)",
-                }}
-              >
-                <Icon icon="solar:trash-bin-trash-bold-duotone" fontSize={18} />
-              </IconButton>
-            </Tooltip>
+            <TableActionButton
+              title="Ubah lokasi"
+              color="info"
+              icon="solar:pen-bold-duotone"
+              onClick={() => openEditModal(record)}
+            />
+            <TableActionButton
+              title="Hapus lokasi"
+              color="error"
+              icon="solar:trash-bin-trash-bold-duotone"
+              onClick={() => openDeleteModal(record)}
+            />
           </Stack>
         ),
       },

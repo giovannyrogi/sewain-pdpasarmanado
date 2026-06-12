@@ -22,6 +22,7 @@ export default function CrudConfirmModal({
   open,
   title = "Konfirmasi Aksi",
   description,
+  confirmDescription,
   highlight,
   confirmLabel = "Lanjutkan",
   loadingLabel = "Memproses...",
@@ -62,10 +63,10 @@ export default function CrudConfirmModal({
               <Icon icon="ion:trash-outline" fontSize={38} />
             </Box>
             <Box sx={{ textAlign: "center" }}>
-                <Typography sx={{ fontFamily: "Poppins", fontWeight: 850, fontSize: 21 }}>
+                <Typography sx={{ fontFamily: "Poppins", fontWeight: 700, fontSize: 21 }}>
                   {title}
                 </Typography>
-                {description && (
+                {(confirmDescription || description) && (
                   <Typography
                   sx={{
                     mt: 0.75,
@@ -76,9 +77,9 @@ export default function CrudConfirmModal({
                     lineHeight: 1.7,
                   }}
                   >
-                    {description}{" "}
+                    {confirmDescription || description}{" "}
                     {highlight && (
-                      <Box component="strong" sx={{ color: "text.primary", fontWeight: 850 }}>
+                      <Box component="strong" sx={{ color: "text.primary", fontWeight: 700 }}>
                         {highlight}
                       </Box>
                     )}
@@ -103,7 +104,7 @@ export default function CrudConfirmModal({
               disabled={loading}
               sx={{
                 borderRadius: 2,
-                fontWeight: 850,
+                fontWeight: 700,
                 textTransform: "none",
                 color: theme.palette.text.primary,
                 bgcolor:
@@ -129,7 +130,7 @@ export default function CrudConfirmModal({
               color={severity}
               onClick={onConfirm}
               disabled={loading}
-              sx={{ borderRadius: 2, fontWeight: 900, textTransform: "none" }}
+              sx={{ borderRadius: 2, fontWeight: 700, textTransform: "none" }}
             >
               {confirmLabel}
             </Button>

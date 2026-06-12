@@ -246,7 +246,10 @@ export async function POST(req) {
     await client.query("ROLLBACK");
     console.error("Error insert payment", err);
     return new Response(
-      JSON.stringify({ success: false, message: err.message }),
+      JSON.stringify({
+        success: false,
+        message: "Terjadi kesalahan saat menambahkan bukti pembayaran.",
+      }),
       { status: 500 }
     );
   } finally {
@@ -492,7 +495,10 @@ export async function GET() {
   } catch (err) {
     console.error("error", err);
     return new Response(
-      JSON.stringify({ success: false, message: err.message }),
+      JSON.stringify({
+        success: false,
+        message: "Terjadi kesalahan saat mengambil data pembayaran.",
+      }),
       { status: 500 }
     );
   }

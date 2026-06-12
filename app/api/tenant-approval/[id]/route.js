@@ -25,12 +25,28 @@ export async function PUT(request, { params }) {
       return unauthorizedResponse();
     }
     const approver_id = authUser.id;
+    const approvalId = Number(id);
+    const tenantApplicationId = Number(tenant_application_id);
+
+    if (!Number.isInteger(approvalId) || approvalId <= 0) {
+      return Response.json(
+        { success: false, message: "Parameter approval tidak valid" },
+        { status: 400 },
+      );
+    }
+
+    if (!Number.isInteger(tenantApplicationId) || tenantApplicationId <= 0) {
+      return Response.json(
+        { success: false, message: "Parameter permohonan tidak valid" },
+        { status: 400 },
+      );
+    }
 
     await client.query("BEGIN");
 
     const approvalRes = await client.query(
       `SELECT * FROM tenant_approval WHERE id=$1`,
-      [id],
+      [approvalId],
     );
 
     if (approvalRes.rows.length === 0) {
@@ -42,7 +58,7 @@ export async function PUT(request, { params }) {
     }
 
     const approvalData = approvalRes.rows[0];
-    if (Number(approvalData.tenant_application_id) !== Number(tenant_application_id)) {
+    if (Number(approvalData.tenant_application_id) !== tenantApplicationId) {
       await client.query("ROLLBACK");
       return Response.json(
         { success: false, message: "Data approval tidak sesuai dengan permohonan" },
@@ -62,7 +78,7 @@ export async function PUT(request, { params }) {
 
     const tenantRes = await client.query(
       `SELECT current_step FROM tenant_application WHERE id=$1`,
-      [tenant_application_id],
+      [tenantApplicationId],
     );
     const currentStep = tenantRes.rows[0]?.current_step || 1;
 
@@ -74,7 +90,7 @@ export async function PUT(request, { params }) {
         JOIN roles r ON ta.role_id = r.id
         WHERE ta.tenant_application_id=$1 AND ta.step_order=$2
         `,
-        [tenant_application_id, currentStep],
+        [tenantApplicationId, currentStep],
       );
       const prevRoleName =
         prevStepRes.rows[0]?.role_name || "divisi sebelumnya";
@@ -96,7 +112,7 @@ export async function PUT(request, { params }) {
       WHERE id=$4 AND tenant_application_id=$5
       RETURNING *
       `,
-      [status, approver_id, new Date(), id, tenant_application_id],
+      [status, approver_id, new Date(), approvalId, tenantApplicationId],
     );
 
     if (updateApproval.rowCount === 0) {
@@ -113,7 +129,7 @@ export async function PUT(request, { params }) {
       FROM tenant_approval
       WHERE tenant_application_id=$1
       `,
-      [tenant_application_id],
+      [tenantApplicationId],
     );
     const maxStep = totalStepsResult.rows[0]?.max_step || 1;
 
@@ -125,7 +141,7 @@ export async function PUT(request, { params }) {
           SET current_step=$1, approval_status='approved', updated_at=$3
           WHERE id=$2
           `,
-          [stepOrder, tenant_application_id, new Date()],
+          [stepOrder, tenantApplicationId, new Date()],
         );
       } else {
         await client.query(
@@ -134,13 +150,13 @@ export async function PUT(request, { params }) {
           SET current_step=$1, updated_at=$3
           WHERE id=$2
           `,
-          [stepOrder + 1, tenant_application_id, new Date()],
+          [stepOrder + 1, tenantApplicationId, new Date()],
         );
       }
 
       const tenantContext = await getTenantNotificationContext(
         client,
-        tenant_application_id,
+        tenantApplicationId,
       );
 
       /**
@@ -179,7 +195,10 @@ export async function PUT(request, { params }) {
     await client.query("ROLLBACK");
     console.error("Error update Tenant Approval", err);
     return Response.json(
-      { success: false, message: err.message },
+      {
+        success: false,
+        message: "Terjadi kesalahan server saat memproses approval.",
+      },
       { status: 500 },
     );
   } finally {

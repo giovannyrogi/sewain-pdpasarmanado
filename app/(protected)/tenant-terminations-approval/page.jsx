@@ -21,7 +21,7 @@ import { useReactToPrint } from "react-to-print";
 import BreadcrumbPage from "@/app/components/breadcrumb/page";
 import TerminationReasonModal from "@/app/components/terminationreasonmodal/TerminationReasonModal";
 import ApprovalTrackingModal from "@/app/components/modals/ApprovalTrackingModal";
-import TenantApplicationDetailModal from "@/app/components/modals/TenantApplicationDetailModal";
+import TenantLeaseDetailModal from "@/app/components/modals/TenantLeaseDetailModal";
 import RejectReasonModal from "@/app/components/modals/RejectReasonModal";
 import MENU_CONFIG from "@/app/components/menu/MenuConfig";
 
@@ -645,7 +645,7 @@ const TenantTerminations = () => {
           />
         </Paper>
       </ConfigProvider>
-      <TenantApplicationDetailModal
+      <TenantLeaseDetailModal
         open={openTenantApprovalInformationModal}
         onClose={() => setOpenTenantApprovalInformationModal(false)}
         selectedData={selectedData}

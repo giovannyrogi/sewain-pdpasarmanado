@@ -1,40 +1,52 @@
 "use client";
-import {
-  alpha,
-  Box,
-  Button,
-  Paper,
-  Tooltip,
-  Typography,
-  useMediaQuery,
-  useTheme,
-} from "@mui/material";
-import React, { useEffect, useState } from "react";
-import { Table, ConfigProvider, theme as antdTheme, Input, Tag } from "antd";
-import { useThemeMode } from "../../components/themeprovider/ThemeContext";
-import moment from "moment";
-import { Icon } from "@iconify/react";
+
+import { Box, useMediaQuery, useTheme } from "@mui/material";
+import React, { useEffect, useMemo, useState } from "react";
+import axios from "axios";
 import LoadingBackdrop from "../../components/loading/Backdrop";
 import Notification from "../../components/Notification";
-import axios from "axios";
-import BreadcrumbPage from "@/app/components/breadcrumb/page";
 import { useUser } from "@/app/utils/useUser";
+import PageHeader from "@/app/components/page-header/PageHeader";
+import DataTableShell from "@/app/components/data-table/DataTableShell";
+import ReusableAntTable from "@/app/components/data-table/ReusableAntTable";
+import SummaryStatCard from "@/app/components/stats/SummaryStatCard";
 import ApprovalTrackingModal from "@/app/components/modals/ApprovalTrackingModal";
 import RejectReasonModal from "@/app/components/modals/RejectReasonModal";
-import TenantApplicationDetailModal from "@/app/components/modals/TenantApplicationDetailModal";
-import MENU_CONFIG from "@/app/components/menu/MenuConfig";
+import TenantLeaseDetailModal from "@/app/components/modals/TenantLeaseDetailModal";
+import {
+  TENANT_APPROVAL_ACTION_COLUMN_WIDTH,
+  TENANT_APPROVAL_PAGE_SIZE_OPTIONS,
+  TENANT_APPROVAL_TABLE_SCROLL_WIDTH,
+  buildTenantApprovalStats,
+  createTenantApprovalColumns,
+  filterTenantApprovals,
+} from "./TenantApprovalTableColumns";
+
+const DEFAULT_LOADING_MESSAGE = "Loading...";
+
+const PAGE_BREADCRUMBS = [
+  {
+    label: "Transactions",
+    value: "transactions",
+    path: "#",
+    icon: "healthicons:money-bag",
+  },
+  {
+    label: "Tenant Approval",
+    value: "tenant-approval",
+    path: "/tenant-approval",
+    icon: "carbon:document-set",
+  },
+];
 
 const TenantApproval = () => {
   const { user } = useUser();
-  const [approvalList, setApprovalList] = useState([]);
-  const { themeMode } = useThemeMode();
   const theme = useTheme();
-  const isMobile = useMediaQuery("(max-width:1200px)");
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const [approvalList, setApprovalList] = useState([]);
   const [searchText, setSearchText] = useState("");
   const [loading, setLoading] = useState(false);
-  const [openAddModal, setOpenAddModal] = useState(false);
-  const [openEditModal, setOpenEditModal] = useState(false);
-  const [openDeleteModal, setOpenDeleteModal] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState(DEFAULT_LOADING_MESSAGE);
   const [selectedData, setSelectedData] = useState(null);
   const [pageSize, setPageSize] = useState(5);
   const [snackbar, setSnackbar] = useState({
@@ -48,23 +60,22 @@ const TenantApproval = () => {
     setOpenTenantApprovalInformationModal,
   ] = useState(false);
   const [openTenantRejectModal, setOpenTenantRejectModal] = useState(false);
-  const [loadingMessage, setLoadingMessage] = useState("Loading...");
   const [isTenantApprovalSubmitting, setIsTenantApprovalSubmitting] =
     useState(false);
   const [handledNotificationTarget, setHandledNotificationTarget] =
     useState(null);
   const [notificationOpenSignal, setNotificationOpenSignal] = useState(0);
 
+  const showSnackbar = (message, severity = "success") => {
+    setSnackbar({ open: true, message, severity });
+  };
+
   const hideGlobalNotificationLoading = () => {
     window.dispatchEvent(new Event("sewain:global-loading-hide"));
   };
 
   const resetNotificationFeedback = () => {
-    setSnackbar((current) => ({
-      ...current,
-      open: false,
-      message: "",
-    }));
+    setSnackbar((current) => ({ ...current, open: false, message: "" }));
   };
 
   const clearNotificationRouteState = () => {
@@ -79,44 +90,45 @@ const TenantApproval = () => {
       params.has("deleted");
 
     /**
-     * Query notifikasi hanya dipakai sebagai trigger pembuka modal.
-     * Setelah diproses harus dibersihkan agar target lama, terutama data yang
-     * sudah dihapus, tidak terbaca ulang saat user klik notifikasi berikutnya.
+     * Parameter notifikasi hanya dipakai sebagai trigger pembuka modal. Setelah
+     * target diproses, URL dibersihkan agar klik notifikasi berikutnya tidak
+     * membaca state lama dari browser.
      */
     if (hasNotificationParams) {
       window.history.replaceState(null, "", window.location.pathname);
     }
   };
 
-  const getDataApprovals = async () => {
-    if (!user) {
-      console.log("User not found");
-      return;
+  const getDataApprovals = async ({ showLoading = true } = {}) => {
+    if (!user) return;
+
+    if (showLoading) {
+      setLoadingMessage("Mengambil data approval...");
+      setLoading(true);
     }
 
-    setLoading(true);
-
     try {
-      const res = await axios.get(`/api/tenant-approval/by-role`, {
+      const response = await axios.get("/api/tenant-approval/by-role", {
         params: { role_id: user.role_id },
       });
 
-      if (res.data.success) {
-        // console.log("user", user);
-
-        // console.log("data approval", res.data);
-
-        setTimeout(() => {
-          setApprovalList(res.data.data);
-          setLoading(false);
-        }, 1000);
-      } else {
-        console.log("Error fetching tenant approval:", res.data.message);
-        setLoading(false);
+      if (response.data?.success) {
+        setApprovalList(response.data.data || []);
+        return;
       }
-    } catch (err) {
-      console.log("Error fetch tenant approval:", err);
-      setLoading(false);
+
+      showSnackbar(
+        response.data?.message || "Gagal mengambil data tenant approval.",
+        "error",
+      );
+    } catch (error) {
+      console.error("Error fetch tenant approval:", error);
+      showSnackbar("Gagal mengambil data tenant approval.", "error");
+    } finally {
+      if (showLoading) {
+        setLoading(false);
+        setLoadingMessage(DEFAULT_LOADING_MESSAGE);
+      }
     }
   };
 
@@ -200,34 +212,30 @@ const TenantApproval = () => {
         window.sessionStorage.removeItem("sewain:tenant-approval-target");
 
         /**
-         * Notifikasi data hapus tidak bisa membuka modal karena record utama sudah
-         * tidak ada. User tetap diberi feedback yang jelas melalui snackbar.
+         * Notifikasi data yang sudah dihapus tidak bisa membuka modal karena
+         * record utamanya tidak tersedia lagi. Feedback dibuat eksplisit agar
+         * user tahu bahwa sistem bukan gagal membuka modal.
          */
         if (deletedFromNotification) {
           await new Promise((resolve) => setTimeout(resolve, 1000));
           setSelectedData(null);
           setOpenApprovalModal(false);
           setOpenTenantApprovalInformationModal(false);
-          setSnackbar({
-            open: true,
-            severity: "error",
-            message:
-              "Data permohonan ini sudah dihapus, sehingga detail approval tidak dapat ditampilkan.",
-          });
+          showSnackbar(
+            "Data permohonan ini sudah dihapus, sehingga detail approval tidak dapat ditampilkan.",
+            "error",
+          );
           return;
         }
 
         /**
-         * Klik dari notifikasi harus selalu membaca data terbaru dari server.
-         * Tanpa refresh ini, modal bisa membawa status lama dari state browser
-         * seperti permohonan yang sebelumnya rejected tetapi sudah diedit kembali
-         * menjadi proses oleh Admin Kontrak.
+         * Klik dari notifikasi selalu mengambil data terbaru. Ini mencegah modal
+         * memakai status lama dari state browser, misalnya setelah permohonan
+         * ditolak lalu diperbarui kembali oleh Admin Kontrak.
          */
         const response = await axios.get(
           "/api/tenant-approval/by-tenant-application-id",
-          {
-            params: { tenant_application_id: tenantApplicationId },
-          },
+          { params: { tenant_application_id: tenantApplicationId } },
         );
 
         const approvalRows = response.data?.data || [];
@@ -239,10 +247,6 @@ const TenantApproval = () => {
         await new Promise((resolve) => setTimeout(resolve, 1000));
 
         if (selectedApproval) {
-          /**
-           * Sinkronkan baris di tabel lokal supaya aksi berikutnya pada halaman
-           * yang sama tidak kembali memakai status approval lama.
-           */
           setApprovalList((currentList) =>
             currentList.map((item) => {
               const freshItem = approvalRows.find(
@@ -253,6 +257,7 @@ const TenantApproval = () => {
           );
           resetNotificationFeedback();
           setSelectedData(selectedApproval);
+
           if (openMode === "progress") {
             setOpenApprovalModal(true);
           } else {
@@ -261,91 +266,85 @@ const TenantApproval = () => {
           return;
         }
 
-        setSnackbar({
-          open: true,
-          severity: "error",
-          message:
-            "Data permohonan tidak ditemukan. Kemungkinan data sudah dihapus atau akses tidak tersedia.",
-        });
-      } catch (err) {
-        console.log("Error open approval from notification:", err);
-        setSnackbar({
-          open: true,
-          severity: "error",
-          message: "Gagal menampilkan data permohonan dari notifikasi.",
-        });
+        showSnackbar(
+          "Data permohonan tidak ditemukan. Kemungkinan data sudah dihapus atau akses tidak tersedia.",
+          "error",
+        );
+      } catch (error) {
+        console.error("Error open approval from notification:", error);
+        showSnackbar("Gagal menampilkan data permohonan dari notifikasi.", "error");
       } finally {
         clearNotificationRouteState();
         setLoading(false);
-        setLoadingMessage("Loading...");
+        setLoadingMessage(DEFAULT_LOADING_MESSAGE);
         hideGlobalNotificationLoading();
       }
     };
 
     openApprovalFromNotification();
-  }, [approvalList, handledNotificationTarget, notificationOpenSignal, user]);
+  }, [handledNotificationTarget, notificationOpenSignal, user]);
 
-  const handleTenantApprove = (record) => {
-    // console.log("edit record", record);
+  const handleOpenTenantDetail = (record) => {
     setSelectedData(record);
     setOpenTenantApprovalInformationModal(true);
   };
 
+  const handleOpenProgress = (record) => {
+    setSelectedData(record);
+    setOpenApprovalModal(true);
+  };
+
+  const handleReject = (record) => {
+    setSelectedData(record);
+    setOpenTenantRejectModal(true);
+  };
+
   /**
-   * Mengirim keputusan approve untuk baris approval yang sedang dibuka.
-   * Logic ini ditempatkan di halaman pemakai agar modal detail tetap benar-benar
-   * reusable dan tidak membawa ketergantungan endpoint khusus tenant approval.
+   * Modal detail tetap reusable; halaman ini yang mengatur endpoint approval.
+   * Backend memakai user dari session, jadi frontend tidak mengirim approver_id.
    */
   const handleApproveTenantApplication = async () => {
     setLoading(true);
+    setLoadingMessage("Memproses approval...");
     setIsTenantApprovalSubmitting(true);
 
     try {
       const response = await axios.put(`/api/tenant-approval/${selectedData?.id}`, {
         tenant_application_id: selectedData?.tenant_application_id,
         status: "approved",
-        approver_id: user?.id,
       });
 
-      if (response.data.success) {
-        setSnackbar({
-          open: true,
-          message: response.data.message || "Berhasil Menyetujui Sewa Ruangan!",
-          severity: "success",
-        });
-        await getDataApprovals();
+      if (response.data?.success) {
+        showSnackbar(
+          response.data.message || "Approval permohonan sewa berhasil diproses.",
+          "success",
+        );
+        await getDataApprovals({ showLoading: false });
         setOpenTenantApprovalInformationModal(false);
         return;
       }
 
-      setSnackbar({
-        open: true,
-        message: response.data.message || "Gagal Menyetujui Sewa Ruangan.",
-        severity: "error",
-      });
+      showSnackbar(
+        response.data?.message || "Gagal menyetujui permohonan sewa.",
+        "error",
+      );
     } catch (error) {
-      console.log("error", error);
-      setSnackbar({
-        open: true,
-        message:
-          error?.response?.data?.message ||
-          "Terjadi error saat menyetujui sewa ruangan.",
-        severity: "error",
-      });
+      console.error("Error approving tenant application:", error);
+      showSnackbar(
+        error?.response?.data?.message ||
+          "Terjadi error saat menyetujui permohonan sewa.",
+        "error",
+      );
     } finally {
       setLoading(false);
+      setLoadingMessage(DEFAULT_LOADING_MESSAGE);
       setIsTenantApprovalSubmitting(false);
     }
   };
 
-  const handleReject = (record) => {
-    // console.log("delete record", record);
-    setSelectedData(record);
-    setOpenTenantRejectModal(true);
-  };
-
   const handleRejectTenantApplication = async (notes) => {
     setLoading(true);
+    setLoadingMessage("Memproses penolakan...");
 
     try {
       const response = await axios.put(
@@ -354,376 +353,122 @@ const TenantApproval = () => {
           notes,
           status: "rejected",
           tenant_application_id: selectedData?.tenant_application_id,
-          approver_id: user?.id,
-        }
+        },
       );
 
-      if (response?.data.success) {
-        setSnackbar({
-          open: true,
-          message: response.data.message || "Berhasil menolak permohonan sewa.",
-          severity: "success",
-        });
-        await getDataApprovals();
+      if (response.data?.success) {
+        showSnackbar(
+          response.data.message || "Penolakan permohonan sewa berhasil diproses.",
+          "success",
+        );
+        await getDataApprovals({ showLoading: false });
         setOpenTenantRejectModal(false);
         return;
       }
 
-      setSnackbar({
-        open: true,
-        message: response?.data.message || "Gagal menolak permohonan sewa.",
-        severity: "error",
-      });
+      showSnackbar(
+        response.data?.message || "Gagal menolak permohonan sewa.",
+        "error",
+      );
     } catch (error) {
       console.error("Error rejecting tenant approval:", error);
-      setSnackbar({
-        open: true,
-        message:
-          error?.response?.data?.message || "Gagal menolak permohonan sewa.",
-        severity: "error",
-      });
+      showSnackbar(
+        error?.response?.data?.message || "Gagal menolak permohonan sewa.",
+        "error",
+      );
     } finally {
       setLoading(false);
+      setLoadingMessage(DEFAULT_LOADING_MESSAGE);
     }
   };
 
-  const handleApproval = (record) => {
-    setSelectedData(record);
-    setOpenApprovalModal(true);
-  };
-
-  // Utility untuk filter dinamis
-  function generateFilters(data, key) {
-    return [...new Set(data.map((item) => item[key]))]
-      .filter((val) => val !== undefined && val !== null)
-      .map((val) => ({ text: val, value: val }));
-  }
-
-  function createOnFilter(key) {
-    return (value, record) => record[key] === value;
-  }
-
-  const tenantNameFilters = generateFilters(approvalList, "tenant_name");
-  const locationFilters = generateFilters(approvalList, "location_name");
-  const documentNumberFilters = generateFilters(
-    approvalList,
-    "document_number"
+  const filteredData = useMemo(
+    () => filterTenantApprovals(approvalList, searchText),
+    [approvalList, searchText],
   );
 
-  const approvalStatusFilters = [
-    { text: "Dalam Proses", value: "proses" },
-    { text: "Tidak Disetujui", value: "rejected" },
-    { text: "Disetujui", value: "approved" },
-  ];
+  const stats = useMemo(
+    () => buildTenantApprovalStats(approvalList, theme, user),
+    [approvalList, theme, user],
+  );
 
-  const onChange = (pagination, filters, sorter, extra) => {
-    if (pagination.pageSize !== pageSize) {
-      setPageSize(pagination.pageSize);
-    }
-  };
-
-  // Utility untuk filter dinamis
-  const filteredData = approvalList.filter((item) => {
-    if (!searchText) return true;
-    const search = searchText.toLowerCase();
-
-    return (
-      item.tenant_name?.toLowerCase().includes(search) ||
-      item.location_name?.toLowerCase().includes(search) ||
-      item.room_number?.toLowerCase().includes(search) ||
-      item.document_number?.toLowerCase().includes(search)
-    );
-  });
-
-  const columns = [
-     {
-      title: "No",
-      dataIndex: "index",
-      render: (text, record, index) => index + 1,
-      width: 50,
-      align: "center",
-    },
-    {
-      title: "Nama Penyewa",
-      dataIndex: "tenant_name",
-      filters: tenantNameFilters,
-      onFilter: createOnFilter("tenant_name"),
-      sorter: (a, b) => a.tenant_name.localeCompare(b.tenant_name),
-      sortDirections: ["ascend", "descend"],
-      render: (text, record) => (
-        <Typography sx={{ fontWeight: "bold", fontSize: "12px" }}>
-          {record.tenant_name.charAt(0).toUpperCase() +
-            record.tenant_name.slice(1)}
-        </Typography>
-      ),
-      width: 200,
-    },
-    {
-      title: "Nomor Dokumen",
-      dataIndex: "document_number",
-      filters: documentNumberFilters,
-      onFilter: createOnFilter("document_number"),
-      filterSearch: true,
-      render: (text, record) => {
-        // Ambil hanya angka dokumen di depan sebelum tanda "/"
-        const documentNumberRaw = record?.document_number || "-";
-        const documentNumberOnly = documentNumberRaw.split("/")[0].trim(); // hasil: "001"
-        return (
-          <Typography
-            sx={{ fontWeight: "bold", fontSize: "12px", textAlign: "center" }}
-          >
-            {documentNumberOnly}
-          </Typography>
-        );
-      },
-      width: 180,
-      align: "left",
-    },
-    {
-      title: "Lokasi",
-      dataIndex: "location_name",
-      filters: locationFilters,
-      onFilter: createOnFilter("location_name"),
-      filterSearch: true,
-      sorter: (a, b) => a.location_name.localeCompare(b.location_name),
-      sortDirections: ["ascend", "descend"],
-      render: (text, record) => (
-        <Typography sx={{ fontSize: "12px" }}>
-          {record.location_name}
-        </Typography>
-      ),
-      width: 200,
-    },
-    {
-      title: "Ruangan",
-      dataIndex: "room_number",
-      render: (text, record) => (
-        <Typography sx={{ fontSize: "12px" }}>{record.room_number}</Typography>
-      ),
-      width: 150,
-    },
-    {
-      title: "Status Persetujuan",
-      dataIndex: "approval_status",
-      filters: approvalStatusFilters,
-      onFilter: createOnFilter("approval_status"),
-      filterSearch: true,
-      render: (text, record) => {
-        return (
-          <Tag
-            // warna random berdasarkan angka ganjil genap
-            color={
-              record.approval_status === "proses"
-                ? "yellow"
-                : record.approval_status === "approved"
-                ? "green"
-                : "red"
-            }
-            key={record.tenant_application_id}
-            style={{
-              fontWeight: "bold",
-              cursor: "pointer",
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-            onClick={() => handleApproval(record)}
-          >
-            {record.approval_status === "proses"
-              ? `Dalam Proses ${record.current_step}/5`
-              : record.approval_status === "approved"
-              ? "Disetujui"
-              : record.approval_status === "rejected"
-              ? "Tidak Disetujui"
-              : "Dibatalkan"}
-
-            {record?.role_id === user?.role_id &&
-            record?.current_step === user?.step_order &&
-            record?.approval_status === "proses" ? (
-              <Tooltip title="Menunggu Approval Anda">
-                <Icon
-                  icon={"icon-park-twotone:info"}
-                  fontSize={18}
-                  color={theme.palette.error.main}
-                  style={{ marginLeft: 5 }}
-                />
-              </Tooltip>
-            ) : record?.role_id === user?.role_id &&
-              record?.current_step >= user?.step_order &&
-              (record?.approval_status === "approved" ||
-                record?.approval_status === "proses") ? (
-              <Tooltip title="Sudah Approve">
-                <Icon
-                  icon={"ph:seal-check-duotone"}
-                  fontSize={18}
-                  color={theme.palette.success.main}
-                  style={{ marginLeft: 5 }}
-                />
-              </Tooltip>
-            ) : record?.role_id === user?.role_id &&
-              record?.current_step <= user?.step_order &&
-              record?.approval_status === "proses" ? (
-              <Tooltip title="Menunggu Giliran">
-                <Icon
-                  icon="svg-spinners:ring-resize"
-                  fontSize={18}
-                  color={"yellow"}
-                  style={{ marginLeft: 5 }}
-                />
-              </Tooltip>
-            ) : (
-              <Tooltip title="Permintaan Ditolak">
-                <Icon
-                  icon="line-md:close-circle-twotone"
-                  fontSize={18}
-                  color={theme.palette.error.main}
-                  style={{ marginLeft: 5 }}
-                />
-              </Tooltip>
-            )}
-          </Tag>
-        );
-      },
-      width: 170,
-    },
-    {
-      title: "Tanggal Dibuat",
-      dataIndex: "created_at",
-      filterSearch: true,
-      sorter: (a, b) => a.created_at.localeCompare(b.created_at),
-      sortDirections: ["ascend", "descend"],
-      render: (text, record) => {
-        return (
-          <Typography sx={{ fontSize: "12px" }}>
-            {moment(record.created_at).format("DD-MM-YYYY HH:mm:ss")}
-          </Typography>
-        );
-      },
-      width: 200,
-    },
-    {
-      title: "Actions",
-      key: "action",
-      align: "center",
-      width: 100,
-      fixed: "right",
-      render: (text, record) => (
-        <Box sx={{ display: "flex", gap: 1, justifyContent: "center" }}>
-          <Tooltip title="Detail Data Pemohon">
-            <Button
-              size="small"
-              variant={themeMode === "dark" ? "outlined" : "contained"}
-              color="info"
-              onClick={() => handleTenantApprove(record)}
-              sx={{ minWidth: 0, px: 1 }}
-            >
-              <Icon icon="mdi:smart-card-outline" fontSize={18} />
-            </Button>
-          </Tooltip>
-          {record.status === "approved" || record.status === "rejected" ? (
-            ""
-          ) : (
-            <Tooltip title="Tolak">
-              <Button
-                size="small"
-                variant={themeMode === "dark" ? "outlined" : "contained"}
-                color="error"
-                onClick={() => handleReject(record)}
-                sx={{ minWidth: 0, px: 1 }}
-              >
-                <Icon icon="line-md:close-circle" fontSize={18} />
-              </Button>
-            </Tooltip>
-          )}
-        </Box>
-      ),
-    },
-  ];
+  const columns = useMemo(
+    () =>
+      createTenantApprovalColumns({
+        data: approvalList,
+        user,
+        theme,
+        isMobile,
+        onDetail: handleOpenTenantDetail,
+        onProgress: handleOpenProgress,
+        onReject: handleReject,
+      }),
+    [approvalList, user, theme, isMobile],
+  );
 
   return (
-    <Box sx={{ width: "100%", height: "100%", minHeight: "100%", p: 2 }}>
-      {/* Component Breadcrumbs disini */}
-      <BreadcrumbPage menuList={MENU_CONFIG} />
+    <Box
+      sx={{
+        width: "100%",
+        minHeight: "100%",
+        p: { xs: 1.5, sm: 2 },
+        display: "flex",
+        flexDirection: "column",
+        gap: 2,
+      }}
+    >
+      <PageHeader
+        breadcrumbs={PAGE_BREADCRUMBS}
+        title="Tenant Approval"
+        description="Tinjau permohonan sewa sesuai tahapan role Anda, lalu proses persetujuan atau penolakan dengan catatan yang jelas."
+        icon="carbon:document-set"
+      />
 
-      {/* <Box
+      <Box
         sx={{
-          display: "flex",
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "flex-end",
-          transition: "all 0.3s",
-          mb: 2,
-          mt: 3,
-        }}
-      >
-        <Button
-          variant={themeMode === "dark" ? "outlined" : "contained"}
-          onClick={() => setOpenAddModal(true)}
-          sx={{
-            textTransform: "none",
-            display: "flex",
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 1,
-            fontWeight: "bold",
-          }}
-        >
-          Tambah
-          <Icon icon="oui:app-users-roles" fontSize="20px" />
-        </Button>
-      </Box> */}
-      <ConfigProvider
-        theme={{
-          algorithm:
-            themeMode === "dark"
-              ? antdTheme.darkAlgorithm
-              : antdTheme.defaultAlgorithm,
-          token: {
-            colorPrimary: theme.palette.primary.main, // warna utama (angka aktif, outline, dsb)
-            // colorText: theme.palette.text.primary, // warna teks default
+          display: "grid",
+          gridTemplateColumns: {
+            xs: "1fr",
+            sm: "repeat(2, minmax(0, 1fr))",
+            lg: "repeat(4, minmax(0, 1fr))",
           },
+          gap: { xs: 1.5, sm: 2 },
+          alignItems: "stretch",
+          width: "100%",
         }}
       >
-        <Paper
-          elevation={6}
-          sx={{
-            p:
-              filteredData.length > 0
-                ? "10px 15px 0px 15px"
-                : "10px 15px 10px 15px",
-            width: "100%",
-            bgcolor: "background.default",
-            overflowX: "auto",
-            mt: 5,
+        {stats.map((item) => (
+          <Box key={item.label} sx={{ minWidth: 0 }}>
+            <SummaryStatCard {...item} />
+          </Box>
+        ))}
+      </Box>
+
+      <DataTableShell
+        title="Daftar Approval"
+        description={`${filteredData.length} dari ${approvalList.length} approval ditampilkan`}
+        searchValue={searchText}
+        searchPlaceholder="Cari pemohon, dokumen, lokasi, ruangan"
+        onSearchChange={setSearchText}
+      >
+        <ReusableAntTable
+          rowKey="id"
+          columns={columns}
+          dataSource={filteredData}
+          pageSize={pageSize}
+          pageSizeOptions={TENANT_APPROVAL_PAGE_SIZE_OPTIONS}
+          onPageSizeChange={setPageSize}
+          scroll={{ x: TENANT_APPROVAL_TABLE_SCROLL_WIDTH, y: 430 }}
+          fixedActionColumn={{
+            className: "tenant-approval-action-column",
+            buttonsClassName: "tenant-approval-action-buttons",
+            width: TENANT_APPROVAL_ACTION_COLUMN_WIDTH,
+            paddingX: 12,
           }}
-        >
-          <Input.Search
-            placeholder="Cari Nama User"
-            allowClear
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-            style={{ width: 250, marginBottom: 20, marginTop: 10 }}
-          />
-          <Table
-            rowKey="id"
-            columns={columns}
-            dataSource={filteredData}
-            onChange={onChange}
-            showSorterTooltip={{ target: "sorter-icon" }}
-            scroll={{ x: "max-content", y: 420 }}
-            pagination={{
-              pageSize: pageSize,
-              showSizeChanger: true,
-              pageSizeOptions: [5, 10, 20, 50],
-              showTotal: (total, range) =>
-                `${range[0]}-${range[1]} dari ${total} data`,
-            }}
-          />
-        </Paper>
-      </ConfigProvider>
-      <TenantApplicationDetailModal
+        />
+      </DataTableShell>
+
+      <TenantLeaseDetailModal
         open={openTenantApprovalInformationModal}
         onClose={() => setOpenTenantApprovalInformationModal(false)}
         selectedData={selectedData}
@@ -731,6 +476,7 @@ const TenantApproval = () => {
         approving={isTenantApprovalSubmitting}
         onApprove={handleApproveTenantApplication}
       />
+
       <RejectReasonModal
         open={openTenantRejectModal}
         onClose={() => setOpenTenantRejectModal(false)}
@@ -740,6 +486,7 @@ const TenantApproval = () => {
         loading={loading}
         onSubmit={handleRejectTenantApplication}
       />
+
       <ApprovalTrackingModal
         open={openApprovalModal}
         onClose={() => setOpenApprovalModal(false)}
@@ -749,13 +496,13 @@ const TenantApproval = () => {
         loadingFalse={() => setLoading(false)}
         setLoadingMessage={setLoadingMessage}
       />
+
       <LoadingBackdrop message={loadingMessage} open={loading} />
-      {/* Snackbar notification */}
       <Notification
         open={snackbar.open}
         message={snackbar.message}
         severity={snackbar.severity}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        onClose={() => setSnackbar((current) => ({ ...current, open: false }))}
       />
     </Box>
   );

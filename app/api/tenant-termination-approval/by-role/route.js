@@ -66,6 +66,21 @@ export async function GET(req) {
       ti.nik AS tenant_nik,
       ti.phone AS tenant_phone,
       ti.ktp_file_path,
+      ti.birth_place,
+      ti.birth_date,
+      ti.nationality,
+      ti.religion,
+      ti.occupation,
+      ti.street_address,
+      ti.rt,
+      ti.rw,
+      ti.kelurahan,
+      ti.district,
+      ti.city,
+      ti.province,
+      ti.postal_code,
+      ti.status AS tenant_identity_status,
+      ti.notes AS tenant_identity_notes,
 
       -- Data tenant application
       tapp.id AS tenant_application_id,
@@ -80,6 +95,13 @@ export async function GET(req) {
       tapp.admin_fee,
       tapp.down_payment,
       tapp.remaining_payment,
+      tapp.current_tenor,
+      tapp.estimated_installment_1,
+      tapp.estimated_installment_2,
+      tapp.estimated_installment_3,
+      tapp.estimated_installment_1_date,
+      tapp.estimated_installment_2_date,
+      tapp.estimated_installment_3_date,
       tapp.approval_status AS tenant_approval_status,
       tapp.current_step AS tenant_current_step,
       tapp.tenant_identity_id,
@@ -126,7 +148,7 @@ export async function GET(req) {
     return new Response(
       JSON.stringify({
         success: false,
-        message: err.message,
+        message: "Terjadi kesalahan saat mengambil data approval terminasi.",
       }),
       { status: 500 }
     );

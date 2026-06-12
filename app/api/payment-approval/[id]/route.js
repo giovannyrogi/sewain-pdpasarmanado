@@ -163,7 +163,10 @@ export async function PUT(request, { params }) {
     await client.query("ROLLBACK");
     console.error("Error update Payment Approval", err);
     return Response.json(
-      { success: false, message: err.message },
+      {
+        success: false,
+        message: "Terjadi kesalahan saat memproses approval pembayaran.",
+      },
       { status: 500 },
     );
   } finally {

@@ -2,35 +2,36 @@
 import {
   Box,
   Button,
-  Paper,
-  Tooltip,
-  Typography,
+  Grid,
+  Stack,
   useTheme,
 } from "@mui/material";
-import React, { useEffect, useRef, useState } from "react";
-import { Table, ConfigProvider, theme as antdTheme, Input, Tag } from "antd";
-import { useThemeMode } from "../../components/themeprovider/ThemeContext";
-import moment from "moment";
+import React, { useEffect, useMemo, useState } from "react";
 import { Icon } from "@iconify/react";
 import LoadingBackdrop from "../../components/loading/Backdrop";
 import Notification from "../../components/Notification";
 import axios from "axios";
-import formatRupiah from "@/app/components/formatrupiah/page";
 import { useUser } from "@/app/utils/useUser";
-import { useReactToPrint } from "react-to-print";
 import TenantIdentityPreviewModal from "@/app/components/modals/TenantIdentityPreviewModal";
-import BreadcrumbPage from "@/app/components/breadcrumb/page";
 import TenantTerminationsModal from "./TenantTerminationsModal";
-import TerminationReasonModal from "@/app/components/terminationreasonmodal/TerminationReasonModal";
 import ApprovalTrackingModal from "@/app/components/modals/ApprovalTrackingModal";
-import CancelTenantTermination from "./CancelTenantTermination";
-import TenantApplicationDetailModal from "@/app/components/modals/TenantApplicationDetailModal";
-import MENU_CONFIG from "@/app/components/menu/MenuConfig";
+import TenantLeaseDetailModal from "@/app/components/modals/TenantLeaseDetailModal";
+import PageHeader from "@/app/components/page-header/PageHeader";
+import DataTableShell from "@/app/components/data-table/DataTableShell";
+import ReusableAntTable from "@/app/components/data-table/ReusableAntTable";
+import SummaryStatCard from "@/app/components/stats/SummaryStatCard";
+import CrudConfirmModal from "@/app/components/crud/CrudConfirmModal";
+import { createTenantTerminationColumns } from "./TenantTerminationsTableColumns";
+
+const PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
+const TABLE_SCROLL_WIDTH = 1440;
+const ACTION_COLUMN_WIDTH = 150;
+
+const normalizeText = (value) => String(value || "").toLowerCase();
 
 const TenantTerminations = () => {
   const { user } = useUser();
   const [dataTenantTerminations, setDataTenantTerminations] = useState([]);
-  const { themeMode } = useThemeMode();
   const theme = useTheme();
   const [searchText, setSearchText] = useState("");
   const [loading, setLoading] = useState(false);
@@ -55,9 +56,6 @@ const TenantTerminations = () => {
   ] = useState(false);
   const [openTerminationApprovalModal, setOpenTerminationApprovalModal] =
     useState(false);
-  const [openTerminationReasonModal, setOpenTerminationReasonModal] =
-    useState(false);
-
   const [cancelTenantTerminationsModal, setCancelTenantTerminationsModal] =
     useState(false);
 
@@ -254,30 +252,23 @@ const TenantTerminations = () => {
     user,
   ]);
 
-  const filteredData = dataTenantTerminations.filter((item) => {
-    // const isAvailableText =
-    //   item.is_available === true
-    //     ? "tersedia"
-    //     : item.is_available === false
-    //     ? "tidak tersedia"
-    //     : "";
+  const filteredData = useMemo(() => {
+    const keyword = normalizeText(searchText);
+    if (!keyword) return dataTenantTerminations;
 
-    return (
-      item.tenant_name?.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.location_name?.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.payment_type?.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.room_number?.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.down_payment?.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.total_payment?.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.remaining_payment?.toLowerCase().includes(searchText.toLowerCase())
+    return dataTenantTerminations.filter((item) =>
+      [
+        item.tenant_name,
+        item.tenant_nik,
+        item.location_name,
+        item.room_number,
+        item.floor,
+        item.payment_type,
+        item.termination_approval_status,
+        item.termination_processed_by_full_name,
+      ].some((value) => normalizeText(value).includes(keyword)),
     );
-  });
-
-  const onChange = (pagination, filters, sorter, extra) => {
-    if (pagination.pageSize !== pageSize) {
-      setPageSize(pagination.pageSize);
-    }
-  };
+  }, [dataTenantTerminations, searchText]);
 
   const handleCancel = (record) => {
     setSelectedData(record);
@@ -285,311 +276,205 @@ const TenantTerminations = () => {
   };
 
   const handleViewDetailInformation = (record) => {
-    // console.log("edit record", record);
     setSelectedData(record);
     setOpenTenantApprovalInformationModal(true);
   };
 
-  const handleViewReason = (record) => {
-    // console.log("edit record", record);
-    setSelectedData(record);
-    setOpenTerminationReasonModal(true);
-  };
-
   const handleInformation = (record) => {
-    // console.log("delete record", record);
     setSelectedData(record);
     setOpenInformationModal(true);
   };
 
   const handleTerminationApproval = (record) => {
-    // console.log("delete record", record);
     setSelectedData(record);
     setOpenTerminationApprovalModal(true);
   };
 
-  // Utility untuk filter dinamis
-  function generateFilters(data, key) {
-    return [...new Set(data.map((item) => item[key]))]
-      .filter((val) => val !== undefined && val !== null)
-      .map((val) => ({ text: val, value: val }));
-  }
-
-  function createOnFilter(key) {
-    return (value, record) => record[key] === value;
-  }
-
-  const tenant_name = generateFilters(dataTenantTerminations, "tenant_name");
-  const floorFilter = generateFilters(dataTenantTerminations, "floor");
-  const locationFilters = generateFilters(
-    dataTenantTerminations,
-    "location_name",
-  );
-  const paymentTypeFilters = generateFilters(
-    dataTenantTerminations,
-    "payment_type",
+  const columns = useMemo(
+    () =>
+      createTenantTerminationColumns({
+        data: dataTenantTerminations,
+        theme,
+        onViewIdentity: handleInformation,
+        onViewDetail: handleViewDetailInformation,
+        onViewProgress: handleTerminationApproval,
+        onCancel: handleCancel,
+      }),
+    [dataTenantTerminations, theme],
   );
 
-  const columns = [
-    {
-      title: "No",
-      dataIndex: "index",
-      render: (text, record, index) => index + 1,
-      width: 50,
-      align: "center",
-    },
-    {
-      title: "Nama Penyewa",
-      dataIndex: "tenant_name",
-      filters: tenant_name,
-      onFilter: createOnFilter("tenant_name"),
-      filterSearch: true,
-      sorter: (a, b) => a.tenant_name.localeCompare(b.tenant_name),
-      sortDirections: ["ascend", "descend"],
-      render: (text, record) => (
-        <Typography
-          sx={{
-            fontWeight: "bold",
-            fontSize: "12px",
-            textTransform: "capitalize",
-            cursor: "pointer",
-            "&:hover": {
-              color: theme.palette.primary.main,
-              textDecoration: "underline",
-            },
-          }}
-          onClick={() => handleInformation(record)}
-        >
-          {record.tenant_name}
-        </Typography>
-      ),
-      width: 200,
-    },
-    {
-      title: "Lokasi",
-      dataIndex: "location_name",
-      filters: locationFilters,
-      onFilter: createOnFilter("location_name"),
-      filterSearch: true,
-      sorter: (a, b) => a.location_name.localeCompare(b.location_name),
-      sortDirections: ["ascend", "descend"],
-      width: 200,
-    },
-    {
-      title: "Ruangan",
-      dataIndex: "room_number",
-      sorter: (a, b) => a.room_number.localeCompare(b.room_number),
-      sortDirections: ["ascend", "descend"],
-      render: (text, record) => {
-        return (
-          <Tag
-            // warna random berdasarkan angka ganjil genap
-            color={record.id % 2 === 0 ? "pink" : "geekblue"}
-            key={record.termination_id}
-            style={{ fontWeight: "bold" }}
-          >
-            {record.room_number}
-          </Tag>
-        );
+  const terminationStats = useMemo(() => {
+    const total = dataTenantTerminations.length;
+    const inProgress = dataTenantTerminations.filter(
+      (item) => item.termination_approval_status === "proses",
+    ).length;
+    const approved = dataTenantTerminations.filter(
+      (item) => item.termination_approval_status === "approved",
+    ).length;
+    const rejectedOrCancelled = dataTenantTerminations.filter((item) =>
+      ["rejected", "cancelled"].includes(item.termination_approval_status),
+    ).length;
+
+    return [
+      {
+        label: "Total Pengajuan",
+        value: total,
+        icon: "solar:document-text-bold-duotone",
+        color: theme.palette.primary.main,
       },
-      width: 120,
-    },
-    {
-      title: "Alasan Non-Aktif",
-      dataIndex: "reason",
-      render: (text, record) => (
-        <Tag
-          // warna random berdasarkan angka ganjil genap
-          color="lime"
-          key={record.termination_id}
-          style={{ fontWeight: "bold", cursor: "pointer", fontSize: "12px" }}
-          onClick={() => handleViewReason(record)}
-        >
-          Lihat Alasan Non-Aktif
-        </Tag>
-        // <Typography
-        //   sx={{
-        //     // fontWeight: "bold",
-        //     fontSize: "13px",
-        //     // textTransform: "capitalize",
-        //     textAlign: "justify",
-        //   }}
-        //   onClick={() => handleViewReason(record)}
-        // >
-        //   {record.reason}
-        // </Typography>
-      ),
-      width: 150,
-    },
-    {
-      title: "Tanggal Dibuat",
-      dataIndex: "termination_created_at",
-      width: 150,
-      render: (text, record) => (
-        <Typography sx={{ fontWeight: "bold", fontSize: "12px" }}>
-          {moment(record.termination_created_at).format("D MMMM YYYY")}
-        </Typography>
-      ),
-    },
-    {
-      title: "Status Persetujuan",
-      dataIndex: "termination_approval_status",
-      filterSearch: true,
-      render: (text, record) => {
-        return (
-          <Tag
-            // warna random berdasarkan angka ganjil genap
-            color={
-              record.termination_approval_status === "proses"
-                ? "yellow"
-                : record.termination_approval_status === "approved"
-                  ? "green"
-                  : "red"
-            }
-            key={record.termination_id}
-            style={{
-              fontWeight: "bold",
-              cursor: "pointer",
-            }}
-            onClick={() => handleTerminationApproval(record)}
-          >
-            {record.termination_approval_status === "proses"
-              ? `Dalam Proses ${record.termination_current_step}/5`
-              : record.termination_approval_status === "approved"
-                ? "Disetujui"
-                : record.termination_approval_status === "rejected"
-                  ? "Tidak Disetujui"
-                  : "Dibatalkan"}
-          </Tag>
-        );
+      {
+        label: "Dalam Proses",
+        value: inProgress,
+        icon: "solar:hourglass-line-duotone",
+        color: "#facc15",
       },
-      width: 150,
-    },
-    {
-      title: "Actions",
-      key: "action",
-      align: "center",
-      width: 100,
-      fixed: "right",
-      render: (text, record) => (
-        <Box
-          sx={{
-            display: "flex",
-            gap: 1,
-            justifyContent: "center",
-            alignItems: "center",
-          }}
-        >
-          <Tooltip title="Detail Data Pemohon">
-            <Button
-              size="small"
-              variant={themeMode === "dark" ? "outlined" : "contained"}
-              color="info"
-              onClick={() => handleViewDetailInformation(record)}
-              sx={{ minWidth: 0, px: 1 }}
-            >
-              <Icon icon="mdi:smart-card-outline" fontSize={18} />
-            </Button>
-          </Tooltip>
-          {record.termination_approval_status === "rejected" && (
-            <Tooltip title="Batal Non-Aktif">
-              <Button
-                size="small"
-                variant={themeMode === "dark" ? "outlined" : "contained"}
-                color="error"
-                onClick={() => handleCancel(record)}
-                sx={{ minWidth: 0, px: 1 }}
-              >
-                <Icon icon="line-md:close-circle" fontSize={18} />
-              </Button>
-            </Tooltip>
-          )}
-        </Box>
-      ),
-    },
-  ];
+      {
+        label: "Disetujui",
+        value: approved,
+        icon: "solar:verified-check-bold-duotone",
+        color: "#4caf50",
+      },
+      {
+        label: "Ditolak/Batal",
+        value: rejectedOrCancelled,
+        icon: "solar:close-circle-bold-duotone",
+        color: theme.palette.error.main,
+      },
+    ];
+  }, [dataTenantTerminations, theme]);
+
+  const handleCancelTermination = async () => {
+    if (!selectedData?.tenant_early_termination_id) return;
+
+    setLoadingMessage("Membatalkan proses nonaktif tenant...");
+    setLoading(true);
+
+    try {
+      const response = await axios.delete(
+        `/api/tenant-terminations/${selectedData.tenant_early_termination_id}`,
+      );
+
+      if (response?.data?.success) {
+        setSnackbar({
+          open: true,
+          message: response.data.message || "Proses nonaktif tenant berhasil dibatalkan.",
+          severity: "success",
+        });
+        await getDataTenantTerminations();
+        setCancelTenantTerminationsModal(false);
+        setSelectedData(null);
+      } else {
+        setSnackbar({
+          open: true,
+          message: response?.data?.message || "Gagal membatalkan nonaktif tenant.",
+          severity: "error",
+        });
+      }
+    } catch (error) {
+      console.error("Error deleting tenant termination:", error);
+      setSnackbar({
+        open: true,
+        message:
+          error.response?.data?.message ||
+          "Terjadi kesalahan saat membatalkan nonaktif tenant.",
+        severity: "error",
+      });
+    } finally {
+      setTimeout(() => {
+        setLoading(false);
+        setLoadingMessage("Loading...");
+      }, 500);
+    }
+  };
 
   return (
-    <Box sx={{ width: "100%", height: "100%", minHeight: "100%", p: 2 }}>
-      {/* Component Breadcrumbs disini */}
-      <BreadcrumbPage menuList={MENU_CONFIG} />
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "flex-end",
-          transition: "all 0.3s",
-          mb: 2,
-          mt: 4,
-        }}
-      >
-        <Button
-          variant={themeMode === "dark" ? "outlined" : "contained"}
-          onClick={() => setOpenTenantTerminationsModal(true)}
-          sx={{
-            textTransform: "none",
+    <Box sx={{ width: "100%", height: "100%", minHeight: "100%", p: { xs: 1.25, sm: 2 } }}>
+      <Stack spacing={{ xs: 1.5, lg: 2 }}>
+        <PageHeader
+          breadcrumbs={[
+            {
+              label: "Transactions",
+              value: "transactions",
+              icon: "solar:money-bag-bold-duotone",
+              path: "#",
+            },
+            {
+              label: "Tenant Terminations",
+              value: "tenant-terminations",
+              icon: "solar:lock-keyhole-minimalistic-bold-duotone",
+              path: "/tenant-terminations",
+            },
+          ]}
+          title="Tenant Terminations"
+          description="Kelola pengajuan nonaktif tenant untuk kontrak aktif, pantau status approval berjenjang, dan buka detail pemohon tanpa memenuhi tabel dengan alasan panjang."
+          icon="solar:lock-keyhole-minimalistic-bold-duotone"
+          actionSx={{
+            width: { xs: "100%", md: "auto" },
             display: "flex",
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 1,
-            fontWeight: "bold",
+            justifyContent: { xs: "stretch", md: "flex-end" },
           }}
+          action={
+            <Button
+              fullWidth
+              variant="contained"
+              startIcon={<Icon icon="solar:lock-keyhole-minimalistic-bold-duotone" />}
+              onClick={() => setOpenTenantTerminationsModal(true)}
+              sx={{
+                minHeight: 46,
+                px: { xs: 2, sm: 2.5 },
+                borderRadius: 2,
+                fontFamily: "Poppins",
+                fontWeight: 900,
+                textTransform: "none",
+                boxShadow:
+                  theme.palette.mode === "dark"
+                    ? "0 6px 14px rgba(255, 152, 0, 0.18)"
+                    : "0 6px 14px rgba(230, 9, 9, 0.16)",
+                "&:hover": {
+                  transform: "translateY(-1px)",
+                },
+              }}
+            >
+              Non-Aktifkan Tenant
+            </Button>
+          }
+        />
+
+        <Grid container spacing={{ xs: 1.25, md: 1.5 }}>
+          {terminationStats.map((item) => (
+            <Grid key={item.label} size={{ xs: 6, md: 3 }}>
+              <SummaryStatCard {...item} />
+            </Grid>
+          ))}
+        </Grid>
+
+        <DataTableShell
+          title="Daftar Nonaktif Tenant"
+          description={`${filteredData.length} dari ${dataTenantTerminations.length} pengajuan ditampilkan`}
+          searchValue={searchText}
+          searchPlaceholder="Cari penyewa, NIK, lokasi, ruangan, status..."
+          onSearchChange={setSearchText}
         >
-          Non-Aktifkan
-          <Icon icon="pepicons-pop:lock-closed-circle" fontSize="20px" />
-        </Button>
-      </Box>
-      <ConfigProvider
-        theme={{
-          algorithm:
-            themeMode === "dark"
-              ? antdTheme.darkAlgorithm
-              : antdTheme.defaultAlgorithm,
-          token: {
-            colorPrimary: theme.palette.primary.main, // warna utama (angka aktif, outline, dsb)
-            // colorText: theme.palette.text.primary, // warna teks default
-            // colorBgContainer: theme.palette.background.default, // background tabel
-          },
-        }}
-      >
-        <Paper
-          elevation={6}
-          sx={{
-            p:
-              filteredData.length > 0
-                ? "10px 15px 0px 15px"
-                : "10px 15px 10px 15px",
-            width: "100%",
-            bgcolor: "background.default",
-            overflowX: "auto",
-          }}
-        >
-          <Input.Search
-            placeholder="Cari..."
-            allowClear
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-            style={{ width: 250, marginBottom: 20, marginTop: 10 }}
-          />
-          <Table
-            rowKey="tenant_application_id"
+          <ReusableAntTable
+            rowKey="tenant_early_termination_id"
             columns={columns}
             dataSource={filteredData}
-            onChange={onChange}
-            showSorterTooltip={{ target: "sorter-icon" }}
-            scroll={{ x: "max-content", y: 420 }}
-            pagination={{
-              pageSize: pageSize,
-              showSizeChanger: true,
-              pageSizeOptions: [5, 10, 20, 50],
-              showTotal: (total, range) =>
-                `${range[0]}-${range[1]} dari ${total} data`,
+            loading={loading}
+            pageSize={pageSize}
+            pageSizeOptions={PAGE_SIZE_OPTIONS}
+            tableLayout="fixed"
+            scroll={{ x: TABLE_SCROLL_WIDTH, y: 430 }}
+            onPageSizeChange={setPageSize}
+            fixedActionColumn={{
+              className: "tenant-terminations-action-column",
+              buttonsClassName: "tenant-terminations-action-buttons",
+              width: ACTION_COLUMN_WIDTH,
+              paddingX: 14,
             }}
           />
-        </Paper>
-      </ConfigProvider>
+        </DataTableShell>
+      </Stack>
+
       <TenantTerminationsModal
         open={openTenantTerminationsModal}
         onClose={() => setOpenTenantTerminationsModal(false)}
@@ -600,17 +485,32 @@ const TenantTerminations = () => {
         getDataTenantTerminations={getDataTenantTerminations}
         user={user}
       />
-      <CancelTenantTermination
+      <CrudConfirmModal
         open={cancelTenantTerminationsModal}
-        onClose={() => setCancelTenantTerminationsModal(false)}
-        selectedData={selectedData}
-        loadingTrue={() => setLoading(true)}
-        loadingFalse={() => setLoading(false)}
+        title="Batalkan Nonaktif Tenant"
+        description={
+          <>
+            Proses nonaktif untuk{" "}
+            <Box component="strong" sx={{ color: "text.primary", fontWeight: 850 }}>
+              {selectedData?.tenant_name || "-"}
+            </Box>{" "}
+            pada{" "}
+            <Box component="strong" sx={{ color: "text.primary", fontWeight: 850 }}>
+              Ruangan {selectedData?.room_number || "-"}
+            </Box>
+            , lokasi{" "}
+            <Box component="strong" sx={{ color: "text.primary", fontWeight: 850 }}>
+              {selectedData?.location_name || "-"}
+            </Box>{" "}
+            akan dihapus dari daftar pengajuan.
+          </>
+        }
+        confirmLabel="Batalkan Nonaktif"
+        loadingLabel="Membatalkan..."
+        severity="error"
         loading={loading}
-        setLoadingMessage={setLoadingMessage}
-        getDataTenantTerminations={getDataTenantTerminations}
-        user={user}
-        onNotify={(notif) => setSnackbar(notif)}
+        onClose={() => !loading && setCancelTenantTerminationsModal(false)}
+        onConfirm={handleCancelTermination}
       />
       <TenantIdentityPreviewModal
         open={openInformationModal}
@@ -618,22 +518,11 @@ const TenantTerminations = () => {
         selectedData={selectedData}
         title="Preview Informasi Pemohon"
       />
-      <TenantApplicationDetailModal
+      <TenantLeaseDetailModal
         open={openTenantApprovalInformationModal}
         onClose={() => setOpenTenantApprovalInformationModal(false)}
         selectedData={selectedData}
         showTerminationDetail
-      />
-      <TerminationReasonModal
-        open={openTerminationReasonModal}
-        onClose={() => setOpenTerminationReasonModal(false)}
-        selectedData={selectedData}
-        loadingTrue={() => setLoading(true)}
-        loadingFalse={() => setLoading(false)}
-        loading={loading}
-        setLoadingMessage={setLoadingMessage}
-        user={user}
-        onNotify={(notif) => setSnackbar(notif)}
       />
       <ApprovalTrackingModal
         open={openTerminationApprovalModal}

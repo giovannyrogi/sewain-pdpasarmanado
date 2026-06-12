@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Box, useTheme } from "@mui/material";
 import { ConfigProvider, Table, theme as antdTheme } from "antd";
 import { useThemeMode } from "@/app/components/themeprovider/ThemeContext";
@@ -25,10 +25,58 @@ export default function ReusableAntTable({
   fixedActionColumn,
   pagination,
   onChange,
+  sx,
   ...tableProps
 }) {
   const muiTheme = useTheme();
   const { themeMode } = useThemeMode();
+  const effectivePageSize = Number(
+    pageSize || pagination?.pageSize || pagination?.defaultPageSize || 5,
+  );
+  const [internalCurrentPage, setInternalCurrentPage] = useState(
+    Number(pagination?.current || pagination?.defaultCurrent || 1),
+  );
+  const currentPage = Number(pagination?.current || internalCurrentPage || 1);
+
+  useEffect(() => {
+    if (pagination?.current) {
+      setInternalCurrentPage(Number(pagination.current));
+    }
+  }, [pagination?.current]);
+
+  useEffect(() => {
+    if (pagination === false || pagination?.current) return;
+
+    const totalRows = Array.isArray(dataSource) ? dataSource.length : 0;
+    const maxPage = Math.max(1, Math.ceil(totalRows / effectivePageSize));
+
+    if (internalCurrentPage > maxPage) {
+      setInternalCurrentPage(maxPage);
+    }
+  }, [dataSource, effectivePageSize, internalCurrentPage, pagination]);
+
+  const columnsWithAutoNumber = useMemo(() => {
+    const startIndex =
+      pagination === false ? 0 : (currentPage - 1) * effectivePageSize;
+
+    /**
+     * Kolom "No" pada AntD hanya menerima index per halaman. Wrapper ini
+     * mengubahnya menjadi nomor absolut agar semua table reusable konsisten:
+     * halaman 2 dengan page size 5 dimulai dari 6, bukan kembali ke 1.
+     */
+    return (columns || []).map((column) => {
+      const shouldAutoNumber =
+        column?.autoNumber !== false &&
+        (column?.title === "No" || column?.dataIndex === "index");
+
+      if (!shouldAutoNumber) return column;
+
+      return {
+        ...column,
+        render: (_value, _record, index) => startIndex + index + 1,
+      };
+    });
+  }, [columns, currentPage, effectivePageSize, pagination]);
 
   const actionColumnSx = fixedActionColumn
     ? {
@@ -88,7 +136,8 @@ export default function ReusableAntTable({
     pagination === false
       ? false
       : {
-          pageSize,
+          current: currentPage,
+          pageSize: effectivePageSize,
           showSizeChanger: true,
           pageSizeOptions,
           showTotal: (total, range) => `${range[0]}-${range[1]} dari ${total} data`,
@@ -96,7 +145,11 @@ export default function ReusableAntTable({
         };
 
   const handleChange = (nextPagination, filters, sorter, extra) => {
-    if (nextPagination?.pageSize && nextPagination.pageSize !== pageSize) {
+    if (nextPagination?.current) {
+      setInternalCurrentPage(nextPagination.current);
+    }
+
+    if (nextPagination?.pageSize && nextPagination.pageSize !== effectivePageSize) {
       onPageSizeChange?.(nextPagination.pageSize);
     }
 
@@ -130,10 +183,10 @@ export default function ReusableAntTable({
         },
       }}
     >
-      <Box sx={actionColumnSx}>
+      <Box sx={[actionColumnSx, sx]}>
         <Table
           rowKey={rowKey}
-          columns={columns}
+          columns={columnsWithAutoNumber}
           dataSource={dataSource}
           loading={loading}
           tableLayout={tableLayout}

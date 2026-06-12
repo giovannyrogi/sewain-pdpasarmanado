@@ -71,7 +71,7 @@ export default function CrudFormModal({
                 variant="contained"
                 sx={{
                   borderRadius: 2,
-                  fontWeight: 750,
+                  fontWeight: 700,
                   textTransform: "none",
                   color: theme.palette.text.primary,
                   bgcolor:

@@ -56,7 +56,7 @@ export async function GET(req) {
     return new Response(
       JSON.stringify({
         success: false,
-        message: err.message,
+        message: "Terjadi kesalahan saat mengambil progress approval pembayaran.",
       }),
       { status: 500 }
     );

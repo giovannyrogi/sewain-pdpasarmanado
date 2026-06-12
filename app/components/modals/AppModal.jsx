@@ -123,7 +123,7 @@ export default function AppModal({
               <Typography
                 sx={{
                   fontFamily: "Poppins",
-                  fontWeight: 850,
+                  fontWeight: 700,
                   fontSize: { xs: 18, sm: 21 },
                   lineHeight: 1.25,
                 }}

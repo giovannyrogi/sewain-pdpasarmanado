@@ -37,6 +37,9 @@ const getIdentityNik = (data) =>
 const getIdentityPhone = (data) =>
   data?.phone || data?.tenant_phone || data?.phone_number || emptyValue;
 
+const getIdentityStatus = (data) =>
+  data?.tenant_identity_status || data?.status;
+
 const getStatusLabel = (status) => {
   if (status === "active") return "Aktif";
   if (status === "inactive") return "Tidak Aktif";
@@ -177,7 +180,7 @@ export default function TenantIdentityPreviewModal({ open, onClose, selectedData
   const identityName = getIdentityName(selectedData);
   const identityNik = getIdentityNik(selectedData);
   const identityPhone = getIdentityPhone(selectedData);
-  const identityStatus = selectedData?.status;
+  const identityStatus = getIdentityStatus(selectedData);
 
   return (
     <>
@@ -292,7 +295,7 @@ export default function TenantIdentityPreviewModal({ open, onClose, selectedData
                 <FieldCard
                   icon="solar:notes-bold-duotone"
                   label="Catatan"
-                  value={displayValue(selectedData?.notes)}
+                  value={displayValue(selectedData?.notes || selectedData?.tenant_identity_notes)}
                   fullWidth
                 />
               )}

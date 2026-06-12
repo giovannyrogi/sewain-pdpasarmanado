@@ -112,7 +112,10 @@ export async function GET(req) {
   } catch (err) {
     console.error("error", err);
     return new Response(
-      JSON.stringify({ success: false, message: err.message }),
+      JSON.stringify({
+        success: false,
+        message: "Terjadi kesalahan saat mengambil data pembayaran berdasarkan role.",
+      }),
       { status: 500 }
     );
   }

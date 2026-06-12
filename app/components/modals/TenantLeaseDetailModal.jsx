@@ -89,7 +89,7 @@ function InfoTile({ icon, label, value, fullWidth = false }) {
             <Typography
               sx={{
                 fontSize: 13,
-                fontWeight: 800,
+                fontWeight: 700,
                 lineHeight: 1.45,
                 mt: 0.25,
                 wordBreak: "break-word",
@@ -129,7 +129,7 @@ function DetailSection({ icon, title, description, children }) {
           <Icon icon={icon} fontSize={17} />
         </Box>
         <Box sx={{ minWidth: 0 }}>
-          <Typography sx={{ fontSize: 15, fontWeight: 900, lineHeight: 1.2 }}>
+          <Typography sx={{ fontSize: 15, fontWeight: 700, lineHeight: 1.2 }}>
             {title}
           </Typography>
           {description && (
@@ -176,7 +176,7 @@ function MoneyRow({ label, value, strong = false }) {
       <Typography
         sx={{
           fontSize: strong ? 15 : 13,
-          fontWeight: 900,
+          fontWeight: 700,
           color: "text.primary",
           wordBreak: "break-word",
         }}
@@ -192,7 +192,7 @@ function MoneyRow({ label, value, strong = false }) {
  * Tombol approve hanya dirender bila `canApprove` true dan status data belum final,
  * sehingga admin kontrak tetap mendapat detail penuh tanpa aksi approval.
  */
-export default function TenantApplicationDetailModal({
+export default function TenantLeaseDetailModal({
   open,
   onClose,
   selectedData,
@@ -200,6 +200,7 @@ export default function TenantApplicationDetailModal({
   approving = false,
   onApprove,
   showTerminationDetail = false,
+  paymentContext = null,
 }) {
   const theme = useTheme();
   const [openPreview, setOpenPreview] = useState(false);
@@ -207,11 +208,14 @@ export default function TenantApplicationDetailModal({
   const paymentDetail = buildPaymentDetail(selectedData);
   const ktpImageUrl = getUploadApiUrl(selectedData?.ktp_file_path);
   const statementFileUrl = getUploadApiUrl(selectedData?.statement_file_path);
+  const proofFileUrl = getUploadApiUrl(paymentContext?.proof_file_path);
   const resolvedStatus =
     selectedData?.status || selectedData?.approval_status;
   const normalizedStatus = String(resolvedStatus || "").toLowerCase();
   const isFinalStatus = ["approved", "rejected"].includes(normalizedStatus);
   const showApproveButton = canApprove && !isFinalStatus;
+  const paymentHistory = paymentContext?.previous_payments || [];
+  const paymentLabel = paymentContext?.payment_label || "Pembayaran";
 
   const installments = useMemo(
     () => [
@@ -267,19 +271,19 @@ export default function TenantApplicationDetailModal({
               alignItems={{ xs: "flex-start", md: "center" }}
             >
               <Box sx={{ minWidth: 0 }}>
-                <Typography sx={{ fontSize: { xs: 20, sm: 24 }, fontWeight: 950 }}>
+                <Typography sx={{ fontSize: { xs: 20, sm: 24 }, fontWeight: 700 }}>
                   {displayValue(selectedData?.tenant_name)}
                 </Typography>
                 <Stack direction="row" flexWrap="wrap" gap={1} sx={{ mt: 1 }}>
                   <Chip
                     size="small"
                     label={`NIK: ${displayValue(selectedData?.tenant_nik)}`}
-                    sx={{ fontWeight: 800 }}
+                    sx={{ fontWeight: 700 }}
                   />
                   <Chip
                     size="small"
                     label={`Telp: ${displayValue(selectedData?.tenant_phone)}`}
-                    sx={{ fontWeight: 800 }}
+                    sx={{ fontWeight: 700 }}
                   />
                 </Stack>
               </Box>
@@ -376,7 +380,9 @@ export default function TenantApplicationDetailModal({
               }}
             >
               <MoneyRow label="Tipe Pembayaran" value={selectedData?.payment_type === "cicilan" ? "Cicilan" : "Lunas"} />
-              <MoneyRow label="Harga Sewa per Tahun" value={paymentDetail.annualRoomRent ? formatRupiah(paymentDetail.annualRoomRent) : emptyValue} />
+              {!showTerminationDetail && (
+                <MoneyRow label="Harga Sewa per Tahun" value={paymentDetail.annualRoomRent ? formatRupiah(paymentDetail.annualRoomRent) : emptyValue} />
+              )}
               <MoneyRow label="Durasi Sewa" value={`${paymentDetail.leaseDurationYears} Tahun`} />
               <MoneyRow label="Total Sewa Kontrak Ruangan" value={paymentDetail.totalSewaKontrakRuangan ? formatRupiah(paymentDetail.totalSewaKontrakRuangan) : emptyValue} />
               <MoneyRow label="Iuran Jasa Administrasi" value={formatRupiah(selectedData?.admin_fee || 0)} />
@@ -506,14 +512,14 @@ export default function TenantApplicationDetailModal({
                               p: 0,
                               mt: 0.25,
                               fontSize: 12.5,
-                              fontWeight: 900,
+                              fontWeight: 700,
                               textTransform: "none",
                             }}
                           >
                             Lihat Surat
                           </Button>
                         ) : (
-                          <Typography sx={{ fontSize: 13, fontWeight: 850, mt: 0.25 }}>
+                          <Typography sx={{ fontSize: 13, fontWeight: 700, mt: 0.25 }}>
                             Belum ada surat
                           </Typography>
                         )}
@@ -521,6 +527,185 @@ export default function TenantApplicationDetailModal({
                     </Stack>
                   </Box>
                 </Grid>
+              </Grid>
+            </DetailSection>
+          )}
+
+          {paymentContext && (
+            <DetailSection
+              icon="solar:wallet-money-bold-duotone"
+              title="Detail Bukti Pembayaran"
+              description="Bukti transfer, nominal pembayaran, dan riwayat pembayaran sebelumnya."
+            >
+              <Grid container spacing={1.25}>
+                <InfoTile
+                  icon="solar:bill-check-bold-duotone"
+                  label="Tahap Pembayaran"
+                  value={paymentLabel}
+                />
+                <InfoTile
+                  icon="solar:calendar-date-bold-duotone"
+                  label="Tanggal Pembayaran"
+                  value={formatDate(paymentContext?.payment_date)}
+                />
+                <InfoTile
+                  icon="solar:wallet-bold-duotone"
+                  label="Nominal Dibayar"
+                  value={paymentContext?.payment_amount ? formatRupiah(paymentContext.payment_amount) : emptyValue}
+                />
+                <InfoTile
+                  icon="solar:document-add-bold-duotone"
+                  label="Nilai Kontrak"
+                  value={paymentContext?.contract_amount ? formatRupiah(paymentContext.contract_amount) : emptyValue}
+                />
+                <InfoTile
+                  icon="solar:bill-list-bold-duotone"
+                  label="PPN Pembayaran"
+                  value={paymentContext?.ppn_amount ? formatRupiah(paymentContext.ppn_amount) : emptyValue}
+                />
+                <InfoTile
+                  icon="solar:money-bag-bold-duotone"
+                  label="Sisa Tagihan"
+                  value={
+                    paymentContext?.remaining_balance !== undefined && paymentContext?.remaining_balance !== null
+                      ? formatRupiah(paymentContext.remaining_balance)
+                      : emptyValue
+                  }
+                />
+                <Grid size={{ xs: 12 }}>
+                  <Box
+                    sx={{
+                      p: 1.5,
+                      borderRadius: 2,
+                      border: `1px solid ${theme.ui?.dashboardCardBorder || theme.palette.divider}`,
+                      bgcolor:
+                        theme.palette.mode === "dark"
+                          ? "rgba(255,255,255,0.035)"
+                          : "rgba(17,24,39,0.025)",
+                    }}
+                  >
+                    <Stack
+                      direction={{ xs: "column", sm: "row" }}
+                      alignItems={{ xs: "stretch", sm: "center" }}
+                      justifyContent="space-between"
+                      spacing={1.25}
+                    >
+                      <Stack direction="row" spacing={1.2} alignItems="center" sx={{ minWidth: 0 }}>
+                        <Box
+                          sx={{
+                            width: 34,
+                            height: 34,
+                            flex: "0 0 auto",
+                            borderRadius: 1.5,
+                            display: "grid",
+                            placeItems: "center",
+                            color: theme.palette.primary.main,
+                            bgcolor: alpha(theme.palette.primary.main, 0.12),
+                          }}
+                        >
+                          <Icon icon="solar:file-check-bold-duotone" fontSize={18} />
+                        </Box>
+                        <Box sx={{ minWidth: 0 }}>
+                          <Typography sx={{ fontSize: 12, fontWeight: 700, color: theme.ui?.mutedText }}>
+                            Bukti Transfer
+                          </Typography>
+                          <Typography
+                            sx={{
+                              fontSize: 13,
+                              fontWeight: 700,
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            {paymentContext?.proof_file_path ? "Dokumen bukti pembayaran tersedia" : "Belum ada bukti pembayaran"}
+                          </Typography>
+                        </Box>
+                      </Stack>
+
+                      {paymentContext?.proof_file_path && (
+                        <Button
+                          variant="contained"
+                          startIcon={<Icon icon="solar:eye-bold-duotone" />}
+                          onClick={() => window.open(proofFileUrl, "_blank", "noopener,noreferrer")}
+                          sx={{
+                            borderRadius: 2,
+                            fontWeight: 700,
+                            textTransform: "none",
+                            boxShadow: "none",
+                          }}
+                        >
+                          Lihat Bukti
+                        </Button>
+                      )}
+                    </Stack>
+                  </Box>
+                </Grid>
+
+                {paymentHistory.length > 0 && (
+                  <Grid size={{ xs: 12 }}>
+                    <Box
+                      sx={{
+                        p: { xs: 1.4, sm: 1.75 },
+                        borderRadius: 2,
+                        border: `1px solid ${theme.ui?.dashboardCardBorder || theme.palette.divider}`,
+                        bgcolor:
+                          theme.palette.mode === "dark"
+                            ? "rgba(255,255,255,0.035)"
+                            : "rgba(17,24,39,0.025)",
+                      }}
+                    >
+                      <Typography sx={{ fontSize: 13, fontWeight: 700, mb: 0.75 }}>
+                        Riwayat Pembayaran Sebelumnya
+                      </Typography>
+                      {paymentHistory.map((payment, index) => {
+                        const previousLabel =
+                          Number(payment.payment_number) === 1
+                            ? "Uang Muka (DP)"
+                            : `Cicilan ${Number(payment.payment_number || index + 1) - 1}`;
+                        const previousProofUrl = getUploadApiUrl(payment.proof_file_path);
+
+                        return (
+                          <Stack
+                            key={payment.payment_id || `${payment.payment_number}-${index}`}
+                            direction={{ xs: "column", sm: "row" }}
+                            justifyContent="space-between"
+                            alignItems={{ xs: "flex-start", sm: "center" }}
+                            spacing={1}
+                            sx={{
+                              py: 0.9,
+                              borderBottom: `1px dashed ${theme.ui?.dashboardCardBorder || theme.palette.divider}`,
+                            }}
+                          >
+                            <Box sx={{ minWidth: 0 }}>
+                              <Typography sx={{ fontSize: 12.5, fontWeight: 700 }}>
+                                {previousLabel} - {formatDate(payment.payment_date)}
+                              </Typography>
+                              <Typography sx={{ fontSize: 12, color: theme.ui?.mutedText, fontWeight: 600 }}>
+                                {payment.amount ? formatRupiah(payment.amount) : emptyValue}
+                              </Typography>
+                            </Box>
+                            {payment.proof_file_path && (
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                startIcon={<Icon icon="solar:eye-bold-duotone" />}
+                                onClick={() => window.open(previousProofUrl, "_blank", "noopener,noreferrer")}
+                                sx={{
+                                  borderRadius: 1.5,
+                                  fontWeight: 700,
+                                  textTransform: "none",
+                                }}
+                              >
+                                Lihat Bukti
+                              </Button>
+                            )}
+                          </Stack>
+                        );
+                      })}
+                    </Box>
+                  </Grid>
+                )}
               </Grid>
             </DetailSection>
           )}
@@ -537,7 +722,7 @@ export default function TenantApplicationDetailModal({
               disabled={approving}
               sx={{
                 borderRadius: 2,
-                fontWeight: 850,
+                fontWeight: 700,
                 color: theme.palette.text.primary,
                 bgcolor:
                   theme.palette.mode === "dark"
@@ -565,7 +750,7 @@ export default function TenantApplicationDetailModal({
                 startIcon={approving ? <CircularProgress size={18} color="inherit" /> : null}
                 sx={{
                   borderRadius: 2,
-                  fontWeight: 900,
+                  fontWeight: 700,
                   color: "#fff",
                   px: 3,
                 }}

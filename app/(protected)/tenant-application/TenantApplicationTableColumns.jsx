@@ -4,14 +4,13 @@ import React from "react";
 import {
   Box,
   Chip,
-  IconButton,
   Stack,
-  Tooltip,
   Typography,
 } from "@mui/material";
 import { Tag } from "antd";
-import { Icon } from "@iconify/react";
 import formatRupiah from "@/app/components/formatrupiah/page";
+import ApprovalStatusChip from "@/app/components/status/ApprovalStatusChip";
+import TableActionButton from "@/app/components/data-table/TableActionButton";
 
 /**
  * Filter dinamis AntD berdasarkan data yang sedang aktif di halaman.
@@ -89,7 +88,6 @@ export const getTenantApplicationColumns = ({
   data,
   isMobile,
   theme,
-  themeMode,
   actionColumnWidth,
   onEdit,
   onDelete,
@@ -249,31 +247,13 @@ export const getTenantApplicationColumns = ({
       filterSearch: true,
       width: 210,
       render: (_, record) => (
-        <Tag
-          color={
-            record.approval_status === "proses"
-              ? "yellow"
-              : record.approval_status === "approved"
-                ? "green"
-                : "red"
-          }
-          key={record.tenant_application_id}
-          style={{
-            borderRadius: 8,
-            fontWeight: "bold",
-            cursor: "pointer",
-            padding: "3px 9px",
-          }}
+        <ApprovalStatusChip
+          status={record.approval_status}
+          step={record.current_step}
+          totalStep={5}
           onClick={() => onApproval(record)}
-        >
-          {record.approval_status === "proses"
-            ? `Dalam Proses ${record.current_step}/5`
-            : record.approval_status === "approved"
-              ? "Disetujui"
-              : record.approval_status === "rejected"
-                ? "Tidak Disetujui"
-                : "Dibatalkan"}
-        </Tag>
+          theme={theme}
+        />
       ),
     },
     {
@@ -291,91 +271,35 @@ export const getTenantApplicationColumns = ({
           sx={{ display: "inline-flex", gap: 0.75, justifyContent: "center" }}
         >
           {record.approval_status !== "approved" && (
-            <Tooltip title="Edit Data">
-              <IconButton
-                size="small"
-                color="info"
-                onClick={() => onEdit(record)}
-                sx={{
-                  width: 34,
-                  height: 34,
-                  borderRadius: 1.5,
-                  border: `1px solid ${theme.palette.info.main}66`,
-                  bgcolor:
-                    theme.palette.mode === "dark"
-                      ? "rgba(33,150,243,0.10)"
-                      : "rgba(33,150,243,0.12)",
-                }}
-              >
-                <Icon icon="line-md:edit" fontSize={18} />
-              </IconButton>
-            </Tooltip>
+            <TableActionButton
+              title="Edit Data"
+              color="info"
+              icon="line-md:edit"
+              onClick={() => onEdit(record)}
+            />
           )}
 
-          <Tooltip title="Detail Data Pemohon">
-            <IconButton
-              size="small"
-              color={themeMode === "dark" ? "inherit" : "success"}
-              onClick={() => onDetail(record)}
-              sx={{
-                width: 34,
-                height: 34,
-                borderRadius: 1.5,
-                border: `1px solid ${theme.palette.success.main}66`,
-                bgcolor:
-                  theme.palette.mode === "dark"
-                    ? "rgba(76,175,80,0.10)"
-                    : "rgba(76,175,80,0.12)",
-              }}
-            >
-              <Icon
-                icon="mdi:smart-card-outline"
-                color={theme.palette.success.main}
-                fontSize={18}
-              />
-            </IconButton>
-          </Tooltip>
+          <TableActionButton
+            title="Detail Data Pemohon"
+            color="success"
+            icon="mdi:smart-card-outline"
+            onClick={() => onDetail(record)}
+          />
 
           {record.approval_status !== "approved" && (
             <>
-              <Tooltip title="Print Dokumen">
-                <IconButton
-                  size="small"
-                  color="primary"
-                  onClick={() => onPrint(record)}
-                  sx={{
-                    width: 34,
-                    height: 34,
-                    borderRadius: 1.5,
-                    border: `1px solid ${theme.palette.primary.main}66`,
-                    bgcolor:
-                      theme.palette.mode === "dark"
-                        ? "rgba(255,152,0,0.10)"
-                        : "rgba(230,9,9,0.10)",
-                  }}
-                >
-                  <Icon icon="streamline-ultimate:print-text" fontSize={18} />
-                </IconButton>
-              </Tooltip>
-              <Tooltip title="Hapus Data">
-                <IconButton
-                  size="small"
-                  color="error"
-                  onClick={() => onDelete(record)}
-                  sx={{
-                    width: 34,
-                    height: 34,
-                    borderRadius: 1.5,
-                    border: `1px solid ${theme.palette.error.main}66`,
-                    bgcolor:
-                      theme.palette.mode === "dark"
-                        ? "rgba(244,67,54,0.10)"
-                        : "rgba(244,67,54,0.12)",
-                  }}
-                >
-                  <Icon icon="line-md:close-circle" fontSize={18} />
-                </IconButton>
-              </Tooltip>
+              <TableActionButton
+                title="Print Dokumen"
+                color="primary"
+                icon="streamline-ultimate:print-text"
+                onClick={() => onPrint(record)}
+              />
+              <TableActionButton
+                title="Hapus Data"
+                color="error"
+                icon="line-md:close-circle"
+                onClick={() => onDelete(record)}
+              />
             </>
           )}
         </Box>

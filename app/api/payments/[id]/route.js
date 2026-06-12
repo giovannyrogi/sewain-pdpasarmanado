@@ -348,7 +348,10 @@ export async function PUT(req, { params }) {
     await client.query("ROLLBACK");
     console.error("Error update payment:", err);
     return new Response(
-      JSON.stringify({ success: false, message: err.message }),
+      JSON.stringify({
+        success: false,
+        message: "Terjadi kesalahan saat memperbarui bukti pembayaran.",
+      }),
       { status: 500 }
     );
   } finally {
@@ -433,7 +436,10 @@ export async function DELETE(req, { params }) {
     }
     console.error("Error delete payment", err);
     return new Response(
-      JSON.stringify({ success: false, message: err.message }),
+      JSON.stringify({
+        success: false,
+        message: "Terjadi kesalahan saat menghapus bukti pembayaran.",
+      }),
       { status: 500 }
     );
   } finally {

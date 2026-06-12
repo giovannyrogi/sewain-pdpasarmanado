@@ -1,49 +1,51 @@
 "use client";
-import {
-  Box,
-  Button,
-  Paper,
-  Tooltip,
-  Typography,
-  useTheme,
-} from "@mui/material";
-import React, { useEffect, useRef, useState } from "react";
-import { Table, ConfigProvider, theme as antdTheme, Input, Tag } from "antd";
-import { useThemeMode } from "../../components/themeprovider/ThemeContext";
-import moment from "moment";
+
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { Box, Button, Grid, Stack, useTheme } from "@mui/material";
 import { Icon } from "@iconify/react";
+import axios from "axios";
+import { useReactToPrint } from "react-to-print";
 import LoadingBackdrop from "../../components/loading/Backdrop";
 import Notification from "../../components/Notification";
-import axios from "axios";
-import BreadcrumbPage from "@/app/components/breadcrumb/page";
-import formatRupiah from "@/app/components/formatrupiah/page";
-import AddPayment from "./AddPayment";
-import { useUser } from "@/app/utils/useUser";
-import ImagePreviewModal from "@/app/components/modals/ImagePreviewModal";
-import ApprovalTrackingModal from "@/app/components/modals/ApprovalTrackingModal";
-import DeletePayment from "./DeletePayment";
-import { useReactToPrint } from "react-to-print";
-import BuktiPembayaran from "@/app/components/documents/BuktiPembayaran";
-import EditPayment from "./EditPayment";
-import MENU_CONFIG from "@/app/components/menu/MenuConfig";
-import ApprovalModal from "./ApprovalModal";
+import PaymentFormModal from "./PaymentFormModal";
 import RejectReasonModal from "@/app/components/modals/RejectReasonModal";
-import KwitansiPembayaran from "@/app/components/documents/KwitansiPembayaran";
-import KwitansiPph from "@/app/components/documents/KwitansiPph";
+import ApprovalTrackingModal from "@/app/components/modals/ApprovalTrackingModal";
+import TenantLeaseDetailModal from "@/app/components/modals/TenantLeaseDetailModal";
+import BuktiPembayaran from "@/app/components/documents/BuktiPembayaran";
+import KwitansiBundle from "@/app/components/documents/KwitansiBundle";
+import PageHeader from "@/app/components/page-header/PageHeader";
+import DataTableShell from "@/app/components/data-table/DataTableShell";
+import ReusableAntTable from "@/app/components/data-table/ReusableAntTable";
+import SummaryStatCard from "@/app/components/stats/SummaryStatCard";
+import CrudConfirmModal from "@/app/components/crud/CrudConfirmModal";
+import { useUser } from "@/app/utils/useUser";
+import {
+  PAYMENT_ACTION_COLUMN_WIDTH,
+  PAYMENT_PAGE_SIZE_OPTIONS,
+  PAYMENT_TABLE_SCROLL_WIDTH,
+  buildPaymentStats,
+  createPaymentColumns,
+  filterPayments,
+} from "./PaymentsTableColumns";
+import {
+  buildPaymentContext,
+  normalizePaymentForLeaseDetail,
+} from "./paymentDetailMapper";
 
 const Payments = () => {
-  // Ref untuk dokumen print
-  const printRef = useRef();
+  const proofPrintRef = useRef();
   const receiptPrintRef = useRef();
   const { user } = useUser();
-  const [dataPayments, setDataPayments] = useState([]);
-  const { themeMode } = useThemeMode();
   const theme = useTheme();
+  const [dataPayments, setDataPayments] = useState([]);
   const [searchText, setSearchText] = useState("");
   const [loading, setLoading] = useState(false);
   const [openAddModal, setOpenAddModal] = useState(false);
   const [openEditModal, setOpenEditModal] = useState(false);
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
+  const [openDetailModal, setOpenDetailModal] = useState(false);
+  const [openProgressModal, setOpenProgressModal] = useState(false);
+  const [openRejectedModal, setOpenRejectedModal] = useState(false);
   const [selectedData, setSelectedData] = useState(null);
   const [pageSize, setPageSize] = useState(5);
   const [snackbar, setSnackbar] = useState({
@@ -52,14 +54,9 @@ const Payments = () => {
     severity: "success",
   });
   const [loadingMessage, setLoadingMessage] = useState("Loading...");
-  const [openBuktiPembayaranModal, setOpenBuktiPembayaranModal] =
-    useState(false);
-  const [openVerificationModal, setOpenVerificationModal] = useState(false);
-  const [openApprovalModal, setOpenApprovalModal] = useState(false);
-  const [openRejectedModal, setOpenRejectedModal] = useState(false);
-  const [printData, setPrintData] = useState(null);
+  const [proofPrintData, setProofPrintData] = useState(null);
   const [receiptPrintData, setReceiptPrintData] = useState(null);
-  const [receiptPrintType, setReceiptPrintType] = useState(null);
+  const [approvingPayment, setApprovingPayment] = useState(false);
   const [paymentsLoaded, setPaymentsLoaded] = useState(false);
   const [handledNotificationTarget, setHandledNotificationTarget] =
     useState(null);
@@ -70,11 +67,7 @@ const Payments = () => {
   };
 
   const resetNotificationFeedback = () => {
-    setSnackbar((current) => ({
-      ...current,
-      open: false,
-      message: "",
-    }));
+    setSnackbar((current) => ({ ...current, open: false, message: "" }));
   };
 
   const clearNotificationRouteState = () => {
@@ -94,27 +87,20 @@ const Payments = () => {
   const getDataPayments = async () => {
     setLoading(true);
     setPaymentsLoaded(false);
+
     try {
       const response = await axios.get("/api/payments");
-      // console.log("data payments", response);
-      if (response.data.success) {
-        setDataPayments(response.data.data);
-        setPaymentsLoaded(true);
-        setTimeout(() => {
-          setLoading(false);
-        }, 1000);
-      } else {
-        setPaymentsLoaded(true);
-        setTimeout(() => {
-          setLoading(false);
-        }, 1000);
-      }
+      setDataPayments(response.data?.success ? response.data.data || [] : []);
     } catch (error) {
-      console.log("error", error);
+      console.error("Error fetch payments:", error);
+      setSnackbar({
+        open: true,
+        severity: "error",
+        message: "Gagal mengambil data pembayaran.",
+      });
+    } finally {
       setPaymentsLoaded(true);
-      setTimeout(() => {
-        setLoading(false);
-      }, 1000);
+      setTimeout(() => setLoading(false), 600);
     }
   };
 
@@ -147,9 +133,7 @@ const Payments = () => {
       if (typeof window === "undefined") return null;
 
       const params = new URLSearchParams(window.location.search);
-      const storageValue = window.sessionStorage.getItem(
-        "sewain:payment-target",
-      );
+      const storageValue = window.sessionStorage.getItem("sewain:payment-target");
 
       if (storageValue) {
         try {
@@ -199,10 +183,10 @@ const Payments = () => {
         window.sessionStorage.removeItem("sewain:payment-target");
 
         if (deletedFromNotification) {
-          await new Promise((resolve) => setTimeout(resolve, 1000));
+          await new Promise((resolve) => setTimeout(resolve, 900));
           setSelectedData(null);
-          setOpenApprovalModal(false);
-          setOpenVerificationModal(false);
+          setOpenDetailModal(false);
+          setOpenProgressModal(false);
           setSnackbar({
             open: true,
             severity: "error",
@@ -213,9 +197,8 @@ const Payments = () => {
         }
 
         /**
-         * Klik dari notifikasi payment harus mengambil data terbaru dari server.
-         * Ini mencegah modal progress masih membaca status rejected lama setelah
-         * Admin Kontrak memperbarui bukti pembayaran menjadi proses lagi.
+         * Data dari notifikasi selalu diambil ulang agar status terbaru
+         * terbaca setelah bukti pembayaran diubah atau ditolak.
          */
         const response = await axios.get("/api/payments");
         const freshPayments = response.data?.success
@@ -227,17 +210,17 @@ const Payments = () => {
           (item) => Number(item?.payments?.payment_id) === paymentId,
         );
 
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        await new Promise((resolve) => setTimeout(resolve, 900));
 
         if (selectedPayment) {
           resetNotificationFeedback();
           setSelectedData(selectedPayment);
           if (openMode === "progress") {
-            setOpenApprovalModal(false);
-            setOpenVerificationModal(true);
+            setOpenDetailModal(false);
+            setOpenProgressModal(true);
           } else {
-            setOpenVerificationModal(false);
-            setOpenApprovalModal(true);
+            setOpenProgressModal(false);
+            setOpenDetailModal(true);
           }
           return;
         }
@@ -248,8 +231,8 @@ const Payments = () => {
           message:
             "Data pembayaran tidak ditemukan. Kemungkinan data sudah dihapus atau akses tidak tersedia.",
         });
-      } catch (err) {
-        console.log("Error open payment from notification:", err);
+      } catch (error) {
+        console.error("Error open payment from notification:", error);
         setSnackbar({
           open: true,
           severity: "error",
@@ -265,35 +248,53 @@ const Payments = () => {
 
     openPaymentFromNotification();
   }, [
-    dataPayments,
     handledNotificationTarget,
     notificationOpenSignal,
     paymentsLoaded,
     user,
   ]);
 
-  const onChange = (pagination, filters, sorter, extra) => {
-    if (pagination.pageSize !== pageSize) {
-      setPageSize(pagination.pageSize);
-    }
-  };
+  const filteredData = useMemo(
+    () => filterPayments(dataPayments, searchText),
+    [dataPayments, searchText],
+  );
+
+  const paymentStats = useMemo(
+    () => buildPaymentStats(dataPayments, theme),
+    [dataPayments, theme],
+  );
 
   const handleEdit = (record) => {
-    // console.log("edit record", record);
     setSelectedData(record);
     setOpenEditModal(true);
   };
 
   const handleDelete = (record) => {
-    // console.log("delete record", record);
     setSelectedData(record);
     setOpenDeleteModal(true);
   };
 
   const handleReject = (record) => {
-    // console.log("delete record", record);
     setSelectedData(record);
     setOpenRejectedModal(true);
+  };
+
+  const handleDetail = (record) => {
+    setSelectedData(record);
+    setOpenDetailModal(true);
+  };
+
+  const handleProgress = (record) => {
+    setSelectedData(record);
+    setOpenProgressModal(true);
+  };
+
+  const handlePrintProof = (record) => {
+    setProofPrintData(record);
+  };
+
+  const handlePrintReceiptBundle = (record) => {
+    setReceiptPrintData(record);
   };
 
   const handleRejectPayment = async (notes) => {
@@ -306,12 +307,10 @@ const Payments = () => {
           notes,
           status: "rejected",
           payment_id: selectedData?.payments?.payment_id,
-          approver_id: user?.id,
-          role_id: user?.role_id,
-        }
+        },
       );
 
-      if (response?.data.success) {
+      if (response?.data?.success) {
         setSnackbar({
           open: true,
           message: response.data.message || "Berhasil menolak bukti pembayaran.",
@@ -324,7 +323,7 @@ const Payments = () => {
 
       setSnackbar({
         open: true,
-        message: response?.data.message || "Gagal menolak bukti pembayaran.",
+        message: response?.data?.message || "Gagal menolak bukti pembayaran.",
         severity: "error",
       });
     } catch (error) {
@@ -340,23 +339,110 @@ const Payments = () => {
     }
   };
 
-  const handleVerification = (record) => {
-    // console.log("verification record", record);
-    setSelectedData(record);
-    setOpenVerificationModal(true);
+  const handleApprovePayment = async () => {
+    if (!selectedData?.payment_approval?.id || !selectedData?.payments?.payment_id) {
+      return;
+    }
+
+    setApprovingPayment(true);
+    setLoadingMessage("Menyetujui bukti pembayaran...");
+    setLoading(true);
+
+    try {
+      const response = await axios.put(
+        `/api/payment-approval/${selectedData.payment_approval.id}`,
+        {
+          payment_id: selectedData.payments.payment_id,
+          status: "approved",
+          tenant_application_id:
+            selectedData?.tenant_application?.tenant_application_id,
+          payment_type: selectedData?.tenant_application?.payment_type,
+        },
+      );
+
+      if (response.data?.success) {
+        setSnackbar({
+          open: true,
+          message:
+            response.data.message || "Bukti pembayaran berhasil disetujui.",
+          severity: "success",
+        });
+        await getDataPayments();
+        setOpenDetailModal(false);
+        return;
+      }
+
+      setSnackbar({
+        open: true,
+        message: response.data?.message || "Gagal menyetujui bukti pembayaran.",
+        severity: "error",
+      });
+    } catch (error) {
+      console.error("Error approve payment:", error);
+      setSnackbar({
+        open: true,
+        message:
+          error?.response?.data?.message ||
+          "Terjadi kesalahan saat menyetujui bukti pembayaran.",
+        severity: "error",
+      });
+    } finally {
+      setTimeout(() => {
+        setApprovingPayment(false);
+        setLoading(false);
+        setLoadingMessage("Loading...");
+      }, 500);
+    }
   };
 
-  const handleApprove = (record) => {
-    // console.log("edit record", record);
-    setSelectedData(record);
-    setOpenApprovalModal(true);
+  const handleDeletePayment = async () => {
+    if (!selectedData?.payments?.payment_id) return;
+
+    setLoadingMessage("Menghapus bukti pembayaran...");
+    setLoading(true);
+
+    try {
+      const response = await axios.delete(
+        `/api/payments/${selectedData.payments.payment_id}`,
+      );
+
+      if (response?.data?.success) {
+        setSnackbar({
+          open: true,
+          message: response.data.message || "Bukti pembayaran berhasil dihapus.",
+          severity: "success",
+        });
+        await getDataPayments();
+        setOpenDeleteModal(false);
+        setSelectedData(null);
+        return;
+      }
+
+      setSnackbar({
+        open: true,
+        message: response?.data?.message || "Gagal menghapus bukti pembayaran.",
+        severity: "error",
+      });
+    } catch (error) {
+      console.error("Error delete payment:", error);
+      setSnackbar({
+        open: true,
+        message:
+          error?.response?.data?.message || "Gagal menghapus bukti pembayaran.",
+        severity: "error",
+      });
+    } finally {
+      setTimeout(() => {
+        setLoading(false);
+        setLoadingMessage("Loading...");
+      }, 500);
+    }
   };
 
-  // useReactToPrint di level atas
-  const handlePrintAction = useReactToPrint({
-    contentRef: printRef, // langsung ref
-    documentTitle: "Persetujuan Sewa Ruangan",
-    onAfterPrint: () => setTimeout(() => setPrintData(null), 200),
+  const handlePrintProofAction = useReactToPrint({
+    contentRef: proofPrintRef,
+    documentTitle: "Bukti Pembayaran",
+    onAfterPrint: () => setTimeout(() => setProofPrintData(null), 200),
   });
 
   const handleReceiptPrintAction = useReactToPrint({
@@ -373,587 +459,231 @@ const Payments = () => {
           margin: 0;
           padding: 0;
           width: 216mm;
-          height: 279mm;
-          overflow: hidden;
+          min-height: 279mm;
+          overflow: visible;
         }
       }
     `,
-    onAfterPrint: () => {
-      setReceiptPrintData(null);
-      setReceiptPrintType(null);
-    },
+    onAfterPrint: () => setTimeout(() => setReceiptPrintData(null), 200),
   });
 
-  // panggil print setelah ref sudah render
   useEffect(() => {
-    if (!printData) return;
-
-    // beri jeda supaya komponen PersetujuanSewaRuangan ter-render dulu
-    const timeout = setTimeout(() => {
-      if (printRef.current) {
-        handlePrintAction();
-      } else {
-        console.error("Belum ada ref untuk print");
-      }
-    }, 200); // jeda 200ms
-
-    return () => clearTimeout(timeout);
-  }, [printData]);
-
-  useEffect(() => {
-    if (!receiptPrintData || !receiptPrintType) return;
+    if (!proofPrintData) return;
 
     const timeout = setTimeout(() => {
-      if (receiptPrintRef.current) {
-        handleReceiptPrintAction();
-      } else {
-        console.error("Belum ada ref untuk print kwitansi");
-      }
+      if (proofPrintRef.current) handlePrintProofAction();
     }, 200);
 
     return () => clearTimeout(timeout);
-  }, [receiptPrintData, receiptPrintType]);
+  }, [proofPrintData, handlePrintProofAction]);
 
-  // handlers
-  const handlePrint = (record) => {
-    // cukup set selectedData — useEffect akan menangani memanggil printAction
-    setPrintData(record);
-  };
+  useEffect(() => {
+    if (!receiptPrintData) return;
 
-  const handlePrintReceipt = (record, type) => {
-    console.log("print receipt", record);
+    const timeout = setTimeout(() => {
+      if (receiptPrintRef.current) handleReceiptPrintAction();
+    }, 200);
 
-    setReceiptPrintData(record);
-    setReceiptPrintType(type);
-  };
+    return () => clearTimeout(timeout);
+  }, [receiptPrintData, handleReceiptPrintAction]);
 
-  // Utility untuk filter dinamis
-  const getValueByPath = (obj, path) => {
-    if (Array.isArray(path)) {
-      return path.reduce((o, key) => o?.[key], obj);
-    }
-    return obj?.[path]; // kalau string, langsung ambil property
-  };
-
-  const generateFilters = (data, path, map = null) => {
-    return [...new Set(data.map((item) => getValueByPath(item, path)))]
-      .filter((val) => val !== undefined && val !== null)
-      .map((val) => ({
-        text: map ? map[val] : val,
-        value: val,
-      }));
-  };
-
-  const createOnFilter = (path) => {
-    return (value, record) => {
-      const recordValue = getValueByPath(record, path);
-      return recordValue === value;
-    };
-  };
-
-  // Mapping data untuk filter
-  // Mapping untuk status
-  const approvalStatusMap = {
-    proses: "Dalam Proses",
-    approved: "Disetujui",
-    rejected: "Ditolak",
-  };
-
-  // Mapping untuk cicilan
-  const cicilanMap = {
-    1: "Uang Muka(DP)",
-    2: "Cicilan 1",
-    3: "Cicilan 2",
-    4: "Cicilan 3",
-  };
-
-  // Mapping untuk tipe pembayaran
-  const paymentTypeMap = {
-    cicilan: "Cicilan",
-    lunas: "Lunas",
-  };
-
-  // nested pakai array
-  const tenantName = generateFilters(dataPayments, [
-    "tenant_application",
-    "tenant_name",
-  ]);
-
-  const paymentTypeFilters = generateFilters(
-    dataPayments,
-    ["tenant_application", "payment_type"],
-    paymentTypeMap,
+  const columns = useMemo(
+    () =>
+      createPaymentColumns({
+        data: dataPayments,
+        user,
+        theme,
+        onDetail: handleDetail,
+        onProgress: handleProgress,
+        onPrintProof: handlePrintProof,
+        onPrintReceiptBundle: handlePrintReceiptBundle,
+        onEdit: handleEdit,
+        onDelete: handleDelete,
+        onReject: handleReject,
+      }),
+    [dataPayments, user, theme],
   );
-
-  const cicilanFilters = generateFilters(
-    dataPayments,
-    ["payments", "payment_number"],
-    cicilanMap,
-  );
-
-  const approvalStatusFilters = generateFilters(
-    dataPayments,
-    ["payments", "approval_status"],
-    approvalStatusMap,
-  );
-
-  // Utility untuk filter dinamis
-  const filteredData = dataPayments.filter((item) => {
-    if (!searchText) return true;
-    const search = searchText.toLowerCase();
-
-    return (
-      item?.tenant_application?.tenant_name?.toLowerCase().includes(search) ||
-      item?.tenant_application?.payment_type?.toLowerCase().includes(search) ||
-      (item?.payments?.payment_number &&
-        `cicilan ${item.payments.payment_number}`
-          .toLowerCase()
-          .includes(search)) ||
-      (item?.payments?.approval_status &&
-        approvalStatusMap[item.payments.approval_status]
-          ?.toLowerCase()
-          .includes(search))
-    );
-  });
-
-  const columns = [
-    {
-      title: "No",
-      dataIndex: "index",
-      render: (text, record, index) => index + 1,
-      width: 50,
-      align: "center",
-    },
-    {
-      title: "Nama Penyewa",
-      dataIndex: ["tenant_application", "tenant_name"],
-      filters: tenantName,
-      onFilter: createOnFilter(["tenant_application", "tenant_name"]),
-      filterSearch: true,
-      sorter: (a, b) =>
-        a.tenant_application.tenant_name.localeCompare(
-          b.tenant_application.tenant_name,
-        ),
-      sortDirections: ["ascend", "descend"],
-      render: (text, record) => (
-        <Typography
-          sx={{
-            fontWeight: "bold",
-            fontSize: "12px",
-            textTransform: "capitalize",
-            cursor: "pointer",
-            "&:hover": {
-              color: theme.palette.primary.main,
-              textDecoration: "underline",
-            },
-          }}
-        >
-          {record?.tenant_application?.tenant_name}
-        </Typography>
-      ),
-      width: 200,
-    },
-    {
-      title: "Tipe Pembayaran",
-      dataIndex: ["tenant_application", "payment_type"],
-      filters: paymentTypeFilters,
-      onFilter: createOnFilter(["tenant_application", "payment_type"]),
-      filterSearch: true,
-      render: (text, record) => {
-        return (
-          <Tag
-            // warna random berdasarkan angka ganjil genap
-            color={
-              record?.tenant_application?.payment_type === "cicilan"
-                ? "blue"
-                : "green"
-            }
-            key={record.payment_id}
-            style={{ fontWeight: "bold" }}
-          >
-            {record?.tenant_application?.payment_type === "cicilan"
-              ? "Cicilan"
-              : "Lunas"}
-          </Tag>
-        );
-      },
-      width: 160,
-    },
-    {
-      title: "Tahap Cicilan",
-      dataIndex: ["payments", "payment_number"],
-      filters: cicilanFilters,
-      onFilter: createOnFilter(["payments", "payment_number"]),
-      filterSearch: true,
-      render: (text, record) => {
-        return record.tenant_application.payment_type === "cicilan" ? (
-          <Tag
-            // warna random berdasarkan angka ganjil genap
-            color={
-              record.payments?.payment_number === 1
-                ? "volcano"
-                : record.payments?.payment_number === 2
-                  ? "lime"
-                  : "orange"
-            }
-            key={record.payments?.payment_id}
-            style={{ fontWeight: "bold" }}
-          >
-            {record.payments?.payment_number === 1
-              ? "Uang Muka (DP)"
-              : record.payments?.payment_number === 2
-                ? "Cicilan 1"
-                : record.payments?.payment_number === 3
-                  ? "Cicilan 2"
-                  : "Cicilan 3"}
-          </Tag>
-        ) : (
-          <Typography
-            sx={{ fontWeight: "bold", fontSize: "12px", textAlign: "center" }}
-          >
-            -
-          </Typography>
-        );
-      },
-      width: 160,
-    },
-    {
-      title: "Status Verifikasi",
-      dataIndex: ["payments", "approval_status"],
-      filters: approvalStatusFilters,
-      onFilter: createOnFilter(["payments", "approval_status"]),
-      // filterSearch: true,
-      render: (text, record) => {
-        return (
-          <Tag
-            // warna random berdasarkan angka ganjil genap
-            color={
-              record.payments?.approval_status === "proses"
-                ? "yellow"
-                : record.payments?.approval_status === "rejected"
-                  ? "red"
-                  : "green"
-            }
-            key={record.payments?.payment_id}
-            style={{
-              fontWeight: "bold",
-              cursor: "pointer",
-            }}
-            onClick={() => handleVerification(record)}
-          >
-            {record.payments?.approval_status === "proses"
-              ? `Dalam Proses`
-              : record.payments?.approval_status === "rejected"
-                ? "Ditolak"
-                : "Disetujui"}
-          </Tag>
-        );
-      },
-      width: 150,
-    },
-    {
-      title: "Tanggal Pembayaran",
-      dataIndex: ["payments", "payment_date"],
-      render: (text, record) => {
-        return (
-          <Typography sx={{ fontWeight: "bold", fontSize: "12px" }}>
-            {moment(record.payments?.payment_date).format("D MMMM YYYY")}
-          </Typography>
-        );
-      },
-      width: 180,
-    },
-    {
-      title: "Total Pembayaran",
-      dataIndex: ["payments", "payment_amount"],
-      filterSearch: true,
-      render: (text, record) =>
-        record.tenant_application?.payment_type === "cicilan" ? (
-          <Typography
-            sx={{ fontWeight: "bold", fontSize: "12px", textAlign: "end" }}
-          >
-            {formatRupiah(Number(record.payments?.payment_amount))}
-          </Typography>
-        ) : (
-          <Typography
-            sx={{ fontWeight: "bold", fontSize: "12px", textAlign: "end" }}
-          >
-            {formatRupiah(Number(record.payments?.payment_amount))}
-          </Typography>
-        ),
-      width: 160,
-    },
-    {
-      title: "Actions",
-      key: "action",
-      align: "center",
-      width: 100,
-      fixed: "right",
-      render: (text, record) => (
-        <Box sx={{ display: "flex", gap: 1, justifyContent: "center" }}>
-          <Tooltip title="Detail Pembayaran">
-            <Button
-              size="small"
-              variant={themeMode === "dark" ? "outlined" : "contained"}
-              color="success"
-              onClick={() => handleApprove(record)}
-              sx={{ minWidth: 0, px: 1 }}
-            >
-              <Icon
-                icon="material-symbols:order-approve-outline"
-                fontSize={18}
-                style={{ color: themeMode === "dark" ? "green" : "white" }}
-              />
-            </Button>
-          </Tooltip>
-          {record.payments?.approval_status === "approved" && (
-            <Tooltip title="Print Bukti Bayar">
-              <Button
-                size="small"
-                variant={themeMode === "dark" ? "outlined" : "contained"}
-                color="primary"
-                onClick={() => handlePrint(record)}
-                sx={{ minWidth: 0, px: 1 }}
-              >
-                <Icon icon="streamline-ultimate:print-text" fontSize={18} />
-              </Button>
-            </Tooltip>
-          )}
-          <Tooltip title="Print Kwitansi Penerimaan">
-            <Button
-              size="small"
-              variant={themeMode === "dark" ? "outlined" : "contained"}
-              color="inherit"
-              onClick={() => handlePrintReceipt(record, "contract")}
-              sx={{ minWidth: 0, px: 1 }}
-            >
-              <Icon icon="mdi:receipt-text-send-outline" fontSize={18} />
-            </Button>
-          </Tooltip>
-          <Tooltip title="Print Kwitansi Pembayaran PPH">
-            <Button
-              size="small"
-              variant={themeMode === "dark" ? "outlined" : "contained"}
-              color="warning"
-              onClick={() => handlePrintReceipt(record, "pph")}
-              sx={{ minWidth: 0, px: 1 }}
-            >
-              <Icon icon="mdi:receipt-text-plus-outline" fontSize={18} />
-            </Button>
-          </Tooltip>
-          {user?.role_id !== 8 &&
-            (record.payments?.approval_status === "rejected" ||
-              record.payments?.approval_status === "proses") && (
-              <>
-                <Tooltip title="Edit Pembayaran">
-                  <Button
-                    size="small"
-                    variant={themeMode === "dark" ? "outlined" : "contained"}
-                    color="info"
-                    onClick={() => handleEdit(record)}
-                    sx={{ minWidth: 0, px: 1 }}
-                  >
-                    <Icon icon="line-md:edit" fontSize={18} />
-                  </Button>
-                </Tooltip>
-                <Tooltip title="Tolak Pembayaran">
-                  <Button
-                    size="small"
-                    variant={themeMode === "dark" ? "outlined" : "contained"}
-                    color="error"
-                    onClick={() => handleDelete(record)}
-                    sx={{ minWidth: 0, px: 1 }}
-                  >
-                    <Icon icon="line-md:close-circle" fontSize={18} />
-                  </Button>
-                </Tooltip>
-              </>
-            )}
-          {user?.role_id === 8 &&
-            record.payments?.approval_status === "proses" && (
-              <Tooltip title="Tolak Pembayaran">
-                <Button
-                  size="small"
-                  variant={themeMode === "dark" ? "outlined" : "contained"}
-                  color="error"
-                  onClick={() => handleReject(record)}
-                  sx={{ minWidth: 0, px: 1 }}
-                >
-                  <Icon icon="line-md:close-circle" fontSize={18} />
-                </Button>
-              </Tooltip>
-            )}
-        </Box>
-      ),
-    },
-  ];
 
   return (
-    <Box sx={{ width: "100%", height: "100%", minHeight: "100%", p: 2 }}>
-      {/* Component Breadcrumbs disini */}
-      <BreadcrumbPage menuList={MENU_CONFIG} />
-
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "flex-end",
-          transition: "all 0.3s",
-          mb: 2,
-          mt: 4,
-        }}
-      >
-        <Button
-          variant={themeMode === "dark" ? "outlined" : "contained"}
-          onClick={() => setOpenAddModal(true)}
-          sx={{
-            textTransform: "none",
+    <Box sx={{ width: "100%", height: "100%", minHeight: "100%", p: { xs: 1.25, sm: 2 } }}>
+      <Stack spacing={{ xs: 1.5, lg: 2 }}>
+        <PageHeader
+          breadcrumbs={[
+            {
+              label: "Transactions",
+              value: "transactions",
+              icon: "solar:money-bag-bold-duotone",
+              path: "#",
+            },
+            {
+              label: "Payments",
+              value: "payments",
+              icon: "streamline:payment-10-remix",
+              path: "/payments",
+            },
+          ]}
+          title="Payments"
+          description="Kelola bukti pembayaran tenant, validasi keuangan, status verifikasi, dan cetak dokumen pembayaran dalam satu halaman."
+          icon="streamline:payment-10-remix"
+          actionSx={{
+            width: { xs: "100%", md: "auto" },
             display: "flex",
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 1,
-            fontWeight: "bold",
+            justifyContent: { xs: "stretch", md: "flex-end" },
           }}
+          action={
+            Number(user?.role_id) !== 8 && (
+              <Button
+                fullWidth
+                variant="contained"
+                startIcon={<Icon icon="streamline:payment-10-remix" />}
+                onClick={() => setOpenAddModal(true)}
+                sx={{
+                  minHeight: 46,
+                  px: { xs: 2, sm: 2.5 },
+                  borderRadius: 2,
+                  fontFamily: "Poppins",
+                  fontWeight: 700,
+                  textTransform: "none",
+                  boxShadow:
+                    theme.palette.mode === "dark"
+                      ? "0 6px 14px rgba(255, 152, 0, 0.18)"
+                      : "0 6px 14px rgba(230, 9, 9, 0.16)",
+                }}
+              >
+                Tambah Pembayaran
+              </Button>
+            )
+          }
+        />
+
+        <Grid container spacing={{ xs: 1.25, md: 1.5 }}>
+          {paymentStats.map((item) => (
+            <Grid key={item.label} size={{ xs: 6, md: 3 }}>
+              <SummaryStatCard {...item} />
+            </Grid>
+          ))}
+        </Grid>
+
+        <DataTableShell
+          title="Daftar Pembayaran"
+          description={`${filteredData.length} dari ${dataPayments.length} pembayaran ditampilkan`}
+          searchValue={searchText}
+          searchPlaceholder="Cari penyewa, NIK, ruangan, status..."
+          onSearchChange={setSearchText}
         >
-          Tambah
-          <Icon icon="streamline:payment-10-remix" fontSize="20px" />
-        </Button>
-      </Box>
-      <ConfigProvider
-        theme={{
-          algorithm:
-            themeMode === "dark"
-              ? antdTheme.darkAlgorithm
-              : antdTheme.defaultAlgorithm,
-          token: {
-            colorPrimary: theme.palette.primary.main, // warna utama (angka aktif, outline, dsb)
-            // colorText: theme.palette.text.primary, // warna teks default
-            // colorBgContainer: theme.palette.background.default, // background tabel
-          },
-        }}
-      >
-        <Paper
-          elevation={6}
-          sx={{
-            p:
-              filteredData.length > 0
-                ? "10px 15px 0px 15px"
-                : "10px 15px 10px 15px",
-            width: "100%",
-            bgcolor: "background.default",
-            overflowX: "auto",
-          }}
-        >
-          <Input.Search
-            placeholder="Cari..."
-            allowClear
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-            style={{ width: 250, marginBottom: 20, marginTop: 10 }}
-          />
-          <Table
+          <ReusableAntTable
             rowKey={(record) => record.payments?.payment_id}
             columns={columns}
             dataSource={filteredData}
-            onChange={onChange}
-            showSorterTooltip={{ target: "sorter-icon" }}
-            scroll={{ x: "max-content", y: 420 }}
-            pagination={{
-              pageSize: pageSize,
-              showSizeChanger: true,
-              pageSizeOptions: [5, 10, 20, 50],
-              showTotal: (total, range) =>
-                `${range[0]}-${range[1]} dari ${total} data`,
+            loading={loading}
+            pageSize={pageSize}
+            pageSizeOptions={PAYMENT_PAGE_SIZE_OPTIONS}
+            tableLayout="fixed"
+            scroll={{ x: PAYMENT_TABLE_SCROLL_WIDTH, y: 430 }}
+            onPageSizeChange={setPageSize}
+            fixedActionColumn={{
+              className: "payments-action-column",
+              buttonsClassName: "payments-action-buttons",
+              width: PAYMENT_ACTION_COLUMN_WIDTH,
+              paddingX: 14,
             }}
           />
-        </Paper>
-      </ConfigProvider>
-      <AddPayment
+        </DataTableShell>
+      </Stack>
+
+      <PaymentFormModal
         open={openAddModal}
+        mode="create"
         onClose={() => setOpenAddModal(false)}
         getDataPayments={getDataPayments}
         onNotify={(notify) => setSnackbar(notify)}
         loadingTrue={() => setLoading(true)}
         loadingFalse={() => setLoading(false)}
-        setLoadingMessage={setLoadingMessage}
         user={user}
       />
-      <EditPayment
+      <PaymentFormModal
         open={openEditModal}
+        mode="edit"
         onClose={() => setOpenEditModal(false)}
         selectedCurrentData={selectedData}
         getDataPayments={getDataPayments}
         onNotify={(notify) => setSnackbar(notify)}
         loadingTrue={() => setLoading(true)}
         loadingFalse={() => setLoading(false)}
-        setLoadingMessage={setLoadingMessage}
         user={user}
       />
-      <DeletePayment
+      <CrudConfirmModal
         open={openDeleteModal}
-        onClose={() => setOpenDeleteModal(false)}
-        selectedData={selectedData}
-        getDataPayments={getDataPayments}
-        onNotify={(notify) => setSnackbar(notify)}
-        loadingTrue={() => setLoading(true)}
-        loadingFalse={() => setLoading(false)}
-      />
-      <ApprovalModal
-        open={openApprovalModal}
-        onClose={() => setOpenApprovalModal(false)}
-        selectedData={selectedData}
+        title="Hapus Bukti Pembayaran"
+        description="Konfirmasi penghapusan bukti pembayaran dari sistem."
+        confirmDescription={
+          <>
+            Bukti pembayaran{" "}
+            <Box component="strong" sx={{ color: "text.primary", fontWeight: 700 }}>
+              {selectedData?.tenant_application?.tenant_name || "-"}
+            </Box>{" "}
+            pada tahap{" "}
+            <Box component="strong" sx={{ color: "text.primary", fontWeight: 700 }}>
+              {selectedData?.payments?.payment_number === 1
+                ? "Uang Muka (DP)"
+                : `Cicilan ${Number(selectedData?.payments?.payment_number || 1) - 1}`}
+            </Box>{" "}
+            akan dihapus dari sistem.
+          </>
+        }
+        confirmLabel="Hapus Data"
+        loadingLabel="Menghapus bukti pembayaran..."
+        severity="error"
         loading={loading}
-        loadingTrue={() => setLoading(true)}
-        loadingFalse={() => setLoading(false)}
-        setLoadingMessage={setLoadingMessage}
-        user={user}
-        getDataPayments={getDataPayments}
-        onNotify={(notify) => setSnackbar(notify)}
+        onClose={() => !loading && setOpenDeleteModal(false)}
+        onConfirm={handleDeletePayment}
+      />
+      <TenantLeaseDetailModal
+        open={openDetailModal}
+        onClose={() => setOpenDetailModal(false)}
+        selectedData={normalizePaymentForLeaseDetail(selectedData)}
+        canApprove={
+          Number(user?.role_id) === 8 &&
+          selectedData?.payments?.approval_status === "proses" &&
+          !["approved", "rejected"].includes(
+            selectedData?.payment_approval?.status,
+          )
+        }
+        approving={approvingPayment}
+        onApprove={handleApprovePayment}
+        paymentContext={buildPaymentContext(selectedData)}
       />
       <RejectReasonModal
         open={openRejectedModal}
         onClose={() => setOpenRejectedModal(false)}
         title="Tolak Bukti Pembayaran"
         description="Tuliskan alasan agar riwayat validasi pembayaran tercatat jelas."
-        confirmLabel="Tolak Bukti Pembayaran"
+        confirmLabel="Tolak Pembayaran"
         loading={loading}
         onSubmit={handleRejectPayment}
       />
       <ApprovalTrackingModal
-        open={openVerificationModal}
-        onClose={() => setOpenVerificationModal(false)}
+        open={openProgressModal}
+        onClose={() => setOpenProgressModal(false)}
         selectedData={selectedData}
         variant="payment"
         loadingTrue={() => setLoading(true)}
         loadingFalse={() => setLoading(false)}
         setLoadingMessage={setLoadingMessage}
       />
-      <ImagePreviewModal
-        open={openBuktiPembayaranModal}
-        onClose={() => setOpenBuktiPembayaranModal(false)}
-        imageUrl={`/api${selectedData?.payments?.proof_file_path}`}
-      />
       <LoadingBackdrop message={loadingMessage} open={loading} />
-      {/* Snackbar notification */}
       <Notification
         open={snackbar.open}
         message={snackbar.message}
         severity={snackbar.severity}
         onClose={() => setSnackbar({ ...snackbar, open: false })}
       />
-      {/* Dokumen tersembunyi (untuk print) */}
+
       <div style={{ display: "none" }}>
-        {printData && <BuktiPembayaran ref={printRef} data={printData} />}
+        {proofPrintData && <BuktiPembayaran ref={proofPrintRef} data={proofPrintData} />}
       </div>
       <div style={{ display: "none" }}>
-        {receiptPrintData && receiptPrintType === "contract" && (
-          <KwitansiPembayaran ref={receiptPrintRef} data={receiptPrintData} />
-        )}
-        {receiptPrintData && receiptPrintType === "pph" && (
-          <KwitansiPph ref={receiptPrintRef} data={receiptPrintData} />
-        )}
+        {receiptPrintData && <KwitansiBundle ref={receiptPrintRef} data={receiptPrintData} />}
       </div>
     </Box>
   );

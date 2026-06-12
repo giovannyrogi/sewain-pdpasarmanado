@@ -17,6 +17,8 @@ export default function SummaryStatCard({ label, value, icon, color }) {
   return (
     <Box
       sx={{
+        width: "100%",
+        height: "100%",
         p: { xs: 1.45, sm: 1.65 },
         minHeight: { xs: 104, sm: 116 },
         borderRadius: 2.5,
@@ -39,7 +41,7 @@ export default function SummaryStatCard({ label, value, icon, color }) {
           sx={{
             color: theme.ui.mutedText,
             fontFamily: "Poppins",
-            fontWeight: 750,
+            fontWeight: 700,
             fontSize: { xs: 11.5, sm: 12 },
             lineHeight: 1.4,
           }}
@@ -66,7 +68,7 @@ export default function SummaryStatCard({ label, value, icon, color }) {
       <Typography
         sx={{
           fontFamily: "Poppins",
-          fontWeight: 850,
+          fontWeight: 700,
           fontSize: { xs: 25, sm: 30 },
           lineHeight: 1,
           letterSpacing: 0,

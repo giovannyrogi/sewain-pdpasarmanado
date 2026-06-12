@@ -33,8 +33,8 @@ export async function POST(req) {
     if (roleResponse) return roleResponse;
 
     const formData = await req.formData();
-    const tenant_application_id = formData.get("tenant_application_id");
-    const reason = formData.get("reason");
+    const tenant_application_id = Number(formData.get("tenant_application_id"));
+    const reason = String(formData.get("reason") || "").trim();
     const surat_file = formData.get("statement_file");
     const authUser = await getAuthenticatedUser();
 
@@ -44,7 +44,14 @@ export async function POST(req) {
 
     const processed_by = authUser.id;
 
-    if (!tenant_application_id || !reason || !surat_file || !processed_by) {
+    if (!Number.isInteger(tenant_application_id) || tenant_application_id <= 0) {
+      return new Response(
+        JSON.stringify({ success: false, message: "Data kontrak tidak valid" }),
+        { status: 400 }
+      );
+    }
+
+    if (!reason || reason.length > 150 || !surat_file || !processed_by) {
       return new Response(
         JSON.stringify({ success: false, message: "Data wajib belum lengkap" }),
         { status: 400 }
@@ -176,7 +183,10 @@ export async function POST(req) {
     await client.query("ROLLBACK");
     console.error("Error insert tenant early termination", err);
     return new Response(
-      JSON.stringify({ success: false, message: err.message }),
+      JSON.stringify({
+        success: false,
+        message: "Terjadi kesalahan saat membuat pengajuan nonaktif tenant",
+      }),
       { status: 500 }
     );
   } finally {
@@ -213,6 +223,21 @@ export async function GET(req) {
         ti.nik AS tenant_nik,
         ti.phone AS tenant_phone,
         ti.ktp_file_path,
+        ti.birth_place,
+        ti.birth_date,
+        ti.nationality,
+        ti.religion,
+        ti.occupation,
+        ti.street_address,
+        ti.rt,
+        ti.rw,
+        ti.kelurahan,
+        ti.district,
+        ti.city,
+        ti.province,
+        ti.postal_code,
+        ti.status AS tenant_identity_status,
+        ti.notes AS tenant_identity_notes,
 
         -- data application
         ta.start_date,
@@ -226,8 +251,16 @@ export async function GET(req) {
         ta.admin_fee,
         ta.down_payment,
         ta.remaining_payment,
+        ta.current_tenor,
+        ta.estimated_installment_1,
+        ta.estimated_installment_2,
+        ta.estimated_installment_3,
+        ta.estimated_installment_1_date,
+        ta.estimated_installment_2_date,
+        ta.estimated_installment_3_date,
         ta.approval_status AS tenant_approval_status,
         ta.current_step AS tenant_current_step,
+        ta.created_at,
         ta.user_id,
         ta.tenant_identity_id,
 
@@ -275,6 +308,21 @@ export async function GET(req) {
       tenant_nik: row.tenant_nik,
       tenant_phone: row.tenant_phone,
       ktp_file_path: row.ktp_file_path,
+      birth_place: row.birth_place,
+      birth_date: row.birth_date,
+      nationality: row.nationality,
+      religion: row.religion,
+      occupation: row.occupation,
+      street_address: row.street_address,
+      rt: row.rt,
+      rw: row.rw,
+      kelurahan: row.kelurahan,
+      district: row.district,
+      city: row.city,
+      province: row.province,
+      postal_code: row.postal_code,
+      tenant_identity_status: row.tenant_identity_status,
+      tenant_identity_notes: row.tenant_identity_notes,
 
       // data application
       start_date: row.start_date,
@@ -288,8 +336,16 @@ export async function GET(req) {
       admin_fee: row.admin_fee,
       down_payment: row.down_payment,
       remaining_payment: row.remaining_payment,
+      current_tenor: row.current_tenor,
+      estimated_installment_1: row.estimated_installment_1,
+      estimated_installment_2: row.estimated_installment_2,
+      estimated_installment_3: row.estimated_installment_3,
+      estimated_installment_1_date: row.estimated_installment_1_date,
+      estimated_installment_2_date: row.estimated_installment_2_date,
+      estimated_installment_3_date: row.estimated_installment_3_date,
       tenant_approval_status: row.tenant_approval_status,
       tenant_current_step: row.tenant_current_step,
+      created_at: row.created_at,
       user_id: row.user_id,
 
       // lokasi & ruangan
@@ -316,7 +372,10 @@ export async function GET(req) {
   } catch (err) {
     console.error("Error GET tenant terminations", err);
     return new Response(
-      JSON.stringify({ success: false, message: err.message }),
+      JSON.stringify({
+        success: false,
+        message: "Terjadi kesalahan saat mengambil data nonaktif tenant",
+      }),
       { status: 500 }
     );
   }

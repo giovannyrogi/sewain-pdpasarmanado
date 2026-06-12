@@ -18,6 +18,22 @@ export async function PUT(request, { params }) {
       return unauthorizedResponse();
     }
     const approver_id = authUser.id;
+    const approvalId = Number(id);
+    const tenantApplicationId = Number(tenant_application_id);
+
+    if (!Number.isInteger(approvalId) || approvalId <= 0) {
+      return Response.json(
+        { success: false, message: "Parameter approval tidak valid" },
+        { status: 400 },
+      );
+    }
+
+    if (!Number.isInteger(tenantApplicationId) || tenantApplicationId <= 0) {
+      return Response.json(
+        { success: false, message: "Parameter permohonan tidak valid" },
+        { status: 400 },
+      );
+    }
 
     if (!notes) {
       return new Response(
@@ -34,7 +50,7 @@ export async function PUT(request, { params }) {
     // Ambil data tenant_approval yang akan diupdate
     const approvalRes = await client.query(
       `SELECT * FROM tenant_approval WHERE id=$1`,
-      [id]
+      [approvalId]
     );
 
     if (approvalRes.rows.length === 0) {
@@ -49,7 +65,7 @@ export async function PUT(request, { params }) {
     }
 
     const approvalData = approvalRes.rows[0];
-    if (Number(approvalData.tenant_application_id) !== Number(tenant_application_id)) {
+    if (Number(approvalData.tenant_application_id) !== tenantApplicationId) {
       await client.query("ROLLBACK");
       return Response.json(
         { success: false, message: "Data approval tidak sesuai dengan permohonan" },
@@ -70,7 +86,7 @@ export async function PUT(request, { params }) {
     // Ambil current_step dari tenant_application
     const tenantRes = await client.query(
       `SELECT current_step FROM tenant_application WHERE id=$1`,
-      [tenant_application_id]
+      [tenantApplicationId]
     );
     const currentStep = tenantRes.rows[0]?.current_step || 1;
 
@@ -81,7 +97,7 @@ export async function PUT(request, { params }) {
          FROM tenant_approval ta
          JOIN roles r ON ta.role_id = r.id
          WHERE ta.tenant_application_id=$1 AND ta.step_order=$2`,
-        [tenant_application_id, currentStep]
+        [tenantApplicationId, currentStep]
       );
 
       const prevRoleName =
@@ -102,7 +118,7 @@ export async function PUT(request, { params }) {
       `UPDATE tenant_approval 
        SET status=$1, notes=$2, approver_id=$3, approved_at=NOW()
        WHERE id=$4 RETURNING *`,
-      [status, notes, approver_id, id]
+      [status, notes, approver_id, approvalId]
     );
 
     if (updateApproval.rowCount === 0) {
@@ -121,7 +137,7 @@ export async function PUT(request, { params }) {
       `UPDATE tenant_application
        SET approval_status='rejected'
        WHERE id=$1 RETURNING *`,
-      [tenant_application_id]
+      [tenantApplicationId]
     );
 
     if (updateApplication.rowCount === 0) {
@@ -137,7 +153,7 @@ export async function PUT(request, { params }) {
 
     const tenantContext = await getTenantNotificationContext(
       client,
-      tenant_application_id,
+      tenantApplicationId,
     );
 
     // Notifikasi reject hanya dikirim ke pihak terkait agar inbox role lain

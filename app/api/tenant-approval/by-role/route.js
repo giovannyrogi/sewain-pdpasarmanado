@@ -19,7 +19,18 @@ export async function GET(req) {
       );
     }
 
-    if (Number(roleId) !== Number(user.role_id) && Number(user.role_id) !== 1) {
+    const normalizedRoleId = Number(roleId);
+    if (!Number.isInteger(normalizedRoleId) || normalizedRoleId <= 0) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: "Parameter role_id tidak valid",
+        }),
+        { status: 400 }
+      );
+    }
+
+    if (normalizedRoleId !== Number(user.role_id) && Number(user.role_id) !== 1) {
       return forbiddenResponse("Anda tidak dapat mengakses data approval role lain.");
     }
 
@@ -89,7 +100,7 @@ export async function GET(req) {
       WHERE ta.role_id = $1
       ORDER BY ta.created_at DESC
       `,
-      [roleId]
+      [normalizedRoleId]
     );
 
     return new Response(
@@ -105,7 +116,7 @@ export async function GET(req) {
     return new Response(
       JSON.stringify({
         success: false,
-        message: err.message,
+        message: "Terjadi kesalahan server saat mengambil data approval.",
       }),
       { status: 500 }
     );
