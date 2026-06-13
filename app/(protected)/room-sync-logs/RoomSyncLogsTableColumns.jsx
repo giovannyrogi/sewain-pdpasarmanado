@@ -171,55 +171,6 @@ const SourceChip = ({ source }) => {
   );
 };
 
-const MetricPill = ({ type, value }) => {
-  const config = metricConfig[type];
-
-  return (
-    <Box
-      sx={(theme) => {
-        const color = getPaletteColor(theme, config.palette);
-        return {
-          display: "inline-flex",
-          alignItems: "center",
-          gap: 0.75,
-          minHeight: 34,
-          px: 1,
-          py: 0.55,
-          borderRadius: 1.75,
-          border: `1px solid ${alpha(color, theme.palette.mode === "dark" ? 0.38 : 0.28)}`,
-          bgcolor: alpha(color, theme.palette.mode === "dark" ? 0.16 : 0.1),
-        };
-      }}
-    >
-      <Icon icon={config.icon} fontSize={16} />
-      <Typography
-        component="span"
-        sx={(theme) => ({
-          color: theme.ui.mutedText,
-          fontFamily: "Poppins",
-          fontSize: 11.5,
-          fontWeight: 700,
-          lineHeight: 1,
-        })}
-      >
-        {config.label}
-      </Typography>
-      <Typography
-        component="span"
-        sx={(theme) => ({
-          color: getPaletteColor(theme, config.palette),
-          fontFamily: "Poppins",
-          fontSize: 16,
-          fontWeight: 700,
-          lineHeight: 1,
-        })}
-      >
-        {value || 0}
-      </Typography>
-    </Box>
-  );
-};
-
 export const createRoomSyncLogColumns = ({ onViewDetail }) => [
   {
     title: "No",
@@ -235,10 +186,14 @@ export const createRoomSyncLogColumns = ({ onViewDetail }) => [
     sorter: (a, b) => new Date(a.started_at) - new Date(b.started_at),
     render: (_, record) => (
       <Stack spacing={0.4}>
-        <Typography sx={{ fontWeight: 700, fontFamily: "Poppins" }}>
+        <Typography
+          sx={{ fontWeight: 700, fontFamily: "Poppins", fontSize: 12 }}
+        >
           {formatSyncDateTime(record.started_at)}
         </Typography>
-        <Typography sx={{ fontSize: 12, color: "text.secondary", fontWeight: 600 }}>
+        <Typography
+          sx={{ fontSize: 12, color: "text.secondary", fontWeight: 600 }}
+        >
           Selesai: {formatSyncDateTime(record.finished_at)}
         </Typography>
       </Stack>
@@ -256,23 +211,11 @@ export const createRoomSyncLogColumns = ({ onViewDetail }) => [
     ),
   },
   {
-    title: "Hasil Proses",
-    dataIndex: "total_checked",
-    width: 330,
-    render: (_, record) => (
-      <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-        <MetricPill type="checked" value={record.total_checked} />
-        <MetricPill type="released" value={record.total_released} />
-        <MetricPill type="skipped" value={record.total_skipped} />
-      </Stack>
-    ),
-  },
-  {
     title: "Eksekutor",
     dataIndex: "executed_by_name",
     width: 190,
     render: (_, record) => (
-      <Typography sx={{ fontWeight: 700, fontFamily: "Poppins" }}>
+      <Typography sx={{ fontWeight: 700, fontFamily: "Poppins", fontSize: 12 }}>
         {record.trigger_source === "cron"
           ? "Sistem Cron"
           : record.executed_by_name || "-"}
@@ -285,7 +228,13 @@ export const createRoomSyncLogColumns = ({ onViewDetail }) => [
     width: 260,
     ellipsis: true,
     render: (value) => (
-      <Typography sx={{ color: value ? "error.main" : "text.secondary", fontWeight: 600 }}>
+      <Typography
+        sx={{
+          color: value ? "error.main" : "text.secondary",
+          fontWeight: 600,
+          fontSize: 12,
+        }}
+      >
         {value || "Tidak ada error"}
       </Typography>
     ),
@@ -298,7 +247,10 @@ export const createRoomSyncLogColumns = ({ onViewDetail }) => [
     align: "center",
     className: "room-sync-actions-cell",
     render: (_, record) => (
-      <Box className="room-sync-actions" sx={{ display: "flex", justifyContent: "center" }}>
+      <Box
+        className="room-sync-actions"
+        sx={{ display: "flex", justifyContent: "center" }}
+      >
         <TableActionButton
           title="Lihat detail sinkronisasi"
           icon="solar:document-text-bold-duotone"
@@ -325,10 +277,14 @@ export const createRoomSyncItemColumns = () => [
     width: 220,
     render: (value, record) => (
       <Stack spacing={0.4}>
-        <Typography sx={{ fontWeight: 700, fontFamily: "Poppins" }}>
+        <Typography
+          sx={{ fontWeight: 700, fontFamily: "Poppins", fontSize: 12 }}
+        >
           {value || "-"}
         </Typography>
-        <Typography sx={{ fontSize: 12, color: "text.secondary", fontWeight: 600 }}>
+        <Typography
+          sx={{ fontSize: 12, color: "text.secondary", fontWeight: 600 }}
+        >
           Dokumen {record.document_number || "-"}
         </Typography>
       </Stack>
@@ -340,10 +296,14 @@ export const createRoomSyncItemColumns = () => [
     width: 220,
     render: (value, record) => (
       <Stack spacing={0.4}>
-        <Typography sx={{ fontWeight: 700, fontFamily: "Poppins" }}>
+        <Typography
+          sx={{ fontWeight: 700, fontFamily: "Poppins", fontSize: 12 }}
+        >
           {value || "-"}
         </Typography>
-        <Typography sx={{ fontSize: 12, color: "text.secondary", fontWeight: 600 }}>
+        <Typography
+          sx={{ fontSize: 12, color: "text.secondary", fontWeight: 600 }}
+        >
           Ruangan {record.room_number || "-"}
         </Typography>
       </Stack>
@@ -360,7 +320,10 @@ export const createRoomSyncItemColumns = () => [
         sx={(theme) => ({
           fontFamily: "Poppins",
           fontWeight: 700,
-          color: value ? theme.palette.primary.main : theme.palette.text.secondary,
+          fontSize: 12,
+          color: value
+            ? theme.palette.primary.main
+            : theme.palette.text.secondary,
           bgcolor: value
             ? alpha(theme.palette.primary.main, 0.14)
             : alpha(theme.palette.text.primary, 0.08),
@@ -373,7 +336,7 @@ export const createRoomSyncItemColumns = () => [
     dataIndex: "lease_end_date",
     width: 230,
     render: (_, record) => (
-      <Typography sx={{ fontWeight: 700, fontFamily: "Poppins" }}>
+      <Typography sx={{ fontWeight: 700, fontFamily: "Poppins", fontSize: 12 }}>
         {record.lease_start_date
           ? moment(record.lease_start_date).format("DD MMM YYYY")
           : "-"}{" "}
@@ -389,7 +352,7 @@ export const createRoomSyncItemColumns = () => [
     dataIndex: "previous_status",
     width: 180,
     render: (_, record) => (
-      <Typography sx={{ fontWeight: 700, fontFamily: "Poppins" }}>
+      <Typography sx={{ fontWeight: 700, fontFamily: "Poppins", fontSize: 12 }}>
         {record.previous_status || "-"} → {record.new_status || "-"}
       </Typography>
     ),
@@ -399,7 +362,14 @@ export const createRoomSyncItemColumns = () => [
     dataIndex: "reason",
     width: 360,
     render: (value) => (
-      <Typography sx={{ color: "text.secondary", fontWeight: 600, lineHeight: 1.6 }}>
+      <Typography
+        sx={{
+          color: "text.secondary",
+          fontWeight: 600,
+          lineHeight: 1.6,
+          fontSize: 12,
+        }}
+      >
         {value || "-"}
       </Typography>
     ),

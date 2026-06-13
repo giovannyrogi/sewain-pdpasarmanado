@@ -50,7 +50,9 @@ const getRunNumber = (value) => Number(value || 0);
 
 const getLatestRunText = (rows) => {
   if (!rows.length) return "Belum sinkron";
-  return rows[0].started_at ? moment(rows[0].started_at).format("DD MMM, HH:mm") : "-";
+  return rows[0].started_at
+    ? moment(rows[0].started_at).format("DD MMM, HH:mm")
+    : "-";
 };
 
 function RunDetailModal({ open, run, items, loading, onClose }) {
@@ -69,7 +71,9 @@ function RunDetailModal({ open, run, items, loading, onClose }) {
     >
       {loading ? (
         <Box sx={{ py: 8, textAlign: "center" }}>
-          <Typography sx={{ fontWeight: 700 }}>Mengambil detail log...</Typography>
+          <Typography sx={{ fontWeight: 700 }}>
+            Mengambil detail log...
+          </Typography>
         </Box>
       ) : (
         <Stack spacing={2}>
@@ -89,7 +93,12 @@ function RunDetailModal({ open, run, items, loading, onClose }) {
               ["Status", getRunStatusLabel(run?.status)],
               ["Mulai", formatSyncDateTime(run?.started_at)],
               ["Selesai", formatSyncDateTime(run?.finished_at)],
-              ["Eksekutor", run?.trigger_source === "cron" ? "Sistem Cron" : run?.executed_by_name || "-"],
+              [
+                "Eksekutor",
+                run?.trigger_source === "cron"
+                  ? "Sistem Cron"
+                  : run?.executed_by_name || "-",
+              ],
               ["Dicek", `${getRunNumber(run?.total_checked)} ruangan`],
               ["Dilepas", `${getRunNumber(run?.total_released)} ruangan`],
               ["Dilewati", `${getRunNumber(run?.total_skipped)} ruangan`],
@@ -106,10 +115,18 @@ function RunDetailModal({ open, run, items, loading, onClose }) {
                       : "rgba(17,24,39,0.03)",
                 }}
               >
-                <Typography sx={{ color: theme.ui.mutedText, fontSize: 12, fontWeight: 700 }}>
+                <Typography
+                  sx={{
+                    color: theme.ui.mutedText,
+                    fontSize: 12,
+                    fontWeight: 700,
+                  }}
+                >
                   {label}
                 </Typography>
-                <Typography sx={{ mt: 0.5, fontWeight: 700 }}>{value}</Typography>
+                <Typography sx={{ mt: 0.5, fontWeight: 700, fontSize: 12 }}>
+                  {value}
+                </Typography>
               </Box>
             ))}
           </Box>
