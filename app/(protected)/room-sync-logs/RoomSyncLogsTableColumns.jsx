@@ -1,0 +1,407 @@
+"use client";
+
+import React from "react";
+import { Box, Chip, Stack, Typography } from "@mui/material";
+import { alpha } from "@mui/material/styles";
+import { Icon } from "@iconify/react";
+import moment from "moment";
+import TableActionButton from "@/app/components/data-table/TableActionButton";
+
+const statusConfig = {
+  completed: {
+    label: "Selesai",
+    color: "success",
+    palette: "success",
+    icon: "solar:check-circle-bold-duotone",
+  },
+  running: {
+    label: "Berjalan",
+    color: "warning",
+    palette: "warning",
+    icon: "solar:refresh-circle-bold-duotone",
+  },
+  skipped: {
+    label: "Dilewati",
+    color: "warning",
+    palette: "warning",
+    icon: "solar:pause-circle-bold-duotone",
+  },
+  failed: {
+    label: "Gagal",
+    color: "error",
+    palette: "error",
+    icon: "solar:close-circle-bold-duotone",
+  },
+};
+
+const sourceConfig = {
+  cron: {
+    label: "Cron VPS",
+    caption: "Otomatis",
+    icon: "solar:server-square-cloud-bold-duotone",
+  },
+  manual: {
+    label: "Manual",
+    caption: "Superadmin",
+    icon: "solar:user-check-rounded-bold-duotone",
+  },
+};
+
+const metricConfig = {
+  checked: {
+    label: "Dicek",
+    icon: "solar:clipboard-check-bold-duotone",
+    palette: "info",
+  },
+  released: {
+    label: "Dilepas",
+    icon: "solar:check-circle-bold-duotone",
+    palette: "success",
+  },
+  skipped: {
+    label: "Dilewati",
+    icon: "solar:pause-circle-bold-duotone",
+    palette: "warning",
+  },
+};
+
+export const formatSyncDateTime = (value) =>
+  value ? moment(value).format("DD MMM YYYY, HH:mm") : "-";
+
+export const getRunStatusLabel = (status) =>
+  statusConfig[status]?.label || status || "-";
+
+export const getRunSourceLabel = (source) =>
+  sourceConfig[source]?.label || source || "-";
+
+const getPaletteColor = (theme, palette) =>
+  theme.palette[palette]?.main || theme.palette.primary.main;
+
+/**
+ * Pill audit dibuat custom agar label status dan sumber sync tetap jelas
+ * pada dark/light theme, tidak terlalu kecil seperti chip default.
+ */
+const AuditPill = ({ icon, label, caption, palette = "primary" }) => (
+  <Box
+    sx={(theme) => {
+      const color = getPaletteColor(theme, palette);
+      return {
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 0.85,
+        minHeight: 34,
+        px: 1,
+        py: 0.55,
+        borderRadius: 1.75,
+        border: `1px solid ${alpha(color, theme.palette.mode === "dark" ? 0.42 : 0.32)}`,
+        bgcolor: alpha(color, theme.palette.mode === "dark" ? 0.18 : 0.11),
+        color,
+      };
+    }}
+  >
+    <Box
+      sx={(theme) => {
+        const color = getPaletteColor(theme, palette);
+        return {
+          width: 24,
+          height: 24,
+          borderRadius: 1.2,
+          display: "grid",
+          placeItems: "center",
+          flexShrink: 0,
+          color,
+          bgcolor: alpha(color, theme.palette.mode === "dark" ? 0.18 : 0.14),
+        };
+      }}
+    >
+      <Icon icon={icon} fontSize={16} />
+    </Box>
+    <Stack spacing={0} sx={{ minWidth: 0 }}>
+      <Typography
+        sx={{
+          fontFamily: "Poppins",
+          fontSize: 12.5,
+          fontWeight: 700,
+          lineHeight: 1.15,
+          whiteSpace: "nowrap",
+        }}
+      >
+        {label}
+      </Typography>
+      {caption && (
+        <Typography
+          sx={(theme) => ({
+            fontFamily: "Poppins",
+            fontSize: 10.5,
+            fontWeight: 600,
+            lineHeight: 1.15,
+            color: theme.ui.mutedText,
+            whiteSpace: "nowrap",
+          })}
+        >
+          {caption}
+        </Typography>
+      )}
+    </Stack>
+  </Box>
+);
+
+const StatusChip = ({ status }) => {
+  const config = statusConfig[status] || statusConfig.skipped;
+
+  return (
+    <AuditPill
+      icon={config.icon}
+      label={config.label}
+      palette={config.palette}
+    />
+  );
+};
+
+const SourceChip = ({ source }) => {
+  const config = sourceConfig[source] || sourceConfig.manual;
+
+  return (
+    <AuditPill
+      icon={config.icon}
+      label={config.label}
+      caption={config.caption}
+      palette="primary"
+    />
+  );
+};
+
+const MetricPill = ({ type, value }) => {
+  const config = metricConfig[type];
+
+  return (
+    <Box
+      sx={(theme) => {
+        const color = getPaletteColor(theme, config.palette);
+        return {
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 0.75,
+          minHeight: 34,
+          px: 1,
+          py: 0.55,
+          borderRadius: 1.75,
+          border: `1px solid ${alpha(color, theme.palette.mode === "dark" ? 0.38 : 0.28)}`,
+          bgcolor: alpha(color, theme.palette.mode === "dark" ? 0.16 : 0.1),
+        };
+      }}
+    >
+      <Icon icon={config.icon} fontSize={16} />
+      <Typography
+        component="span"
+        sx={(theme) => ({
+          color: theme.ui.mutedText,
+          fontFamily: "Poppins",
+          fontSize: 11.5,
+          fontWeight: 700,
+          lineHeight: 1,
+        })}
+      >
+        {config.label}
+      </Typography>
+      <Typography
+        component="span"
+        sx={(theme) => ({
+          color: getPaletteColor(theme, config.palette),
+          fontFamily: "Poppins",
+          fontSize: 16,
+          fontWeight: 700,
+          lineHeight: 1,
+        })}
+      >
+        {value || 0}
+      </Typography>
+    </Box>
+  );
+};
+
+export const createRoomSyncLogColumns = ({ onViewDetail }) => [
+  {
+    title: "No",
+    dataIndex: "index",
+    width: 72,
+    align: "center",
+    fixed: "left",
+  },
+  {
+    title: "Waktu Sinkron",
+    dataIndex: "started_at",
+    width: 230,
+    sorter: (a, b) => new Date(a.started_at) - new Date(b.started_at),
+    render: (_, record) => (
+      <Stack spacing={0.4}>
+        <Typography sx={{ fontWeight: 700, fontFamily: "Poppins" }}>
+          {formatSyncDateTime(record.started_at)}
+        </Typography>
+        <Typography sx={{ fontSize: 12, color: "text.secondary", fontWeight: 600 }}>
+          Selesai: {formatSyncDateTime(record.finished_at)}
+        </Typography>
+      </Stack>
+    ),
+  },
+  {
+    title: "Sumber & Status",
+    dataIndex: "trigger_source",
+    width: 290,
+    render: (_, record) => (
+      <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+        <SourceChip source={record.trigger_source} />
+        <StatusChip status={record.status} />
+      </Stack>
+    ),
+  },
+  {
+    title: "Hasil Proses",
+    dataIndex: "total_checked",
+    width: 330,
+    render: (_, record) => (
+      <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+        <MetricPill type="checked" value={record.total_checked} />
+        <MetricPill type="released" value={record.total_released} />
+        <MetricPill type="skipped" value={record.total_skipped} />
+      </Stack>
+    ),
+  },
+  {
+    title: "Eksekutor",
+    dataIndex: "executed_by_name",
+    width: 190,
+    render: (_, record) => (
+      <Typography sx={{ fontWeight: 700, fontFamily: "Poppins" }}>
+        {record.trigger_source === "cron"
+          ? "Sistem Cron"
+          : record.executed_by_name || "-"}
+      </Typography>
+    ),
+  },
+  {
+    title: "Catatan",
+    dataIndex: "error_message",
+    width: 260,
+    ellipsis: true,
+    render: (value) => (
+      <Typography sx={{ color: value ? "error.main" : "text.secondary", fontWeight: 600 }}>
+        {value || "Tidak ada error"}
+      </Typography>
+    ),
+  },
+  {
+    title: "Aksi",
+    dataIndex: "actions",
+    width: 96,
+    fixed: "right",
+    align: "center",
+    className: "room-sync-actions-cell",
+    render: (_, record) => (
+      <Box className="room-sync-actions" sx={{ display: "flex", justifyContent: "center" }}>
+        <TableActionButton
+          title="Lihat detail sinkronisasi"
+          icon="solar:document-text-bold-duotone"
+          color="primary"
+          onClick={() => onViewDetail(record)}
+        />
+      </Box>
+    ),
+  },
+];
+
+export const createRoomSyncItemColumns = () => [
+  {
+    title: "Aksi",
+    dataIndex: "action",
+    width: 140,
+    render: (value) => (
+      <StatusChip status={value === "released" ? "completed" : "skipped"} />
+    ),
+  },
+  {
+    title: "Penyewa",
+    dataIndex: "tenant_name",
+    width: 220,
+    render: (value, record) => (
+      <Stack spacing={0.4}>
+        <Typography sx={{ fontWeight: 700, fontFamily: "Poppins" }}>
+          {value || "-"}
+        </Typography>
+        <Typography sx={{ fontSize: 12, color: "text.secondary", fontWeight: 600 }}>
+          Dokumen {record.document_number || "-"}
+        </Typography>
+      </Stack>
+    ),
+  },
+  {
+    title: "Lokasi & Ruangan",
+    dataIndex: "location_name",
+    width: 220,
+    render: (value, record) => (
+      <Stack spacing={0.4}>
+        <Typography sx={{ fontWeight: 700, fontFamily: "Poppins" }}>
+          {value || "-"}
+        </Typography>
+        <Typography sx={{ fontSize: 12, color: "text.secondary", fontWeight: 600 }}>
+          Ruangan {record.room_number || "-"}
+        </Typography>
+      </Stack>
+    ),
+  },
+  {
+    title: "Kontrak",
+    dataIndex: "contract_number",
+    width: 220,
+    render: (value) => (
+      <Chip
+        size="small"
+        label={value || "Kontrak belum dibuat"}
+        sx={(theme) => ({
+          fontFamily: "Poppins",
+          fontWeight: 700,
+          color: value ? theme.palette.primary.main : theme.palette.text.secondary,
+          bgcolor: value
+            ? alpha(theme.palette.primary.main, 0.14)
+            : alpha(theme.palette.text.primary, 0.08),
+        })}
+      />
+    ),
+  },
+  {
+    title: "Masa Berlaku",
+    dataIndex: "lease_end_date",
+    width: 230,
+    render: (_, record) => (
+      <Typography sx={{ fontWeight: 700, fontFamily: "Poppins" }}>
+        {record.lease_start_date
+          ? moment(record.lease_start_date).format("DD MMM YYYY")
+          : "-"}{" "}
+        s/d{" "}
+        {record.lease_end_date
+          ? moment(record.lease_end_date).format("DD MMM YYYY")
+          : "-"}
+      </Typography>
+    ),
+  },
+  {
+    title: "Status",
+    dataIndex: "previous_status",
+    width: 180,
+    render: (_, record) => (
+      <Typography sx={{ fontWeight: 700, fontFamily: "Poppins" }}>
+        {record.previous_status || "-"} → {record.new_status || "-"}
+      </Typography>
+    ),
+  },
+  {
+    title: "Alasan",
+    dataIndex: "reason",
+    width: 360,
+    render: (value) => (
+      <Typography sx={{ color: "text.secondary", fontWeight: 600, lineHeight: 1.6 }}>
+        {value || "-"}
+      </Typography>
+    ),
+  },
+];

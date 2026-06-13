@@ -10,7 +10,7 @@ import { Icon } from "@iconify/react";
  * Parent cukup mengirim label, value, icon, dan color; komponen ini yang menjaga
  * spacing, warna dark/light, serta ukuran font agar konsisten di semua halaman.
  */
-export default function SummaryStatCard({ label, value, icon, color }) {
+export default function SummaryStatCard({ label, value, icon, color, valueSx }) {
   const theme = useTheme();
   const accentColor = color || theme.palette.primary.main;
 
@@ -72,6 +72,7 @@ export default function SummaryStatCard({ label, value, icon, color }) {
           fontSize: { xs: 25, sm: 30 },
           lineHeight: 1,
           letterSpacing: 0,
+          ...valueSx,
         }}
       >
         {value}

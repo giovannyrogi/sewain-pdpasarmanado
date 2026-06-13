@@ -284,6 +284,14 @@ const MENU_CONFIG = [
         ],
         showIcon: true,
       },
+      {
+        label: "Log Sinkron Ruangan",
+        value: "room-sync-logs",
+        path: "/room-sync-logs",
+        icon: <Icon icon="solar:refresh-circle-bold-duotone" fontSize="20px" />,
+        roles: [ROLES.SUPERADMIN],
+        showIcon: true,
+      },
     ],
   },
   {

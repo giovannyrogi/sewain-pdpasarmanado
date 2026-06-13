@@ -107,6 +107,88 @@ Important:
 
 ---
 
+## `room_status_sync_runs`
+
+Stores summary audit logs for automatic/manual room status synchronization.
+
+```sql
+CREATE TABLE IF NOT EXISTS room_status_sync_runs (
+  id VARCHAR(36) PRIMARY KEY,
+  trigger_source VARCHAR(20) NOT NULL,
+  status VARCHAR(20) NOT NULL,
+  started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  finished_at TIMESTAMP,
+  executed_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  total_checked INTEGER DEFAULT 0,
+  total_released INTEGER DEFAULT 0,
+  total_skipped INTEGER DEFAULT 0,
+  error_message TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_room_status_sync_runs_started_at
+ON room_status_sync_runs (started_at DESC);
+```
+
+Allowed `trigger_source` values:
+
+* `cron`
+* `manual`
+
+Allowed `status` values:
+
+* `running`
+* `completed`
+* `skipped`
+* `failed`
+
+---
+
+## `room_status_sync_items`
+
+Stores per-room audit details for each room status synchronization run.
+
+```sql
+CREATE TABLE IF NOT EXISTS room_status_sync_items (
+  id BIGSERIAL PRIMARY KEY,
+  run_id VARCHAR(36) NOT NULL REFERENCES room_status_sync_runs(id) ON DELETE CASCADE,
+  room_id INTEGER REFERENCES rooms(id) ON DELETE SET NULL,
+  tenant_application_id INTEGER REFERENCES tenant_application(id) ON DELETE SET NULL,
+  contract_id INTEGER REFERENCES contracts(id) ON DELETE SET NULL,
+  tenant_name VARCHAR(160),
+  location_name VARCHAR(160),
+  room_number VARCHAR(50),
+  document_number VARCHAR(50),
+  contract_number VARCHAR(80),
+  lease_start_date DATE,
+  lease_end_date DATE,
+  previous_status VARCHAR(20),
+  new_status VARCHAR(20),
+  action VARCHAR(20) NOT NULL,
+  reason TEXT,
+  details JSONB DEFAULT '{}'::jsonb,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_room_status_sync_items_run_id
+ON room_status_sync_items (run_id);
+
+CREATE INDEX IF NOT EXISTS idx_room_status_sync_items_room_id
+ON room_status_sync_items (room_id);
+```
+
+Allowed `action` values:
+
+* `released`
+* `skipped`
+
+Important:
+
+* Room status synchronization is only triggered by the VPS cron endpoint or the superadmin manual sync page.
+* Do not run room release logic from dashboard, report, or ordinary list APIs.
+* Payment arrears do not block physical room release. Payment monitoring remains in payment reports.
+
+---
+
 ## `roles`
 
 Stores user roles.
