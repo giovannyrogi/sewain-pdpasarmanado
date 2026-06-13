@@ -20,6 +20,13 @@ export const updateUserCookie = (updatedFields) => {
     JSON.stringify(mergedUser)
   )}; path=/; SameSite=Strict`;
 
+  if (mergedUser.expiresAt) {
+    sessionStorage.setItem(
+      "sewain:session-expires-at",
+      String(mergedUser.expiresAt),
+    );
+  }
+
   // TRIGGER GLOBAL EVENT
   window.dispatchEvent(
     new CustomEvent("user-cookie-updated", {

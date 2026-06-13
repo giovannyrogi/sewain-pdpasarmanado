@@ -6,7 +6,7 @@ import formatRupiah from "@/app/components/formatrupiah/page";
 
 const asNumber = (value) => Number(value || 0);
 const REPORT_NAVY = "1F2937";
-const REPORT_RED = "E60909";
+const REPORT_PRIMARY_ORANGE = "FF9800";
 const REPORT_BORDER = "D1D5DB";
 const REPORT_SOFT = "F8FAFC";
 
@@ -24,6 +24,19 @@ const getCurrencyColumnIndexes = (columns = []) =>
     if (column.type === "currency") acc.add(index);
     return acc;
   }, new Set());
+
+const formatPdfCellValue = (row, column) => {
+  if (column.type === "currency") {
+    /**
+     * Spasi setelah "Rp." mudah dipecah baris oleh jsPDF ketika kolom sempit.
+     * Untuk PDF laporan, nominal dibuat rapat agar tetap satu baris dan mudah
+     * dipindai sebagai nilai uang.
+     */
+    return formatRupiah(row[column.key]).replace("Rp. ", "Rp.");
+  }
+
+  return row[column.key] ?? "-";
+};
 
 /**
  * Logo laporan dimuat dari public folder saat export PDF berjalan di browser.
@@ -155,7 +168,7 @@ export const exportReportToExcel = ({
       fill: { fgColor: { rgb: "F1F5F9" } },
       alignment: { horizontal: "left", vertical: "center" },
       border: {
-        left: { style: "medium", color: { rgb: REPORT_RED } },
+        left: { style: "medium", color: { rgb: REPORT_PRIMARY_ORANGE } },
       },
     };
   }
@@ -197,7 +210,7 @@ export const exportReportToExcel = ({
                 ? "right"
                 : "center",
           vertical: "center",
-          wrapText: true,
+          wrapText: !currencyColumnIndexes.has(c),
         },
         border: {
           top: { style: "thin", color: { rgb: "E5E7EB" } },
@@ -248,7 +261,7 @@ export const exportReportToPDF = async ({
   doc.roundedRect(12, headerTop, pageWidth - 24, headerHeight, 2, 2, "F");
   doc.setDrawColor(226, 232, 240);
   doc.roundedRect(12, headerTop, pageWidth - 24, headerHeight, 2, 2, "S");
-  doc.setFillColor(230, 9, 9);
+  doc.setFillColor(255, 152, 0);
   doc.rect(16, headerTop + 5, 1.5, headerHeight - 10, "F");
 
   doc.setTextColor(15, 23, 42);
@@ -269,7 +282,7 @@ export const exportReportToPDF = async ({
     if (logoDataUrl) {
       doc.addImage(logoDataUrl, "PNG", logoX, logoY, 10, 10);
     } else {
-      doc.setFillColor(230, 9, 9);
+      doc.setFillColor(255, 152, 0);
       doc.roundedRect(logoX, logoY, 10, 10, 2, 2, "F");
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(7);
@@ -294,12 +307,20 @@ export const exportReportToPDF = async ({
     );
   }
 
+  const currencyColumnIndexes = getCurrencyColumnIndexes(columns);
+  const columnStyles = columns.reduce((acc, column, index) => {
+    if (column.type === "currency") {
+      acc[index] = {
+        halign: "right",
+        cellWidth: column.pdfWidth || 28,
+        overflow: "visible",
+      };
+    }
+    return acc;
+  }, {});
+
   const body = rows.map((row) =>
-    columns.map((column) =>
-      column.type === "currency"
-        ? formatRupiah(row[column.key])
-        : (row[column.key] ?? "-"),
-    ),
+    columns.map((column) => formatPdfCellValue(row, column)),
   );
 
   if (totalsRow) {
@@ -325,11 +346,22 @@ export const exportReportToPDF = async ({
       textColor: [31, 41, 55],
       lineColor: [203, 213, 225],
       lineWidth: 0.08,
+      valign: "middle",
     },
-    headStyles: { fillColor: [31, 41, 55], textColor: [255, 255, 255] },
+    headStyles: {
+      fillColor: [31, 41, 55],
+      textColor: [255, 255, 255],
+      halign: "center",
+      valign: "middle",
+    },
     alternateRowStyles: { fillColor: [248, 250, 252] },
     bodyStyles: { valign: "middle" },
+    columnStyles,
     didParseCell: (data) => {
+      if (data.section === "body" && currencyColumnIndexes.has(data.column.index)) {
+        data.cell.styles.halign = "right";
+      }
+
       if (totalsRow && data.row.index === body.length - 1) {
         data.cell.styles.fontStyle = "bold";
         data.cell.styles.fillColor = [254, 243, 199];

@@ -55,7 +55,7 @@ const DueStatusChip = ({ status, daysRemaining, theme }) => {
         border: `1px solid ${alpha(color, theme.palette.mode === "dark" ? 0.5 : 0.35)}`,
         fontFamily: "Poppins",
         fontWeight: 700,
-        fontSize: 11,
+        fontSize: 12,
         "& .MuiChip-icon": {
           color,
         },
@@ -98,7 +98,7 @@ export const PAYMENT_DUE_EXPORT_COLUMNS = [
   { header: "Lantai", key: "floor", width: 14 },
   { header: "Jenis Pembayaran", key: "payment_type", width: 18 },
   { header: "Tahap Pembayaran", key: "payment_step_label", width: 20 },
-  { header: "Nominal", key: "due_amount", type: "currency", width: 18 },
+  { header: "Nominal", key: "due_amount", type: "currency", width: 20, pdfWidth: 28 },
   { header: "Tanggal Jatuh Tempo", key: "due_date", width: 22 },
   { header: "Status", key: "due_status_label", width: 22 },
 ];
@@ -153,7 +153,7 @@ export const createPaymentDueReportColumns = ({
     render: (_, record) => (
       <Stack spacing={0.45}>
         <Typography
-          sx={{ fontFamily: "Poppins", fontWeight: 700, fontSize: 12.5 }}
+          sx={{ fontFamily: "Poppins", fontWeight: 700, fontSize: 14 }}
         >
           {record.tenant_application?.tenant_name || "-"}
         </Typography>
@@ -162,7 +162,7 @@ export const createPaymentDueReportColumns = ({
             color: theme.ui.mutedText,
             fontFamily: "Poppins",
             fontWeight: 600,
-            fontSize: 11,
+            fontSize: 12,
           }}
         >
           NIK {record.tenant_application?.tenant_nik || "-"}
@@ -202,7 +202,7 @@ export const createPaymentDueReportColumns = ({
               color: theme.palette.primary.main,
               fontFamily: "Poppins",
               fontWeight: 700,
-              fontSize: 10.5,
+              fontSize: 12,
             }}
           />
           <Typography
@@ -210,7 +210,7 @@ export const createPaymentDueReportColumns = ({
               color: theme.ui.mutedText,
               fontFamily: "Poppins",
               fontWeight: 600,
-              fontSize: 11,
+              fontSize: 12,
             }}
           >
             {record.room?.floor || "-"}
@@ -236,7 +236,7 @@ export const createPaymentDueReportColumns = ({
         </Typography>
         <Typography
           sx={{
-            color: theme.palette.primary.main,
+            // color: theme.palette.primary.main,
             fontFamily: "Poppins",
             fontWeight: 700,
             fontSize: 12,

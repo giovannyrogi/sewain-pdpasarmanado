@@ -1,66 +1,112 @@
 "use client";
-import { ThemeModeProvider } from "../themeprovider/ThemeContext";
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { AdapterMoment } from "@mui/x-date-pickers/AdapterMoment";
+
+import { useEffect, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import moment from "moment";
 import "moment/locale/id";
-import { useRouter } from "next/navigation";
-import ExpiredSessionModal from "../expiredsessionmodal/page";
-import { useEffect, useState } from "react";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterMoment } from "@mui/x-date-pickers/AdapterMoment";
+import { ThemeModeProvider } from "../themeprovider/ThemeContext";
+import ExpiredSessionModal from "../modals/ExpiredSessionModal";
+
 moment.locale("id");
 
-const SESSION_CHECK_INTERVAL = 1000; // cek tiap 1 detik
-const SESSION_MODAL_COUNTDOWN = 10; // 10 detik countdown manual
+const SESSION_CHECK_INTERVAL = 1000;
+const SESSION_MODAL_COUNTDOWN = 10;
+const SESSION_EXPIRY_STORAGE_KEY = "sewain:session-expires-at";
+
+const getCookie = (name) => {
+  if (typeof document === "undefined") return null;
+
+  const match = document.cookie.match(
+    new RegExp(`(^| )${name}=([^;]+)`),
+  );
+  return match ? decodeURIComponent(match[2]) : null;
+};
+
+const clearClientSession = () => {
+  document.cookie =
+    "loggedInUser=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Strict";
+  sessionStorage.removeItem(SESSION_EXPIRY_STORAGE_KEY);
+};
 
 export default function AppProviders({ children }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [showModal, setShowModal] = useState(false);
   const [counter, setCounter] = useState(SESSION_MODAL_COUNTDOWN);
 
-  const getCookie = (name) => {
-    const match = document.cookie.match(
-      new RegExp("(^| )" + name + "=([^;]+)")
-    );
-    return match ? decodeURIComponent(match[2]) : null;
+  const isLoginPage = pathname === "/login";
+
+  const openExpiredSessionModal = () => {
+    setShowModal((alreadyOpen) => {
+      if (!alreadyOpen) {
+        setCounter(SESSION_MODAL_COUNTDOWN);
+      }
+      return true;
+    });
   };
 
-  // --- interval global untuk cek session tiap detik
+  /**
+   * Pemeriksaan ini berjalan di client agar user yang membiarkan halaman terbuka
+   * tetap mendapat modal expired session. Backend tetap menjadi sumber keamanan:
+   * API menolak request setelah `expiresAt`, sedangkan client hanya mengatur UX.
+   */
   useEffect(() => {
-    const interval = setInterval(() => {
-      const cookie = getCookie("loggedInUser");
-      if (!cookie) return;
+    if (isLoginPage) {
+      sessionStorage.removeItem(SESSION_EXPIRY_STORAGE_KEY);
+      setShowModal(false);
+      return undefined;
+    }
 
-      let user;
-      try {
-        user = JSON.parse(cookie);
-      } catch (err) {
-        console.error(err);
+    const checkSession = () => {
+      const cookie = getCookie("loggedInUser");
+      const storedExpiresAt = Number(
+        sessionStorage.getItem(SESSION_EXPIRY_STORAGE_KEY),
+      );
+      const now = Date.now();
+
+      if (!cookie) {
+        if (storedExpiresAt && storedExpiresAt <= now) {
+          openExpiredSessionModal();
+        }
         return;
       }
 
-      const now = Date.now();
+      try {
+        const user = JSON.parse(cookie);
+        const expiresAt = Number(user?.expiresAt);
 
-      if (user.expiresAt <= now && !showModal) {
-        // session expired → tampilkan modal & mulai countdown
-        setShowModal(true);
-        setCounter(SESSION_MODAL_COUNTDOWN);
+        if (!expiresAt) return;
+
+        sessionStorage.setItem(
+          SESSION_EXPIRY_STORAGE_KEY,
+          String(expiresAt),
+        );
+
+        if (expiresAt <= now) {
+          openExpiredSessionModal();
+        }
+      } catch (error) {
+        console.error("Gagal membaca cookie session:", error);
+        openExpiredSessionModal();
       }
-    }, SESSION_CHECK_INTERVAL);
+    };
+
+    checkSession();
+    const interval = setInterval(checkSession, SESSION_CHECK_INTERVAL);
 
     return () => clearInterval(interval);
-  }, [showModal]);
+  }, [isLoginPage]);
 
-  // --- countdown modal 10 detik
   useEffect(() => {
-    if (!showModal) return;
+    if (!showModal) return undefined;
 
     if (counter <= 0) {
-      // hapus cookie, tutup modal & redirect
-      document.cookie =
-        "loggedInUser=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+      clearClientSession();
       setShowModal(false);
-      router.push("/login");
-      return;
+      router.replace("/login");
+      return undefined;
     }
 
     const timer = setTimeout(() => {

@@ -67,7 +67,7 @@ export default function LoginPage() {
     setThemeMode(nextThemeMode);
     localStorage.setItem(
       "currentTheme",
-      JSON.stringify({ currentThemeMode: nextThemeMode })
+      JSON.stringify({ currentThemeMode: nextThemeMode }),
     );
   };
 
@@ -237,7 +237,11 @@ export default function LoginPage() {
             <Box
               sx={{
                 display: "grid",
-                gridTemplateColumns: { xs: "1fr", sm: "repeat(3, 1fr)", md: "1fr" },
+                gridTemplateColumns: {
+                  xs: "1fr",
+                  sm: "repeat(3, 1fr)",
+                  md: "1fr",
+                },
                 gap: { xs: 1, md: 1.5 },
                 mt: { xs: 3, md: 5 },
               }}
@@ -247,7 +251,11 @@ export default function LoginPage() {
                   key={item.title}
                   sx={{
                     display: "grid",
-                    gridTemplateColumns: { xs: "36px 1fr", sm: "1fr", md: "42px 1fr" },
+                    gridTemplateColumns: {
+                      xs: "36px 1fr",
+                      sm: "1fr",
+                      md: "42px 1fr",
+                    },
                     gap: { xs: 1.25, sm: 1, md: 1.5 },
                     alignItems: "center",
                     p: { xs: 1.25, md: 1.5 },
@@ -270,7 +278,9 @@ export default function LoginPage() {
                     <Icon icon={item.icon} fontSize={20} />
                   </Box>
                   <Box sx={{ minWidth: 0 }}>
-                    <Typography sx={{ fontSize: { xs: 12.5, md: 13 }, fontWeight: 800 }}>
+                    <Typography
+                      sx={{ fontSize: { xs: 12.5, md: 13 }, fontWeight: 800 }}
+                    >
                       {item.title}
                     </Typography>
                     <Typography
@@ -399,7 +409,6 @@ export default function LoginPage() {
               margin="normal"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              autoFocus
               required
               disabled={loading || redirecting}
               color="primary"

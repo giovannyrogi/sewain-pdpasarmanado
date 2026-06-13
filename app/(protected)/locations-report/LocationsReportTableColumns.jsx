@@ -9,7 +9,14 @@ export const LOCATION_REPORT_SCROLL_WIDTH = 1360;
 export const LOCATION_REPORT_PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
 
 const moneyText = (value) => (
-  <Typography sx={{ fontSize: 12, fontWeight: 700, textAlign: "right" }}>
+  <Typography
+    sx={{
+      fontSize: 12,
+      fontWeight: 600,
+      textAlign: "right",
+      letterSpacing: "1px",
+    }}
+  >
     {value === "" || value === null || value === undefined
       ? ""
       : formatRupiah(value)}
@@ -92,7 +99,7 @@ export const createLocationReportColumns = ({ theme, isMobile }) => [
       a.location_name.localeCompare(b.location_name),
     ),
     render: (value, record) => (
-      <Typography sx={{ fontWeight: 700, fontSize: 13 }}>{value}</Typography>
+      <Typography sx={{ fontWeight: 700, fontSize: 14 }}>{value}</Typography>
     ),
   },
   {

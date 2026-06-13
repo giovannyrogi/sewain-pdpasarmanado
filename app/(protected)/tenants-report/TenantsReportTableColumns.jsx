@@ -11,7 +11,14 @@ export const TENANT_REPORT_SCROLL_WIDTH = 1960;
 export const TENANT_REPORT_PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
 
 const moneyText = (value) => (
-  <Typography sx={{ fontSize: 12, fontWeight: 700, textAlign: "right" }}>
+  <Typography
+    sx={{
+      fontSize: 12,
+      fontWeight: 600,
+      textAlign: "right",
+      letterSpacing: "1px",
+    }}
+  >
     {value === "" || value === null || value === undefined
       ? ""
       : formatRupiah(value)}
@@ -133,10 +140,10 @@ export const createTenantReportColumns = ({ theme, isMobile }) => [
     ),
     render: (value, record) => (
       <Stack spacing={0.4}>
-        <Typography sx={{ fontWeight: 700, fontSize: 13 }}>{value}</Typography>
+        <Typography sx={{ fontWeight: 700, fontSize: 14 }}>{value}</Typography>
         {!record?.__isTotal && (
           <Typography
-            sx={{ color: theme.ui.mutedText, fontWeight: 700, fontSize: 11 }}
+            sx={{ color: theme.ui.mutedText, fontWeight: 700, fontSize: 12 }}
           >
             {record?.payment_type === "lunas" ? "Lunas" : "Cicilan"} -
             Pembayaran {record?.payment_number || "-"}
@@ -186,7 +193,7 @@ export const createTenantReportColumns = ({ theme, isMobile }) => [
     width: 150,
     render: (value) => (
       <Typography sx={{ fontSize: 12, fontWeight: 700 }}>
-        {value || "-"} 
+        {value || "-"}
       </Typography>
     ),
   },

@@ -116,13 +116,13 @@ export default function TenantsReportPage() {
     setSnackbar({ open: true, message, severity });
   };
 
-  const validateRange = () => {
-    if (!range.startDate || !range.endDate) {
+  const validateRange = (targetRange = range) => {
+    if (!targetRange.startDate || !targetRange.endDate) {
       showSnackbar("Tanggal mulai dan selesai wajib diisi.", "error");
       return false;
     }
 
-    if (moment(range.startDate).isAfter(range.endDate)) {
+    if (moment(targetRange.startDate).isAfter(targetRange.endDate)) {
       showSnackbar(
         "Tanggal mulai tidak boleh melewati tanggal selesai.",
         "error",
@@ -133,19 +133,24 @@ export default function TenantsReportPage() {
     return true;
   };
 
-  const fetchReport = async ({ showLoading = true } = {}) => {
-    if (!user || !validateRange()) return;
+  const fetchReport = async ({
+    showLoading = true,
+    overrideRange = range,
+    message = "Mengambil laporan pendapatan tenant...",
+    notifySuccess = false,
+  } = {}) => {
+    if (!user || !validateRange(overrideRange)) return;
 
     if (showLoading) {
-      setLoadingMessage("Mengambil laporan pendapatan tenant...");
+      setLoadingMessage(message);
       setLoading(true);
     }
 
     try {
       const response = await axios.get("/api/report/income-by-tenants", {
         params: {
-          start_date: range.startDate,
-          end_date: range.endDate,
+          start_date: overrideRange.startDate,
+          end_date: overrideRange.endDate,
         },
       });
 
@@ -157,6 +162,11 @@ export default function TenantsReportPage() {
         showSnackbar(
           "Tidak ada pendapatan tenant pada periode ini.",
           "warning",
+        );
+      } else if (notifySuccess) {
+        showSnackbar(
+          `Laporan pendapatan tenant berhasil ditampilkan (${nextRows.length} data).`,
+          "success",
         );
       }
     } catch (error) {
@@ -184,6 +194,17 @@ export default function TenantsReportPage() {
     if (preset !== "custom") {
       setRange(getPresetRange(preset));
     }
+  };
+
+  const handleResetFilter = async () => {
+    const defaultRange = getPresetRange("month");
+    setSearchText("");
+    setSelectedPreset("month");
+    setRange(defaultRange);
+    await fetchReport({
+      overrideRange: defaultRange,
+      message: "Mereset filter laporan tenant...",
+    });
   };
 
   const filteredRows = useMemo(
@@ -279,8 +300,10 @@ export default function TenantsReportPage() {
           setSelectedPreset("custom");
           setRange(nextRange);
         }}
-        onApply={() => fetchReport()}
+        onApply={() => fetchReport({ notifySuccess: true })}
+        onReset={handleResetFilter}
         isSubmitting={loading}
+        isResetting={loadingMessage.includes("Mereset")}
       />
 
       <DataTableShell

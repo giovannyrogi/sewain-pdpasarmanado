@@ -196,7 +196,7 @@ export default function ReportFilterPanel({
                 borderRadius: 2,
                 px: 1.5,
                 fontWeight: 700,
-                justifyContent: "flex-start",
+                justifyContent: { xs: "center", sm: "flex-start" },
                 color: isCustomActive
                   ? theme.palette.primary.contrastText
                   : theme.palette.primary.main,
@@ -239,24 +239,6 @@ export default function ReportFilterPanel({
                     }}
                   >
                     {preset.label}
-                    {preset.count !== undefined && (
-                      <Box
-                        component="span"
-                        sx={{
-                          minWidth: 22,
-                          height: 22,
-                          px: 0.7,
-                          borderRadius: 999,
-                          display: "inline-grid",
-                          placeItems: "center",
-                          bgcolor: isActive
-                            ? alpha(theme.palette.common.black, 0.16)
-                            : alpha(theme.palette.primary.main, 0.12),
-                        }}
-                      >
-                        {preset.count}
-                      </Box>
-                    )}
                   </Button>
                 );
               })}
@@ -265,7 +247,7 @@ export default function ReportFilterPanel({
 
           <Stack
             direction={{ xs: "column", sm: "row" }}
-            spacing={1}
+            spacing={{ xs: 1.75, sm: 1 }}
             alignItems={{ xs: "stretch", sm: "center" }}
             sx={{ pt: { xs: 1, sm: 1.25 } }}
           >

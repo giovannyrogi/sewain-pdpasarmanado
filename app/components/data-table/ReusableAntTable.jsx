@@ -80,6 +80,19 @@ export default function ReusableAntTable({
     });
   }, [columns, currentPage, effectivePageSize, pagination]);
 
+  /**
+   * Saat table memakai summary row untuk total laporan, vertical scroll AntD
+   * membuat scrollbar berada tepat di atas total row sehingga total terlihat
+   * seperti terpisah dari data. Untuk kasus ini hanya horizontal scroll yang
+   * dipertahankan, sementara tinggi table mengikuti jumlah data yang tampil.
+   */
+  const effectiveScroll = useMemo(() => {
+    if (!summaryRow || !scroll?.y) return scroll;
+    const restScroll = { ...scroll };
+    delete restScroll.y;
+    return restScroll;
+  }, [scroll, summaryRow]);
+
   const fixedColumnSx = {
     "--reusable-fixed-bg":
       muiTheme.palette.mode === "dark" ? "#111111" : "#ffffff",
@@ -300,7 +313,7 @@ export default function ReusableAntTable({
           loading={loading}
           tableLayout={tableLayout}
           showSorterTooltip={{ target: "sorter-icon" }}
-          scroll={scroll}
+          scroll={effectiveScroll}
           pagination={mergedPagination}
           onChange={handleChange}
           summary={

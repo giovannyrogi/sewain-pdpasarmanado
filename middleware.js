@@ -1,8 +1,6 @@
-// middleware.js
 import { NextResponse } from "next/server";
 import MENU_CONFIG from "./app/components/menu/MenuConfig";
 
-// build access map dari MENU_CONFIG
 const buildAccessMap = (menus) => {
   const map = {};
 
@@ -11,6 +9,7 @@ const buildAccessMap = (menus) => {
       if (item.path) {
         map[item.path] = item.roles;
       }
+
       if (item.submenu) {
         traverse(item.submenu);
       }
@@ -23,42 +22,65 @@ const buildAccessMap = (menus) => {
 
 const ACCESS_MAP = buildAccessMap(MENU_CONFIG);
 
+const clearLoginCookie = (response) => {
+  response.cookies.set("loggedInUser", "", {
+    expires: new Date(0),
+    path: "/",
+  });
+  return response;
+};
+
 export function middleware(req) {
   const { pathname } = req.nextUrl;
   const loggedInUser = req.cookies.get("loggedInUser");
 
-  // BELUM LOGIN
   if (!loggedInUser && pathname !== "/login") {
     return NextResponse.redirect(new URL("/login", req.url));
   }
 
-  if (loggedInUser) {
-    let user;
-    try {
-      user = JSON.parse(loggedInUser.value);
-    } catch {
-      return NextResponse.redirect(new URL("/login", req.url));
-    }
+  if (!loggedInUser) {
+    return NextResponse.next();
+  }
 
-    // SUDAH LOGIN → BLOCK /login
-    if (pathname === "/login") {
-      return NextResponse.redirect(new URL("/dashboard", req.url));
-    }
-
-    // CEK AKSES ROUTE
-    const matchedPath = Object.keys(ACCESS_MAP).find(
-      (route) => pathname === route || pathname.startsWith(route + "/")
+  let user;
+  try {
+    user = JSON.parse(loggedInUser.value);
+  } catch {
+    return clearLoginCookie(
+      NextResponse.redirect(new URL("/login", req.url)),
     );
+  }
 
-    // route tidak terdaftar → BLOCK
-    if (!matchedPath) {
-      return NextResponse.redirect(new URL("/dashboard", req.url));
+  /**
+   * `expiresAt` adalah batas sesi aplikasi yang dipakai API untuk menolak akses.
+   * Cookie sengaja punya grace singkat agar shell protected masih bisa memuat
+   * modal expired session, lalu client melakukan countdown dan redirect login.
+   */
+  const isExpired =
+    user?.expiresAt && Date.now() > Number(user.expiresAt);
+
+  if (isExpired) {
+    if (pathname === "/login") {
+      return clearLoginCookie(NextResponse.next());
     }
 
-    // role tidak punya akses → BLOCK
-    if (!ACCESS_MAP[matchedPath].includes(user.role_id)) {
-      return NextResponse.redirect(new URL("/dashboard", req.url));
-    }
+    return NextResponse.next();
+  }
+
+  if (pathname === "/login") {
+    return NextResponse.redirect(new URL("/dashboard", req.url));
+  }
+
+  const matchedPath = Object.keys(ACCESS_MAP).find(
+    (route) => pathname === route || pathname.startsWith(`${route}/`),
+  );
+
+  if (!matchedPath) {
+    return NextResponse.redirect(new URL("/dashboard", req.url));
+  }
+
+  if (!ACCESS_MAP[matchedPath].includes(user.role_id)) {
+    return NextResponse.redirect(new URL("/dashboard", req.url));
   }
 
   return NextResponse.next();

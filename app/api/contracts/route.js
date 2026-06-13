@@ -124,7 +124,9 @@ export async function POST(req) {
       const year = moment(fullyPaidDate).format("YYYY");
       const locationCode = tenant.location_code || "-";
 
-      const contract_number = `${document_number} / PM / SK / - ${locationCode} / ${monthRoman} / ${year}`;
+      const contract_number = `${String(document_number).trim()}/PM/SK/-${String(
+        locationCode,
+      ).trim()}/${monthRoman}/${year}`;
 
       const checkContractNumber = await client.query(
         `

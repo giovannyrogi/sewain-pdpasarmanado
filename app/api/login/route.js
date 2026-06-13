@@ -63,7 +63,8 @@ export async function POST(req) {
     // 4. Hapus password sebelum dikirim ke frontend
     delete user.password;
 
-    const SESSION_DURATION_MINUTES = 60; // durasi session dalam menit
+    const SESSION_DURATION_MINUTES = 60; // durasi session aplikasi dalam menit
+    const SESSION_COOKIE_GRACE_SECONDS = 30; // ruang singkat agar modal expired tetap bisa tampil
     const expiresAt = Date.now() + SESSION_DURATION_MINUTES * 60 * 1000; // timestamp expired
 
     // 5. Simpan user ke cookie
@@ -78,7 +79,7 @@ export async function POST(req) {
       httpOnly: false,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
-      maxAge: SESSION_DURATION_MINUTES * 60,
+      maxAge: SESSION_DURATION_MINUTES * 60 + SESSION_COOKIE_GRACE_SECONDS,
       path: "/",
     });
 

@@ -21,40 +21,36 @@ import {
   exportReportToPDF,
 } from "@/app/utils/reportExportUtils";
 import {
-  buildPaymentContext,
-  normalizePaymentForLeaseDetail,
-} from "../payments/paymentDetailMapper";
-import {
-  PAYMENT_DUE_EXPORT_COLUMNS,
-  PAYMENT_DUE_PAGE_SIZE_OPTIONS,
-  PAYMENT_DUE_SCROLL_WIDTH,
-  buildPaymentDueExportRows,
-  createPaymentDueReportColumns,
-  filterPaymentDueRows,
-} from "./PaymentDueReportTableColumns";
+  CONTRACT_EXPIRY_EXPORT_COLUMNS,
+  CONTRACT_EXPIRY_PAGE_SIZE_OPTIONS,
+  CONTRACT_EXPIRY_SCROLL_WIDTH,
+  buildContractExpiryExportRows,
+  createContractExpiryReportColumns,
+  filterContractExpiryRows,
+} from "./ContractExpiryReportTableColumns";
 
 const DEFAULT_LOADING_MESSAGE = "Loading...";
 const DEFAULT_STATUS_FILTER = "all";
 
 const PAGE_BREADCRUMBS = [
   {
-    label: "Reports",
+    label: "Laporan",
     value: "reports",
     path: "#",
     icon: "solar:chart-square-bold-duotone",
   },
   {
-    label: "Jatuh Tempo Pembayaran",
-    value: "payment-due-report",
-    path: "/payment-due-report",
-    icon: "solar:alarm-bold-duotone",
+    label: "Kontrak Segera Berakhir",
+    value: "contract-expiry-report",
+    path: "/contract-expiry-report",
+    icon: "solar:calendar-mark-bold-duotone",
   },
 ];
 
 const FILTERS = [
   { value: "all", label: "Semua" },
-  { value: "dueSoon", label: "30 Hari Lagi" },
-  { value: "overdue", label: "Terlambat" },
+  { value: "expiringSoon", label: "30 Hari Lagi" },
+  { value: "expired", label: "Sudah Berakhir" },
 ];
 
 const FILTER_LABELS = FILTERS.reduce(
@@ -69,20 +65,22 @@ const getDefaultRange = () => ({
 
 const filterByStatus = (rows, status) => {
   if (status === "all" || status === "custom") return rows;
-  return rows.filter((row) => row.payment_due?.due_status === status);
+  return rows.filter(
+    (row) => row.contract_expiry?.contract_status === status,
+  );
 };
 
 const getRequestRange = (filter, range) => {
   const today = moment();
 
-  if (filter === "dueSoon") {
+  if (filter === "expiringSoon") {
     return {
       startDate: today.format("YYYY-MM-DD"),
       endDate: today.clone().add(30, "days").format("YYYY-MM-DD"),
     };
   }
 
-  if (filter === "overdue") {
+  if (filter === "expired") {
     return {
       startDate: "2000-01-01",
       endDate: today.clone().subtract(1, "day").format("YYYY-MM-DD"),
@@ -104,8 +102,8 @@ const getFilterLabel = (filter) => FILTER_LABELS[filter] || "Semua";
 const getExportFilterName = (filter) =>
   ({
     all: "Semua",
-    dueSoon: "30_Hari_Lagi",
-    overdue: "Terlambat",
+    expiringSoon: "30_Hari_Lagi",
+    expired: "Sudah_Berakhir",
     custom: "Custom_Range",
   })[filter] || "Semua";
 
@@ -120,11 +118,10 @@ const getReportPeriodLabel = (filter, targetRange) => {
 };
 
 /**
- * Laporan jatuh tempo pembayaran memperluas kartu dashboard menjadi halaman
- * operasional penuh. Detail tetap memakai modal lease shared supaya identitas,
- * ruangan, biaya, dan riwayat bukti pembayaran konsisten dengan menu Payments.
+ * Laporan kontrak segera berakhir memakai pola yang sama dengan laporan jatuh
+ * tempo pembayaran, tetapi sumber datanya buku kontrak dan tanggal akhir sewa.
  */
-export default function PaymentDueReportPage() {
+export default function ContractExpiryReportPage() {
   const isMobile = useMediaQuery("(max-width:600px)");
   const { user } = useUser();
   const theme = useTheme();
@@ -167,7 +164,7 @@ export default function PaymentDueReportPage() {
     showLoading = true,
     overrideFilter = statusFilter,
     overrideRange = range,
-    message = "Mengambil laporan jatuh tempo pembayaran...",
+    message = "Mengambil laporan kontrak segera berakhir...",
     notifySuccess = false,
   } = {}) => {
     if (!user || !validateRange(overrideRange)) return;
@@ -179,7 +176,7 @@ export default function PaymentDueReportPage() {
 
     try {
       const requestRange = getRequestRange(overrideFilter, overrideRange);
-      const response = await axios.get("/api/report/payment-due", {
+      const response = await axios.get("/api/report/contract-expiry", {
         params: {
           start_date: requestRange.startDate,
           end_date: requestRange.endDate,
@@ -190,20 +187,20 @@ export default function PaymentDueReportPage() {
 
       if (!nextRows.length) {
         showSnackbar(
-          "Belum ada pembayaran yang jatuh tempo atau terlambat.",
+          "Belum ada kontrak yang akan berakhir atau sudah berakhir.",
           "warning",
         );
       } else if (notifySuccess) {
         showSnackbar(
-          `Laporan jatuh tempo berhasil ditampilkan (${nextRows.length} data).`,
+          `Laporan kontrak berhasil ditampilkan (${nextRows.length} data).`,
           "success",
         );
       }
     } catch (error) {
-      console.error("Error fetch payment due report:", error);
+      console.error("Error fetch contract expiry report:", error);
       showSnackbar(
         error?.response?.data?.message ||
-          "Gagal mengambil laporan jatuh tempo pembayaran.",
+          "Gagal mengambil laporan kontrak segera berakhir.",
         "error",
       );
     } finally {
@@ -223,15 +220,15 @@ export default function PaymentDueReportPage() {
   const summary = useMemo(
     () => ({
       total: rows.length,
-      dueSoon: rows.filter((item) => item.payment_due?.due_status === "dueSoon")
-        .length,
-      overdue: rows.filter((item) => item.payment_due?.due_status === "overdue")
-        .length,
+      expiringSoon: rows.filter(
+        (item) => item.contract_expiry?.contract_status === "expiringSoon",
+      ).length,
+      expired: rows.filter(
+        (item) => item.contract_expiry?.contract_status === "expired",
+      ).length,
     }),
     [rows],
   );
-
-  const handleFilterChange = (filterValue) => setStatusFilter(filterValue);
 
   const handleResetFilter = async () => {
     const defaultRange = getDefaultRange();
@@ -241,60 +238,61 @@ export default function PaymentDueReportPage() {
     await fetchReport({
       overrideFilter: DEFAULT_STATUS_FILTER,
       overrideRange: defaultRange,
-      message: "Mereset filter laporan jatuh tempo pembayaran...",
+      message: "Mereset filter laporan kontrak...",
       notifySuccess: true,
     });
   };
 
   const filteredRows = useMemo(() => {
     const statusRows = filterByStatus(rows, statusFilter);
-    return filterPaymentDueRows(statusRows, searchText);
+    return filterContractExpiryRows(statusRows, searchText);
   }, [rows, searchText, statusFilter]);
 
   const columns = useMemo(
     () =>
-      createPaymentDueReportColumns({
+      createContractExpiryReportColumns({
         theme,
         onOpenDetail: setSelectedRow,
-        onPhoneAction: () =>
-          showSnackbar("Fitur pengingat WhatsApp belum tersedia.", "warning"),
         isMobile,
       }),
-    [theme],
+    [theme, isMobile],
   );
 
   const exportRows = useMemo(
-    () => buildPaymentDueExportRows(filteredRows),
+    () => buildContractExpiryExportRows(filteredRows),
     [filteredRows],
   );
 
   const activeExportRange = getRequestRange(statusFilter, range);
   const activeFilterLabel = getFilterLabel(statusFilter);
   const filterInfo = [
-    { label: "Periode", value: getReportPeriodLabel(statusFilter, activeExportRange) },
+    {
+      label: "Periode",
+      value: getReportPeriodLabel(statusFilter, activeExportRange),
+    },
     { label: "Filter", value: activeFilterLabel },
     { label: "Total Data", value: `${filteredRows.length} data` },
   ];
 
-  const reportTitle = "Laporan Jatuh Tempo Pembayaran";
+  const reportTitle = "Laporan Kontrak Segera Berakhir";
   const reportSubtitle =
-    "Daftar pembayaran yang akan jatuh tempo dalam 30 hari ke depan atau sudah melewati jatuh tempo.";
+    "Daftar buku kontrak yang akan berakhir dalam 30 hari ke depan atau sudah melewati masa berlaku.";
 
   const handleExportExcel = () => {
     exportReportToExcel({
       title: reportTitle,
       subtitle: reportSubtitle,
       filterInfo,
-      sheetName: "Jatuh Tempo Pembayaran",
+      sheetName: "Kontrak Berakhir",
       fileName: buildReportFileName({
-        prefix: "Laporan_Jatuh_Tempo_Pembayaran",
+        prefix: "Laporan_Kontrak_Segera_Berakhir",
         filterName: getExportFilterName(statusFilter),
         startDate: activeExportRange.startDate,
         endDate: activeExportRange.endDate,
         extension: "xlsx",
       }),
       rows: exportRows,
-      columns: PAYMENT_DUE_EXPORT_COLUMNS,
+      columns: CONTRACT_EXPIRY_EXPORT_COLUMNS,
     });
   };
 
@@ -304,14 +302,14 @@ export default function PaymentDueReportPage() {
       subtitle: reportSubtitle,
       filterInfo,
       fileName: buildReportFileName({
-        prefix: "Laporan_Jatuh_Tempo_Pembayaran",
+        prefix: "Laporan_Kontrak_Segera_Berakhir",
         filterName: getExportFilterName(statusFilter),
         startDate: activeExportRange.startDate,
         endDate: activeExportRange.endDate,
         extension: "pdf",
       }),
       rows: exportRows,
-      columns: PAYMENT_DUE_EXPORT_COLUMNS,
+      columns: CONTRACT_EXPIRY_EXPORT_COLUMNS,
       printedAtFooter: true,
       showLogoMark: true,
     });
@@ -330,9 +328,9 @@ export default function PaymentDueReportPage() {
     >
       <PageHeader
         breadcrumbs={PAGE_BREADCRUMBS}
-        title="Jatuh Tempo Pembayaran"
-        description="Pantau pembayaran cicilan yang akan jatuh tempo dalam 30 hari ke depan dan seluruh pembayaran yang sudah melewati jatuh tempo."
-        icon="solar:alarm-bold-duotone"
+        title="Kontrak Segera Berakhir"
+        description="Pantau buku kontrak yang akan selesai dalam 30 hari ke depan dan kontrak yang sudah melewati masa berlaku."
+        icon="solar:calendar-mark-bold-duotone"
         action={
           <Button
             variant="contained"
@@ -369,21 +367,21 @@ export default function PaymentDueReportPage() {
         />
         <SummaryStatCard
           label="30 Hari Lagi"
-          value={summary.dueSoon}
+          value={summary.expiringSoon}
           icon="solar:clock-circle-bold-duotone"
           color={theme.palette.warning.main}
         />
         <SummaryStatCard
-          label="Terlambat"
-          value={summary.overdue}
-          icon="solar:alarm-bold-duotone"
+          label="Sudah Berakhir"
+          value={summary.expired}
+          icon="solar:close-circle-bold-duotone"
           color={theme.palette.error.main}
         />
       </Box>
 
       <ReportFilterPanel
-        title="Filter Jatuh Tempo"
-        description="Pilih rentang tanggal jatuh tempo, lalu gunakan filter cepat untuk melihat semua data, 30 hari lagi, atau yang terlambat."
+        title="Filter Kontrak"
+        description="Pilih rentang tanggal akhir kontrak, lalu gunakan filter cepat untuk melihat semua data, 30 hari lagi, atau yang sudah berakhir."
         icon="solar:filter-bold-duotone"
         range={range}
         selectedPreset={statusFilter}
@@ -393,10 +391,11 @@ export default function PaymentDueReportPage() {
           count:
             item.value === "all"
               ? summary.total
-              : rows.filter((row) => row.payment_due?.due_status === item.value)
-                  .length,
+              : rows.filter(
+                  (row) => row.contract_expiry?.contract_status === item.value,
+                ).length,
         }))}
-        onPresetChange={handleFilterChange}
+        onPresetChange={setStatusFilter}
         onRangeChange={setRange}
         onApply={() => fetchReport({ notifySuccess: true })}
         onReset={handleResetFilter}
@@ -408,15 +407,15 @@ export default function PaymentDueReportPage() {
       />
 
       <DataTableShell
-        title="Daftar Jatuh Tempo Pembayaran"
-        description={`${filteredRows.length} dari ${rows.length} pembayaran ditampilkan`}
+        title="Daftar Kontrak Segera Berakhir"
+        description={`${filteredRows.length} dari ${rows.length} kontrak ditampilkan`}
         searchValue={searchText}
-        searchPlaceholder="Cari penyewa, NIK, lokasi, ruangan, pembayaran"
+        searchPlaceholder="Cari penyewa, NIK, dokumen, kontrak, lokasi, ruangan"
         onSearchChange={setSearchText}
         headerAction={
           <TableExportButton
             disabled={!filteredRows.length}
-            ariaLabel="Export laporan jatuh tempo pembayaran"
+            ariaLabel="Export laporan kontrak segera berakhir"
             items={[
               {
                 label: "Export Excel",
@@ -437,14 +436,14 @@ export default function PaymentDueReportPage() {
           columns={columns}
           dataSource={filteredRows}
           pageSize={pageSize}
-          pageSizeOptions={PAYMENT_DUE_PAGE_SIZE_OPTIONS}
+          pageSizeOptions={CONTRACT_EXPIRY_PAGE_SIZE_OPTIONS}
           onPageSizeChange={setPageSize}
-          scroll={{ x: PAYMENT_DUE_SCROLL_WIDTH, y: 560 }}
+          scroll={{ x: CONTRACT_EXPIRY_SCROLL_WIDTH, y: 560 }}
           pagination={{ total: filteredRows.length }}
           fixedActionColumn={{
-            className: "payment-due-action-cell",
-            buttonsClassName: "payment-due-action-buttons",
-            width: 152,
+            className: "contract-expiry-action-cell",
+            buttonsClassName: "contract-expiry-action-buttons",
+            width: 112,
             paddingX: 14,
           }}
         />
@@ -453,8 +452,7 @@ export default function PaymentDueReportPage() {
       <TenantLeaseDetailModal
         open={Boolean(selectedRow)}
         onClose={() => setSelectedRow(null)}
-        selectedData={normalizePaymentForLeaseDetail(selectedRow)}
-        paymentContext={buildPaymentContext(selectedRow)}
+        selectedData={selectedRow}
       />
 
       <LoadingBackdrop message={loadingMessage} open={loading} />

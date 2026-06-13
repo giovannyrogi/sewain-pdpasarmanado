@@ -21,7 +21,7 @@ const MENU_CONFIG = [
     ],
     submenu: [
       {
-        label: "Roles",
+        label: "Peran",
         value: "roles",
         path: "/roles",
         icon: <Icon icon="oui:app-users-roles" fontSize="20px" />,
@@ -29,7 +29,7 @@ const MENU_CONFIG = [
         showIcon: true,
       },
       {
-        label: "Users",
+        label: "Pengguna",
         value: "users",
         path: "/users",
         icon: <Icon icon="hugeicons:location-user-03" fontSize="20px" />,
@@ -37,7 +37,7 @@ const MENU_CONFIG = [
         showIcon: true,
       },
       {
-        label: "Locations",
+        label: "Lokasi",
         value: "locations",
         path: "/locations",
         icon: <Icon icon="mdi:location-radius-outline" fontSize="20px" />,
@@ -48,7 +48,7 @@ const MENU_CONFIG = [
         showIcon: true,
       },
       {
-        label: "Floor",
+        label: "Lantai",
         value: "floor",
         path: "/floor",
         icon: <Icon icon="ion:pricetags-outline" fontSize="20px" />,
@@ -59,7 +59,7 @@ const MENU_CONFIG = [
         showIcon: true,
       },
       {
-        label: "Rooms",
+        label: "Ruangan",
         value: "rooms",
         path: "/rooms",
         icon: <Icon icon="cil:room" fontSize="20px" />,
@@ -70,7 +70,7 @@ const MENU_CONFIG = [
         showIcon: true,
       },
       {
-        label: "Identity Lists",
+        label: "Daftar Identitas",
         value: "identity-lists",
         path: "/identity-lists",
         icon: <Icon icon="qlementine-icons:id-card-16" fontSize="20px" />,
@@ -83,7 +83,7 @@ const MENU_CONFIG = [
     ],
   },
   {
-    label: "Transactions",
+    label: "Transaksi",
     value: "transactions",
     icon: <Icon icon="healthicons:money-bag" fontSize={22} />,
     roles: [
@@ -98,7 +98,7 @@ const MENU_CONFIG = [
     ],
     submenu: [
       {
-        label: "Tenant Application",
+        label: "Permohonan Sewa",
         value: "tenant-application",
         path: "/tenant-application",
         icon: <Icon icon="hugeicons:file-edit" fontSize="20px" />,
@@ -109,7 +109,7 @@ const MENU_CONFIG = [
         showIcon: true,
       },
       {
-        label: "Tenant Approval",
+        label: "Persetujuan Sewa",
         value: "tenant-approval",
         path: "/tenant-approval",
         icon: <Icon icon="carbon:document-set" fontSize="20px" />,
@@ -124,7 +124,7 @@ const MENU_CONFIG = [
         showIcon: true,
       },
       {
-        label: "Tenant Terminations",
+        label: "Non-Aktif Tenant",
         value: "tenant-terminations",
         path: "/tenant-terminations",
         icon: <Icon icon="pepicons-pop:lock-closed-circle" fontSize="20px" />,
@@ -135,7 +135,7 @@ const MENU_CONFIG = [
         showIcon: true,
       },
       {
-        label: "Termination Approval",
+        label: "Persetujuan Non-Aktif",
         value: "tenant-terminations-approval",
         path: "/tenant-terminations-approval",
         icon: <Icon icon="pepicons-pop:lock-closed-circle" fontSize="20px" />,
@@ -150,7 +150,7 @@ const MENU_CONFIG = [
         showIcon: true,
       },
       {
-        label: "Payments",
+        label: "Pembayaran",
         value: "payments",
         path: "/payments",
         icon: (
@@ -167,7 +167,7 @@ const MENU_CONFIG = [
         showIcon: true,
       },
       {
-        label: "Contracts",
+        label: "Buku Kontrak",
         value: "contracts",
         path: "/contracts",
         icon: <Icon icon="clarity:contract-line" fontSize="20px" />,
@@ -185,7 +185,7 @@ const MENU_CONFIG = [
     ],
   },
   {
-    label: "Reports",
+    label: "Laporan",
     value: "reports",
     icon: <Icon icon="fluent:chart-multiple-16-filled" fontSize={23} />,
     roles: [
@@ -217,7 +217,7 @@ const MENU_CONFIG = [
       //   showIcon: true,
       // },
       {
-        label: "Report By Locations",
+        label: "Laporan per Lokasi",
         value: "locations-report",
         path: "/locations-report",
         icon: <Icon icon="ant-design:pie-chart-filled" fontSize="20px" />,
@@ -234,7 +234,7 @@ const MENU_CONFIG = [
         showIcon: true,
       },
       {
-        label: "Report By Tenants",
+        label: "Laporan per Penyewa",
         value: "tenants-report",
         path: "/tenants-report",
         icon: <Icon icon="bi:bar-chart-fill" fontSize="18px" />,
@@ -267,17 +267,34 @@ const MENU_CONFIG = [
         ],
         showIcon: true,
       },
+      {
+        label: "Kontrak Segera Berakhir",
+        value: "contract-expiry-report",
+        path: "/contract-expiry-report",
+        icon: <Icon icon="solar:calendar-mark-bold-duotone" fontSize="20px" />,
+        roles: [
+          ROLES.SUPERADMIN,
+          ROLES.DIVISI_KONTRAK,
+          ROLES.KEPALA_SEKSI,
+          ROLES.KEPALA_SUBDIVISI,
+          ROLES.KEPALA_DIVISI,
+          ROLES.DIREKTUR_BISNIS,
+          ROLES.DIREKTUR_UTAMA,
+          ROLES.DIVISI_KEUANGAN,
+        ],
+        showIcon: true,
+      },
     ],
   },
   {
-    label: "Settings",
+    label: "Pengaturan",
     value: "settings",
     icon: <Icon icon="line-md:cog-loop" fontSize={23} />,
     roles: Object.values(ROLES),
     hidden: true,
     submenu: [
       {
-        label: "Account",
+        label: "Akun",
         value: "account",
         path: "/account",
         icon: <Icon icon="mdi:account-edit" fontSize="20px" />,

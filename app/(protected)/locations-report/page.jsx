@@ -108,13 +108,13 @@ export default function LocationsReportPage() {
     setSnackbar({ open: true, message, severity });
   };
 
-  const validateRange = () => {
-    if (!range.startDate || !range.endDate) {
+  const validateRange = (targetRange = range) => {
+    if (!targetRange.startDate || !targetRange.endDate) {
       showSnackbar("Tanggal mulai dan selesai wajib diisi.", "error");
       return false;
     }
 
-    if (moment(range.startDate).isAfter(range.endDate)) {
+    if (moment(targetRange.startDate).isAfter(targetRange.endDate)) {
       showSnackbar("Tanggal mulai tidak boleh melewati tanggal selesai.", "error");
       return false;
     }
@@ -122,19 +122,24 @@ export default function LocationsReportPage() {
     return true;
   };
 
-  const fetchReport = async ({ showLoading = true } = {}) => {
-    if (!user || !validateRange()) return;
+  const fetchReport = async ({
+    showLoading = true,
+    overrideRange = range,
+    message = "Mengambil laporan pendapatan lokasi...",
+    notifySuccess = false,
+  } = {}) => {
+    if (!user || !validateRange(overrideRange)) return;
 
     if (showLoading) {
-      setLoadingMessage("Mengambil laporan pendapatan lokasi...");
+      setLoadingMessage(message);
       setLoading(true);
     }
 
     try {
       const locationResponse = await axios.get("/api/report/income-by-locations", {
         params: {
-          start_date: range.startDate,
-          end_date: range.endDate,
+          start_date: overrideRange.startDate,
+          end_date: overrideRange.endDate,
         },
       });
 
@@ -144,6 +149,11 @@ export default function LocationsReportPage() {
 
       if (!nextRows.length) {
         showSnackbar("Tidak ada pendapatan lokasi pada periode ini.", "warning");
+      } else if (notifySuccess) {
+        showSnackbar(
+          `Laporan pendapatan lokasi berhasil ditampilkan (${nextRows.length} data).`,
+          "success",
+        );
       }
     } catch (error) {
       console.error("Error fetch location report:", error);
@@ -170,6 +180,17 @@ export default function LocationsReportPage() {
     if (preset !== "custom") {
       setRange(getPresetRange(preset));
     }
+  };
+
+  const handleResetFilter = async () => {
+    const defaultRange = getPresetRange("month");
+    setSearchText("");
+    setSelectedPreset("month");
+    setRange(defaultRange);
+    await fetchReport({
+      overrideRange: defaultRange,
+      message: "Mereset filter laporan lokasi...",
+    });
   };
 
   const filteredRows = useMemo(
@@ -261,8 +282,10 @@ export default function LocationsReportPage() {
           setSelectedPreset("custom");
           setRange(nextRange);
         }}
-        onApply={() => fetchReport()}
+        onApply={() => fetchReport({ notifySuccess: true })}
+        onReset={handleResetFilter}
         isSubmitting={loading}
+        isResetting={loadingMessage.includes("Mereset")}
       />
 
       <DataTableShell

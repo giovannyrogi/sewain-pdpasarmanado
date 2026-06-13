@@ -343,6 +343,7 @@ const TopMenu = ({
   const handleLogout = async () => {
     onShowLoading?.();
     try {
+      sessionStorage.removeItem("sewain:session-expires-at");
       await axios.post("/api/logout");
       setTimeout(() => {
         router.push("/login");
