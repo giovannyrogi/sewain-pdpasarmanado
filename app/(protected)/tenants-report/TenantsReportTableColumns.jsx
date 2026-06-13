@@ -5,13 +5,16 @@ import { Chip, Stack, Typography } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { Icon } from "@iconify/react";
 import formatRupiah from "@/app/components/formatrupiah/page";
+import { formatNumber } from "@/app/utils/formatNumber";
 
 export const TENANT_REPORT_SCROLL_WIDTH = 1960;
 export const TENANT_REPORT_PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
 
 const moneyText = (value) => (
   <Typography sx={{ fontSize: 12, fontWeight: 700, textAlign: "right" }}>
-    {value === "" || value === null || value === undefined ? "" : formatRupiah(value)}
+    {value === "" || value === null || value === undefined
+      ? ""
+      : formatRupiah(value)}
   </Typography>
 );
 
@@ -83,13 +86,19 @@ const renderPaymentStatus = (value, record, theme) => {
   if (record?.__isTotal) return null;
 
   const isPaid = Number(record?.remaining_balance || 0) === 0;
-  const color = isPaid ? theme.palette.success.main : theme.palette.warning.main;
+  const color = isPaid
+    ? theme.palette.success.main
+    : theme.palette.warning.main;
 
   return (
     <Chip
       size="small"
       label={value || "-"}
-      icon={<Icon icon={isPaid ? "solar:check-circle-bold" : "solar:clock-circle-bold"} />}
+      icon={
+        <Icon
+          icon={isPaid ? "solar:check-circle-bold" : "solar:clock-circle-bold"}
+        />
+      }
       sx={{
         height: 28,
         borderRadius: 999,
@@ -119,13 +128,18 @@ export const createTenantReportColumns = ({ theme, isMobile }) => [
     dataIndex: "tenant_name",
     fixed: isMobile ? undefined : "left",
     width: 240,
-    sorter: keepTotalAtBottom((a, b) => a.tenant_name.localeCompare(b.tenant_name)),
+    sorter: keepTotalAtBottom((a, b) =>
+      a.tenant_name.localeCompare(b.tenant_name),
+    ),
     render: (value, record) => (
       <Stack spacing={0.4}>
         <Typography sx={{ fontWeight: 700, fontSize: 13 }}>{value}</Typography>
         {!record?.__isTotal && (
-          <Typography sx={{ color: theme.ui.mutedText, fontWeight: 700, fontSize: 11 }}>
-            {record?.payment_type === "lunas" ? "Lunas" : "Cicilan"} - Pembayaran {record?.payment_number || "-"}
+          <Typography
+            sx={{ color: theme.ui.mutedText, fontWeight: 700, fontSize: 11 }}
+          >
+            {record?.payment_type === "lunas" ? "Lunas" : "Cicilan"} -
+            Pembayaran {record?.payment_number || "-"}
           </Typography>
         )}
       </Stack>
@@ -134,7 +148,7 @@ export const createTenantReportColumns = ({ theme, isMobile }) => [
   {
     title: "Tanggal Bayar",
     dataIndex: "payment_date",
-    width: 150,
+    width: 180,
     sorter: keepTotalAtBottom((a, b) =>
       String(a.payment_date).localeCompare(String(b.payment_date)),
     ),
@@ -149,14 +163,22 @@ export const createTenantReportColumns = ({ theme, isMobile }) => [
           size="small"
           label={`Ruang ${value || "-"}`}
           icon={<Icon icon="solar:door-bold-duotone" />}
-          sx={{ borderRadius: 999, fontWeight: 700 }}
+          sx={{
+            borderRadius: 1.2,
+            fontWeight: 700,
+            color: theme.palette.primary.main,
+            bgcolor:
+              theme.palette.mode === "dark"
+                ? "rgba(255,152,0,0.13)"
+                : "rgba(230,9,9,0.10)",
+          }}
         />
       ),
   },
   {
     title: "Masa Berlaku",
     dataIndex: "masa_berlaku",
-    width: 210,
+    width: 250,
   },
   {
     title: "Ukuran",
@@ -164,7 +186,7 @@ export const createTenantReportColumns = ({ theme, isMobile }) => [
     width: 150,
     render: (value) => (
       <Typography sx={{ fontSize: 12, fontWeight: 700 }}>
-        {value || "-"} m²
+        {value || "-"} 
       </Typography>
     ),
   },

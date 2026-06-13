@@ -26,7 +26,7 @@ export const metadata = {
   description: "Sistem Informasi SewaIN",
   icons: {
     icon: "/favicon.ico",
-    apple: "/sewain-s-icon-red.png",
+    apple: "/sewain-s-icon-orange.png",
   },
   other: {
     "facebook-domain-verification": "4gs2ydcc3mifvxf8kwtp8shmybg8lj",

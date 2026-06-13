@@ -8,15 +8,16 @@ import "moment/locale/id";
 import PageHeader from "@/app/components/page-header/PageHeader";
 import DataTableShell from "@/app/components/data-table/DataTableShell";
 import ReusableAntTable from "@/app/components/data-table/ReusableAntTable";
+import TableExportButton from "@/app/components/data-table/TableExportButton";
 import LoadingBackdrop from "@/app/components/loading/Backdrop";
 import Notification from "@/app/components/Notification";
+import ReportFilterPanel from "@/app/components/reports/ReportFilterPanel";
 import { useUser } from "@/app/utils/useUser";
-import ReportFilterPanel from "../reports/_shared/ReportFilterPanel";
 import {
   buildReportFileName,
   exportReportToExcel,
   exportReportToPDF,
-} from "../reports/_shared/reportExportUtils";
+} from "@/app/utils/reportExportUtils";
 import {
   LOCATION_EXPORT_COLUMNS,
   LOCATION_REPORT_PAGE_SIZE_OPTIONS,
@@ -197,11 +198,6 @@ export default function LocationsReportPage() {
     [totals],
   );
 
-  const tableRows = useMemo(
-    () => (filteredRows.length ? [...filteredRows, totalsRow] : filteredRows),
-    [filteredRows, totalsRow],
-  );
-
   const reportTitle = `Laporan Pendapatan per Lokasi (${moment(range.startDate).format(
     "DD-MM-YYYY",
   )} s/d ${moment(range.endDate).format("DD-MM-YYYY")})`;
@@ -218,6 +214,8 @@ export default function LocationsReportPage() {
       }),
       rows: filteredRows,
       columns: LOCATION_EXPORT_COLUMNS,
+      printedAtFooter: true,
+      showLogoMark: true,
       totalsRow,
     });
   };
@@ -265,9 +263,6 @@ export default function LocationsReportPage() {
         }}
         onApply={() => fetchReport()}
         isSubmitting={loading}
-        exportDisabled={!filteredRows.length}
-        onExportExcel={handleExportExcel}
-        onExportPDF={handleExportPDF}
       />
 
       <DataTableShell
@@ -276,17 +271,35 @@ export default function LocationsReportPage() {
         searchValue={searchText}
         searchPlaceholder="Cari nama lokasi"
         onSearchChange={setSearchText}
+        headerAction={
+          <TableExportButton
+            disabled={!filteredRows.length}
+            ariaLabel="Export laporan lokasi"
+            items={[
+              {
+                label: "Export Excel",
+                icon: "vscode-icons:file-type-excel",
+                onClick: handleExportExcel,
+              },
+              {
+                label: "Export PDF",
+                icon: "vscode-icons:file-type-pdf2",
+                onClick: handleExportPDF,
+              },
+            ]}
+          />
+        }
       >
         <ReusableAntTable
           rowKey="location_id"
           columns={columns}
-          dataSource={tableRows}
+          dataSource={filteredRows}
           pageSize={pageSize}
           pageSizeOptions={LOCATION_REPORT_PAGE_SIZE_OPTIONS}
           onPageSizeChange={setPageSize}
           scroll={{ x: LOCATION_REPORT_SCROLL_WIDTH, y: 520 }}
           pagination={{ total: filteredRows.length }}
-          rowClassName={(record) => (record?.__isTotal ? "report-total-row" : "")}
+          summaryRow={filteredRows.length ? totalsRow : null}
         />
       </DataTableShell>
 

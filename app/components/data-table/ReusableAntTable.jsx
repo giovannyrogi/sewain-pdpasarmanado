@@ -23,6 +23,7 @@ export default function ReusableAntTable({
   scroll = { x: 1280, y: 430 },
   tableLayout,
   fixedActionColumn,
+  summaryRow,
   pagination,
   onChange,
   sx,
@@ -86,11 +87,36 @@ export default function ReusableAntTable({
       muiTheme.palette.mode === "dark" ? "#1c1c1c" : "#f8f9fb",
     "--reusable-fixed-hover-bg":
       muiTheme.palette.mode === "dark" ? "#2b2317" : "#fff6f6",
+    "--reusable-fixed-total-bg":
+      muiTheme.palette.mode === "dark" ? "#21190c" : "#fff3f3",
+    "--reusable-row-bg":
+      muiTheme.palette.mode === "dark" ? "#111111" : "#ffffff",
+    "--reusable-row-hover-bg":
+      muiTheme.palette.mode === "dark" ? "#2b2317" : "#fff6f6",
     /**
-     * Semua fixed column Ant Design harus punya background solid.
-     * Tanpa ini, kolom fixed akan terlihat transparan saat horizontal scroll
-     * dan data di belakangnya bisa menimpa teks fixed column.
+     * AntD memakai layer sticky terpisah untuk fixed column. Semua cell table
+     * dibuat punya background solid agar teks dari kolom yang sedang discroll
+     * tidak terlihat menembus fixed column atau baris total laporan.
      */
+    "& .ant-table, & .ant-table-container, & .ant-table-content, & .ant-table-body": {
+      background: "var(--reusable-row-bg) !important",
+      backgroundColor: "var(--reusable-row-bg) !important",
+    },
+    "& .ant-table-thead > tr > th": {
+      background: "var(--reusable-fixed-header-bg) !important",
+      backgroundColor: "var(--reusable-fixed-header-bg) !important",
+      backgroundImage: "none !important",
+    },
+    "& .ant-table-tbody > tr > td": {
+      background: "var(--reusable-row-bg) !important",
+      backgroundColor: "var(--reusable-row-bg) !important",
+      backgroundImage: "none !important",
+      backgroundClip: "border-box !important",
+    },
+    "& .ant-table-tbody > tr:hover > td": {
+      background: "var(--reusable-row-hover-bg) !important",
+      backgroundColor: "var(--reusable-row-hover-bg) !important",
+    },
     "& .ant-table-cell-fix-left, & .ant-table-cell-fix-left-first, & .ant-table-cell-fix-left-last, & .ant-table-cell-fix-right, & .ant-table-cell-fix-right-first, & .ant-table-cell-fix-right-last": {
       background: "var(--reusable-fixed-bg) !important",
       backgroundColor: "var(--reusable-fixed-bg) !important",
@@ -118,18 +144,27 @@ export default function ReusableAntTable({
       zIndex: 1,
     },
     "& .ant-table-tbody > tr.report-total-row > td": {
-      background:
-        muiTheme.palette.mode === "dark"
-          ? "rgba(255, 152, 0, 0.10) !important"
-          : "rgba(230, 9, 9, 0.06) !important",
+      background: "var(--reusable-fixed-total-bg) !important",
+      backgroundColor: "var(--reusable-fixed-total-bg) !important",
       borderTop: `1px solid ${muiTheme.palette.primary.main} !important`,
       fontWeight: "700 !important",
     },
     "& .ant-table-tbody > tr.report-total-row > td.ant-table-cell-fix-left, & .ant-table-tbody > tr.report-total-row > td.ant-table-cell-fix-right": {
-      background:
-        muiTheme.palette.mode === "dark"
-          ? "#21190c !important"
-          : "#fff3f3 !important",
+      background: "var(--reusable-fixed-total-bg) !important",
+      backgroundColor: "var(--reusable-fixed-total-bg) !important",
+    },
+    "& .ant-table-summary > tr > td": {
+      background: "var(--reusable-fixed-total-bg) !important",
+      backgroundColor: "var(--reusable-fixed-total-bg) !important",
+      borderTop: `1px solid ${muiTheme.palette.primary.main} !important`,
+      fontWeight: "700 !important",
+    },
+    "& .ant-table-summary > tr > td.ant-table-cell-fix-left, & .ant-table-summary > tr > td.ant-table-cell-fix-right": {
+      background: "var(--reusable-fixed-total-bg) !important",
+      backgroundColor: "var(--reusable-fixed-total-bg) !important",
+      backgroundImage: "none !important",
+      opacity: "1 !important",
+      zIndex: "22 !important",
     },
   };
 
@@ -211,6 +246,25 @@ export default function ReusableAntTable({
     onChange?.(nextPagination, filters, sorter, extra);
   };
 
+  const renderSummaryCell = (column, index) => {
+    const value = column?.dataIndex ? summaryRow?.[column.dataIndex] : undefined;
+    const content =
+      typeof column?.render === "function"
+        ? column.render(value, summaryRow, -1)
+        : value;
+
+    return (
+      <Table.Summary.Cell
+        key={column?.key || column?.dataIndex || index}
+        index={index}
+        align={column?.align}
+        fixed={column?.fixed}
+      >
+        {content}
+      </Table.Summary.Cell>
+    );
+  };
+
   return (
     <ConfigProvider
       theme={{
@@ -249,6 +303,17 @@ export default function ReusableAntTable({
           scroll={scroll}
           pagination={mergedPagination}
           onChange={handleChange}
+          summary={
+            summaryRow
+              ? () => (
+                  <Table.Summary fixed>
+                    <Table.Summary.Row className="report-total-row">
+                      {columnsWithAutoNumber.map(renderSummaryCell)}
+                    </Table.Summary.Row>
+                  </Table.Summary>
+                )
+              : undefined
+          }
           {...tableProps}
         />
       </Box>

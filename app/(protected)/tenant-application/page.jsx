@@ -3,10 +3,6 @@ import {
   Box,
   Button,
   Grid,
-  ListItemIcon,
-  ListItemText,
-  Menu,
-  MenuItem,
   Stack,
   useMediaQuery,
   useTheme,
@@ -20,6 +16,7 @@ import axios from "axios";
 import PageHeader from "@/app/components/page-header/PageHeader";
 import DataTableShell from "@/app/components/data-table/DataTableShell";
 import ReusableAntTable from "@/app/components/data-table/ReusableAntTable";
+import TableExportButton from "@/app/components/data-table/TableExportButton";
 import SummaryStatCard from "@/app/components/stats/SummaryStatCard";
 import TenantApplicationFormModal from "./TenantApplicationFormModal";
 import CrudConfirmModal from "@/app/components/crud/CrudConfirmModal";
@@ -74,13 +71,11 @@ const Applications = () => {
 
   const [openUpdateDateModal, setOpenUpdateDateModal] = useState(false);
   const [printData, setPrintData] = useState(null);
-  const [anchorEl, setAnchorEl] = useState(null);
   const [tenantApplicationsLoaded, setTenantApplicationsLoaded] =
     useState(false);
   const [handledNotificationTarget, setHandledNotificationTarget] =
     useState(null);
   const [notificationOpenSignal, setNotificationOpenSignal] = useState(0);
-  const openMenu = Boolean(anchorEl);
 
   const hideGlobalNotificationLoading = () => {
     window.dispatchEvent(new Event("sewain:global-loading-hide"));
@@ -106,14 +101,6 @@ const Applications = () => {
     if (hasNotificationParams) {
       window.history.replaceState(null, "", window.location.pathname);
     }
-  };
-
-  const handleMenuClick = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleMenuClose = () => {
-    setAnchorEl(null);
   };
 
   const getDataTenantApplication = async () => {
@@ -438,7 +425,6 @@ const Applications = () => {
     }
 
     exportTenantApplicationsToExcel(filteredData);
-    handleMenuClose();
   };
 
   const handleExportPDF = () => {
@@ -525,65 +511,23 @@ const Applications = () => {
           searchValue={searchText}
           searchPlaceholder="Cari penyewa, dokumen, lokasi, ruangan, pembayaran..."
           onSearchChange={setSearchText}
-          action={
-            <Box
-              sx={{
-                width: "100%",
-              }}
-            >
-              <Button
-                size="small"
-                variant={themeMode === "dark" ? "outlined" : "contained"}
-                startIcon={<Icon icon="solar:export-bold-duotone" />}
-                onClick={handleMenuClick}
-                sx={{
-                  minHeight: 40,
-                  px: 2,
-                  borderRadius: 2,
-                  fontFamily: "Poppins",
-                  fontWeight: 850,
-                  textTransform: "none",
-                }}
-              >
-                Export
-              </Button>
-
-              <Menu
-                anchorEl={anchorEl}
-                open={openMenu}
-                onClose={handleMenuClose}
-                anchorOrigin={{
-                  vertical: "bottom",
-                  horizontal: "left",
-                }}
-                transformOrigin={{
-                  vertical: "top",
-                  horizontal: "left",
-                }}
-                PaperProps={{
-                  sx: {
-                    mt: 1,
-                    borderRadius: 2,
-                    boxShadow: 6,
-                    overflow: "visible",
-                    zIndex: 2000,
-                  },
-                }}
-              >
-                <MenuItem onClick={handleExportExcel}>
-                  <ListItemIcon>
-                    <Icon icon="vscode-icons:file-type-excel" />
-                  </ListItemIcon>
-                  <ListItemText>Export ke Excel</ListItemText>
-                </MenuItem>
-                <MenuItem onClick={handleExportPDF}>
-                  <ListItemIcon>
-                    <Icon icon="vscode-icons:file-type-pdf2" />
-                  </ListItemIcon>
-                  <ListItemText>Export ke PDF</ListItemText>
-                </MenuItem>
-              </Menu>
-            </Box>
+          headerAction={
+            <TableExportButton
+              disabled={!filteredData.length}
+              ariaLabel="Export permohonan sewa"
+              items={[
+                {
+                  label: "Export ke Excel",
+                  icon: "vscode-icons:file-type-excel",
+                  onClick: handleExportExcel,
+                },
+                {
+                  label: "Export ke PDF",
+                  icon: "vscode-icons:file-type-pdf2",
+                  onClick: handleExportPDF,
+                },
+              ]}
+            />
           }
         >
           <ReusableAntTable

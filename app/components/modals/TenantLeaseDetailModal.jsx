@@ -203,7 +203,11 @@ export default function TenantLeaseDetailModal({
   paymentContext = null,
 }) {
   const theme = useTheme();
-  const [openPreview, setOpenPreview] = useState(false);
+  const [previewImage, setPreviewImage] = useState({
+    open: false,
+    url: "",
+    alt: "Preview",
+  });
 
   const paymentDetail = buildPaymentDetail(selectedData);
   const ktpImageUrl = getUploadApiUrl(selectedData?.ktp_file_path);
@@ -216,6 +220,21 @@ export default function TenantLeaseDetailModal({
   const showApproveButton = canApprove && !isFinalStatus;
   const paymentHistory = paymentContext?.previous_payments || [];
   const paymentLabel = paymentContext?.payment_label || "Pembayaran";
+
+  /**
+   * Preview modal yang tersedia saat ini berbasis tag img. Untuk file bukti
+   * berbentuk PDF, fallback tetap membuka tab baru agar dokumen tidak rusak.
+   */
+  const openDocumentPreview = (url, alt) => {
+    if (!url) return;
+
+    if (String(url).toLowerCase().includes(".pdf")) {
+      window.open(url, "_blank", "noopener,noreferrer");
+      return;
+    }
+
+    setPreviewImage({ open: true, url, alt });
+  };
 
   const installments = useMemo(
     () => [
@@ -304,7 +323,10 @@ export default function TenantLeaseDetailModal({
                       : "rgba(255,255,255,0.72)",
                   cursor: selectedData?.ktp_file_path ? "zoom-in" : "default",
                 }}
-                onClick={() => selectedData?.ktp_file_path && setOpenPreview(true)}
+                onClick={() =>
+                  selectedData?.ktp_file_path &&
+                  openDocumentPreview(ktpImageUrl, "Preview KTP")
+                }
               >
                 {selectedData?.ktp_file_path ? (
                   <Box
@@ -627,7 +649,12 @@ export default function TenantLeaseDetailModal({
                         <Button
                           variant="contained"
                           startIcon={<Icon icon="solar:eye-bold-duotone" />}
-                          onClick={() => window.open(proofFileUrl, "_blank", "noopener,noreferrer")}
+                          onClick={() =>
+                            openDocumentPreview(
+                              proofFileUrl,
+                              "Preview Bukti Pembayaran",
+                            )
+                          }
                           sx={{
                             borderRadius: 2,
                             fontWeight: 700,
@@ -690,7 +717,12 @@ export default function TenantLeaseDetailModal({
                                 size="small"
                                 variant="outlined"
                                 startIcon={<Icon icon="solar:eye-bold-duotone" />}
-                                onClick={() => window.open(previousProofUrl, "_blank", "noopener,noreferrer")}
+                                onClick={() =>
+                                  openDocumentPreview(
+                                    previousProofUrl,
+                                    `Preview Bukti Pembayaran ${previousLabel}`,
+                                  )
+                                }
                                 sx={{
                                   borderRadius: 1.5,
                                   fontWeight: 700,
@@ -765,10 +797,12 @@ export default function TenantLeaseDetailModal({
       </AppModal>
 
       <ImagePreviewModal
-        open={openPreview}
-        onClose={() => setOpenPreview(false)}
-        imageUrl={ktpImageUrl}
-        alt="Preview KTP"
+        open={previewImage.open}
+        onClose={() =>
+          setPreviewImage({ open: false, url: "", alt: "Preview" })
+        }
+        imageUrl={previewImage.url}
+        alt={previewImage.alt}
       />
     </>
   );

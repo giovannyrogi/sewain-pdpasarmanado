@@ -273,10 +273,19 @@ export function createPaymentColumns({
           className="payments-action-buttons"
           sx={{ display: "inline-flex", gap: 0.75, justifyContent: "center" }}
         >
+          {Number(user?.role_id) !== 8 &&
+            ["rejected", "proses"].includes(record.payments?.approval_status) && (
+              <TableActionButton
+                title="Edit pembayaran"
+                color="info"
+                icon="solar:pen-new-square-bold-duotone"
+                onClick={() => onEdit(record)}
+              />
+            )}
           <TableActionButton
             title="Detail pembayaran"
             color="success"
-            icon="material-symbols:order-approve-outline"
+            icon="solar:bill-check-bold-duotone"
             onClick={() => onDetail(record)}
           />
           {record.payments?.approval_status === "approved" && (
@@ -297,20 +306,12 @@ export function createPaymentColumns({
           )}
           {Number(user?.role_id) !== 8 &&
             ["rejected", "proses"].includes(record.payments?.approval_status) && (
-              <>
-                <TableActionButton
-                  title="Edit pembayaran"
-                  color="info"
-                  icon="line-md:edit"
-                  onClick={() => onEdit(record)}
-                />
-                <TableActionButton
-                  title="Hapus pembayaran"
-                  color="error"
-                  icon="line-md:close-circle"
-                  onClick={() => onDelete(record)}
-                />
-              </>
+              <TableActionButton
+                title="Hapus pembayaran"
+                color="error"
+                icon="solar:trash-bin-trash-bold-duotone"
+                onClick={() => onDelete(record)}
+              />
             )}
           {Number(user?.role_id) === 8 &&
             record.payments?.approval_status === "proses" && (

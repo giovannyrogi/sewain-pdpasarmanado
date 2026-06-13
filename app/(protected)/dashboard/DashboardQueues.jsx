@@ -111,9 +111,24 @@ const QueueItem = ({
   tone = "primary",
   actionHref,
   actionLabel = "Detail",
+  actionLoadingMessage,
 }) => {
   const theme = useTheme();
   const color = theme.palette[tone]?.main || theme.palette.primary.main;
+  const handleActionClick = () => {
+    if (!actionLoadingMessage || typeof window === "undefined") return;
+
+    /**
+     * Loading global dipakai untuk navigasi yang perlu membuka modal di halaman
+     * tujuan. Halaman tujuan bertanggung jawab mematikan loading setelah data
+     * fresh berhasil diambil dan modal target sudah diproses.
+     */
+    window.dispatchEvent(
+      new CustomEvent("sewain:global-loading-show", {
+        detail: { message: actionLoadingMessage },
+      }),
+    );
+  };
 
   return (
     <Box sx={getDashboardListItemSx(theme)}>
@@ -157,19 +172,52 @@ const QueueItem = ({
             LinkComponent={Link}
             href={actionHref}
             size="small"
+            startIcon={<Icon icon="solar:eye-bold-duotone" />}
             endIcon={<Icon icon="solar:arrow-right-linear" />}
+            onClick={handleActionClick}
             sx={{
               minWidth: 0,
-              px: 1,
-              py: 0.35,
+              minHeight: 30,
+              px: 1.15,
+              py: 0.45,
               borderRadius: 1.5,
               fontWeight: 900,
               fontSize: 11,
+              lineHeight: 1,
               color: theme.palette.primary.main,
               bgcolor:
                 theme.palette.mode === "dark"
-                  ? "rgba(255, 152, 0, 0.10)"
-                  : "rgba(230, 9, 9, 0.08)",
+                  ? "rgba(255, 152, 0, 0.14)"
+                  : "rgba(230, 9, 9, 0.10)",
+              border: `1px solid ${theme.palette.primary.main}55`,
+              boxShadow:
+                theme.palette.mode === "dark"
+                  ? "0 8px 18px rgba(255,152,0,0.08)"
+                  : "0 8px 18px rgba(230,9,9,0.08)",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              "& .MuiButton-startIcon": {
+                mr: 0.55,
+                ml: 0,
+                alignItems: "center",
+              },
+              "& .MuiButton-endIcon": {
+                ml: 0.35,
+                mr: 0,
+                alignItems: "center",
+              },
+              "& .MuiButton-startIcon svg, & .MuiButton-endIcon svg": {
+                display: "block",
+                fontSize: 15,
+              },
+              "&:hover": {
+                bgcolor:
+                  theme.palette.mode === "dark"
+                    ? "rgba(255, 152, 0, 0.22)"
+                    : "rgba(230, 9, 9, 0.16)",
+                borderColor: `${theme.palette.primary.main}88`,
+              },
             }}
           >
             {actionLabel}
@@ -284,10 +332,12 @@ export default function DashboardQueues({ overview, loading }) {
                 icon="solar:wallet-money-bold-duotone"
                 title={item.tenant_name}
                 subtitle={`${formatRupiah(item.amount || 0)} - ${formatDate(item.payment_date)}`}
-                status="Menunggu validasi pembayaran"
+                status="Menunggu persetujuan Anda"
                 meta="Payment"
                 tone="success"
                 actionHref={`/payments?payment_id=${item.payment_id}&open=approval`}
+                actionLabel="Setujui"
+                actionLoadingMessage="Menampilkan detail validasi pembayaran..."
               />
             ))}
           </Stack>

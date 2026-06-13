@@ -10,7 +10,9 @@ export const LOCATION_REPORT_PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
 
 const moneyText = (value) => (
   <Typography sx={{ fontSize: 12, fontWeight: 700, textAlign: "right" }}>
-    {value === "" || value === null || value === undefined ? "" : formatRupiah(value)}
+    {value === "" || value === null || value === undefined
+      ? ""
+      : formatRupiah(value)}
   </Typography>
 );
 
@@ -90,16 +92,7 @@ export const createLocationReportColumns = ({ theme, isMobile }) => [
       a.location_name.localeCompare(b.location_name),
     ),
     render: (value, record) => (
-      <Stack direction="row" alignItems="center" spacing={1}>
-        {!record?.__isTotal && (
-          <Icon
-            icon="solar:buildings-3-bold-duotone"
-            fontSize={20}
-            color={theme.palette.primary.main}
-          />
-        )}
-        <Typography sx={{ fontWeight: 700, fontSize: 13 }}>{value}</Typography>
-      </Stack>
+      <Typography sx={{ fontWeight: 700, fontSize: 13 }}>{value}</Typography>
     ),
   },
   {
@@ -107,7 +100,9 @@ export const createLocationReportColumns = ({ theme, isMobile }) => [
     dataIndex: "income_contracts",
     width: 170,
     align: "right",
-    sorter: keepTotalAtBottom((a, b) => a.income_contracts - b.income_contracts),
+    sorter: keepTotalAtBottom(
+      (a, b) => a.income_contracts - b.income_contracts,
+    ),
     render: moneyText,
   },
   {

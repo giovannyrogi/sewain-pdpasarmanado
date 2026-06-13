@@ -188,7 +188,16 @@ const MENU_CONFIG = [
     label: "Reports",
     value: "reports",
     icon: <Icon icon="fluent:chart-multiple-16-filled" fontSize={23} />,
-    roles: [ROLES.SUPERADMIN, ROLES.DIVISI_KONTRAK],
+    roles: [
+      ROLES.SUPERADMIN,
+      ROLES.DIVISI_KONTRAK,
+      ROLES.KEPALA_SEKSI,
+      ROLES.KEPALA_SUBDIVISI,
+      ROLES.KEPALA_DIVISI,
+      ROLES.DIREKTUR_BISNIS,
+      ROLES.DIREKTUR_UTAMA,
+      ROLES.DIVISI_KEUANGAN,
+    ],
     submenu: [
       // {
       //   label: "Room Status",
@@ -229,6 +238,23 @@ const MENU_CONFIG = [
         value: "tenants-report",
         path: "/tenants-report",
         icon: <Icon icon="bi:bar-chart-fill" fontSize="18px" />,
+        roles: [
+          ROLES.SUPERADMIN,
+          ROLES.DIVISI_KONTRAK,
+          ROLES.KEPALA_SEKSI,
+          ROLES.KEPALA_SUBDIVISI,
+          ROLES.KEPALA_DIVISI,
+          ROLES.DIREKTUR_BISNIS,
+          ROLES.DIREKTUR_UTAMA,
+          ROLES.DIVISI_KEUANGAN,
+        ],
+        showIcon: true,
+      },
+      {
+        label: "Jatuh Tempo Pembayaran",
+        value: "payment-due-report",
+        path: "/payment-due-report",
+        icon: <Icon icon="solar:alarm-bold-duotone" fontSize="20px" />,
         roles: [
           ROLES.SUPERADMIN,
           ROLES.DIVISI_KONTRAK,

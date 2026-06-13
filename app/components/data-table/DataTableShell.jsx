@@ -15,6 +15,7 @@ export default function DataTableShell({
   searchValue,
   searchPlaceholder = "Cari data...",
   onSearchChange,
+  headerAction,
   action,
   children,
 }) {
@@ -30,33 +31,54 @@ export default function DataTableShell({
         overflow: "hidden",
       }}
     >
-      <Stack
-        direction={{ xs: "column", md: "row" }}
-        alignItems={{ xs: "stretch", md: "center" }}
-        justifyContent="space-between"
-        spacing={1.5}
-        sx={{ p: { xs: 1.5, sm: 2 } }}
-      >
-        <Box sx={{ minWidth: 0 }}>
-          <Typography sx={{ fontFamily: "Poppins", fontWeight: 850, fontSize: 18 }}>
-            {title}
-          </Typography>
-          {description && (
+      <Stack spacing={1.5} sx={{ p: { xs: 1.5, sm: 2 } }}>
+        <Stack
+          direction="row"
+          alignItems="flex-start"
+          justifyContent="space-between"
+          spacing={1.5}
+        >
+          <Box sx={{ minWidth: 0, flex: "1 1 auto" }}>
             <Typography
+              sx={{ fontFamily: "Poppins", fontWeight: 700, fontSize: 18 }}
+            >
+              {title}
+            </Typography>
+            {description && (
+              <Typography
+                sx={{
+                  color: theme.ui.mutedText,
+                  fontFamily: "Poppins",
+                  fontWeight: 600,
+                  fontSize: 12,
+                  mt: 0.25,
+                }}
+              >
+                {description}
+              </Typography>
+            )}
+          </Box>
+
+          {headerAction && (
+            <Box
               sx={{
-                color: theme.ui.mutedText,
-                fontFamily: "Poppins",
-                fontWeight: 600,
-                fontSize: 12,
-                mt: 0.25,
+                flex: "0 0 auto",
+                display: "flex",
+                justifyContent: "flex-end",
+                pt: { xs: 0.15, sm: 0 },
               }}
             >
-              {description}
-            </Typography>
+              {headerAction}
+            </Box>
           )}
-        </Box>
+        </Stack>
 
-        <Stack direction={{ xs: "column", sm: "row" }} spacing={1} alignItems={{ xs: "stretch", sm: "center" }}>
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          spacing={1}
+          alignItems={{ xs: "stretch", sm: "center" }}
+          justifyContent={{ xs: "stretch", sm: "flex-start" }}
+        >
           <TextField
             size="small"
             value={searchValue}
@@ -70,7 +92,7 @@ export default function DataTableShell({
               ),
             }}
             sx={{
-              minWidth: { xs: "100%", sm: 260 },
+              minWidth: { xs: "100%", sm: 400 },
               "& .MuiOutlinedInput-root": {
                 fontFamily: "Poppins",
                 borderRadius: 2,

@@ -8,15 +8,16 @@ import "moment/locale/id";
 import PageHeader from "@/app/components/page-header/PageHeader";
 import DataTableShell from "@/app/components/data-table/DataTableShell";
 import ReusableAntTable from "@/app/components/data-table/ReusableAntTable";
+import TableExportButton from "@/app/components/data-table/TableExportButton";
 import LoadingBackdrop from "@/app/components/loading/Backdrop";
 import Notification from "@/app/components/Notification";
+import ReportFilterPanel from "@/app/components/reports/ReportFilterPanel";
 import { useUser } from "@/app/utils/useUser";
-import ReportFilterPanel from "../reports/_shared/ReportFilterPanel";
 import {
   buildReportFileName,
   exportReportToExcel,
   exportReportToPDF,
-} from "../reports/_shared/reportExportUtils";
+} from "@/app/utils/reportExportUtils";
 import {
   TENANT_EXPORT_COLUMNS,
   TENANT_REPORT_PAGE_SIZE_OPTIONS,
@@ -56,14 +57,22 @@ const getPresetRange = (preset) => {
 
   if (preset === "two_week") {
     return {
-      startDate: today.clone().subtract(1, "week").startOf("week").format("YYYY-MM-DD"),
+      startDate: today
+        .clone()
+        .subtract(1, "week")
+        .startOf("week")
+        .format("YYYY-MM-DD"),
       endDate: today.format("YYYY-MM-DD"),
     };
   }
 
   if (preset === "two_month") {
     return {
-      startDate: today.clone().subtract(1, "month").startOf("month").format("YYYY-MM-DD"),
+      startDate: today
+        .clone()
+        .subtract(1, "month")
+        .startOf("month")
+        .format("YYYY-MM-DD"),
       endDate: today.format("YYYY-MM-DD"),
     };
   }
@@ -114,7 +123,10 @@ export default function TenantsReportPage() {
     }
 
     if (moment(range.startDate).isAfter(range.endDate)) {
-      showSnackbar("Tanggal mulai tidak boleh melewati tanggal selesai.", "error");
+      showSnackbar(
+        "Tanggal mulai tidak boleh melewati tanggal selesai.",
+        "error",
+      );
       return false;
     }
 
@@ -142,7 +154,10 @@ export default function TenantsReportPage() {
       setTotals(response.data?.totals || {});
 
       if (!nextRows.length) {
-        showSnackbar("Tidak ada pendapatan tenant pada periode ini.", "warning");
+        showSnackbar(
+          "Tidak ada pendapatan tenant pada periode ini.",
+          "warning",
+        );
       }
     } catch (error) {
       console.error("Error fetch tenant report:", error);
@@ -202,14 +217,9 @@ export default function TenantsReportPage() {
     [totals],
   );
 
-  const tableRows = useMemo(
-    () => (filteredRows.length ? [...filteredRows, totalsRow] : filteredRows),
-    [filteredRows, totalsRow],
-  );
-
-  const reportTitle = `Laporan Pendapatan per Tenant (${moment(range.startDate).format(
-    "DD-MM-YYYY",
-  )} s/d ${moment(range.endDate).format("DD-MM-YYYY")})`;
+  const reportTitle = `Laporan Pendapatan per Tenant (${moment(
+    range.startDate,
+  ).format("DD-MM-YYYY")} s/d ${moment(range.endDate).format("DD-MM-YYYY")})`;
 
   const handleExportExcel = () => {
     exportReportToExcel({
@@ -239,6 +249,7 @@ export default function TenantsReportPage() {
       rows: filteredRows,
       columns: TENANT_EXPORT_COLUMNS,
       totalsRow,
+      showLogoMark: true,
     });
   };
 
@@ -270,9 +281,6 @@ export default function TenantsReportPage() {
         }}
         onApply={() => fetchReport()}
         isSubmitting={loading}
-        exportDisabled={!filteredRows.length}
-        onExportExcel={handleExportExcel}
-        onExportPDF={handleExportPDF}
       />
 
       <DataTableShell
@@ -281,17 +289,35 @@ export default function TenantsReportPage() {
         searchValue={searchText}
         searchPlaceholder="Cari penyewa, ruangan, masa berlaku, status"
         onSearchChange={setSearchText}
+        headerAction={
+          <TableExportButton
+            disabled={!filteredRows.length}
+            ariaLabel="Export laporan tenant"
+            items={[
+              {
+                label: "Export Excel",
+                icon: "vscode-icons:file-type-excel",
+                onClick: handleExportExcel,
+              },
+              {
+                label: "Export PDF",
+                icon: "vscode-icons:file-type-pdf2",
+                onClick: handleExportPDF,
+              },
+            ]}
+          />
+        }
       >
         <ReusableAntTable
           rowKey="payment_id"
           columns={columns}
-          dataSource={tableRows}
+          dataSource={filteredRows}
           pageSize={pageSize}
           pageSizeOptions={TENANT_REPORT_PAGE_SIZE_OPTIONS}
           onPageSizeChange={setPageSize}
           scroll={{ x: TENANT_REPORT_SCROLL_WIDTH, y: 560 }}
           pagination={{ total: filteredRows.length }}
-          rowClassName={(record) => (record?.__isTotal ? "report-total-row" : "")}
+          summaryRow={filteredRows.length ? totalsRow : null}
         />
       </DataTableShell>
 

@@ -1,6 +1,7 @@
 import pool from "@/lib/dbConfig";
 import moment from "moment";
 import { requireAuthenticatedUser } from "@/app/utils/auth";
+import { formatNumber } from "@/app/utils/formatNumber";
 
 function isValidDate(value) {
   return moment(value, "YYYY-MM-DD", true).isValid();
@@ -21,7 +22,7 @@ export async function GET(request) {
           success: false,
           message: "Start date are required",
         }),
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -31,7 +32,7 @@ export async function GET(request) {
           success: false,
           message: "End date are required",
         }),
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -41,7 +42,7 @@ export async function GET(request) {
           success: false,
           message: "Format tanggal harus YYYY-MM-DD.",
         }),
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -55,7 +56,7 @@ export async function GET(request) {
           success: false,
           message: "Start date must be before end date",
         }),
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -199,7 +200,10 @@ export async function GET(request) {
     ORDER BY pf.tenant_name, pf.payment_date;
     `;
 
-    const { rows } = await pool.query(sql, [startDateFormatted, endDateFormatted]);
+    const { rows } = await pool.query(sql, [
+      startDateFormatted,
+      endDateFormatted,
+    ]);
 
     const data = rows.map((r) => ({
       payment_id: r.payment_id,
@@ -210,9 +214,11 @@ export async function GET(request) {
       tenant_name: r.tenant_name,
       room_number: r.room_number,
       masa_berlaku: `${moment(r.start_date).format("DD-MM-YYYY")} s/d ${moment(
-        r.end_date
+        r.end_date,
       ).format("DD-MM-YYYY")}`,
-      ukuran_m2: `${r.room_length} x ${r.room_width}`,
+      ukuran_m2: `${formatNumber(r.room_length)} x ${formatNumber(
+        r.room_width,
+      )} m²`,
       harga_m2: Number(r.harga_m2 || 0),
       kontrak: Number(r.kontrak_murni || 0),
       jtu: Number(r.jtu_display || 0),
@@ -248,7 +254,7 @@ export async function GET(request) {
         total_with_ppn: 0,
         total_pph: 0,
         total_net: 0,
-      }
+      },
     );
 
     Object.keys(totals).forEach((k) => {
@@ -265,7 +271,7 @@ export async function GET(request) {
           end_date: endDate,
         },
       }),
-      { status: 200, headers: { "Content-Type": "application/json" } }
+      { status: 200, headers: { "Content-Type": "application/json" } },
     );
   } catch (error) {
     console.error("Error in income-by-tenant:", error);
@@ -274,7 +280,7 @@ export async function GET(request) {
         success: false,
         message: "Server error",
       }),
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

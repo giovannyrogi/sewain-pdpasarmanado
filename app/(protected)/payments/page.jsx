@@ -163,8 +163,13 @@ const Payments = () => {
     const deletedFromNotification = target?.deletedFromNotification;
     const targetKey = `${paymentId}-${openMode}-${deletedFromNotification}-${target?.requestedAt || 0}`;
 
+    /**
+     * Dashboard queue memakai open=approval karena konteksnya memang validasi.
+     * Di halaman payments, approval dilakukan dari modal detail pemohon yang
+     * sama dengan open=detail, sementara open=progress khusus riwayat verifikasi.
+     */
     if (
-      !["detail", "progress"].includes(openMode) ||
+      !["detail", "approval", "progress"].includes(openMode) ||
       !paymentId ||
       !user ||
       (!deletedFromNotification && !paymentsLoaded) ||

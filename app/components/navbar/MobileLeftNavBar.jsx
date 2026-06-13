@@ -23,6 +23,8 @@ const MobileLeftNavBar = ({
   const pathname = usePathname();
   const { themeMode } = useThemeMode();
   const [openDropdown, setOpenDropdown] = useState(null);
+  const drawerBackground =
+    theme.palette.mode === "dark" ? "#121212" : theme.ui.navBg;
 
   /**
    * Mobile navigation mirrors the desktop menu behavior, then closes the drawer
@@ -86,7 +88,8 @@ const MobileLeftNavBar = ({
             width: { xs: 300, sm: 328 },
             maxWidth: "88vw",
             p: 2,
-            bgcolor: theme.ui.navBg,
+            bgcolor: drawerBackground,
+            backgroundImage: "none",
             borderRight: `1px solid ${theme.ui.navBorder}`,
             boxShadow: theme.ui.shellShadow,
           },

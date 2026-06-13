@@ -45,8 +45,8 @@ export default function CrudConfirmModal({
         width={430}
         showCloseButton={!loading}
       >
-        <Stack spacing={2.2}>
-          <Stack alignItems="center" spacing={1.5}>
+        <Stack spacing={{ xs: 1.5, sm: 1.75 }}>
+          <Stack alignItems="center" spacing={1.15}>
             <Box
               sx={{
                 width: 72,
@@ -93,8 +93,8 @@ export default function CrudConfirmModal({
           <Stack
             direction={{ xs: "column-reverse", sm: "row" }}
             sx={{
-              gap: { xs: 2, sm: 1.5 },
-              p: { xs: 2.6, sm: 2.5 },
+              gap: { xs: 1.25, sm: 1.25 },
+              pt: { xs: 0.25, sm: 0.5 },
             }}
           >
             <Button

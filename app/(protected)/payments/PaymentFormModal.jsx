@@ -155,9 +155,22 @@ function PaymentProofUploadCard({
               startIcon={<Icon icon="solar:eye-bold-duotone" />}
               onClick={onPreview}
               disabled={disabled}
-              sx={{ borderRadius: 2, fontWeight: 700, textTransform: "none" }}
+              title="Lihat bukti pembayaran"
+              sx={{
+                borderRadius: 2,
+                fontWeight: 700,
+                textTransform: "none",
+                minWidth: { xs: "100%", sm: 42, md: 42 },
+                px: { xs: 1.5, sm: 1.1, md: 1.1 },
+                "& .MuiButton-startIcon": {
+                  mr: { xs: 1, sm: 0, md: 0 },
+                  ml: 0,
+                },
+              }}
             >
-              Lihat Bukti
+              <Box component="span" sx={{ display: { xs: "inline", sm: "none" } }}>
+                Lihat Bukti
+              </Box>
             </Button>
           )}
           <Button
@@ -165,9 +178,22 @@ function PaymentProofUploadCard({
             component="label"
             startIcon={<Icon icon="solar:upload-bold-duotone" />}
             disabled={disabled}
-            sx={{ borderRadius: 2, fontWeight: 700, textTransform: "none" }}
+            title={hasProof ? "Ganti bukti pembayaran" : "Upload bukti pembayaran"}
+            sx={{
+              borderRadius: 2,
+              fontWeight: 700,
+              textTransform: "none",
+              minWidth: { xs: "100%", sm: 42, md: 42 },
+              px: { xs: 1.5, sm: 1.1, md: 1.1 },
+              "& .MuiButton-startIcon": {
+                mr: { xs: 1, sm: 0, md: 0 },
+                ml: 0,
+              },
+            }}
           >
-            {hasProof ? "Ganti Bukti" : "Upload Bukti"}
+            <Box component="span" sx={{ display: { xs: "inline", sm: "none" } }}>
+              {hasProof ? "Ganti Bukti" : "Upload Bukti"}
+            </Box>
             <input type="file" accept="image/*,.pdf" hidden onChange={onUpload} />
           </Button>
           {hasProof && (
@@ -177,9 +203,22 @@ function PaymentProofUploadCard({
               startIcon={<Icon icon="solar:trash-bin-trash-bold-duotone" />}
               onClick={onClear}
               disabled={disabled}
-              sx={{ borderRadius: 2, fontWeight: 700, textTransform: "none" }}
+              title="Hapus bukti pembayaran"
+              sx={{
+                borderRadius: 2,
+                fontWeight: 700,
+                textTransform: "none",
+                minWidth: { xs: "100%", sm: 42, md: 42 },
+                px: { xs: 1.5, sm: 1.1, md: 1.1 },
+                "& .MuiButton-startIcon": {
+                  mr: { xs: 1, sm: 0, md: 0 },
+                  ml: 0,
+                },
+              }}
             >
-              Hapus
+              <Box component="span" sx={{ display: { xs: "inline", sm: "none" } }}>
+                Hapus
+              </Box>
             </Button>
           )}
         </Stack>
@@ -562,7 +601,7 @@ export default function PaymentFormModal({
             </Grid>
           )}
 
-          <Grid size={{ xs: 12, md: 6 }}>
+          <Grid size={{ xs: 12, md: typePembayaran === "cicilan" ? 6 : 12 }}>
             <FormControl fullWidth required>
               <InputLabel id="payment-type-label">Tipe Pembayaran</InputLabel>
               <Select
