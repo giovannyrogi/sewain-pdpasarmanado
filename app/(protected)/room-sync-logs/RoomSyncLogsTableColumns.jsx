@@ -54,7 +54,7 @@ const metricConfig = {
     palette: "info",
   },
   released: {
-    label: "Dilepas",
+    label: "Tersedia",
     icon: "solar:check-circle-bold-duotone",
     palette: "success",
   },
@@ -73,6 +73,8 @@ export const getRunStatusLabel = (status) =>
 
 export const getRunSourceLabel = (source) =>
   sourceConfig[source]?.label || source || "-";
+
+const getRunNumber = (value) => Number(value || 0);
 
 const getPaletteColor = (theme, palette) =>
   theme.palette[palette]?.main || theme.palette.primary.main;
@@ -171,7 +173,64 @@ const SourceChip = ({ source }) => {
   );
 };
 
-export const createRoomSyncLogColumns = ({ onViewDetail }) => [
+const ItemActionChip = ({ action }) => {
+  if (action === "released") {
+    return (
+      <AuditPill
+        icon="solar:home-smile-bold-duotone"
+        label="Tersedia"
+        caption="Status diperbarui"
+        palette="success"
+      />
+    );
+  }
+
+  return (
+    <AuditPill
+      icon="solar:pause-circle-bold-duotone"
+      label="Dilewati"
+      caption="Tidak diubah"
+      palette="warning"
+    />
+  );
+};
+
+const SyncInfo = ({ record }) => {
+  const released = getRunNumber(record.total_released);
+
+  if (record.status === "failed") {
+    return (
+      <AuditPill
+        icon="solar:danger-triangle-bold-duotone"
+        label="Sync gagal"
+        caption="Periksa catatan error"
+        palette="error"
+      />
+    );
+  }
+
+  if (released > 0) {
+    return (
+      <AuditPill
+        icon="solar:home-smile-bold-duotone"
+        label={`${released} ruangan tersedia kembali`}
+        caption="Status ruangan diperbarui"
+        palette="success"
+      />
+    );
+  }
+
+  return (
+    <AuditPill
+      icon="solar:info-circle-bold-duotone"
+      label="Tidak ada ruangan diperbarui"
+      caption="Semua data sudah sesuai"
+      palette="info"
+    />
+  );
+};
+
+export const createRoomSyncLogColumns = ({ onViewDetail, onDelete }) => [
   {
     title: "No",
     dataIndex: "index",
@@ -211,6 +270,12 @@ export const createRoomSyncLogColumns = ({ onViewDetail }) => [
     ),
   },
   {
+    title: "Informasi Sync",
+    dataIndex: "total_released",
+    width: 320,
+    render: (_, record) => <SyncInfo record={record} />,
+  },
+  {
     title: "Eksekutor",
     dataIndex: "executed_by_name",
     width: 190,
@@ -242,20 +307,31 @@ export const createRoomSyncLogColumns = ({ onViewDetail }) => [
   {
     title: "Aksi",
     dataIndex: "actions",
-    width: 96,
+    width: 132,
     fixed: "right",
     align: "center",
     className: "room-sync-actions-cell",
     render: (_, record) => (
       <Box
         className="room-sync-actions"
-        sx={{ display: "flex", justifyContent: "center" }}
+        sx={{ display: "flex", justifyContent: "center", gap: 0.75 }}
       >
         <TableActionButton
           title="Lihat detail sinkronisasi"
           icon="solar:document-text-bold-duotone"
           color="primary"
           onClick={() => onViewDetail(record)}
+        />
+        <TableActionButton
+          title={
+            record.status === "running"
+              ? "Log berjalan belum dapat dihapus"
+              : "Hapus log sinkronisasi"
+          }
+          icon="solar:trash-bin-trash-bold-duotone"
+          color="error"
+          disabled={record.status === "running"}
+          onClick={() => onDelete(record)}
         />
       </Box>
     ),
@@ -267,9 +343,7 @@ export const createRoomSyncItemColumns = () => [
     title: "Aksi",
     dataIndex: "action",
     width: 140,
-    render: (value) => (
-      <StatusChip status={value === "released" ? "completed" : "skipped"} />
-    ),
+    render: (value) => <ItemActionChip action={value} />,
   },
   {
     title: "Penyewa",

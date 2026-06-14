@@ -17,6 +17,7 @@ import DataTableShell from "@/app/components/data-table/DataTableShell";
 import ReusableAntTable from "@/app/components/data-table/ReusableAntTable";
 import SummaryStatCard from "@/app/components/stats/SummaryStatCard";
 import AppModal from "@/app/components/modals/AppModal";
+import CrudConfirmModal from "@/app/components/crud/CrudConfirmModal";
 import LoadingBackdrop from "@/app/components/loading/Backdrop";
 import Notification from "@/app/components/Notification";
 import { useUser } from "@/app/utils/useUser";
@@ -64,7 +65,7 @@ function RunDetailModal({ open, run, items, loading, onClose }) {
       open={open}
       onClose={onClose}
       title="Detail Sinkronisasi Ruangan"
-      description="Rincian ruangan yang dilepas atau dilewati dalam satu proses sinkronisasi."
+      description="Rincian ruangan yang dibuat tersedia kembali atau dilewati dalam satu proses sinkronisasi."
       icon="solar:document-text-bold-duotone"
       width={1120}
       maxHeight="88vh"
@@ -100,7 +101,10 @@ function RunDetailModal({ open, run, items, loading, onClose }) {
                   : run?.executed_by_name || "-",
               ],
               ["Dicek", `${getRunNumber(run?.total_checked)} ruangan`],
-              ["Dilepas", `${getRunNumber(run?.total_released)} ruangan`],
+              [
+                "Tersedia Kembali",
+                `${getRunNumber(run?.total_released)} ruangan`,
+              ],
               ["Dilewati", `${getRunNumber(run?.total_skipped)} ruangan`],
             ].map(([label, value]) => (
               <Box
@@ -174,7 +178,9 @@ export default function RoomSyncLogsPage() {
   const [pageSize, setPageSize] = useState(10);
   const [selectedRun, setSelectedRun] = useState(null);
   const [selectedItems, setSelectedItems] = useState([]);
+  const [deleteTarget, setDeleteTarget] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState(DEFAULT_LOADING_MESSAGE);
   const [snackbar, setSnackbar] = useState({
@@ -229,7 +235,7 @@ export default function RoomSyncLogsPage() {
       showSnackbar(
         result?.alreadyRunning
           ? "Sinkronisasi lain sedang berjalan."
-          : `Sinkronisasi selesai. ${result?.totalReleased || 0} ruangan diperbarui.`,
+          : `Sinkronisasi selesai. ${result?.totalReleased || 0} ruangan tersedia kembali.`,
         result?.alreadyRunning ? "warning" : "success",
       );
       await fetchLogs({ showLoading: false });
@@ -268,6 +274,28 @@ export default function RoomSyncLogsPage() {
     }
   };
 
+  const deleteLog = async () => {
+    if (!deleteTarget?.id) return;
+
+    setDeleteLoading(true);
+
+    try {
+      await axios.delete(`/api/room-sync-logs/${deleteTarget.id}`);
+      showSnackbar("Log sinkronisasi berhasil dihapus.");
+      setDeleteTarget(null);
+      await fetchLogs({ showLoading: false });
+    } catch (error) {
+      console.error("Gagal menghapus log sinkronisasi:", error);
+      showSnackbar(
+        error?.response?.data?.message ||
+          "Gagal menghapus log sinkronisasi.",
+        "error",
+      );
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
   const filteredRows = useMemo(() => {
     const keyword = searchText.trim().toLowerCase();
     if (!keyword) return rows;
@@ -301,7 +329,11 @@ export default function RoomSyncLogsPage() {
   );
 
   const columns = useMemo(
-    () => createRoomSyncLogColumns({ onViewDetail: openDetail }),
+    () =>
+      createRoomSyncLogColumns({
+        onViewDetail: openDetail,
+        onDelete: setDeleteTarget,
+      }),
     [],
   );
 
@@ -352,7 +384,7 @@ export default function RoomSyncLogsPage() {
       <PageHeader
         breadcrumbs={PAGE_BREADCRUMBS}
         title="Log Sinkron Ruangan"
-        description="Pantau audit pelepasan status ruangan dari kontrak yang sudah selesai atau termination final."
+        description="Pantau audit perubahan status ruangan menjadi tersedia kembali dari kontrak selesai atau termination final."
         action={
           <Button
             variant="contained"
@@ -391,7 +423,7 @@ export default function RoomSyncLogsPage() {
           color={theme.palette.primary.main}
         />
         <SummaryStatCard
-          label="Ruangan Dilepas"
+          label="Ruangan Tersedia Kembali"
           value={summary.totalReleased}
           icon="solar:check-circle-bold-duotone"
           color={theme.palette.success.main}
@@ -428,11 +460,11 @@ export default function RoomSyncLogsPage() {
           dataSource={filteredRows}
           pageSize={pageSize}
           onPageSizeChange={setPageSize}
-          scroll={{ x: 1500, y: isMobile ? 430 : 520 }}
+          scroll={{ x: 1800, y: isMobile ? 430 : 520 }}
           fixedActionColumn={{
             className: "room-sync-actions-cell",
             buttonsClassName: "room-sync-actions",
-            width: 96,
+            width: 132,
             paddingX: 12,
           }}
         />
@@ -447,6 +479,21 @@ export default function RoomSyncLogsPage() {
           setSelectedRun(null);
           setSelectedItems([]);
         }}
+      />
+
+      <CrudConfirmModal
+        open={Boolean(deleteTarget)}
+        title="Hapus Log Sinkronisasi"
+        description="Log sinkronisasi dan detail ruangan pada proses ini akan dihapus permanen."
+        confirmDescription="Anda yakin ingin menghapus log sinkronisasi ini?"
+        highlight={formatSyncDateTime(deleteTarget?.started_at)}
+        confirmLabel="Hapus Log"
+        loadingLabel="Menghapus log sinkronisasi..."
+        loading={deleteLoading}
+        onClose={() => {
+          if (!deleteLoading) setDeleteTarget(null);
+        }}
+        onConfirm={deleteLog}
       />
 
       <LoadingBackdrop open={loading} message={loadingMessage} />

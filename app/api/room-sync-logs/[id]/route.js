@@ -7,7 +7,8 @@ const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 /**
- * Detail satu run sinkronisasi beserta item ruangan yang dilepas/dilewati.
+ * Detail satu run sinkronisasi beserta item ruangan yang tersedia kembali
+ * atau dilewati.
  */
 export async function GET(_request, { params }) {
   const { response } = await requireRole([SUPERADMIN_ROLE_ID]);
@@ -95,5 +96,78 @@ export async function GET(_request, { params }) {
       },
       { status: 500 },
     );
+  }
+}
+
+/**
+ * Hapus permanen satu riwayat sinkronisasi.
+ *
+ * Detail item ikut terhapus oleh foreign key ON DELETE CASCADE, sehingga
+ * endpoint cukup menghapus run utamanya. Status running ditolak agar audit
+ * proses yang sedang berjalan tidak hilang.
+ */
+export async function DELETE(_request, { params }) {
+  const { response } = await requireRole([SUPERADMIN_ROLE_ID]);
+  if (response) return response;
+
+  const { id } = await params;
+
+  if (!UUID_PATTERN.test(String(id || ""))) {
+    return NextResponse.json(
+      { success: false, message: "ID log sinkronisasi tidak valid." },
+      { status: 400 },
+    );
+  }
+
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    const runResult = await client.query(
+      `
+        SELECT id, status
+        FROM room_status_sync_runs
+        WHERE id = $1
+        FOR UPDATE
+      `,
+      [id],
+    );
+
+    if (!runResult.rowCount) {
+      await client.query("ROLLBACK");
+      return NextResponse.json(
+        { success: false, message: "Log sinkronisasi tidak ditemukan." },
+        { status: 404 },
+      );
+    }
+
+    if (runResult.rows[0].status === "running") {
+      await client.query("ROLLBACK");
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Log sinkronisasi yang sedang berjalan tidak dapat dihapus.",
+        },
+        { status: 409 },
+      );
+    }
+
+    await client.query("DELETE FROM room_status_sync_runs WHERE id = $1", [id]);
+    await client.query("COMMIT");
+
+    return NextResponse.json({
+      success: true,
+      message: "Log sinkronisasi berhasil dihapus.",
+    });
+  } catch (error) {
+    await client.query("ROLLBACK").catch(() => {});
+    console.error("Gagal menghapus log sinkronisasi ruangan:", error);
+    return NextResponse.json(
+      { success: false, message: "Gagal menghapus log sinkronisasi ruangan." },
+      { status: 500 },
+    );
+  } finally {
+    client.release();
   }
 }

@@ -291,7 +291,7 @@ export async function syncExpiredRooms({
         `,
         [
           row.room_id,
-          "Ruangan tersedia otomatis karena masa kontrak sudah berakhir atau termination final disetujui.",
+          "Ruangan tersedia kembali otomatis karena masa kontrak sudah berakhir atau termination final disetujui.",
         ],
       );
 
@@ -302,7 +302,7 @@ export async function syncExpiredRooms({
           runId,
           row,
           "released",
-          "Ruangan dilepas karena tidak ada kontrak, perpanjangan, atau permohonan aktif yang menahan status.",
+          "Ruangan dibuat tersedia kembali karena tidak ada kontrak, perpanjangan, atau permohonan aktif yang menahan status.",
           "available",
         );
       } else {
@@ -341,7 +341,7 @@ export async function syncExpiredRooms({
       totalChecked: candidates.rowCount,
       totalReleased,
       totalSkipped,
-      message: `Sinkronisasi selesai. ${totalReleased} ruangan diperbarui.`,
+      message: `Sinkronisasi selesai. ${totalReleased} ruangan tersedia kembali.`,
     };
   } catch (error) {
     await client.query("ROLLBACK").catch(() => {});
