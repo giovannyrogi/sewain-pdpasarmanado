@@ -1,5 +1,13 @@
 import pool from "@/lib/dbConfig";
-import { forbiddenResponse, requireAuthenticatedUser } from "@/app/utils/auth";
+import {
+  forbiddenResponse,
+  requireAuthenticatedUser,
+} from "@/app/utils/auth";
+
+const jsonResponse = (payload, status = 200) =>
+  new Response(JSON.stringify(payload), { status });
+
+const isPositiveInteger = (value) => /^[1-9][0-9]*$/.test(String(value || ""));
 
 export async function GET(req) {
   try {
@@ -7,42 +15,59 @@ export async function GET(req) {
     if (response) return response;
 
     const { searchParams } = new URL(req.url);
-    const user_id = searchParams.get("user_id") || authUser.id;
+    const requestedUserId = searchParams.get("user_id") || authUser.id;
 
-    if (Number(user_id) !== Number(authUser.id) && Number(authUser.role_id) !== 1) {
+    if (!isPositiveInteger(requestedUserId)) {
+      return jsonResponse(
+        { success: false, message: "ID pengguna tidak valid." },
+        400,
+      );
+    }
+
+    if (
+      Number(requestedUserId) !== Number(authUser.id) &&
+      Number(authUser.role_id) !== 1
+    ) {
       return forbiddenResponse("Anda hanya dapat mengakses data akun sendiri.");
     }
 
-    const result = await pool.query(`SELECT * FROM users u where id = $1;`, [
-      user_id,
-    ]);
-
-    const user = result.rows[0];
-
-    const data = {
-      id: user.id,
-      full_name: user.full_name,
-      username: user.username,
-      email: user.email,
-      role_id: user.role_id,
-      phone: user.phone,
-    };
-
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: "Berhasil mengambil data user",
-        data: data,
-      }),
-      { status: 200 }
+    const result = await pool.query(
+      `
+        SELECT
+          u.id,
+          u.full_name,
+          u.username,
+          u.email,
+          u.role_id,
+          r.role_name,
+          u.phone,
+          u.created_at,
+          u.updated_at
+        FROM users u
+        LEFT JOIN roles r ON r.id = u.role_id
+        WHERE u.id = $1
+        LIMIT 1
+      `,
+      [requestedUserId],
     );
 
-    // console.log("result", result);
+    if (!result.rows[0]) {
+      return jsonResponse(
+        { success: false, message: "Data akun tidak ditemukan." },
+        404,
+      );
+    }
+
+    return jsonResponse({
+      success: true,
+      message: "Berhasil mengambil data akun.",
+      data: result.rows[0],
+    });
   } catch (err) {
-    console.log("error", err);
-    return new Response(
-      JSON.stringify({ success: false, message: err.message }),
-      { status: 500 }
+    console.error("Error get current account data:", err);
+    return jsonResponse(
+      { success: false, message: "Terjadi kesalahan saat mengambil data akun." },
+      500,
     );
   }
 }

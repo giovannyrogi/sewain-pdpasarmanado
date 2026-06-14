@@ -1,88 +1,92 @@
 import pool from "@/lib/dbConfig";
 import { NextResponse } from "next/server";
-import { forbiddenResponse, requireAuthenticatedUser } from "@/app/utils/auth";
+import {
+  forbiddenResponse,
+  requireAuthenticatedUser,
+} from "@/app/utils/auth";
+
+const isPositiveInteger = (value) => /^[1-9][0-9]*$/.test(String(value || ""));
+
+const validatePasswordBody = (body) => {
+  const oldPassword = String(body?.oldPassword || "");
+  const newPassword = String(body?.newPassword || "");
+  const comfirmNewPassword = String(body?.comfirmNewPassword || "");
+
+  if (!oldPassword) return { error: "Password lama wajib diisi." };
+  if (!newPassword) return { error: "Password baru wajib diisi." };
+  if (newPassword.length < 6) return { error: "Password baru minimal 6 karakter." };
+  if (newPassword.length > 255) {
+    return { error: "Password baru maksimal 255 karakter." };
+  }
+  if (!comfirmNewPassword) {
+    return { error: "Konfirmasi password baru wajib diisi." };
+  }
+  if (newPassword !== comfirmNewPassword) {
+    return { error: "Password baru dan konfirmasi password tidak sama." };
+  }
+
+  return { values: { oldPassword, newPassword } };
+};
 
 export async function PUT(req, { params }) {
   try {
     const { user: authUser, response } = await requireAuthenticatedUser();
     if (response) return response;
 
-    const { id } = await params; // ambil id user dari URL
+    const { id } = await params;
+    if (!isPositiveInteger(id)) {
+      return NextResponse.json(
+        { success: false, message: "ID pengguna tidak valid." },
+        { status: 400 },
+      );
+    }
 
     if (Number(id) !== Number(authUser.id) && Number(authUser.role_id) !== 1) {
       return forbiddenResponse("Anda hanya dapat mengubah password akun sendiri.");
     }
 
-    const { oldPassword, newPassword, comfirmNewPassword } = await req.json();
-
-    // Validasi input dasar
-    if (!oldPassword) {
+    const normalized = validatePasswordBody(await req.json());
+    if (normalized.error) {
       return NextResponse.json(
-        { success: false, message: "Password lama wajib diisi." },
-        { status: 200 }
+        { success: false, message: normalized.error },
+        { status: 400 },
       );
     }
 
-    if (!newPassword) {
+    const userRes = await pool.query(
+      "SELECT id, password FROM users WHERE id = $1 LIMIT 1",
+      [id],
+    );
+
+    if (!userRes.rows[0]) {
       return NextResponse.json(
-        { success: false, message: "Password Baru wajib diisi." },
-        { status: 200 }
+        { success: false, message: "Data akun tidak ditemukan." },
+        { status: 404 },
       );
     }
 
-    if (!comfirmNewPassword) {
-      return NextResponse.json(
-        { success: false, message: "Konfirmasi Password Baru wajib diisi." },
-        { status: 200 }
-      );
-    }
-
-    // Pastikan password baru dan konfirmasi sama
-    if (newPassword !== comfirmNewPassword) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Password baru dan konfirmasi Password tidak sama.",
-        },
-        { status: 200 }
-      );
-    }
-
-    // Ambil user dari database
-    const userRes = await pool.query(`SELECT * FROM users WHERE id = $1`, [id]);
-
-    if (userRes.rows.length === 0) {
-      return NextResponse.json(
-        { success: false, message: "User tidak ditemukan." },
-        { status: 200 }
-      );
-    }
-
-    const user = userRes.rows[0];
-
-    // Cek apakah password lama benar
-    if (user.password !== oldPassword) {
+    // Password masih mengikuti mekanisme lama aplikasi agar tidak mengubah flow login.
+    if (userRes.rows[0].password !== normalized.values.oldPassword) {
       return NextResponse.json(
         { success: false, message: "Password lama salah." },
-        { status: 200 }
+        { status: 400 },
       );
     }
 
-    // Update password di database
-    await pool.query(`UPDATE users SET password = $1 WHERE id = $2`, [
-      newPassword,
-      id,
-    ]);
-
-    return NextResponse.json(
-      { success: true, message: "Password berhasil diperbarui." },
-      { status: 200 }
+    await pool.query(
+      "UPDATE users SET password = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2",
+      [normalized.values.newPassword, id],
     );
+
+    return NextResponse.json({
+      success: true,
+      message: "Password berhasil diperbarui.",
+    });
   } catch (error) {
-    console.error("Error update password:", error);
+    console.error("Error update account password:", error);
     return NextResponse.json(
-      { success: false, message: "Terjadi kesalahan pada server." },
-      { status: 500 }
+      { success: false, message: "Terjadi kesalahan saat mengubah password." },
+      { status: 500 },
     );
   }
 }

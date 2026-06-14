@@ -1,299 +1,478 @@
 "use client";
+
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  alpha,
   Box,
   Button,
+  Chip,
   Divider,
   Grid,
   Paper,
   Skeleton,
+  Stack,
   Typography,
-  useMediaQuery,
   useTheme,
 } from "@mui/material";
-import React, { useEffect, useState } from "react";
-import { Table, ConfigProvider, theme as antdTheme, Input, Tag } from "antd";
-import moment from "moment";
 import { Icon } from "@iconify/react";
 import axios from "axios";
-import settingsMenu from "@/app/components/menu/SettingsMenu";
-import { useThemeMode } from "@/app/components/themeprovider/ThemeContext";
 import Notification from "@/app/components/Notification";
 import LoadingBackdrop from "@/app/components/loading/Backdrop";
-import BreadcrumbPage from "@/app/components/breadcrumb/page";
+import PageHeader from "@/app/components/page-header/PageHeader";
+import SummaryStatCard from "@/app/components/stats/SummaryStatCard";
+import { updateUserCookie } from "@/app/utils/updateUserCookie";
 import { useUser } from "@/app/utils/useUser";
-import MENU_CONFIG from "@/app/components/menu/MenuConfig";
-import EditPassword from "./EditPassword";
-import EditUser from "./EditUser";
+import AccountProfileModal from "./AccountProfileModal";
+import AccountPasswordModal from "./AccountPasswordModal";
+import {
+  displayValue,
+  formatAccountDate,
+  getInitialSnackbar,
+  normalizeProfilePayload,
+  validatePasswordPayload,
+} from "./accountUtils";
 
-const Account = () => {
-  const { user, setUser } = useUser();
+const accountFields = [
+  {
+    label: "Nama Lengkap",
+    key: "full_name",
+    icon: "solar:user-bold-duotone",
+  },
+  {
+    label: "Username",
+    key: "username",
+    icon: "solar:mention-circle-bold-duotone",
+  },
+  {
+    label: "Email",
+    key: "email",
+    icon: "solar:letter-bold-duotone",
+  },
+  {
+    label: "Nomor HP",
+    key: "phone",
+    icon: "solar:phone-bold-duotone",
+  },
+  {
+    label: "Peran",
+    key: "role_name",
+    icon: "solar:shield-user-bold-duotone",
+  },
+  {
+    label: "Diperbarui",
+    key: "updated_at",
+    icon: "solar:calendar-mark-bold-duotone",
+    formatter: formatAccountDate,
+  },
+];
 
-  const isMobile = useMediaQuery("(max-width: 750px)");
-  const [dataUsers, setDataUsers] = useState({});
-  const { themeMode } = useThemeMode();
+/**
+ * Halaman pengaturan akun pribadi.
+ * Page ini hanya mengatur fetch, state modal, dan sinkronisasi cookie user;
+ * form profil serta form password dipisah agar lebih mudah dirawat.
+ */
+export default function Account() {
   const theme = useTheme();
+  const { user, setUser } = useUser();
+  const [account, setAccount] = useState({});
   const [loading, setLoading] = useState(false);
-  const [snackbar, setSnackbar] = useState({
-    open: false,
-    message: "",
-    severity: "success",
-  });
-  const [loadingMessage, setLoadingMessage] = useState("Loading...");
-  const [openEditPasswordModal, setOpenEditPasswordModal] = useState(false);
-  const [openEditModal, setOpenEditModal] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [passwordOpen, setPasswordOpen] = useState(false);
+  const [snackbar, setSnackbar] = useState(getInitialSnackbar);
 
-  const getUsersData = async () => {
-    try {
-      const response = await axios.get(
-        `/api/account/get-current-user-data?user_id=${user.id}`
-      );
-      // console.log("Users data", response);
-      if (response.data.success) {
-        setDataUsers(response.data.data);
-      } else {
-        setDataUsers({});
-      }
-    } catch (error) {
-      console.log("error", error);
-    }
+  const showSnackbar = (message, severity = "success") => {
+    setSnackbar({ open: true, message, severity });
   };
 
-  const getAllData = async () => {
+  const fetchAccount = useCallback(async () => {
     setLoading(true);
     try {
-      await getUsersData();
+      const response = await axios.get("/api/account/get-current-user-data");
+      if (response.data?.success) {
+        setAccount(response.data.data || {});
+        return response.data.data || {};
+      }
+
+      showSnackbar(
+        response.data?.message || "Gagal mengambil data akun.",
+        "error",
+      );
+      setAccount({});
+      return {};
     } catch (error) {
-      console.log("error", error);
+      showSnackbar(
+        error?.response?.data?.message ||
+          "Terjadi error saat mengambil data akun.",
+        "error",
+      );
+      setAccount({});
+      return {};
     } finally {
-      setTimeout(() => {
-        setLoading(false);
-      }, 1000);
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (user?.id) fetchAccount();
+  }, [fetchAccount, user?.id]);
+
+  const accountStats = useMemo(
+    () => [
+      {
+        label: "Status Akun",
+        value: "Aktif",
+        icon: "solar:verified-check-bold-duotone",
+        color: theme.palette.success.main,
+      },
+      {
+        label: "Peran Pengguna",
+        value: displayValue(account?.role_name),
+        icon: "solar:shield-user-bold-duotone",
+        color: theme.palette.primary.main,
+      },
+      {
+        label: "Update Terakhir",
+        value: formatAccountDate(account?.updated_at),
+        icon: "solar:calendar-date-bold-duotone",
+        color: theme.palette.info.main,
+      },
+    ],
+    [account, theme],
+  );
+
+  const handleUpdateProfile = async (form) => {
+    const normalized = normalizeProfilePayload(form);
+    if (normalized.error) {
+      showSnackbar(normalized.error, "error");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await axios.put(
+        `/api/account/update-user/${account.id}`,
+        normalized.values,
+      );
+
+      if (!response.data?.success) {
+        showSnackbar(
+          response.data?.message || "Gagal mengubah informasi akun.",
+          "error",
+        );
+        return;
+      }
+
+      const updatedAccount = response.data.data || {};
+      setAccount(updatedAccount);
+
+      const updatedUser = updateUserCookie({
+        full_name: updatedAccount.full_name,
+        username: updatedAccount.username,
+        email: updatedAccount.email,
+        phone: updatedAccount.phone,
+      });
+
+      if (updatedUser) setUser(updatedUser);
+
+      setProfileOpen(false);
+      showSnackbar(
+        response.data.message || "Informasi akun berhasil diperbarui.",
+      );
+      await fetchAccount();
+    } catch (error) {
+      showSnackbar(
+        error?.response?.data?.message ||
+          "Terjadi error saat mengubah informasi akun.",
+        "error",
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
-  useEffect(() => {
-    if (user) {
-      getAllData();
+  const handleUpdatePassword = async (form, resetForm) => {
+    const normalized = validatePasswordPayload(form);
+    if (normalized.error) {
+      showSnackbar(normalized.error, "error");
+      return;
     }
-  }, [user]);
+
+    setLoading(true);
+    try {
+      const response = await axios.put(
+        `/api/account/update-password/${account.id}`,
+        normalized.values,
+      );
+
+      if (!response.data?.success) {
+        showSnackbar(
+          response.data?.message || "Gagal mengubah password.",
+          "error",
+        );
+        return;
+      }
+
+      resetForm?.();
+      setPasswordOpen(false);
+      showSnackbar(response.data.message || "Password berhasil diperbarui.");
+    } catch (error) {
+      showSnackbar(
+        error?.response?.data?.message ||
+          "Terjadi error saat mengubah password.",
+        "error",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <Box sx={{ width: "100%", height: "100%", minHeight: "100%", p: 2 }}>
-      {/* Component Breadcrumbs disini */}
-      <BreadcrumbPage menuList={MENU_CONFIG} />
-      <ConfigProvider
-        theme={{
-          algorithm:
-            themeMode === "dark"
-              ? antdTheme.darkAlgorithm
-              : antdTheme.defaultAlgorithm,
-          token: {
-            colorPrimary: theme.palette.primary.main, // warna utama (angka aktif, outline, dsb)
-            // colorText: theme.palette.text.primary, // warna teks default
-            // colorBgContainer: theme.palette.background.default, // background tabel
-          },
-        }}
-      >
-        <Paper
-          elevation={6}
-          sx={{
-            p: 2,
-            width: "100%",
-            bgcolor: "background.default",
-            overflowX: "auto",
-          }}
-        >
-          <Grid container>
-            <Grid size={12}>
-              <Typography
-                sx={{
-                  fontSize: "14px",
-                  fontWeight: "bold",
-                  fontFamily: "poppins, sans-serif",
-                }}
-              >
-                Informasi Akun
-              </Typography>
-            </Grid>
-
-            <Divider
-              sx={{
-                mt: 0.5,
-                mb: 4,
-                width: "100%",
-                borderColor: theme.palette.primary.main,
-              }}
-            />
-
-            {/* Informasi Akun */}
-            <Grid size={12} mb={6}>
-              {[
-                { label: "Nama", value: dataUsers?.full_name },
-                { label: "Username", value: dataUsers?.username },
-                {
-                  label: "Email",
-                  value: dataUsers?.email,
-                  // capitalize: true,
-                },
-                { label: "No. Telp", value: dataUsers?.phone },
-                // { label: "Email", value: dataUsers?.email },
-              ].map((item, index, arr) => (
-                <Grid container size={12} key={index}>
-                  {/* Label */}
-                  <Grid size={isMobile ? 3.5 : 2}>
-                    {loading ? (
-                      <Skeleton
-                        width={isMobile ? 60 : 80}
-                        height={20}
-                        sx={{ borderRadius: "4px" }}
-                      />
-                    ) : (
-                      <Typography
-                        sx={{
-                          fontSize: "14px",
-                          fontWeight: "bold",
-                          // color: theme.palette.text.disabled,
-                          fontFamily: "poppins, sans-serif",
-                        }}
-                      >
-                        {item.label}
-                      </Typography>
-                    )}
-                  </Grid>
-
-                  {/* Value */}
-                  <Grid size={isMobile ? 8.5 : 10}>
-                    {loading ? (
-                      <Skeleton
-                        width={isMobile ? "70%" : "40%"}
-                        height={20}
-                        variant="rounded"
-                        animation="wave"
-                      />
-                    ) : (
-                      <Typography
-                        sx={{
-                          fontSize: "14px",
-                          fontWeight: "500",
-                          // color: theme.palette.text.disabled,
-                          fontFamily: "poppins, sans-serif",
-                          textTransform: item.capitalize
-                            ? "capitalize"
-                            : "none",
-                        }}
-                      >
-                        : {item.value || "-"}
-                      </Typography>
-                    )}
-                  </Grid>
-
-                  {/* Divider — hide on last item */}
-                  {!loading && index !== arr.length - 1 && (
-                    <Grid size={12}>
-                      <Divider
-                        sx={{
-                          my: 1,
-                          width: "100%",
-                          opacity: 0.5,
-                          bgcolor: theme.palette.text.disabled,
-                        }}
-                      />
-                    </Grid>
-                  )}
-
-                  {/* Divider skeleton when loading */}
-                  {loading && index !== arr.length - 1 && (
-                    <Grid size={12}>
-                      <Skeleton
-                        variant="rectangular"
-                        height={1}
-                        sx={{ my: 1, opacity: 0.3 }}
-                      />
-                    </Grid>
-                  )}
-                </Grid>
-              ))}
-            </Grid>
-
-            <Grid
-              size={12}
-              align={isMobile ? "center" : "end"}
-              mb={isMobile ? 1 : 0}
+    <Box
+      sx={{
+        width: "100%",
+        minHeight: "100%",
+        p: { xs: 1.5, sm: 2.25, lg: 3 },
+      }}
+    >
+      <Stack spacing={{ xs: 2, sm: 2.25 }}>
+        <PageHeader
+          title="Akun"
+          description="Kelola informasi profil dan keamanan password akun yang sedang digunakan."
+          icon="solar:user-id-bold-duotone"
+          breadcrumbs={[
+            {
+              label: "Pengaturan",
+              icon: "solar:settings-bold-duotone",
+            },
+            {
+              label: "Akun",
+              icon: "solar:user-id-bold-duotone",
+            },
+          ]}
+          action={
+            <Stack
+              direction={{ xs: "column", sm: "row" }}
+              spacing={1.25}
+              sx={{ width: { xs: "100%", sm: "auto" } }}
             >
               <Button
                 variant="contained"
-                color="primary"
-                size="small"
-                // fullWidth
+                onClick={() => setPasswordOpen(true)}
+                disabled={loading || !account?.id}
+                startIcon={<Icon icon="solar:lock-password-bold-duotone" />}
                 sx={{
-                  width: isMobile ? "100%" : "auto",
-                  mr: isMobile ? 0 : 4,
-                  mb: isMobile ? 3 : 0,
-                  fontWeight: "bold",
-                  fontSize: 14,
+                  borderRadius: 2,
+                  fontWeight: 600,
+                  fontSize: 12,
                   textTransform: "none",
+                  width: { xs: "100%", sm: "auto" },
+                  bgcolor:
+                    theme.palette.mode === "dark"
+                      ? "rgba(255,255,255,0.10)"
+                      : "rgba(17,24,39,0.08)",
+                  color: "text.primary",
+                  border: `1px solid ${theme.ui.dashboardCardBorder}`,
+                  boxShadow: "none",
+                  "&:hover": {
+                    bgcolor:
+                      theme.palette.mode === "dark"
+                        ? "rgba(255,255,255,0.16)"
+                        : "rgba(17,24,39,0.13)",
+                    boxShadow: "none",
+                  },
                 }}
-                onClick={() => setOpenEditPasswordModal(true)}
-                disabled={loading}
               >
                 Ubah Password
               </Button>
               <Button
                 variant="contained"
-                color="primary"
-                size="small"
-                // fullWidth
+                onClick={() => setProfileOpen(true)}
+                disabled={loading || !account?.id}
+                startIcon={<Icon icon="solar:pen-new-square-bold-duotone" />}
                 sx={{
-                  width: isMobile ? "100%" : "auto",
-                  fontWeight: "bold",
-                  fontSize: 14,
+                  borderRadius: 2,
+                  fontWeight: 600,
+                  fontSize: 12,
                   textTransform: "none",
+                  width: { xs: "100%", sm: "auto" },
                 }}
-                disabled={loading}
-                onClick={() => setOpenEditModal(true)}
               >
-                Ubah Informasi Akun
+                Ubah Informasi
               </Button>
+            </Stack>
+          }
+          actionSx={{ width: { xs: "100%", sm: "auto" } }}
+        />
+
+        {/* <Grid container spacing={{ xs: 1.5, sm: 1.75 }}>
+          {accountStats.map((item) => (
+            <Grid size={{ xs: 12, md: 4 }} key={item.label}>
+              <SummaryStatCard
+                {...item}
+                valueSx={{ fontSize: { xs: 21, sm: 24 } }}
+              />
             </Grid>
+          ))}
+        </Grid> */}
+
+        <Paper
+          elevation={0}
+          sx={{
+            p: { xs: 2, sm: 2.5 },
+            borderRadius: 3,
+            border: `1px solid ${theme.ui.dashboardCardBorder}`,
+            bgcolor: theme.ui.dashboardCardBg,
+            boxShadow: theme.ui.dashboardCardShadow,
+          }}
+        >
+          <Stack
+            direction={{ xs: "column", md: "row" }}
+            alignItems={{ xs: "flex-start", md: "center" }}
+            justifyContent="space-between"
+            spacing={2}
+            sx={{ mb: 2 }}
+          >
+            <Box>
+              <Typography
+                sx={{
+                  fontFamily: "Poppins",
+                  fontWeight: 700,
+                  fontSize: { xs: 18, sm: 20 },
+                }}
+              >
+                Informasi Akun
+              </Typography>
+              <Typography
+                sx={{
+                  color: theme.ui.mutedText,
+                  fontFamily: "Poppins",
+                  fontWeight: 600,
+                  fontSize: 12,
+                  lineHeight: 1.7,
+                  mt: 0.25,
+                }}
+              >
+                Data dasar akun yang tampil di sistem dan top menu aplikasi.
+              </Typography>
+            </Box>
+
+            <Chip
+              label={displayValue(account?.role_name)}
+              sx={{
+                color: theme.palette.primary.main,
+                bgcolor: alpha(theme.palette.primary.main, 0.12),
+                border: `1px solid ${alpha(theme.palette.primary.main, 0.26)}`,
+                fontFamily: "Poppins",
+                fontWeight: 600,
+                fontSize: 12,
+              }}
+            />
+          </Stack>
+
+          <Divider sx={{ borderColor: theme.palette.primary.main, mb: 2.25 }} />
+
+          <Grid container spacing={{ xs: 1.5, sm: 1.75 }}>
+            {accountFields.map((field) => {
+              const rawValue = account?.[field.key];
+              const value = field.formatter
+                ? field.formatter(rawValue)
+                : displayValue(rawValue);
+
+              return (
+                <Grid size={{ xs: 12, md: 6 }} key={field.key}>
+                  <Box
+                    sx={{
+                      p: { xs: 1.45, sm: 1.65 },
+                      minHeight: 78,
+                      borderRadius: 2.5,
+                      border: `1px solid ${theme.ui.dashboardCardBorder}`,
+                      bgcolor:
+                        theme.palette.mode === "dark"
+                          ? "rgba(255,255,255,0.035)"
+                          : "rgba(17,24,39,0.025)",
+                      display: "flex",
+                      gap: 1.25,
+                      alignItems: "center",
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        width: 38,
+                        height: 38,
+                        flex: "0 0 auto",
+                        borderRadius: 2,
+                        display: "grid",
+                        placeItems: "center",
+                        color: theme.palette.primary.main,
+                        bgcolor: alpha(theme.palette.primary.main, 0.13),
+                      }}
+                    >
+                      <Icon icon={field.icon} fontSize={21} />
+                    </Box>
+
+                    <Box sx={{ minWidth: 0 }}>
+                      <Typography
+                        sx={{
+                          color: theme.ui.mutedText,
+                          fontFamily: "Poppins",
+                          fontWeight: 700,
+                          fontSize: 12,
+                          lineHeight: 1.4,
+                          fontSize: 12,
+                        }}
+                      >
+                        {field.label}
+                      </Typography>
+                      {loading ? (
+                        <Skeleton width={180} height={22} />
+                      ) : (
+                        <Typography
+                          sx={{
+                            fontFamily: "Poppins",
+                            fontWeight: 700,
+                            fontSize: { xs: 14, sm: 15 },
+                            lineHeight: 1.45,
+                            wordBreak: "break-word",
+                            fontSize: 12,
+                          }}
+                        >
+                          {value}
+                        </Typography>
+                      )}
+                    </Box>
+                  </Box>
+                </Grid>
+              );
+            })}
           </Grid>
         </Paper>
-      </ConfigProvider>
+      </Stack>
 
-      <EditUser
-        open={openEditModal}
-        onClose={() => setOpenEditModal(false)}
-        loadingTrue={() => setLoading(true)}
-        loadingFalse={() => setLoading(false)}
+      <AccountProfileModal
+        open={profileOpen}
         loading={loading}
-        getUsersData={getUsersData}
-        selectedData={dataUsers}
-        onNotify={(notif) => setSnackbar(notif)}
-        user={user}
-        setUser={setUser}
+        data={account}
+        onClose={() => setProfileOpen(false)}
+        onSubmit={handleUpdateProfile}
       />
 
-      <EditPassword
-        open={openEditPasswordModal}
-        onClose={() => setOpenEditPasswordModal(false)}
-        loadingTrue={() => setLoading(true)}
-        loadingFalse={() => setLoading(false)}
+      <AccountPasswordModal
+        open={passwordOpen}
         loading={loading}
-        getUsersData={getUsersData}
-        onNotify={(notif) => setSnackbar(notif)}
-        selectedData={dataUsers}
-        user={user}
+        onClose={() => setPasswordOpen(false)}
+        onSubmit={handleUpdatePassword}
       />
 
-      <LoadingBackdrop message={loadingMessage} open={loading} />
-      {/* Snackbar notification */}
+      <LoadingBackdrop
+        open={loading && !profileOpen && !passwordOpen}
+        message="Memuat data akun..."
+      />
       <Notification
         open={snackbar.open}
         message={snackbar.message}
         severity={snackbar.severity}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        onClose={() => setSnackbar((current) => ({ ...current, open: false }))}
       />
     </Box>
   );
-};
-
-export default Account;
+}
