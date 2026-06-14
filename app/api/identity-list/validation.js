@@ -3,10 +3,10 @@ import {
   normalizeRequiredString,
   parsePositiveInteger,
 } from "@/app/utils/apiValidation";
+import { normalizeIndonesianPhone } from "@/app/utils/phoneNumber";
 
 const IDENTITY_STATUS = ["active", "inactive", "blacklisted"];
 const NATIONALITY_OPTIONS = ["WNI", "WNA"];
-const PHONE_PATTERN = /^[0-9]{8,15}$/;
 const NIK_PATTERN = /^[0-9]{16}$/;
 const SHORT_NUMBER_PATTERN = /^[0-9]{1,3}$/;
 
@@ -38,11 +38,6 @@ export const validateIdentityFormData = (formData, { requireFile = false } = {})
     ["birth_place", getRequiredFormValue(formData, "tempatLahir", "Tempat lahir", { max: 80 })],
     ["religion", getRequiredFormValue(formData, "agama", "Agama", { max: 40 })],
     ["occupation", getRequiredFormValue(formData, "pekerjaan", "Pekerjaan", { max: 100 })],
-    ["phone", getRequiredFormValue(formData, "phone", "Nomor telepon", {
-      max: 15,
-      pattern: PHONE_PATTERN,
-      patternMessage: "Nomor telepon harus berisi 8 sampai 15 digit angka.",
-    })],
     ["street_address", getRequiredFormValue(formData, "alamatJalan", "Nama jalan/alamat", { max: 180 })],
     ["rt", getRequiredFormValue(formData, "rt", "RT", {
       max: 3,
@@ -66,6 +61,12 @@ export const validateIdentityFormData = (formData, { requireFile = false } = {})
     }
     fields[key] = result.value;
   }
+
+  const phone = normalizeIndonesianPhone(formData.get("phone"));
+  if (phone.error) {
+    return { values: null, error: phone.error };
+  }
+  fields.phone = phone.value;
 
   const birthDate = moment(formData.get("tanggalLahir"));
   if (!birthDate.isValid()) {

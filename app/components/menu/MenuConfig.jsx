@@ -251,7 +251,7 @@ const MENU_CONFIG = [
         showIcon: true,
       },
       {
-        label: "Jatuh Tempo Pembayaran",
+        label: "Jatuh Tempo",
         value: "payment-due-report",
         path: "/payment-due-report",
         icon: <Icon icon="solar:alarm-bold-duotone" fontSize="20px" />,

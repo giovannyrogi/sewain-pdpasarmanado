@@ -27,6 +27,12 @@ import {
   getUploadApiUrl,
   normalizeStoredUploadPath,
 } from "@/app/utils/uploadPath";
+import {
+  getIndonesianPhoneLocalValue,
+  normalizeIndonesianPhone,
+  normalizeIndonesianPhoneInput,
+  validateIndonesianPhoneLocal,
+} from "@/app/utils/phoneNumber";
 
 const emptyForm = {
   nomorIndukKependudukan: "",
@@ -51,11 +57,16 @@ const emptyForm = {
 };
 
 const getProvinceOptions = () =>
-  typeof wilayah.provinsi === "function" ? wilayah.provinsi() : wilayah.provinsi || [];
+  typeof wilayah.provinsi === "function"
+    ? wilayah.provinsi()
+    : wilayah.provinsi || [];
 
-const getCityOptions = (provinceCode) => (provinceCode ? wilayah.kabupaten(provinceCode) : []);
-const getDistrictOptions = (cityCode) => (cityCode ? wilayah.kecamatan(cityCode) : []);
-const getVillageOptions = (districtCode) => (districtCode ? wilayah.desa(districtCode) : []);
+const getCityOptions = (provinceCode) =>
+  provinceCode ? wilayah.kabupaten(provinceCode) : [];
+const getDistrictOptions = (cityCode) =>
+  cityCode ? wilayah.kecamatan(cityCode) : [];
+const getVillageOptions = (districtCode) =>
+  districtCode ? wilayah.desa(districtCode) : [];
 
 const toDigits = (value, maxLength) =>
   String(value || "")
@@ -87,11 +98,20 @@ export default function IdentityFormModal({
   const provinces = useMemo(() => getProvinceOptions(), []);
   const cities = useMemo(() => getCityOptions(provinceCode), [provinceCode]);
   const districts = useMemo(() => getDistrictOptions(cityCode), [cityCode]);
-  const villages = useMemo(() => getVillageOptions(districtCode), [districtCode]);
+  const villages = useMemo(
+    () => getVillageOptions(districtCode),
+    [districtCode],
+  );
   const ktpPreviewUrl = form.ktpFilePath?.startsWith("blob:")
     ? form.ktpFilePath
     : getUploadApiUrl(form.ktpFilePath);
-  const remainingNikDigits = Math.max(16 - form.nomorIndukKependudukan.length, 0);
+  const remainingNikDigits = Math.max(
+    16 - form.nomorIndukKependudukan.length,
+    0,
+  );
+  const phoneValidation = form.phone
+    ? validateIndonesianPhoneLocal(form.phone)
+    : { error: null };
 
   useEffect(() => {
     if (!open) return;
@@ -105,13 +125,21 @@ export default function IdentityFormModal({
       return;
     }
 
-    const selectedProvince = provinces.find((item) => item.nama === initialData.province);
+    const selectedProvince = provinces.find(
+      (item) => item.nama === initialData.province,
+    );
     const cityOptions = getCityOptions(selectedProvince?.kode);
-    const selectedCity = cityOptions.find((item) => item.nama === initialData.city);
+    const selectedCity = cityOptions.find(
+      (item) => item.nama === initialData.city,
+    );
     const districtOptions = getDistrictOptions(selectedCity?.kode);
-    const selectedDistrict = districtOptions.find((item) => item.nama === initialData.district);
+    const selectedDistrict = districtOptions.find(
+      (item) => item.nama === initialData.district,
+    );
     const villageOptions = getVillageOptions(selectedDistrict?.kode);
-    const selectedVillage = villageOptions.find((item) => item.nama === initialData.kelurahan);
+    const selectedVillage = villageOptions.find(
+      (item) => item.nama === initialData.kelurahan,
+    );
 
     setProvinceCode(selectedProvince?.kode || "");
     setCityCode(selectedCity?.kode || "");
@@ -121,11 +149,13 @@ export default function IdentityFormModal({
       nomorIndukKependudukan: initialData.nik || "",
       namaLengkap: initialData.full_name || "",
       tempatLahir: initialData.birth_place || "",
-      tanggalLahir: initialData.birth_date ? moment(initialData.birth_date) : null,
+      tanggalLahir: initialData.birth_date
+        ? moment(initialData.birth_date)
+        : null,
       agama: initialData.religion || "",
       pekerjaan: initialData.occupation || "",
       wargaNegara: initialData.nationality || "WNI",
-      phone: initialData.phone || "",
+      phone: getIndonesianPhoneLocalValue(initialData.phone),
       alamatJalan: initialData.street_address || "",
       rt: initialData.rt || "",
       rw: initialData.rw || "",
@@ -223,7 +253,10 @@ export default function IdentityFormModal({
     const formData = new FormData();
     if (mode === "edit" && initialData?.id) {
       formData.append("id", initialData.id);
-      formData.append("oldKtpPath", normalizeStoredUploadPath(initialData.ktp_file_path));
+      formData.append(
+        "oldKtpPath",
+        normalizeStoredUploadPath(initialData.ktp_file_path),
+      );
     }
 
     formData.append("nomorIndukKependudukan", form.nomorIndukKependudukan);
@@ -236,7 +269,17 @@ export default function IdentityFormModal({
     formData.append("agama", form.agama);
     formData.append("pekerjaan", form.pekerjaan);
     formData.append("wargaNegara", form.wargaNegara);
-    formData.append("phone", form.phone);
+    const normalizedPhone = normalizeIndonesianPhone(form.phone);
+    if (normalizedPhone.error) {
+      onNotify?.({
+        open: true,
+        message: normalizedPhone.error,
+        severity: "error",
+      });
+      return;
+    }
+
+    formData.append("phone", normalizedPhone.value);
     formData.append("alamatJalan", form.alamatJalan);
     formData.append("rt", form.rt);
     formData.append("rw", form.rw);
@@ -272,7 +315,9 @@ export default function IdentityFormModal({
             <TextField
               label="Nama Lengkap *"
               value={form.namaLengkap}
-              onChange={(event) => updateField("namaLengkap", event.target.value)}
+              onChange={(event) =>
+                updateField("namaLengkap", event.target.value)
+              }
               disabled={loading}
               fullWidth
               inputProps={{ maxLength: 120 }}
@@ -284,7 +329,10 @@ export default function IdentityFormModal({
               label="NIK *"
               value={form.nomorIndukKependudukan}
               onChange={(event) =>
-                updateField("nomorIndukKependudukan", toDigits(event.target.value, 16))
+                updateField(
+                  "nomorIndukKependudukan",
+                  toDigits(event.target.value, 16),
+                )
               }
               disabled={loading}
               fullWidth
@@ -297,9 +345,18 @@ export default function IdentityFormModal({
                 endAdornment: form.nomorIndukKependudukan && (
                   <InputAdornment position="end">
                     {remainingNikDigits === 0 ? (
-                      <Icon icon="solar:check-circle-bold-duotone" color={theme.palette.success.main} />
+                      <Icon
+                        icon="solar:check-circle-bold-duotone"
+                        color={theme.palette.success.main}
+                      />
                     ) : (
-                      <Typography sx={{ color: "error.main", fontWeight: 800, fontSize: 12 }}>
+                      <Typography
+                        sx={{
+                          color: "error.main",
+                          fontWeight: 800,
+                          fontSize: 12,
+                        }}
+                      >
                         {remainingNikDigits}
                       </Typography>
                     )}
@@ -313,7 +370,9 @@ export default function IdentityFormModal({
             <TextField
               label="Tempat Lahir *"
               value={form.tempatLahir}
-              onChange={(event) => updateField("tempatLahir", event.target.value)}
+              onChange={(event) =>
+                updateField("tempatLahir", event.target.value)
+              }
               disabled={loading}
               fullWidth
               inputProps={{ maxLength: 80 }}
@@ -354,12 +413,16 @@ export default function IdentityFormModal({
 
           <Grid size={{ xs: 12, md: 6 }}>
             <FormControl fullWidth required>
-              <InputLabel id="identity-nationality-label">Kewarganegaraan</InputLabel>
+              <InputLabel id="identity-nationality-label">
+                Kewarganegaraan
+              </InputLabel>
               <Select
                 labelId="identity-nationality-label"
                 label="Kewarganegaraan"
                 value={form.wargaNegara}
-                onChange={(event) => updateField("wargaNegara", event.target.value)}
+                onChange={(event) =>
+                  updateField("wargaNegara", event.target.value)
+                }
                 disabled={loading}
               >
                 <MenuItem value="WNI">WNI</MenuItem>
@@ -370,12 +433,53 @@ export default function IdentityFormModal({
 
           <Grid size={{ xs: 12, md: 6 }}>
             <TextField
-              label="No HP *"
+              label="Nomor HP *"
+              placeholder=" 8213xxxxxx"
               value={form.phone}
-              onChange={(event) => updateField("phone", toDigits(event.target.value, 15))}
+              onChange={(event) =>
+                updateField(
+                  "phone",
+                  normalizeIndonesianPhoneInput(event.target.value),
+                )
+              }
               disabled={loading}
               fullWidth
-              inputProps={{ maxLength: 15 }}
+              error={Boolean(phoneValidation.error)}
+              helperText={
+                phoneValidation.error ||
+                "Masukkan nomor tanpa 0, contoh: 8213xxxxx."
+              }
+              // Helpertext padding & margin = 0
+              sx={{
+                ".MuiFormHelperText-root": { padding: 0, margin: "5px 0 0 0" },
+              }}
+              inputProps={{
+                maxLength: 13,
+                inputMode: "numeric",
+              }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Box
+                      component="span"
+                      sx={{
+                        color: theme.palette.primary.disabled,
+                        // bgcolor:
+                        //   theme.palette.mode === "dark"
+                        //     ? "rgba(255,152,0,0.13)"
+                        //     : "rgba(230,9,9,0.08)",
+                        // border: `1px solid ${theme.palette.primary.main}33`,
+                        fontFamily: "Poppins",
+                        fontWeight: 600,
+                        fontSize: 13,
+                        lineHeight: 1,
+                      }}
+                    >
+                      +62
+                    </Box>
+                  </InputAdornment>
+                ),
+              }}
             />
           </Grid>
 
@@ -389,7 +493,8 @@ export default function IdentityFormModal({
                   theme.palette.mode === "dark"
                     ? "rgba(255,255,255,0.035)"
                     : "rgba(17,24,39,0.025)",
-                transition: "border-color 0.18s ease, background-color 0.18s ease",
+                transition:
+                  "border-color 0.18s ease, background-color 0.18s ease",
                 "&:hover": {
                   borderColor:
                     theme.palette.mode === "dark"
@@ -408,7 +513,12 @@ export default function IdentityFormModal({
                 justifyContent="space-between"
                 spacing={{ xs: 1.6, md: 1.5 }}
               >
-                <Stack direction="row" spacing={1.25} alignItems="center" sx={{ minWidth: 0 }}>
+                <Stack
+                  direction="row"
+                  spacing={1.25}
+                  alignItems="center"
+                  sx={{ minWidth: 0 }}
+                >
                   <Box
                     sx={{
                       width: { xs: 44, sm: 48 },
@@ -439,7 +549,9 @@ export default function IdentityFormModal({
                       spacing={0.8}
                       sx={{ flexWrap: "wrap", rowGap: 0.5 }}
                     >
-                      <Typography sx={{ fontWeight: 850, fontSize: 13 }}>Foto KTP</Typography>
+                      <Typography sx={{ fontWeight: 850, fontSize: 13 }}>
+                        Foto KTP
+                      </Typography>
                       {form.ktpFilePath && (
                         <Box
                           component="span"
@@ -571,14 +683,18 @@ export default function IdentityFormModal({
                           ktpFilePath: "",
                         }))
                       }
-                      startIcon={<Icon icon="solar:trash-bin-trash-bold-duotone" />}
+                      startIcon={
+                        <Icon icon="solar:trash-bin-trash-bold-duotone" />
+                      }
                       sx={{
                         width: { xs: "100%", sm: "auto" },
                         minWidth: { sm: 96 },
                         bgcolor: theme.palette.error.main,
                         boxShadow: "none",
                         "&:hover": {
-                          bgcolor: theme.palette.error.dark || theme.palette.error.main,
+                          bgcolor:
+                            theme.palette.error.dark ||
+                            theme.palette.error.main,
                           boxShadow: "none",
                         },
                       }}
@@ -595,11 +711,17 @@ export default function IdentityFormModal({
             <Autocomplete
               options={provinces}
               getOptionLabel={(option) => option.nama || ""}
-              value={provinces.find((item) => item.kode === provinceCode) || null}
+              value={
+                provinces.find((item) => item.kode === provinceCode) || null
+              }
               onChange={(_, value) => handleProvinceChange(value)}
               disabled={loading}
-              isOptionEqualToValue={(option, value) => option.kode === value.kode}
-              renderInput={(params) => <TextField {...params} label="Provinsi *" required />}
+              isOptionEqualToValue={(option, value) =>
+                option.kode === value.kode
+              }
+              renderInput={(params) => (
+                <TextField {...params} label="Provinsi *" required />
+              )}
             />
           </Grid>
 
@@ -610,8 +732,12 @@ export default function IdentityFormModal({
               value={cities.find((item) => item.kode === cityCode) || null}
               onChange={(_, value) => handleCityChange(value)}
               disabled={loading || !provinceCode}
-              isOptionEqualToValue={(option, value) => option.kode === value.kode}
-              renderInput={(params) => <TextField {...params} label="Kabupaten/Kota *" required />}
+              isOptionEqualToValue={(option, value) =>
+                option.kode === value.kode
+              }
+              renderInput={(params) => (
+                <TextField {...params} label="Kabupaten/Kota *" required />
+              )}
             />
           </Grid>
 
@@ -619,11 +745,17 @@ export default function IdentityFormModal({
             <Autocomplete
               options={districts}
               getOptionLabel={(option) => option.nama || ""}
-              value={districts.find((item) => item.kode === districtCode) || null}
+              value={
+                districts.find((item) => item.kode === districtCode) || null
+              }
               onChange={(_, value) => handleDistrictChange(value)}
               disabled={loading || !cityCode}
-              isOptionEqualToValue={(option, value) => option.kode === value.kode}
-              renderInput={(params) => <TextField {...params} label="Kecamatan *" required />}
+              isOptionEqualToValue={(option, value) =>
+                option.kode === value.kode
+              }
+              renderInput={(params) => (
+                <TextField {...params} label="Kecamatan *" required />
+              )}
             />
           </Grid>
 
@@ -634,8 +766,12 @@ export default function IdentityFormModal({
               value={villages.find((item) => item.kode === villageCode) || null}
               onChange={(_, value) => handleVillageChange(value)}
               disabled={loading || !districtCode}
-              isOptionEqualToValue={(option, value) => option.kode === value.kode}
-              renderInput={(params) => <TextField {...params} label="Kelurahan/Desa *" required />}
+              isOptionEqualToValue={(option, value) =>
+                option.kode === value.kode
+              }
+              renderInput={(params) => (
+                <TextField {...params} label="Kelurahan/Desa *" required />
+              )}
             />
           </Grid>
 
@@ -643,7 +779,9 @@ export default function IdentityFormModal({
             <TextField
               label="Nama Jalan / Alamat *"
               value={form.alamatJalan}
-              onChange={(event) => updateField("alamatJalan", event.target.value)}
+              onChange={(event) =>
+                updateField("alamatJalan", event.target.value)
+              }
               disabled={loading}
               fullWidth
               inputProps={{ maxLength: 180 }}
@@ -654,7 +792,9 @@ export default function IdentityFormModal({
             <TextField
               label="RT *"
               value={form.rt}
-              onChange={(event) => updateField("rt", toDigits(event.target.value, 3))}
+              onChange={(event) =>
+                updateField("rt", toDigits(event.target.value, 3))
+              }
               disabled={loading}
               fullWidth
               inputProps={{ maxLength: 3 }}
@@ -665,7 +805,9 @@ export default function IdentityFormModal({
             <TextField
               label="RW *"
               value={form.rw}
-              onChange={(event) => updateField("rw", toDigits(event.target.value, 3))}
+              onChange={(event) =>
+                updateField("rw", toDigits(event.target.value, 3))
+              }
               disabled={loading}
               fullWidth
               inputProps={{ maxLength: 3 }}
@@ -701,7 +843,9 @@ export default function IdentityFormModal({
               <TextField
                 label="Alasan Blacklist *"
                 value={form.notes}
-                onChange={(event) => updateField("notes", event.target.value.slice(0, 150))}
+                onChange={(event) =>
+                  updateField("notes", event.target.value.slice(0, 150))
+                }
                 disabled={loading}
                 fullWidth
                 multiline

@@ -83,7 +83,7 @@ const getPaletteColor = (theme, palette) =>
  * Pill audit dibuat custom agar label status dan sumber sync tetap jelas
  * pada dark/light theme, tidak terlalu kecil seperti chip default.
  */
-const AuditPill = ({ icon, label, caption, palette = "primary" }) => (
+const AuditPill = ({ icon, label, caption, palette = "primary", sx }) => (
   <Box
     sx={(theme) => {
       const color = getPaletteColor(theme, palette);
@@ -98,6 +98,7 @@ const AuditPill = ({ icon, label, caption, palette = "primary" }) => (
         border: `1px solid ${alpha(color, theme.palette.mode === "dark" ? 0.42 : 0.32)}`,
         bgcolor: alpha(color, theme.palette.mode === "dark" ? 0.18 : 0.11),
         color,
+        ...sx,
       };
     }}
   >
@@ -181,6 +182,7 @@ const ItemActionChip = ({ action }) => {
         label="Tersedia"
         caption="Status diperbarui"
         palette="success"
+        sx={{ minWidth: 166 }}
       />
     );
   }
@@ -191,6 +193,7 @@ const ItemActionChip = ({ action }) => {
       label="Dilewati"
       caption="Tidak diubah"
       palette="warning"
+      sx={{ minWidth: 146 }}
     />
   );
 };
@@ -307,7 +310,7 @@ export const createRoomSyncLogColumns = ({ onViewDetail, onDelete }) => [
   {
     title: "Aksi",
     dataIndex: "actions",
-    width: 132,
+    width: 300,
     fixed: "right",
     align: "center",
     className: "room-sync-actions-cell",
@@ -342,7 +345,7 @@ export const createRoomSyncItemColumns = () => [
   {
     title: "Aksi",
     dataIndex: "action",
-    width: 140,
+    width: 210,
     render: (value) => <ItemActionChip action={value} />,
   },
   {

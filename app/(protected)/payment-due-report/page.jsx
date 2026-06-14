@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Box, Button, useMediaQuery, useTheme } from "@mui/material";
 import { Icon } from "@iconify/react";
 import axios from "axios";
@@ -15,11 +15,14 @@ import LoadingBackdrop from "@/app/components/loading/Backdrop";
 import Notification from "@/app/components/Notification";
 import ReportFilterPanel from "@/app/components/reports/ReportFilterPanel";
 import { useUser } from "@/app/utils/useUser";
+import formatRupiah from "@/app/components/formatrupiah/page";
+import { getWhatsAppPhone } from "@/app/utils/phoneNumber";
 import {
   buildReportFileName,
   exportReportToExcel,
   exportReportToPDF,
 } from "@/app/utils/reportExportUtils";
+import { getDaysLabel } from "../dashboard/dashboardUtils";
 import {
   buildPaymentContext,
   normalizePaymentForLeaseDetail,
@@ -117,6 +120,40 @@ const formatReportRange = (targetRange) =>
 const getReportPeriodLabel = (filter, targetRange) => {
   if (filter === "all") return "Semua";
   return formatReportRange(targetRange);
+};
+
+const formatMessageDate = (value) =>
+  value ? moment(value).format("DD MMMM YYYY") : "-";
+
+const buildPaymentDueWhatsAppMessage = (record) => {
+  const tenant = record?.tenant_application || {};
+  const location = record?.location || {};
+  const room = record?.room || {};
+  const due = record?.payment_due || {};
+  const dueStatus = getDaysLabel(due.days_remaining);
+  const dueSentence =
+    due.due_status === "overdue"
+      ? `telah melewati jatuh tempo (${dueStatus})`
+      : `akan jatuh tempo (${dueStatus})`;
+
+  return [
+    `Yth. Bapak/Ibu ${tenant.tenant_name || "Penyewa"},`,
+    "",
+    `Kami informasikan bahwa pembayaran sewa ruangan Anda ${dueSentence}.`,
+    "",
+    "Detail pembayaran:",
+    `- Lokasi: ${location.location_name || "-"}`,
+    `- Ruangan: ${room.room_number || "-"}${room.floor ? `, ${room.floor}` : ""}`,
+    `- Tahap pembayaran: ${due.payment_step_label || "-"}`,
+    `- Nominal: ${formatRupiah(Number(due.due_amount || 0))}`,
+    `- Tanggal jatuh tempo: ${formatMessageDate(due.due_date)}`,
+    `- Status: ${dueStatus}`,
+    "",
+    "Mohon segera melakukan pembayaran sesuai ketentuan. Jika pembayaran sudah dilakukan, mohon konfirmasi kepada admin dengan mengirimkan bukti pembayaran.",
+    "",
+    "Terima kasih.",
+    "Perumda Pasar Manado",
+  ].join("\n");
 };
 
 /**
@@ -251,16 +288,32 @@ export default function PaymentDueReportPage() {
     return filterPaymentDueRows(statusRows, searchText);
   }, [rows, searchText, statusFilter]);
 
+  const handlePhoneAction = useCallback((record) => {
+    const phone = getWhatsAppPhone(record?.tenant_application?.tenant_phone);
+
+    if (!phone) {
+      setSnackbar({
+        open: true,
+        message: "Nomor WhatsApp penyewa belum valid atau belum tersedia.",
+        severity: "warning",
+      });
+      return;
+    }
+
+    const message = buildPaymentDueWhatsAppMessage(record);
+    const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+    window.open(url, "_blank", "noopener,noreferrer");
+  }, []);
+
   const columns = useMemo(
     () =>
       createPaymentDueReportColumns({
         theme,
         onOpenDetail: setSelectedRow,
-        onPhoneAction: () =>
-          showSnackbar("Fitur pengingat WhatsApp belum tersedia.", "warning"),
+        onPhoneAction: handlePhoneAction,
         isMobile,
       }),
-    [theme],
+    [handlePhoneAction, isMobile, theme],
   );
 
   const exportRows = useMemo(
