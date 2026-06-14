@@ -37,6 +37,26 @@ const displayValue = (value) => {
 };
 
 /**
+ * Nilai jenis harga dari database memakai kode teknis. Helper ini menjaga teks
+ * yang tampil di modal tetap mudah dipahami pengguna operasional.
+ */
+const getRoomPriceTypeLabel = (priceType) => {
+  const normalizedPriceType = String(priceType || "").trim().toLowerCase();
+
+  if (normalizedPriceType === "harga_tetap") return "Harga Tetap";
+  if (normalizedPriceType === "harga_per_meter") return "Harga per Meter";
+
+  return emptyValue;
+};
+
+const getRoomPriceValueLabel = (priceType) => {
+  const normalizedPriceType = String(priceType || "").trim().toLowerCase();
+  return normalizedPriceType === "harga_tetap"
+    ? "Harga Tetap Ruangan"
+    : "Harga Ruangan / m²";
+};
+
+/**
  * Kartu kecil untuk menampilkan informasi pasangan label/nilai.
  * Dipisah agar detail pemohon, ruangan, dan biaya dapat memakai pola UI yang sama.
  */
@@ -370,7 +390,8 @@ export default function TenantLeaseDetailModal({
               <InfoTile icon="solar:ruler-bold-duotone" label="Panjang" value={selectedData?.room_length ? `${formatNumber(selectedData.room_length)} M` : emptyValue} />
               <InfoTile icon="solar:ruler-cross-pen-bold-duotone" label="Lebar" value={selectedData?.room_width ? `${formatNumber(selectedData.room_width)} M` : emptyValue} />
               <InfoTile icon="solar:widget-5-bold-duotone" label="Luas" value={selectedData?.room_area ? `${formatNumber(selectedData.room_area)} m²` : emptyValue} />
-              <InfoTile icon="solar:tag-price-bold-duotone" label="Harga Ruangan / m²" value={selectedData?.price_per_m2 ? formatRupiah(selectedData.price_per_m2) : emptyValue} />
+              <InfoTile icon="solar:tag-price-bold-duotone" label="Jenis Harga" value={getRoomPriceTypeLabel(selectedData?.price_type)} />
+              <InfoTile icon="solar:tag-price-bold-duotone" label={getRoomPriceValueLabel(selectedData?.price_type)} value={selectedData?.price_per_m2 ? formatRupiah(selectedData.price_per_m2) : emptyValue} />
               <InfoTile icon="solar:calendar-add-bold-duotone" label="Tanggal Dibuat" value={formatDate(selectedData?.created_at)} />
               <InfoTile
                 icon="solar:calendar-date-bold-duotone"

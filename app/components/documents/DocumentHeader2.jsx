@@ -21,6 +21,7 @@ const DocumentHeader2 = () => {
             width={110}
             height={90}
             priority
+            unoptimized
           />
         </Box>
 
@@ -74,6 +75,7 @@ const DocumentHeader2 = () => {
             width={90}
             height={90}
             priority
+            unoptimized
           />
         </Box>
       </Box>

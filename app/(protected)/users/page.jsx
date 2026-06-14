@@ -1,324 +1,432 @@
 "use client";
-import { Box, Button, Paper, Typography, useTheme } from "@mui/material";
-import React, { use, useEffect, useState } from "react";
-import { Table, ConfigProvider, theme as antdTheme, Input } from "antd";
-import { useThemeMode } from "../../components/themeprovider/ThemeContext";
-import moment from "moment";
-import { Icon } from "@iconify/react";
-import LoadingBackdrop from "../../components/loading/Backdrop";
-import Notification from "../../components/Notification";
-import AddUser from "./AddUser";
-import EditUser from "./EditUser";
-import DeleteUser from "./DeleteUser";
-import axios from "axios";
-import BreadcrumbPage from "@/app/components/breadcrumb/page";
-import { useUser } from "@/app/utils/useUser";
-import MENU_CONFIG from "@/app/components/menu/MenuConfig";
 
-const Users = () => {
-  const [dataUsers, setDataUsers] = useState([]);
-  const [dataRoles, setDataRoles] = useState([]);
-  const { themeMode } = useThemeMode();
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { Box, Button, Grid, Stack, useTheme } from "@mui/material";
+import { Icon } from "@iconify/react";
+import axios from "axios";
+import LoadingBackdrop from "@/app/components/loading/Backdrop";
+import Notification from "@/app/components/Notification";
+import PageHeader from "@/app/components/page-header/PageHeader";
+import DataTableShell from "@/app/components/data-table/DataTableShell";
+import ReusableAntTable from "@/app/components/data-table/ReusableAntTable";
+import CrudConfirmModal from "@/app/components/crud/CrudConfirmModal";
+import SummaryStatCard from "@/app/components/stats/SummaryStatCard";
+import { useUser } from "@/app/utils/useUser";
+import UserFormModal from "./UserFormModal";
+import { createUsersTableColumns } from "./UsersTableColumns";
+import {
+  APPROVAL_ROLE_IDS,
+  PAGE_SIZE_OPTIONS,
+  SUPERADMIN_ROLE_ID,
+  getInitialForm,
+  getInitialSnackbar,
+  getRoleCategory,
+  normalizeEmail,
+  normalizeFullName,
+  normalizeSearch,
+  normalizeUsername,
+  validateForm,
+} from "./userUtils";
+
+/**
+ * Halaman master data Pengguna.
+ * Page ini hanya mengatur state, fetch, dan orchestration; form serta kolom
+ * tabel dipisahkan agar perubahan UI berikutnya tidak menumpuk di satu file.
+ */
+export default function Users() {
   const theme = useTheme();
+  const { user } = useUser();
+  const [users, setUsers] = useState([]);
+  const [roles, setRoles] = useState([]);
   const [searchText, setSearchText] = useState("");
   const [loading, setLoading] = useState(false);
-  const [openAddModal, setOpenAddModal] = useState(false);
-  const [openEditModal, setOpenEditModal] = useState(false);
-  const [openDeleteModal, setOpenDeleteModal] = useState(false);
-  const [selectedData, setSelectedData] = useState(null);
+  const [formMode, setFormMode] = useState("create");
+  const [formOpen, setFormOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [form, setForm] = useState(getInitialForm);
+  const [formErrors, setFormErrors] = useState({});
+  const [showPassword, setShowPassword] = useState(false);
   const [pageSize, setPageSize] = useState(5);
-  const [snackbar, setSnackbar] = useState({
-    open: false,
-    message: "",
-    severity: "success",
-  });
-  const [currentRole, setCurrentRole] = useState("");
-  const { user } = useUser();
+  const [snackbar, setSnackbar] = useState(getInitialSnackbar);
 
-  const getUsersData = async () => {
-    setLoading(true);
-    try {
-      // Kirim role_name sebagai query parameter
-      const response = await axios.get(`/api/users?role_id=${user.role_id}`);
-      // console.log("Users data", response);
-      setDataUsers(response.data.data);
-      setTimeout(() => {
-        setLoading(false);
-      }, 1000);
-    } catch (error) {
-      console.log("error", error);
-      setTimeout(() => {
-        setLoading(false);
-      }, 1000);
-    }
+  const showSnackbar = (message, severity = "success") => {
+    setSnackbar({ open: true, message, severity });
   };
 
-  const getDataRoles = async () => {
+  const fetchUsers = useCallback(async () => {
     setLoading(true);
+    try {
+      const response = await axios.get("/api/users");
+      if (response.data?.success) {
+        setUsers(response.data.data || []);
+        return;
+      }
 
+      showSnackbar(response.data?.message || "Gagal mengambil data pengguna.", "error");
+    } catch (error) {
+      showSnackbar(
+        error?.response?.data?.message || "Terjadi error saat mengambil data pengguna.",
+        "error",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const fetchRoles = useCallback(async () => {
     try {
       const response = await axios.get("/api/roles");
-      // console.log("data role", response.data);
-      setDataRoles(response.data.data);
+      if (response.data?.success) {
+        setRoles(response.data.data || []);
+      }
     } catch (error) {
-      console.log(error);
+      showSnackbar(
+        error?.response?.data?.message || "Terjadi error saat mengambil data peran.",
+        "error",
+      );
     }
-  };
+  }, []);
 
   useEffect(() => {
-    if (user) {
-      getUsersData();
-      getDataRoles();
-    }
-  }, [user]);
+    fetchUsers();
+    fetchRoles();
+  }, [fetchUsers, fetchRoles]);
 
-  const filteredData = dataUsers.filter(
-    (item) =>
-      item.full_name?.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.username?.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.email?.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.role_name?.toLowerCase().includes(searchText.toLowerCase())
+  const usersWithCategory = useMemo(
+    () =>
+      users.map((item) => ({
+        ...item,
+        role_category: getRoleCategory(item.role_id).label,
+      })),
+    [users],
   );
 
-  const handleEdit = (record) => {
-    // console.log("edit record", record);
-    setSelectedData(record);
-    setOpenEditModal(true);
+  const filteredUsers = useMemo(() => {
+    const keyword = normalizeSearch(searchText);
+    if (!keyword) return usersWithCategory;
+
+    return usersWithCategory.filter((item) =>
+      [
+        item.full_name,
+        item.username,
+        item.email,
+        item.role_name,
+        item.role_category,
+        item.created_at,
+        item.updated_at,
+      ].some((value) => normalizeSearch(value).includes(keyword)),
+    );
+  }, [searchText, usersWithCategory]);
+
+  const userStats = useMemo(() => {
+    const superadminCount = users.filter(
+      (item) => Number(item.role_id) === SUPERADMIN_ROLE_ID,
+    ).length;
+    const approvalCount = users.filter((item) =>
+      APPROVAL_ROLE_IDS.has(Number(item.role_id)),
+    ).length;
+    const financeCount = users.filter((item) => Number(item.role_id) === 8).length;
+
+    return [
+      {
+        label: "Total Pengguna",
+        value: users.length,
+        icon: "solar:users-group-rounded-bold-duotone",
+        color: theme.palette.primary.main,
+      },
+      {
+        label: "Superadmin",
+        value: superadminCount,
+        icon: "solar:shield-keyhole-bold-duotone",
+        color: theme.palette.error.main,
+      },
+      {
+        label: "Role Approval",
+        value: approvalCount,
+        icon: "solar:checklist-minimalistic-bold-duotone",
+        color: theme.palette.success.main,
+      },
+      {
+        label: "Keuangan",
+        value: financeCount,
+        icon: "solar:wallet-money-bold-duotone",
+        color: theme.palette.info.main,
+      },
+    ];
+  }, [users, theme]);
+
+  const openCreateModal = () => {
+    setSelectedUser(null);
+    setForm(getInitialForm());
+    setFormErrors({});
+    setShowPassword(false);
+    setFormMode("create");
+    setFormOpen(true);
   };
 
-  const handleDelete = (record) => {
-    // console.log("delete record", record);
-    setSelectedData(record);
-    setOpenDeleteModal(true);
+  const openEditModal = (record) => {
+    setSelectedUser(record);
+    setForm({
+      fullName: record?.full_name || "",
+      username: record?.username || "",
+      password: "",
+      email: record?.email || "",
+      roleId: record?.role_id || "",
+    });
+    setFormErrors({});
+    setShowPassword(false);
+    setFormMode("edit");
+    setFormOpen(true);
   };
 
-  const onChange = (pagination, filters, sorter, extra) => {
-    if (pagination.pageSize !== pageSize) {
-      setPageSize(pagination.pageSize);
+  const openDeleteModal = (record) => {
+    setSelectedUser(record);
+    setDeleteOpen(true);
+  };
+
+  const closeFormModal = () => {
+    if (loading) return;
+    setFormOpen(false);
+    setSelectedUser(null);
+    setForm(getInitialForm());
+    setFormErrors({});
+    setShowPassword(false);
+  };
+
+  const updateForm = (field) => (event) => {
+    const rawValue = event.target.value;
+    const value = field === "username" ? rawValue.replace(/\s/g, "") : rawValue;
+    const nextForm = { ...form, [field]: value };
+
+    setForm(nextForm);
+
+    if (formErrors[field]) {
+      const nextErrors = validateForm(nextForm, formMode);
+      setFormErrors((current) => ({ ...current, [field]: nextErrors[field] || "" }));
     }
   };
 
-  // Utility untuk filter dinamis
-  function generateFilters(data, key) {
-    return [...new Set(data.map((item) => item[key]))]
-      .filter((val) => val !== undefined && val !== null)
-      .map((val) => ({ text: val, value: val }));
-  }
+  const handleSaveUser = async (event) => {
+    event.preventDefault();
 
-  function createOnFilter(key) {
-    return (value, record) => record[key] === value;
-  }
+    const validationErrors = validateForm(form, formMode);
+    if (Object.values(validationErrors).some(Boolean)) {
+      setFormErrors(validationErrors);
+      return;
+    }
 
-  const nameFilters = generateFilters(dataUsers, "full_name");
-  const roleFilters = generateFilters(dataUsers, "role_name");
+    const payload = {
+      fullName: normalizeFullName(form.fullName),
+      username: normalizeUsername(form.username),
+      email: normalizeEmail(form.email),
+      roleId: Number(form.roleId),
+    };
 
-  const columns = [
-     {
-      title: "No",
-      dataIndex: "index",
-      render: (text, record, index) => index + 1,
-      width: 50,
-      align: "center",
-    },
-    {
-      title: "Nama User",
-      dataIndex: "full_name",
-      filters: nameFilters,
-      onFilter: createOnFilter("full_name"),
-      filterSearch: true,
-      sorter: (a, b) => a.full_name.localeCompare(b.full_name),
-      sortDirections: ["ascend", "descend"],
-      render: (text, record) => (
-        <Typography sx={{ fontWeight: "bold", fontSize: "12px" }}>
-          {record.full_name}
-        </Typography>
-      ),
-      width: 150,
-    },
-    {
-      title: "Username",
-      dataIndex: "username",
-      width: 100,
-    },
-    {
-      title: "Password",
-      dataIndex: "password",
-      render: (text) => (
-        <span>{"*".repeat(text?.length > 0 ? text.length : 6)}</span>
-      ),
-      width: 100,
-    },
-    {
-      title: "Role",
-      dataIndex: "role_name",
-      filters: roleFilters,
-      onFilter: createOnFilter("role_name"),
-      filterSearch: true,
-      width: 150,
-    },
-    {
-      title: "Email",
-      dataIndex: "email",
-      width: 150,
-    },
-    {
-      title: "Actions",
-      key: "action",
-      align: "center",
-      width: 100,
-      fixed: "right",
-      render: (text, record) => (
-        <Box sx={{ display: "flex", gap: 1, justifyContent: "center" }}>
-          <Button
-            size="small"
-            variant={themeMode === "dark" ? "outlined" : "contained"}
-            color="info"
-            onClick={() => handleEdit(record)}
-            sx={{ minWidth: 0, px: 1 }}
-          >
-            <Icon icon="line-md:edit" fontSize={18} />
-          </Button>
-          <Button
-            size="small"
-            variant={themeMode === "dark" ? "outlined" : "contained"}
-            color="error"
-            onClick={() => handleDelete(record)}
-            sx={{ minWidth: 0, px: 1 }}
-          >
-            <Icon icon="line-md:close-circle" fontSize={18} />
-          </Button>
-        </Box>
-      ),
-    },
-  ];
+    if (formMode === "create" || form.password) {
+      payload.password = form.password;
+    }
+
+    setLoading(true);
+    try {
+      const request =
+        formMode === "edit" && selectedUser?.id
+          ? axios.put(`/api/users/${selectedUser.id}`, payload)
+          : axios.post("/api/users", payload);
+
+      const response = await request;
+
+      if (response.data?.success) {
+        showSnackbar(response.data.message || "Pengguna berhasil disimpan.");
+        setFormOpen(false);
+        setSelectedUser(null);
+        setForm(getInitialForm());
+        setFormErrors({});
+        await fetchUsers();
+        return;
+      }
+
+      showSnackbar(response.data?.message || "Gagal menyimpan pengguna.", "error");
+    } catch (error) {
+      showSnackbar(
+        error?.response?.data?.message || "Terjadi error saat menyimpan pengguna.",
+        "error",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteUser = async () => {
+    if (!selectedUser?.id) return;
+
+    setLoading(true);
+    try {
+      const response = await axios.delete(`/api/users/${selectedUser.id}`);
+
+      if (response.data?.success) {
+        showSnackbar(response.data.message || "Pengguna berhasil dihapus.");
+        setDeleteOpen(false);
+        setSelectedUser(null);
+        await fetchUsers();
+        return;
+      }
+
+      showSnackbar(response.data?.message || "Gagal menghapus pengguna.", "error");
+    } catch (error) {
+      showSnackbar(
+        error?.response?.data?.message || "Terjadi error saat menghapus pengguna.",
+        "error",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const columns = useMemo(
+    () =>
+      createUsersTableColumns({
+        theme,
+        users: usersWithCategory,
+        currentUserId: user?.id,
+        onEdit: openEditModal,
+        onDelete: openDeleteModal,
+      }),
+    [theme, usersWithCategory, user?.id],
+  );
 
   return (
-    <Box sx={{ width: "100%", height: "100%", minHeight: "100%", p: 2 }}>
-      {/* Component Breadcrumbs disini */}
-      <BreadcrumbPage menuList={MENU_CONFIG} />
-
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "flex-end",
-          transition: "all 0.3s",
-          mb: 2,
-          mt: 3,
-        }}
-      >
-        <Button
-          variant={themeMode === "dark" ? "outlined" : "contained"}
-          onClick={() => setOpenAddModal(true)}
-          sx={{
-            textTransform: "none",
+    <Box
+      sx={{
+        width: "100%",
+        minHeight: "calc(100vh - 64px)",
+        bgcolor: theme.ui.pageBg,
+        p: { xs: 1.25, sm: 2, lg: 2.25 },
+        transition: "background-color 0.2s ease",
+      }}
+    >
+      <Stack spacing={{ xs: 1.5, lg: 2 }}>
+        <PageHeader
+          breadcrumbs={[
+            {
+              label: "Data Master",
+              value: "data-master",
+              icon: "solar:database-bold-duotone",
+              path: "#",
+            },
+            {
+              label: "Pengguna",
+              value: "users",
+              icon: "solar:users-group-rounded-bold-duotone",
+              path: "/users",
+            },
+          ]}
+          title="Pengguna"
+          description="Kelola akun pengguna, akses peran, dan data kontak yang dipakai untuk proses operasional SewaIN."
+          icon="solar:users-group-rounded-bold-duotone"
+          actionSx={{
+            width: { xs: "100%", md: "auto" },
             display: "flex",
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 1,
-            fontWeight: "bold",
+            justifyContent: { xs: "stretch", md: "flex-end" },
           }}
+          action={
+            <Button
+              fullWidth
+              variant="contained"
+              startIcon={<Icon icon="solar:user-plus-rounded-bold-duotone" />}
+              onClick={openCreateModal}
+              sx={{
+                minHeight: 46,
+                px: { xs: 2, sm: 2.5 },
+                borderRadius: 2,
+                fontFamily: "Poppins",
+                fontWeight: 700,
+                textTransform: "none",
+                boxShadow:
+                  theme.palette.mode === "dark"
+                    ? "0 6px 14px rgba(255, 152, 0, 0.18)"
+                    : "0 6px 14px rgba(230, 9, 9, 0.16)",
+                "&:hover": {
+                  boxShadow:
+                    theme.palette.mode === "dark"
+                      ? "0 8px 18px rgba(255, 152, 0, 0.22)"
+                      : "0 8px 18px rgba(230, 9, 9, 0.20)",
+                  transform: "translateY(-1px)",
+                },
+              }}
+            >
+              Tambah Pengguna
+            </Button>
+          }
+        />
+
+        <Grid container spacing={{ xs: 1.25, md: 1.5 }}>
+          {userStats.map((item) => (
+            <Grid key={item.label} size={{ xs: 6, md: 3 }}>
+              <SummaryStatCard {...item} />
+            </Grid>
+          ))}
+        </Grid>
+
+        <DataTableShell
+          title="Daftar Pengguna"
+          description={`${filteredUsers.length} dari ${users.length} pengguna ditampilkan`}
+          searchValue={searchText}
+          searchPlaceholder="Cari pengguna, username, email, atau peran..."
+          onSearchChange={setSearchText}
         >
-          Tambah
-          <Icon icon="line-md:account-add" fontSize="20px" />
-        </Button>
-      </Box>
-      <ConfigProvider
-        theme={{
-          algorithm:
-            themeMode === "dark"
-              ? antdTheme.darkAlgorithm
-              : antdTheme.defaultAlgorithm,
-          token: {
-            colorPrimary: theme.palette.primary.main, // warna utama (angka aktif, outline, dsb)
-            // colorText: theme.palette.text.primary, // warna teks default
-          },
-        }}
-      >
-        <Paper
-          elevation={6}
-          sx={{
-            p:
-              filteredData.length > 0
-                ? "10px 15px 0px 15px"
-                : "10px 15px 10px 15px",
-            width: "100%",
-            bgcolor: "background.default",
-            overflowX: "auto",
-          }}
-        >
-          <Input.Search
-            placeholder="Cari Nama User"
-            allowClear
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-            style={{ width: 250, marginBottom: 20, marginTop: 10 }}
-          />
-          <Table
-            rowKey="id"
+          <ReusableAntTable
             columns={columns}
-            dataSource={filteredData}
-            onChange={onChange}
-            showSorterTooltip={{ target: "sorter-icon" }}
-            scroll={{ x: "max-content", y: 420 }}
-            pagination={{
-              pageSize: pageSize,
-              showSizeChanger: true,
-              pageSizeOptions: [5, 10, 20, 50],
-              showTotal: (total, range) =>
-                `${range[0]}-${range[1]} dari ${total} data`,
+            dataSource={filteredUsers}
+            loading={loading}
+            pageSize={pageSize}
+            pageSizeOptions={PAGE_SIZE_OPTIONS}
+            scroll={{ x: 1320, y: 430 }}
+            onPageSizeChange={setPageSize}
+            fixedActionColumn={{
+              className: "users-action-column",
+              buttonsClassName: "users-action-buttons",
+              width: 116,
+              paddingX: 12,
             }}
           />
-        </Paper>
-      </ConfigProvider>
-      <AddUser
-        open={openAddModal}
-        onClose={() => setOpenAddModal(false)}
-        loadingTrue={() => setLoading(true)}
-        loadingFalse={() => setLoading(false)}
+        </DataTableShell>
+      </Stack>
+
+      <UserFormModal
+        open={formOpen}
+        mode={formMode}
+        form={form}
+        errors={formErrors}
+        roles={roles}
         loading={loading}
-        getUsersData={getUsersData}
-        getDataRoles={getDataRoles}
-        onNotify={(notif) => setSnackbar(notif)}
-        currentRole={currentRole}
-        dataRoles={dataRoles}
+        showPassword={showPassword}
+        onTogglePassword={() => setShowPassword((current) => !current)}
+        onChange={updateForm}
+        onClose={closeFormModal}
+        onSubmit={handleSaveUser}
       />
-      <EditUser
-        open={openEditModal}
-        onClose={() => setOpenEditModal(false)}
-        loadingTrue={() => setLoading(true)}
-        loadingFalse={() => setLoading(false)}
+
+      <CrudConfirmModal
+        open={deleteOpen}
+        title="Hapus Pengguna"
+        description="Akun pengguna akan dihapus dari sistem."
+        confirmDescription="Anda yakin ingin menghapus pengguna"
+        highlight={selectedUser?.full_name || "-"}
+        confirmLabel="Hapus Pengguna"
+        loadingLabel="Menghapus pengguna..."
         loading={loading}
-        getUsersData={getUsersData}
-        getDataRoles={getDataRoles}
-        selectedData={selectedData}
-        onNotify={(notif) => setSnackbar(notif)}
-        currentRole={currentRole}
-        dataRoles={dataRoles}
+        onClose={() => !loading && setDeleteOpen(false)}
+        onConfirm={handleDeleteUser}
       />
-      <DeleteUser
-        open={openDeleteModal}
-        onClose={() => setOpenDeleteModal(false)}
-        loadingTrue={() => setLoading(true)}
-        loadingFalse={() => setLoading(false)}
-        loading={loading}
-        getUsersData={getUsersData}
-        getDataRoles={getDataRoles}
-        onNotify={(notif) => setSnackbar(notif)}
-        selectedData={selectedData}
-      />
-      <LoadingBackdrop message="Loading..." open={loading} />
-      {/* Snackbar notification */}
+
+      <LoadingBackdrop message="Loading..." open={loading && !formOpen && !deleteOpen} />
       <Notification
         open={snackbar.open}
         message={snackbar.message}
         severity={snackbar.severity}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        onClose={() => setSnackbar((current) => ({ ...current, open: false }))}
       />
     </Box>
   );
-};
-
-export default Users;
+}

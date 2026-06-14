@@ -1,7 +1,27 @@
 import pool from "@/lib/dbConfig";
-import { requireAuthenticatedUser, requireRole } from "@/app/utils/auth";
+import { requireRole } from "@/app/utils/auth";
 
 const SUPERADMIN_ROLE_ID = 1;
+const MAX_ROLE_NAME_LENGTH = 50;
+
+const jsonResponse = (payload, status = 200) =>
+  new Response(JSON.stringify(payload), { status });
+
+const normalizeRoleName = (value) => String(value || "").trim().replace(/\s+/g, " ");
+
+const validateRoleName = (value) => {
+  const roleName = normalizeRoleName(value);
+
+  if (!roleName) {
+    return { error: "Nama peran wajib diisi." };
+  }
+
+  if (roleName.length > MAX_ROLE_NAME_LENGTH) {
+    return { error: `Nama peran maksimal ${MAX_ROLE_NAME_LENGTH} karakter.` };
+  }
+
+  return { roleName };
+};
 
 // CREATE Role
 export async function POST(req) {
@@ -10,96 +30,69 @@ export async function POST(req) {
     if (response) return response;
 
     const body = await req.json();
-    const { roleName } = body;
+    const { roleName, error } = validateRoleName(body?.roleName);
 
-    // Validasi field wajib
-    if (!roleName) {
-      return new Response(
-        JSON.stringify({ success: false, message: "Semua field wajib diisi!" }),
-        { status: 400 }
-      );
+    if (error) {
+      return jsonResponse({ success: false, message: error }, 400);
     }
 
-    // Cek duplikasi username
-    const checkUser = await pool.query(
-      `SELECT 1 FROM roles WHERE role_name = $1`,
-      [roleName]
+    const duplicateRole = await pool.query(
+      `SELECT 1 FROM roles WHERE LOWER(TRIM(role_name)) = LOWER($1)`,
+      [roleName],
     );
-    if (checkUser.rows.length > 0) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          message: "Role sudah terdaftar!",
-        }),
-        { status: 400 }
+
+    if (duplicateRole.rows.length > 0) {
+      return jsonResponse(
+        { success: false, message: "Nama peran sudah terdaftar." },
+        409,
       );
     }
 
-    // Insert user
     const result = await pool.query(
       `INSERT INTO roles (role_name)
-       VALUES ($1) RETURNING *`,
-      [roleName]
+       VALUES ($1)
+       RETURNING id, role_name, updated_at, created_at`,
+      [roleName],
     );
 
-    return new Response(
-      JSON.stringify({
+    return jsonResponse(
+      {
         success: true,
-        message: "Berhasil menambah role baru",
+        message: "Peran berhasil ditambahkan.",
         data: result.rows[0],
-      }),
-      { status: 201 }
+      },
+      201,
     );
   } catch (err) {
-    // Error lain
-    console.error("Error POST /api/users:", err);
-    return new Response(
-      JSON.stringify({
-        success: false,
-        message: "Terjadi kesalahan pada server.",
-      }),
-      { status: 500 }
+    console.error("Error POST /api/roles:", err);
+    return jsonResponse(
+      { success: false, message: "Terjadi kesalahan pada server." },
+      500,
     );
   }
 }
 
-export async function GET(req) {
+export async function GET() {
   try {
-    const { response } = await requireAuthenticatedUser();
+    const { response } = await requireRole([SUPERADMIN_ROLE_ID]);
     if (response) return response;
 
-    // Ambil role dari query parameter
-    const { searchParams } = new URL(req.url);
-    const role_id = searchParams.get("role_id");
-    // console.log("role serverside GET", role_id);
-
     const result = await pool.query(
-      `SELECT * FROM roles order by created_at DESC`
+      `SELECT id, role_name, updated_at, created_at
+       FROM roles
+       ORDER BY created_at DESC`,
     );
 
-    // console.log("result", result);
-
-    const rows = result.rows.map((user) => ({
-      id: user.id,
-      role_name: user.role_name,
-      username: user.username,
-      updated_at: user.updated_at,
-      created_at: user.created_at,
-    }));
-
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: "Berhasil mengambil data role",
-        data: rows,
-      }),
-      { status: 200 }
-    );
+    return jsonResponse({
+      success: true,
+      message: "Berhasil mengambil data peran.",
+      data: result.rows,
+    });
   } catch (err) {
-    console.log("error", err);
-    return new Response(
-      JSON.stringify({ success: false, message: err.message }),
-      { status: 500 }
+    console.error("Error GET /api/roles:", err);
+    return jsonResponse(
+      { success: false, message: "Terjadi kesalahan pada server." },
+      500,
     );
   }
 }

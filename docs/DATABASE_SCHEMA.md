@@ -297,6 +297,8 @@ Stores room rental applications.
 | `current_step`                 | `INTEGER`       | `DEFAULT 1`                                           | Current approval step                   |
 | `current_payment_step`         | `INTEGER`       | `DEFAULT 1`                                           | Current payment/installment step        |
 | `is_fully_paid`                | `BOOLEAN`       | `DEFAULT FALSE`                                       | Fully paid status based on payments     |
+| `lease_duration_years`         | `INTEGER`       | `DEFAULT 1`                                           | rent duration for 1 year                |
+| `annual_room_rent`             | `NUMERIC(18,2)` | nullable                                              | total payment room for 1 year           |
 | `updated_at`                   | `TIMESTAMP`     | `DEFAULT CURRENT_TIMESTAMP`                           | Last update timestamp                   |
 | `created_at`                   | `TIMESTAMP`     | `DEFAULT CURRENT_TIMESTAMP`                           | Creation timestamp                      |
 

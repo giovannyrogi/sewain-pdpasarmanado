@@ -4,6 +4,20 @@ import {
   normalizeLeaseDurationYears,
 } from "./calculateRoomRent";
 
+/**
+ * Membaca nilai snapshot biaya dari database tanpa menganggap angka 0 sebagai
+ * data kosong. Perhitungan ulang hanya dipakai untuk data lama/API yang belum
+ * mengirim nilai, bukan untuk menutupi data database yang sudah valid.
+ */
+const readSnapshotNumber = (value, fallback = 0) => {
+  if (value === null || value === undefined || value === "") {
+    return fallback;
+  }
+
+  const numericValue = Number(value);
+  return Number.isFinite(numericValue) ? numericValue : fallback;
+};
+
 export const buildPaymentDetail = (data) => {
   if (!data) {
     return {
@@ -25,9 +39,9 @@ export const buildPaymentDetail = (data) => {
   // =========================
   //  BASE (AMBIL BACKEND)
   // =========================
-  const totalPayment = Number(data?.total_payment || 0);
-  const downPayment = Number(data?.down_payment || 0);
-  const remainingPayment = Number(data?.remaining_payment || 0);
+  const totalPayment = readSnapshotNumber(data?.total_payment);
+  const downPayment = readSnapshotNumber(data?.down_payment);
+  const remainingPayment = readSnapshotNumber(data?.remaining_payment);
   const leaseDurationYears = normalizeLeaseDurationYears(
     data?.lease_duration_years,
   );
@@ -35,16 +49,22 @@ export const buildPaymentDetail = (data) => {
   // =========================
   //  TOTAL SEWA
   // =========================
-  const annualRoomRent =
-    Number(data?.annual_room_rent || 0) || calculateAnnualRoomRent(data);
-  const totalSewaKontrakRuangan =
-    Number(data?.total_payment_room || 0) ||
-    calculateContractRoomRent(data, leaseDurationYears);
+  const annualRoomRent = readSnapshotNumber(
+    data?.annual_room_rent,
+    calculateAnnualRoomRent(data),
+  );
+  const totalSewaKontrakRuangan = readSnapshotNumber(
+    data?.total_payment_room,
+    calculateContractRoomRent(data, leaseDurationYears),
+  );
 
   // =========================
   //  PPN
   // =========================
-  const totalPPN = Number(data?.total_ppn || totalSewaKontrakRuangan * TAX);
+  const totalPPN = readSnapshotNumber(
+    data?.total_ppn,
+    totalSewaKontrakRuangan * TAX,
+  );
 
   // =========================
   //  DP BREAKDOWN

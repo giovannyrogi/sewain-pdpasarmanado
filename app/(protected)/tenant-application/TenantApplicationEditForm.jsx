@@ -267,6 +267,7 @@ const TenantApplicationEditForm = ({
               room_width: selectedData.room_width,
               room_area: selectedData.room_area,
               price_per_m2: selectedData.price_per_m2,
+              price_type: selectedData.price_type,
               floor_id: selectedData.floor_id,
               floor: selectedData.floor,
               base_price: selectedData.base_price,

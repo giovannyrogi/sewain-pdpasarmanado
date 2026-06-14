@@ -295,16 +295,20 @@ const Applications = () => {
   const handlePrintAction = useReactToPrint({
     contentRef: printRef,
     documentTitle: "Dokumen Sewa Ruangan",
-    onAfterPrint: () => setTimeout(() => setPrintData(null), 200),
+    onAfterPrint: () => setTimeout(() => setPrintData(null), 800),
   });
 
   // handlers print
   const handlePrintDoc = (record) => {
     setPrintData(record);
 
-    setTimeout(() => {
-      handlePrintAction();
-    }, 300);
+    // Tunggu React menyelesaikan render dokumen tersembunyi sebelum
+    // react-to-print menyalinnya ke iframe print, terutama saat development.
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        handlePrintAction();
+      }, 500);
+    });
   };
 
   const handleEdit = (record) => {
