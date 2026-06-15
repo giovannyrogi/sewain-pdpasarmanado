@@ -106,6 +106,7 @@ export function createPaymentColumns({
   onEdit,
   onDelete,
   onReject,
+  isMobile,
 }) {
   const paymentTypeMap = { cicilan: "Cicilan", lunas: "Lunas" };
   const statusFilters = [
@@ -264,7 +265,7 @@ export function createPaymentColumns({
       key: "action",
       align: "center",
       width: PAYMENT_ACTION_COLUMN_WIDTH,
-      fixed: "right",
+      fixed: isMobile ? false : "right",
       className: "payments-action-column",
       onHeaderCell: () => ({ className: "payments-action-column" }),
       onCell: () => ({ className: "payments-action-column" }),

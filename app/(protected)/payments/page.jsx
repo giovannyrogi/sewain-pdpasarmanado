@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Box, Button, Grid, Stack, useTheme } from "@mui/material";
+import { Box, Button, Grid, Stack, useMediaQuery, useTheme } from "@mui/material";
 import { Icon } from "@iconify/react";
 import axios from "axios";
 import { useReactToPrint } from "react-to-print";
@@ -33,6 +33,7 @@ import {
 } from "./paymentDetailMapper";
 
 const Payments = () => {
+  const isMobile = useMediaQuery("( max-width: 600px )");
   const proofPrintRef = useRef();
   const receiptPrintRef = useRef();
   const { user } = useUser();
@@ -498,6 +499,7 @@ const Payments = () => {
         data: dataPayments,
         user,
         theme,
+        isMobile,
         onDetail: handleDetail,
         onProgress: handleProgress,
         onPrintProof: handlePrintProof,
