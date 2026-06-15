@@ -40,10 +40,10 @@ export default function AppModal({
       onClose={onClose}
       sx={{
         display: "flex",
-        alignItems: { xs: "flex-start", sm: "center" },
+        alignItems: "center",
         justifyContent: "center",
         p: { xs: 1.25, sm: 2 },
-        py: { xs: 2, sm: 2 },
+        minHeight: "100dvh",
       }}
       slotProps={{
         backdrop: {

@@ -133,8 +133,8 @@ function DetailSection({ icon, title, description, children }) {
   const theme = useTheme();
 
   return (
-    <Box sx={{ mt: 2.25 }}>
-      <Stack direction="row" spacing={1.2} alignItems="center" sx={{ mb: 1 }}>
+    <Box sx={{ mt: { xs: 3, sm: 3.25 } }}>
+      <Stack direction="row" spacing={1.2} alignItems="center" sx={{ mb: 1.25 }}>
         <Box
           sx={{
             width: 30,
@@ -166,7 +166,7 @@ function DetailSection({ icon, title, description, children }) {
           )}
         </Box>
       </Stack>
-      <Divider sx={{ borderColor: alpha(theme.palette.primary.main, 0.62), mb: 1.4 }} />
+      <Divider sx={{ borderColor: alpha(theme.palette.primary.main, 0.62), mb: 1.75 }} />
       {children}
     </Box>
   );
@@ -240,6 +240,12 @@ export default function TenantLeaseDetailModal({
   const showApproveButton = canApprove && !isFinalStatus;
   const paymentHistory = paymentContext?.previous_payments || [];
   const paymentLabel = paymentContext?.payment_label || "Pembayaran";
+  const documentNumber = displayValue(selectedData?.document_number);
+  const contractNumber =
+    selectedData?.contract_number ||
+    selectedData?.contracts?.contract_number ||
+    selectedData?.latest_contract_number ||
+    "Belum dibuat";
 
   /**
    * Preview modal yang tersedia saat ini berbasis tag img. Untuk file bukti
@@ -291,7 +297,7 @@ export default function TenantLeaseDetailModal({
         width={980}
         contentSx={{ position: "relative" }}
       >
-        <Stack spacing={2.25}>
+        <Stack spacing={{ xs: 2.75, sm: 3 }}>
           <Box
             sx={{
               p: { xs: 1.5, sm: 2 },
@@ -402,6 +408,25 @@ export default function TenantLeaseDetailModal({
                     ? `${formatDate(selectedData.start_date)} s/d ${formatDate(selectedData.end_date)}`
                     : "Pendaftaran Baru"
                 }
+              />
+            </Grid>
+          </DetailSection>
+
+          <DetailSection
+            icon="solar:document-text-bold-duotone"
+            title="Informasi Dokumen & Kontrak"
+            description="Nomor administrasi permohonan dan buku kontrak yang terkait."
+          >
+            <Grid container spacing={1.25}>
+              <InfoTile
+                icon="solar:document-add-bold-duotone"
+                label="Nomor Dokumen Permohonan"
+                value={documentNumber}
+              />
+              <InfoTile
+                icon="solar:document-bold-duotone"
+                label="Nomor Kontrak / Buku Kontrak"
+                value={contractNumber}
               />
             </Grid>
           </DetailSection>

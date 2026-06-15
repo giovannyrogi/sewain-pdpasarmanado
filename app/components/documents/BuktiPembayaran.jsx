@@ -3,11 +3,6 @@ import {
   Box,
   Typography,
   Divider,
-  Table,
-  TableHead,
-  TableBody,
-  TableRow,
-  TableCell,
   Grid,
 } from "@mui/material";
 import moment from "moment";
@@ -15,284 +10,71 @@ import React, { forwardRef } from "react";
 import formatRupiah from "../formatrupiah/page";
 import Image from "next/image";
 import { getUploadApiUrl } from "@/app/utils/uploadPath";
+import { buildPaymentDetail } from "@/app/utils/buildPaymentDetail";
+
+const readNumber = (value, fallback = 0) => {
+  if (value === null || value === undefined || value === "") return fallback;
+  const numberValue = Number(value);
+  return Number.isFinite(numberValue) ? numberValue : fallback;
+};
+
+const formatDecimal = (value) => {
+  const numberValue = Number(value);
+  if (!Number.isFinite(numberValue)) return "-";
+
+  return new Intl.NumberFormat("id-ID", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  }).format(numberValue);
+};
+
+// Format ukuran ruangan disamakan dengan dokumen permohonan sewa:
+// panjang x lebar dan luas memakai simbol m².
+const formatRoomSize = (room = {}) => {
+  const length = formatDecimal(room?.room_length);
+  const width = formatDecimal(room?.room_width);
+  const area = formatDecimal(room?.room_area);
+  const dimension =
+    length !== "-" && width !== "-" ? `${length}m x ${width}m` : "-";
+
+  return area !== "-" ? `${dimension} (${area} m²)` : dimension;
+};
+
+// Previous payment dan payment saat ini dinormalisasi agar tabel cicilan selalu
+// membaca snapshot aktual dari tabel payments, bukan menghitung ulang dari rumus lama.
+const buildProofPaymentRows = (payments = {}) => {
+  const currentPayment = {
+    payment_number: payments?.payment_number,
+    payment_date: payments?.payment_date,
+    contract_amount: payments?.contract_amount,
+    ppn_amount: payments?.ppn_amount,
+    amount: payments?.payment_amount,
+    remaining_balance: payments?.remaining_balance,
+  };
+
+  return [...(payments?.previous_payments || []), currentPayment].filter(
+    (payment) => payment?.payment_number,
+  );
+};
 
 const BuktiPembayaran = forwardRef(({ data }, ref) => {
   if (!data) return null;
+  const tenantApplication = data?.tenant_application || {};
+  const room = data?.room || {};
+  const paymentDetail = buildPaymentDetail({ ...tenantApplication, ...room });
   const ktpImageUrl = getUploadApiUrl(data?.tenant_application?.ktp_file_path);
 
-  const handleCalculateTotal = () => {
-    // console.log("data", data);
-
-    // Konversi nilai ke number
-    const paymentAmount = Number(data?.payments?.payment_amount || 0);
-    const roomPrice = Number(data?.room?.price_per_m2 || 0);
-    const roomArea = Number(data?.room?.room_area || 0);
-
-    const downPayment = Number(data?.tenant_application?.down_payment || 0);
-    const iuranJasaAdministrasi = Number(
-      data?.tenant_application?.admin_fee || 0
-    );
-
-    // hitung nilai kontrak dan PPN dari DP
-    const nilaiKontrakDP = downPayment / 1.11;
-    const PPNDownPayment = nilaiKontrakDP * 0.11;
-
-    const totalSewaKontrakRuangan = roomPrice * roomArea;
-
-    const totalPPNSewaKontrakRuangan = totalSewaKontrakRuangan * 0.11;
-    const grandTotal =
-      totalSewaKontrakRuangan +
-      totalPPNSewaKontrakRuangan +
-      iuranJasaAdministrasi;
-
-    const nilaiKontrak = Number(data?.payments?.contract_amount || 0);
-
-    const totalPPN = Number(data?.payments?.ppn_amount || 0);
-
-    // Previous Payment DP
-    let previousAmountDP = 0;
-    let previousContractAmountDP = 0;
-    let previousPPNDP = 0;
-    let previousProofFilePathDP = "";
-    let previousPaymentDateDP = "";
-    let previousPaymentNumberDP = 0;
-    let previousRemainingBalanceDP = 0;
-
-    // Previous Payment 1
-    let previousAmount1 = 0;
-    let previousContractAmount1 = 0;
-    let previousPPN1 = 0;
-    let previousProofFilePath1 = "";
-    let previousPaymentDate1 = "";
-    let previousPaymentNumber1 = 0;
-    let previousRemainingBalance1 = 0;
-
-    // Previous Payment 2
-    let previousAmount2 = 0;
-    let previousContractAmount2 = 0;
-    let previousPPN2 = 0;
-    let previousProofFilePath2 = "";
-    let previousPaymentDate2 = "";
-    let previousPaymentNumber2 = 0;
-    let previousRemainingBalance2 = 0;
-
-    // Previous Payment 3
-    let previousAmount3 = 0;
-    let previousContractAmount3 = 0;
-    let previousPPN3 = 0;
-    let previousProofFilePath3 = "";
-    let previousPaymentDate3 = "";
-    let previousPaymentNumber3 = 0;
-    let previousRemainingBalance3 = 0;
-
-    if (data?.payments?.previous_payments?.length > 0) {
-      previousAmountDP = Number(
-        data?.payments?.previous_payments[0]?.amount || 0
-      );
-      previousContractAmountDP = Number(
-        data?.payments?.previous_payments[0]?.contract_amount || 0
-      );
-      previousPPNDP = Number(
-        data?.payments?.previous_payments[0]?.ppn_amount || 0
-      );
-      previousProofFilePathDP =
-        data?.payments?.previous_payments[0]?.proof_file_path;
-      previousPaymentDateDP =
-        data?.payments?.previous_payments[0]?.payment_date;
-      previousPaymentNumberDP =
-        data?.payments?.previous_payments[0]?.payment_number;
-      previousRemainingBalanceDP = Number(
-        data?.payments?.previous_payments[0]?.remaining_balance || 0
-      );
-
-      previousAmount1 = Number(
-        data?.payments?.previous_payments[1]?.amount || 0
-      );
-      previousContractAmount1 = Number(
-        data?.payments?.previous_payments[1]?.contract_amount || 0
-      );
-      previousPPN1 = Number(
-        data?.payments?.previous_payments[1]?.ppn_amount || 0
-      );
-      previousProofFilePath1 =
-        data?.payments?.previous_payments[1]?.proof_file_path;
-      previousPaymentDate1 = data?.payments?.previous_payments[1]?.payment_date;
-      previousPaymentNumber1 =
-        data?.payments?.previous_payments[1]?.payment_number;
-      previousRemainingBalance1 = Number(
-        data?.payments?.previous_payments[1]?.remaining_balance || 0
-      );
-
-      previousAmount2 = Number(
-        data?.payments?.previous_payments[2]?.amount || 0
-      );
-      previousContractAmount2 = Number(
-        data?.payments?.previous_payments[2]?.contract_amount || 0
-      );
-      previousPPN2 = Number(
-        data?.payments?.previous_payments[2]?.ppn_amount || 0
-      );
-      previousProofFilePath2 =
-        data?.payments?.previous_payments[2]?.proof_file_path;
-      previousPaymentDate2 = data?.payments?.previous_payments[2]?.payment_date;
-      previousPaymentNumber2 =
-        data?.payments?.previous_payments[2]?.payment_number;
-      previousRemainingBalance2 = Number(
-        data?.payments?.previous_payments[2]?.remaining_balance || 0
-      );
-
-      previousAmount3 = Number(
-        data?.payments?.previous_payments[3]?.amount || 0
-      );
-      previousContractAmount3 = Number(
-        data?.payments?.previous_payments[3]?.contract_amount || 0
-      );
-      previousPPN3 = Number(
-        data?.payments?.previous_payments[3]?.ppn_amount || 0
-      );
-      previousProofFilePath3 =
-        data?.payments?.previous_payments[3]?.proof_file_path;
-      previousPaymentDate3 = data?.payments?.previous_payments[3]?.payment_date;
-      previousPaymentNumber3 =
-        data?.payments?.previous_payments[3]?.payment_number;
-      previousRemainingBalance3 = Number(
-        data?.payments?.previous_payments[3]?.remaining_balance || 0
-      );
-    }
-
-    return {
-      totalSewaKontrakRuangan,
-      totalPPNSewaKontrakRuangan,
-      paymentAmount,
-      nilaiKontrak,
-      totalPPN,
-      grandTotal,
-      iuranJasaAdministrasi,
-      PPNDownPayment,
-      nilaiKontrakDP,
-      downPayment,
-
-      previousAmountDP,
-      previousContractAmountDP,
-      previousPPNDP,
-      previousProofFilePathDP,
-      previousPaymentDateDP,
-      previousPaymentNumberDP,
-      previousRemainingBalanceDP,
-
-      previousAmount1,
-      previousContractAmount1,
-      previousPPN1,
-      previousProofFilePath1,
-      previousPaymentDate1,
-      previousPaymentNumber1,
-      previousRemainingBalance1,
-
-      previousAmount2,
-      previousContractAmount2,
-      previousPPN2,
-      previousProofFilePath2,
-      previousPaymentDate2,
-      previousPaymentNumber2,
-      previousRemainingBalance2,
-
-      previousAmount3,
-      previousContractAmount3,
-      previousPPN3,
-      previousProofFilePath3,
-      previousPaymentDate3,
-      previousPaymentNumber3,
-      previousRemainingBalance3,
-    };
-  };
-
-  const {
-    paymentAmount,
-    nilaiKontrak,
-    totalPPN,
-    totalSewaKontrakRuangan,
-    totalPPNSewaKontrakRuangan,
-    grandTotal,
-    iuranJasaAdministrasi,
-    PPNDownPayment,
-    nilaiKontrakDP,
-    downPayment,
-
-    previousAmountDP,
-    previousContractAmountDP,
-    previousPPNDP,
-    previousProofFilePathDP,
-    previousPaymentDateDP,
-    previousPaymentNumberDP,
-    previousRemainingBalanceDP,
-
-    previousAmount1,
-    previousContractAmount1,
-    previousPPN1,
-    previousProofFilePath1,
-    previousPaymentDate1,
-    previousPaymentNumber1,
-    previousRemainingBalance1,
-
-    previousAmount2,
-    previousContractAmount2,
-    previousPPN2,
-    previousProofFilePath2,
-    previousPaymentDate2,
-    previousPaymentNumber2,
-    previousRemainingBalance2,
-
-    previousAmount3,
-    previousContractAmount3,
-    previousPPN3,
-    previousProofFilePath3,
-    previousPaymentDate3,
-    previousPaymentNumber3,
-    previousRemainingBalance3,
-  } = handleCalculateTotal() || {
-    totalSewaKontrakRuangan: 0,
-    paymentAmount: 0,
-    nilaiKontrak: 0,
-    totalPPN: 0,
-    totalPPNSewaKontrakRuangan: 0,
-    grandTotal: 0,
-    iuranJasaAdministrasi: 0,
-    PPNDownPayment: 0,
-    nilaiKontrakDP: 0,
-    downPayment: 0,
-
-    previousAmountDP: 0,
-    previousContractAmountDP: 0,
-    previousPPNDP: 0,
-    previousProofFilePathDP: "",
-    previousPaymentDateDP: "",
-    previousPaymentNumberDP: "",
-    previousRemainingBalanceDP: 0,
-
-    previousAmount1: 0,
-    previousContractAmount1: 0,
-    previousPPN1: 0,
-    previousProofFilePath1: "",
-    previousPaymentDate1: "",
-    previousPaymentNumber1: "",
-    previousRemainingBalance1: 0,
-
-    previousAmount2: 0,
-    previousContractAmount2: 0,
-    previousPPN2: 0,
-    previousProofFilePath2: "",
-    previousPaymentDate2: "",
-    previousPaymentNumber2: "",
-    previousRemainingBalance2: 0,
-
-    previousAmount3: 0,
-    previousContractAmount3: 0,
-    previousPPN3: 0,
-    previousProofFilePath3: "",
-    previousPaymentDate3: "",
-    previousPaymentNumber3: "",
-    previousRemainingBalance3: 0,
-  };
+  const annualRoomRent = readNumber(paymentDetail?.annualRoomRent);
+  const leaseDurationYears = readNumber(paymentDetail?.leaseDurationYears, 1);
+  const totalSewaKontrakRuangan = readNumber(
+    paymentDetail?.totalSewaKontrakRuangan,
+  );
+  const totalPPNSewaKontrakRuangan = readNumber(paymentDetail?.totalPPN);
+  const iuranJasaAdministrasi = readNumber(tenantApplication?.admin_fee);
+  const grandTotal = readNumber(paymentDetail?.totalPayment);
+  const paymentAmount = readNumber(data?.payments?.payment_amount, grandTotal);
+  const paymentRows = buildProofPaymentRows(data?.payments);
+  const roomSize = formatRoomSize(room);
 
   return (
     <Box ref={ref} sx={{ padding: "10px 30px 0px 30px" }}>
@@ -448,7 +230,7 @@ const BuktiPembayaran = forwardRef(({ data }, ref) => {
                 fontSize: "13px",
               }}
             >
-              Harga Ruangan
+              Harga Ruangan / Tahun
             </th>
             <th
               style={{
@@ -516,8 +298,7 @@ const BuktiPembayaran = forwardRef(({ data }, ref) => {
                 textAlign: "center",
               }}
             >
-              {data?.room?.room_width ? data?.room?.room_width + "M" : "-"} X{" "}
-              {data?.room?.room_length ? data?.room?.room_length + "M" : "-"}
+              {roomSize}
             </td>
             <td
               style={{
@@ -530,9 +311,7 @@ const BuktiPembayaran = forwardRef(({ data }, ref) => {
                 textAlign: "right",
               }}
             >
-              {data?.room?.price_per_m2
-                ? formatRupiah(data?.room?.price_per_m2) + "/M2"
-                : "-"}
+              {annualRoomRent ? formatRupiah(annualRoomRent) : "-"}
             </td>
             <td
               style={{
@@ -548,6 +327,33 @@ const BuktiPembayaran = forwardRef(({ data }, ref) => {
               }}
             >
               {formatRupiah(totalSewaKontrakRuangan)},-
+            </td>
+          </tr>
+
+          <tr>
+            <td
+              colSpan={5}
+              style={{
+                border: "1px solid black",
+                fontFamily: "calibri",
+                padding: "5px",
+                fontSize: "13px",
+                fontWeight: "bold",
+              }}
+            >
+              Durasi Sewa
+            </td>
+            <td
+              style={{
+                border: "1px solid black",
+                fontFamily: "calibri",
+                padding: "5px",
+                fontSize: "13px",
+                textAlign: "right",
+                fontWeight: "bold",
+              }}
+            >
+              {leaseDurationYears} Tahun
             </td>
           </tr>
 
@@ -685,18 +491,7 @@ const BuktiPembayaran = forwardRef(({ data }, ref) => {
             </tr>
           </thead>
           <tbody>
-            {/* Gabungkan previous_payments + current payment */}
-            {[
-              ...(data?.payments?.previous_payments || []),
-              {
-                payment_number: data?.payments?.payment_number,
-                payment_date: data?.payments?.payment_date,
-                contract_amount: data?.payments?.contract_amount,
-                ppn_amount: data?.payments?.ppn_amount,
-                amount: data?.payments?.payment_amount,
-                remaining_balance: data?.payments?.remaining_balance,
-              },
-            ].map((payment, idx) => (
+            {paymentRows.map((payment, idx) => (
               <tr key={idx}>
                 <td
                   style={{
@@ -837,7 +632,7 @@ const BuktiPembayaran = forwardRef(({ data }, ref) => {
                   textAlign: "center",
                 }}
               >
-                {moment(data.payments?.payment_date).format("Do MMMM YYYY") ||
+                {moment(data.payments?.payment_date).format("D MMMM YYYY") ||
                   "-"}
               </td>
               <td
@@ -850,7 +645,7 @@ const BuktiPembayaran = forwardRef(({ data }, ref) => {
                   fontWeight: "bold",
                 }}
               >
-                {formatRupiah(grandTotal)},-
+                {formatRupiah(paymentAmount)},-
               </td>
             </tr>
           </tbody>
@@ -915,7 +710,7 @@ const BuktiPembayaran = forwardRef(({ data }, ref) => {
               </Typography>
             </Grid>
 
-            {/* Mapping semua bukti bayar dari previous_payments  current payment */}
+            {/* Mapping semua bukti bayar dari previous_payments dan current payment */}
             {[...(data?.payments?.previous_payments || []), data?.payments]
               .filter((p) => p && p.proof_file_path) // hanya tampil jika ada file
               .map((payment, index) => (
@@ -945,7 +740,7 @@ const BuktiPembayaran = forwardRef(({ data }, ref) => {
                     {payment.payment_number === 1
                       ? "Uang Muka (DP)"
                       : `Cicilan ${payment.payment_number - 1}`}{" "}
-                    — Tanggal:{" "}
+                    - Tanggal:{" "}
                     {moment(payment.payment_date).format("D MMMM YYYY")}
                   </Typography>
                   <Box
