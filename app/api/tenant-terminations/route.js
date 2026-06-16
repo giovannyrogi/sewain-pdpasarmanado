@@ -263,6 +263,9 @@ export async function GET(req) {
         ta.created_at,
         ta.user_id,
         ta.tenant_identity_id,
+        ta.document_number,
+        latest_contract.contract_number,
+        latest_contract.contract_date,
 
         -- lokasi & ruangan
         l.id AS location_id,
@@ -273,10 +276,18 @@ export async function GET(req) {
         r.room_length,
         r.room_width,
         r.price_per_m2,
+        r.price_type,
         r.room_area,
         f.floor
       FROM tenant_early_terminations tet
       JOIN tenant_application ta ON tet.tenant_application_id = ta.id
+      LEFT JOIN LATERAL (
+        SELECT c.contract_number, c.contract_date
+        FROM contracts c
+        WHERE c.tenant_application_id = ta.id
+        ORDER BY c.created_at DESC
+        LIMIT 1
+      ) latest_contract ON TRUE
       JOIN tenant_identities ti ON ta.tenant_identity_id = ti.id
       JOIN rooms r ON ta.room_id = r.id
       JOIN locations l ON ta.location_id = l.id
@@ -347,6 +358,11 @@ export async function GET(req) {
       tenant_current_step: row.tenant_current_step,
       created_at: row.created_at,
       user_id: row.user_id,
+      document_number: row.document_number,
+      contract_number: row.contract_number,
+      contract_date: row.contract_date
+        ? moment(row.contract_date).format("YYYY-MM-DD")
+        : null,
 
       // lokasi & ruangan
       location_id: row.location_id,
@@ -358,6 +374,7 @@ export async function GET(req) {
       room_width: row.room_width,
       room_area: row.room_area,
       price_per_m2: row.price_per_m2,
+      price_type: row.price_type,
       floor: row.floor,
     }));
 

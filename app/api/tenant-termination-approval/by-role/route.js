@@ -105,6 +105,9 @@ export async function GET(req) {
       tapp.approval_status AS tenant_approval_status,
       tapp.current_step AS tenant_current_step,
       tapp.tenant_identity_id,
+      tapp.document_number,
+      latest_contract.contract_number,
+      latest_contract.contract_date,
 
       -- Data lokasi & ruangan
       l.id AS location_id,
@@ -116,6 +119,7 @@ export async function GET(req) {
       rm.room_width,
       rm.room_area,
       rm.price_per_m2,
+      rm.price_type,
       lfp.floor
     FROM tenant_termination_approval tta
     JOIN roles r ON tta.role_id = r.id
@@ -124,6 +128,13 @@ export async function GET(req) {
       ON tta.tenant_early_termination_id = tet.id
     LEFT JOIN users u2 ON tet.processed_by = u2.id
     JOIN tenant_application tapp ON tet.tenant_application_id = tapp.id
+    LEFT JOIN LATERAL (
+      SELECT c.contract_number, c.contract_date
+      FROM contracts c
+      WHERE c.tenant_application_id = tapp.id
+      ORDER BY c.created_at DESC
+      LIMIT 1
+    ) latest_contract ON TRUE
     JOIN tenant_identities ti ON tapp.tenant_identity_id = ti.id
     JOIN rooms rm ON tapp.room_id = rm.id
     JOIN locations l ON tapp.location_id = l.id

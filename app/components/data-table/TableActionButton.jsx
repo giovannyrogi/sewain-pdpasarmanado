@@ -1,75 +1,124 @@
 "use client";
 
-import React from "react";
-import { IconButton, Tooltip } from "@mui/material";
-import { alpha } from "@mui/material/styles";
+import React, { useState } from "react";
+import {
+  Button,
+  Menu,
+  MenuItem,
+  Typography,
+  useMediaQuery,
+  useTheme,
+} from "@mui/material";
 import { Icon } from "@iconify/react";
 
 /**
- * Tombol aksi standar untuk kolom "Aksi" pada table.
- *
- * Light mode dibuat seperti contained button agar kontras dan mudah dikenali,
- * sementara dark mode memakai surface transparan dengan border tipis agar tetap
- * menyatu dengan theme gelap aplikasi.
+ * Tombol aksi standar untuk header DataTableShell.
+ * Komponen ini dipakai untuk aksi tabel yang butuh perilaku responsif sama:
+ * label tampil di layar lebar, lalu disembunyikan di mobile agar toolbar rapi.
  */
 export default function TableActionButton({
+  disabled,
+  ariaLabel = "Aksi tabel",
+  label,
   title,
   color = "primary",
-  icon,
+  icon = "solar:menu-dots-bold-duotone",
+  items = [],
   onClick,
-  disabled = false,
-  sx,
 }) {
-  return (
-    <Tooltip title={title}>
-      <span>
-        <IconButton
-          size="small"
-          color={color}
-          onClick={onClick}
-          disabled={disabled}
-          sx={(theme) => {
-            const paletteColor =
-              theme.palette[color]?.main || theme.palette.primary.main;
-            const isDark = theme.palette.mode === "dark";
+  const theme = useTheme();
+  const compact = useMediaQuery(theme.breakpoints.down("sm"));
+  const [anchorEl, setAnchorEl] = useState(null);
+  const openMenu = Boolean(anchorEl);
+  const hasMenu = items.length > 0;
+  const iconOnly = !label;
 
-            return {
-              flex: "0 0 auto",
-              width: 34,
-              height: 34,
-              borderRadius: 1.5,
-              color: isDark ? paletteColor : theme.palette.getContrastText(paletteColor),
-              border: isDark ? `1px solid ${alpha(paletteColor, 0.46)}` : "none",
-              bgcolor: isDark ? alpha(paletteColor, 0.13) : paletteColor,
-              boxShadow: isDark
-                ? `0 8px 18px ${alpha(paletteColor, 0.12)}`
-                : `0 8px 16px ${alpha(paletteColor, 0.2)}`,
-              transition:
-                "transform 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease, border-color 0.18s ease",
-              "&:hover": {
-                bgcolor: isDark ? alpha(paletteColor, 0.22) : paletteColor,
-                borderColor: isDark ? alpha(paletteColor, 0.66) : "transparent",
-                transform: "translateY(-1px)",
-                boxShadow: isDark
-                  ? `0 10px 22px ${alpha(paletteColor, 0.18)}`
-                  : `0 10px 22px ${alpha(paletteColor, 0.28)}`,
-              },
-              "&:active": {
-                transform: "translateY(0)",
-              },
-              "&.Mui-disabled": {
-                color: alpha(theme.palette.text.primary, 0.28),
-                bgcolor: alpha(theme.palette.text.primary, 0.08),
-                borderColor: alpha(theme.palette.text.primary, 0.12),
-                boxShadow: "none",
-              },
-              ...sx,
-            };
+  const closeMenu = () => setAnchorEl(null);
+
+  const handleSelect = (item) => {
+    closeMenu();
+    item?.onClick?.();
+  };
+
+  const handleClick = (event) => {
+    if (hasMenu) {
+      setAnchorEl(event.currentTarget);
+      return;
+    }
+
+    onClick?.();
+  };
+
+  return (
+    <>
+      <Button
+        variant={theme.palette.mode === "dark" ? "outlined" : "contained"}
+        color={color}
+        disabled={disabled}
+        onClick={handleClick}
+        startIcon={<Icon icon={icon} />}
+        title={title}
+        aria-label={title || ariaLabel}
+        sx={{
+          minHeight: iconOnly ? 34 : 40,
+          minWidth: iconOnly ? 34 : { xs: compact ? 44 : 128, sm: 128 },
+          width: iconOnly ? 34 : { xs: compact ? 44 : "auto", sm: "auto" },
+          borderRadius: 2,
+          px: iconOnly ? 0 : { xs: compact ? 1.25 : 2, sm: 2 },
+          fontFamily: "Poppins",
+          fontWeight: 700,
+          textTransform: "none",
+          flex: "0 0 auto",
+          "& .MuiButton-startIcon": {
+            m: iconOnly ? 0 : undefined,
+            mr: iconOnly ? 0 : { xs: compact ? 0 : 1, sm: 1 },
+          },
+        }}
+      >
+        {label ? (
+          <Typography
+            component="span"
+            sx={{
+              display: { xs: compact ? "none" : "inline", sm: "inline" },
+              fontSize: 13,
+              fontWeight: 700,
+            }}
+          >
+            {label}
+          </Typography>
+        ) : null}
+      </Button>
+
+      {hasMenu && (
+        <Menu
+          anchorEl={anchorEl}
+          open={openMenu}
+          onClose={closeMenu}
+          PaperProps={{
+            sx: {
+              mt: 1,
+              minWidth: 190,
+              borderRadius: 2,
+              bgcolor: theme.ui.menuPaperBg,
+              border: `1px solid ${theme.ui.dashboardCardBorder}`,
+              boxShadow: 6,
+            },
           }}
         >
-          <Icon icon={icon} fontSize={18} />
-        </IconButton>
-      </span>
-    </Tooltip>
+          {items.map((item) => (
+            <MenuItem
+              key={item.label}
+              disabled={item.disabled}
+              onClick={() => handleSelect(item)}
+            >
+              <Icon icon={item.icon} fontSize={20} />
+              <Typography sx={{ ml: 1, fontWeight: 700 }}>
+                {item.label}
+              </Typography>
+            </MenuItem>
+          ))}
+        </Menu>
+      )}
+    </>
   );
 }

@@ -15,6 +15,7 @@ import axios from "axios";
 import PageHeader from "@/app/components/page-header/PageHeader";
 import DataTableShell from "@/app/components/data-table/DataTableShell";
 import ReusableAntTable from "@/app/components/data-table/ReusableAntTable";
+import TableActionButton from "@/app/components/data-table/TableActionButton";
 import SummaryStatCard from "@/app/components/stats/SummaryStatCard";
 import AppModal from "@/app/components/modals/AppModal";
 import CrudConfirmModal from "@/app/components/crud/CrudConfirmModal";
@@ -55,6 +56,19 @@ const getLatestRunText = (rows) => {
     ? moment(rows[0].started_at).format("DD MMM, HH:mm")
     : "-";
 };
+
+/**
+ * Log kosong adalah hasil sync yang tidak mengecek/memperbarui/melewati room,
+ * tidak memiliki error, dan tidak punya item audit. Hanya log seperti ini yang
+ * boleh dihapus massal agar audit sync yang punya informasi tetap tersimpan.
+ */
+const isEmptySyncRun = (row) =>
+  row?.status !== "running" &&
+  getRunNumber(row?.total_checked) === 0 &&
+  getRunNumber(row?.total_released) === 0 &&
+  getRunNumber(row?.total_skipped) === 0 &&
+  getRunNumber(row?.item_count) === 0 &&
+  !String(row?.error_message || "").trim();
 
 function RunDetailModal({ open, run, items, loading, onClose }) {
   const theme = useTheme();
@@ -179,8 +193,10 @@ export default function RoomSyncLogsPage() {
   const [selectedRun, setSelectedRun] = useState(null);
   const [selectedItems, setSelectedItems] = useState([]);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleteEmptyOpen, setDeleteEmptyOpen] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteEmptyLoading, setDeleteEmptyLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState(DEFAULT_LOADING_MESSAGE);
   const [snackbar, setSnackbar] = useState({
@@ -296,6 +312,34 @@ export default function RoomSyncLogsPage() {
     }
   };
 
+  const deleteEmptyLogs = async () => {
+    setDeleteEmptyLoading(true);
+
+    try {
+      const response = await axios.delete("/api/room-sync-logs", {
+        params: { scope: "empty" },
+      });
+      const deletedCount = Number(response.data?.deletedCount || 0);
+
+      showSnackbar(
+        response.data?.message ||
+          `${deletedCount} log kosong berhasil dihapus.`,
+        deletedCount > 0 ? "success" : "warning",
+      );
+      setDeleteEmptyOpen(false);
+      await fetchLogs({ showLoading: false });
+    } catch (error) {
+      console.error("Gagal menghapus log sinkronisasi kosong:", error);
+      showSnackbar(
+        error?.response?.data?.message ||
+          "Gagal menghapus log sinkronisasi kosong.",
+        "error",
+      );
+    } finally {
+      setDeleteEmptyLoading(false);
+    }
+  };
+
   const filteredRows = useMemo(() => {
     const keyword = searchText.trim().toLowerCase();
     if (!keyword) return rows;
@@ -325,6 +369,11 @@ export default function RoomSyncLogsPage() {
       failedRuns: rows.filter((row) => row.status === "failed").length,
       latestRun: getLatestRunText(rows),
     }),
+    [rows],
+  );
+
+  const emptyLogCount = useMemo(
+    () => rows.filter((row) => isEmptySyncRun(row)).length,
     [rows],
   );
 
@@ -453,6 +502,15 @@ export default function RoomSyncLogsPage() {
         searchValue={searchText}
         searchPlaceholder="Cari status, sumber, atau eksekutor"
         onSearchChange={setSearchText}
+        headerAction={
+          <TableActionButton
+            ariaLabel="Hapus log kosong"
+            label="Hapus Log Kosong"
+            icon="solar:trash-bin-trash-bold-duotone"
+            disabled={emptyLogCount === 0 || loading || deleteEmptyLoading}
+            onClick={() => setDeleteEmptyOpen(true)}
+          />
+        }
       >
         <ReusableAntTable
           rowKey="id"
@@ -494,6 +552,21 @@ export default function RoomSyncLogsPage() {
           if (!deleteLoading) setDeleteTarget(null);
         }}
         onConfirm={deleteLog}
+      />
+
+      <CrudConfirmModal
+        open={deleteEmptyOpen}
+        title="Hapus Log Kosong"
+        description="Hanya log sinkronisasi yang tidak memiliki data dicek, tersedia kembali, dilewati, error, atau detail item yang akan dihapus."
+        confirmDescription="Anda yakin ingin menghapus seluruh log kosong?"
+        highlight={`${emptyLogCount} log kosong`}
+        confirmLabel="Hapus Log Kosong"
+        loadingLabel="Menghapus log kosong..."
+        loading={deleteEmptyLoading}
+        onClose={() => {
+          if (!deleteEmptyLoading) setDeleteEmptyOpen(false);
+        }}
+        onConfirm={deleteEmptyLogs}
       />
 
       <LoadingBackdrop open={loading} message={loadingMessage} />

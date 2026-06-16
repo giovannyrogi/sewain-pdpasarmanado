@@ -102,3 +102,57 @@ export async function GET(request) {
     );
   }
 }
+
+/**
+ * Cleanup kolektif untuk log sinkronisasi yang benar-benar kosong.
+ * Endpoint ini sengaja mewajibkan scope=empty agar DELETE collection tidak
+ * pernah berarti "hapus semua log" secara tidak sengaja.
+ */
+export async function DELETE(request) {
+  const { response } = await requireRole([SUPERADMIN_ROLE_ID]);
+  if (response) return response;
+
+  const { searchParams } = new URL(request.url);
+  const scope = String(searchParams.get("scope") || "").trim();
+
+  if (scope !== "empty") {
+    return NextResponse.json(
+      { success: false, message: "Scope hapus log tidak valid." },
+      { status: 400 },
+    );
+  }
+
+  try {
+    const result = await pool.query(`
+      DELETE FROM room_status_sync_runs r
+      WHERE r.status <> 'running'
+        AND COALESCE(r.total_checked, 0) = 0
+        AND COALESCE(r.total_released, 0) = 0
+        AND COALESCE(r.total_skipped, 0) = 0
+        AND NULLIF(TRIM(COALESCE(r.error_message, '')), '') IS NULL
+        AND NOT EXISTS (
+          SELECT 1
+          FROM room_status_sync_items i
+          WHERE i.run_id = r.id
+        )
+      RETURNING r.id
+    `);
+
+    const deletedCount = result.rowCount || 0;
+
+    return NextResponse.json({
+      success: true,
+      deletedCount,
+      message:
+        deletedCount > 0
+          ? `${deletedCount} log kosong berhasil dihapus.`
+          : "Tidak ada log kosong yang perlu dihapus.",
+    });
+  } catch (error) {
+    console.error("Gagal menghapus log sinkronisasi kosong:", error);
+    return NextResponse.json(
+      { success: false, message: "Gagal menghapus log sinkronisasi kosong." },
+      { status: 500 },
+    );
+  }
+}

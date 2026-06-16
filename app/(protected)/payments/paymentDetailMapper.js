@@ -21,6 +21,26 @@ export const normalizePaymentForLeaseDetail = (selectedData) => {
   const room = selectedData.room || {};
   const location = selectedData.location || {};
   const payment = selectedData.payments || {};
+  const contracts = selectedData.contracts || {};
+
+  // Detail lease dipakai lintas menu, jadi field dokumen/kontrak dibuat
+  // eksplisit agar modal tidak bergantung pada bentuk response tertentu.
+  const documentNumber =
+    tenant.document_number ||
+    selectedData.document_number ||
+    payment.document_number ||
+    contracts.document_number;
+  const contractNumber =
+    tenant.contract_number ||
+    selectedData.contract_number ||
+    contracts.contract_number ||
+    payment.contract_number ||
+    selectedData.latest_contract_number;
+  const contractDate =
+    tenant.contract_date ||
+    selectedData.contract_date ||
+    contracts.contract_date ||
+    payment.contract_date;
 
   return {
     ...tenant,
@@ -28,6 +48,9 @@ export const normalizePaymentForLeaseDetail = (selectedData) => {
     ...location,
     status: payment.approval_status,
     approval_status: payment.approval_status,
+    document_number: documentNumber,
+    contract_number: contractNumber,
+    contract_date: contractDate,
     tenant_name: tenant.tenant_name,
     tenant_nik: tenant.tenant_nik,
     tenant_phone: tenant.tenant_phone,
@@ -39,6 +62,7 @@ export const normalizePaymentForLeaseDetail = (selectedData) => {
     room_width: room.room_width,
     room_area: room.room_area,
     price_per_m2: room.price_per_m2,
+    price_type: room.price_type || tenant.price_type || selectedData.price_type,
     created_at: tenant.created_at,
   };
 };

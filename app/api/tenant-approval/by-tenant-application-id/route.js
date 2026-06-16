@@ -78,6 +78,8 @@ export async function GET(req) {
         tapp.estimated_installment_3_date,
         tapp.document_number,
         tapp.current_tenor,
+        latest_contract.contract_number,
+        latest_contract.contract_date,
         l.location_name,
         rm.room_number,
         rm.floor_id,
@@ -85,11 +87,19 @@ export async function GET(req) {
         rm.room_width,
         rm.room_area,
         rm.price_per_m2,
+        rm.price_type,
         lfp.floor
       FROM tenant_approval ta
       JOIN roles r ON ta.role_id = r.id
       LEFT JOIN users u ON ta.approver_id = u.id
       JOIN tenant_application tapp ON ta.tenant_application_id = tapp.id
+      LEFT JOIN LATERAL (
+        SELECT c.contract_number, c.contract_date
+        FROM contracts c
+        WHERE c.tenant_application_id = tapp.id
+        ORDER BY c.created_at DESC
+        LIMIT 1
+      ) latest_contract ON TRUE
       JOIN tenant_identities ti ON tapp.tenant_identity_id = ti.id
       JOIN rooms rm ON tapp.room_id = rm.id
       JOIN locations l ON tapp.location_id = l.id

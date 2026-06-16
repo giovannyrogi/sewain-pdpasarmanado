@@ -433,6 +433,8 @@ export async function GET(req) {
         ta.total_ppn,
         ta.current_tenor,
         ta.application_type,
+        latest_contract.contract_number,
+        latest_contract.contract_date,
 
         -- identitas penyewa saat ini
         ti.full_name AS tenant_name,
@@ -471,6 +473,13 @@ export async function GET(req) {
       LEFT JOIN tenant_early_terminations tet ON tet.tenant_application_id = ta.id
       LEFT JOIN tenant_application prev ON ta.renewal_of = prev.id
       LEFT JOIN tenant_identities pti ON prev.tenant_identity_id = pti.id
+      LEFT JOIN LATERAL (
+        SELECT c.contract_number, c.contract_date
+        FROM contracts c
+        WHERE c.tenant_application_id = ta.id
+        ORDER BY c.created_at DESC
+        LIMIT 1
+      ) latest_contract ON TRUE
       WHERE tet.is_terminated = false
          OR tet.is_terminated IS NULL
       ORDER BY ta.created_at DESC`,
@@ -495,6 +504,8 @@ export async function GET(req) {
       estimated_installment_2_date: row.estimated_installment_2_date,
       estimated_installment_3_date: row.estimated_installment_3_date,
       document_number: row.document_number,
+      contract_number: row.contract_number,
+      contract_date: row.contract_date,
       payment_type: row.payment_type,
       total_payment: row.total_payment,
       down_payment: row.down_payment,

@@ -301,6 +301,7 @@ export async function GET() {
 
         -- tenant_application
         ta.id AS tenant_application_id,
+        ta.document_number,
         ta.start_date,
         ta.end_date,
         ta.payment_type,
@@ -324,6 +325,8 @@ export async function GET() {
         ta.lease_duration_years,
         ta.total_ppn,
         ta.admin_fee,
+        latest_contract.contract_number,
+        latest_contract.contract_date,
 
         -- tenant_identities 
         ti.full_name AS tenant_name,
@@ -339,6 +342,7 @@ export async function GET() {
         rm.room_width,
         rm.room_area,
         rm.price_per_m2,
+        rm.price_type,
 
         -- location floor prices
         lfp.floor,
@@ -366,6 +370,13 @@ export async function GET() {
       LEFT JOIN locations loc ON loc.id = ta.location_id
       LEFT JOIN location_floor_prices lfp ON lfp.id = rm.floor_id
       LEFT JOIN payment_approval pa ON pa.payment_id = p.id
+      LEFT JOIN LATERAL (
+        SELECT c.contract_number, c.contract_date
+        FROM contracts c
+        WHERE c.tenant_application_id = ta.id
+        ORDER BY c.created_at DESC
+        LIMIT 1
+      ) latest_contract ON TRUE
       LEFT JOIN LATERAL (
         SELECT json_object_agg(
           pr.receipt_type,
@@ -405,6 +416,11 @@ export async function GET() {
       return {
         tenant_application: {
           tenant_application_id: row.tenant_application_id,
+          document_number: row.document_number,
+          contract_number: row.contract_number,
+          contract_date: row.contract_date
+            ? moment(row.contract_date).format("YYYY-MM-DD")
+            : null,
           tenant_name: row.tenant_name,
           tenant_nik: row.tenant_nik,
           tenant_phone: row.tenant_phone,
@@ -452,6 +468,12 @@ export async function GET() {
           remaining_balance: row.remaining_balance,
           previous_payments: row.previous_payments || [],
         },
+        contracts: {
+          contract_number: row.contract_number,
+          contract_date: row.contract_date
+            ? moment(row.contract_date).format("YYYY-MM-DD")
+            : null,
+        },
         receipts: row.receipts_json || {},
         payment_approval: {
           id: row.id,
@@ -474,6 +496,7 @@ export async function GET() {
           room_width: row.room_width,
           room_area: row.room_area,
           price_per_m2: row.price_per_m2,
+          price_type: row.price_type,
           floor: row.floor,
         },
         location: {

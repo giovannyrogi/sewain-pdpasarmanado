@@ -73,6 +73,8 @@ export async function GET(request) {
           ta.total_ppn,
           ta.admin_fee,
           ta.document_number,
+          latest_contract.contract_number,
+          latest_contract.contract_date,
 
           ti.full_name AS tenant_name,
           ti.nik AS tenant_nik,
@@ -86,6 +88,7 @@ export async function GET(request) {
           rm.room_width,
           rm.room_area,
           rm.price_per_m2,
+          rm.price_type,
 
           lfp.floor,
 
@@ -120,6 +123,13 @@ export async function GET(request) {
         JOIN locations loc ON loc.id = ta.location_id
         LEFT JOIN location_floor_prices lfp ON lfp.id = rm.floor_id
         LEFT JOIN terminated t ON t.tenant_application_id = ta.id
+        LEFT JOIN LATERAL (
+          SELECT c.contract_number, c.contract_date
+          FROM contracts c
+          WHERE c.tenant_application_id = ta.id
+          ORDER BY c.created_at DESC
+          LIMIT 1
+        ) latest_contract ON TRUE
         LEFT JOIN LATERAL (
           SELECT COALESCE(MAX(p.payment_number), 0) + 1 AS next_payment_number
           FROM payments p
@@ -205,6 +215,8 @@ export async function GET(request) {
         tenant_application: {
           tenant_application_id: row.tenant_application_id,
           document_number: row.document_number,
+          contract_number: row.contract_number,
+          contract_date: toDateString(row.contract_date),
           tenant_name: row.tenant_name,
           tenant_nik: row.tenant_nik,
           tenant_phone: row.tenant_phone,
@@ -246,6 +258,10 @@ export async function GET(request) {
           remaining_balance: row.remaining_payment,
           previous_payments: row.previous_payments || [],
         },
+        contracts: {
+          contract_number: row.contract_number,
+          contract_date: toDateString(row.contract_date),
+        },
         payment_due: {
           due_date: toDateString(row.due_date),
           due_status: row.due_status,
@@ -262,6 +278,7 @@ export async function GET(request) {
           room_width: row.room_width,
           room_area: row.room_area,
           price_per_m2: row.price_per_m2,
+          price_type: row.price_type,
           floor: row.floor,
         },
         location: {
