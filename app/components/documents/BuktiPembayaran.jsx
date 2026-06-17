@@ -57,6 +57,10 @@ const buildProofPaymentRows = (payments = {}) => {
   );
 };
 
+// Dokumen print memakai URL upload yang sudah dinormalisasi agar data lama
+// (/uploads/...) dan data baru (/api/uploads/...) tetap menghasilkan src valid.
+const buildPrintableUploadImageUrl = (filePath) => getUploadApiUrl(filePath);
+
 const BuktiPembayaran = forwardRef(({ data }, ref) => {
   if (!data) return null;
   const tenantApplication = data?.tenant_application || {};
@@ -680,6 +684,7 @@ const BuktiPembayaran = forwardRef(({ data }, ref) => {
               src={ktpImageUrl}
               alt={`foto-ktp-${data?.tenant_application?.tenant_name}`}
               fill
+              unoptimized
               style={{ objectFit: "contain", borderRadius: "8px" }}
               priority
             />
@@ -753,9 +758,10 @@ const BuktiPembayaran = forwardRef(({ data }, ref) => {
                     }}
                   >
                     <Image
-                      src={`/api${payment.proof_file_path}`}
+                      src={buildPrintableUploadImageUrl(payment.proof_file_path)}
                       alt={`bukti-pembayaran-${payment.payment_number}-${data?.tenant_application?.tenant_name}`}
                       fill
+                      unoptimized
                       style={{
                         objectFit: "contain",
                         borderRadius: "8px",
@@ -819,9 +825,12 @@ const BuktiPembayaran = forwardRef(({ data }, ref) => {
                 }}
               >
                 <Image
-                  src={`/api${data?.payments?.proof_file_path}`}
+                  src={buildPrintableUploadImageUrl(
+                    data?.payments?.proof_file_path,
+                  )}
                   alt={`bukti-pembayaran-pembayaran-lunas`}
                   fill
+                  unoptimized
                   style={{
                     objectFit: "contain",
                   }}

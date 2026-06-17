@@ -99,11 +99,12 @@ export default function LoginPage() {
         position: "relative",
         overflowX: "hidden",
         display: "flex",
+        flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
         px: { xs: 2, sm: 3, md: 5 },
         pt: { xs: 2, sm: 3, md: 5 },
-        pb: { xs: 7, md: 5 },
+        pb: { xs: 2.5, sm: 3, md: 4 },
         transition: "background-color 0.3s ease, color 0.3s ease",
         "&::before": {
           content: '""',
@@ -134,10 +135,12 @@ export default function LoginPage() {
         sx={{
           width: "100%",
           maxWidth: 1080,
+          flex: "1 0 auto",
           minHeight: { xs: "auto", md: 620 },
           display: "grid",
           gridTemplateColumns: { xs: "1fr", md: "1.05fr 0.95fr" },
           alignItems: "stretch",
+          alignContent: "center",
           position: "relative",
           zIndex: 1,
           border: `1px solid ${ui.border}`,
@@ -529,14 +532,13 @@ export default function LoginPage() {
 
       <Box
         sx={{
-          position: "fixed",
-          bottom: 0,
-          left: 0,
           width: "100%",
-          py: 1.5,
-          px: 2,
+          flexShrink: 0,
+          py: { xs: 1.5, sm: 1 },
+          px: { xs: 1, sm: 2 },
           bgcolor: "transparent",
-          zIndex: 2,
+          position: "relative",
+          zIndex: 1,
           textAlign: "center",
         }}
       >
