@@ -1,12 +1,7 @@
 "use client";
 
 import React from "react";
-import {
-  Box,
-  Chip,
-  Stack,
-  Typography,
-} from "@mui/material";
+import { Box, Chip, Stack, Typography } from "@mui/material";
 import { Tag } from "antd";
 import formatRupiah from "@/app/components/formatrupiah/page";
 import ApprovalStatusChip from "@/app/components/status/ApprovalStatusChip";
@@ -286,14 +281,21 @@ export const getTenantApplicationColumns = ({
             onClick={() => onDetail(record)}
           />
 
+          <TableActionButton
+            title="Print Dokumen"
+            color="primary"
+            icon="streamline-ultimate:print-text"
+            onClick={() => onPrint(record)}
+          />
+
           {record.approval_status !== "approved" && (
             <>
-              <TableActionButton
+              {/* <TableActionButton
                 title="Print Dokumen"
                 color="primary"
                 icon="streamline-ultimate:print-text"
                 onClick={() => onPrint(record)}
-              />
+              /> */}
               <TableActionButton
                 title="Hapus Data"
                 color="error"

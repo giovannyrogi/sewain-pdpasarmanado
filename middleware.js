@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import MENU_CONFIG from "./app/components/menu/MenuConfig";
+import { getDefaultRouteByRole } from "./app/utils/defaultRouteByRole";
 
 const buildAccessMap = (menus) => {
   const map = {};
@@ -68,7 +69,7 @@ export function middleware(req) {
   }
 
   if (pathname === "/login") {
-    return NextResponse.redirect(new URL("/dashboard", req.url));
+    return NextResponse.redirect(new URL(getDefaultRouteByRole(user.role_id), req.url));
   }
 
   const matchedPath = Object.keys(ACCESS_MAP).find(
@@ -76,11 +77,11 @@ export function middleware(req) {
   );
 
   if (!matchedPath) {
-    return NextResponse.redirect(new URL("/dashboard", req.url));
+    return NextResponse.redirect(new URL(getDefaultRouteByRole(user.role_id), req.url));
   }
 
   if (!ACCESS_MAP[matchedPath].includes(user.role_id)) {
-    return NextResponse.redirect(new URL("/dashboard", req.url));
+    return NextResponse.redirect(new URL(getDefaultRouteByRole(user.role_id), req.url));
   }
 
   return NextResponse.next();

@@ -8,8 +8,8 @@ SewaIN architecture, UI patterns, business flows, security expectations, and
 maintenance rules.
 
 SewaIN is a production-grade Next.js application for room rental management,
-tenant applications, approvals, payments, contracts, terminations, notifications,
-and reports.
+land permit management, tenant applications, approvals, payments, contracts,
+terminations, notifications, and reports.
 
 ## Task Classification
 
@@ -214,6 +214,9 @@ When redesigning a page:
 - Use existing modal components for CRUD and detail flows.
 - Fully migrate old modals/components when requested. Avoid half-migration.
 - Delete legacy files only after confirming they are no longer imported.
+- Protected application pages must use a consistent responsive wrapper with
+  theme-aware background, safe padding, and spacing so content never sticks to
+  the sidebar, navbar, or topbar on mobile, tablet, or desktop.
 
 For tables:
 
@@ -232,6 +235,10 @@ All UI changes must support:
 - Mobile.
 - Tablet.
 - Desktop.
+
+Every frontend UI creation, redesign, or adjustment must be planned and checked
+for mobile, tablet, and desktop layouts. Responsive behavior is not optional,
+even for small styling fixes.
 
 Use theme values instead of hardcoded colors whenever possible.
 
@@ -391,6 +398,53 @@ When changing tenant application, payment, contract, or room pricing logic:
 - Update all detail displays consistently.
 - Ensure create, edit, detail, print, and approval views agree.
 
+## Land Permit Module Rules
+
+The Izin Lahan feature is a separate module inside SewaIN. Keep it isolated from
+room rental transaction tables while reusing truly shared master data.
+
+Shared tables allowed for both modules:
+
+- `locations`
+- `users`
+- `roles`
+- `tenant_identities`
+- `notifications`
+
+Land permit-specific data must use land permit tables:
+
+- `land_sectors`
+- `land_stalls`
+- `land_permit_applications`
+- `land_permit_approval`
+- `land_permit_payments`
+- `land_permit_payment_approval`
+- `land_permit_terminations`
+- `land_permit_termination_approval`
+- `land_permit_documents`
+
+Rules:
+
+- `Admin Izin Lahan` is role ID `9`.
+- Do not store land permit applications in `tenant_application`.
+- Do not store land permit payments in `payments`.
+- Do not store land permit terminations in `tenant_early_terminations`.
+- Use `tenant_identities` as the shared identity master for room rental and
+  land permit flows. Do not duplicate KTP, NIK, name, address, or KTP file
+  fields in land permit tables.
+- Do not create a separate trader profile table unless a future requirement
+  introduces trader-specific attributes that cannot belong to one permit
+  application. Commodity/trade type for land permits belongs to the land permit
+  application because it can differ between permit requests.
+- Land permit pricing is simpler than room rental pricing:
+  `stall_length * stall_width * price_per_m2 * lease_duration_years`.
+- Land permit payments do not use PPN, PPH, admin fee, down payment, or
+  installments unless the business flow is explicitly changed later.
+- Land permit approval uses separate approval tables and pages, even when it
+  reuses the same UI components and approval role sequence.
+- Land permit QR validation must use opaque tokens. Do not place full NIK,
+  private identity data, or complete payment details directly in QR payloads.
+
 ## Notification Flow Rules
 
 SewaIN notification data is user-specific through recipients/read/archive state.
@@ -408,6 +462,14 @@ Notification behavior must remain informative and compact:
   personal confirmation such as "approval berhasil diproses".
 - Finance role should only receive payment-related notifications unless explicitly
   required otherwise.
+- Room rental and land permit notifications must be separated. Use
+  `metadata.module = "room_rental"` for room rental notifications and
+  `metadata.module = "land_permit"` for land permit notifications.
+- Land permit notifications should use land permit entity types such as
+  `land_permit_application`, `land_permit_payment`, and
+  `land_permit_termination`.
+- Admin Kontrak must not receive land permit workflow notifications, and Admin
+  Izin Lahan must not receive room rental workflow notifications.
 
 Clicking notifications must:
 
@@ -437,6 +499,11 @@ For role approval pages, keep action flow focused:
 - Reject reason modal for rejection.
 - Progress tracking modal for status history.
 
+Land permit approval and land permit termination approval are also role-based,
+step-based flows, but they must remain in their own tables, API routes, pages,
+and notifications. Reuse generic approval UI components where possible without
+mixing room rental and land permit data sources.
+
 ## Payments Flow Rules
 
 Payment verification is separate from tenant approval.
@@ -450,6 +517,10 @@ data for the shared modal instead of duplicating a separate full detail modal.
 
 Receipt/print behavior must be changed carefully. Preserve existing layout unless
 the user asks for redesign.
+
+Land permit payment validation is separate from room rental payment validation.
+It should use land permit payment tables and should not inherit room rental-only
+fields such as PPN, PPH, admin fee, down payment, or installment calculations.
 
 ## File Cleanup Rules
 

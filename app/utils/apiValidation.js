@@ -55,6 +55,41 @@ export const normalizeRequiredString = (
   return { value: normalizedValue, error: null };
 };
 
+export const normalizeOptionalString = (value, label = "Nilai", max = 150) => {
+  const normalizedValue = String(value || "").trim();
+
+  if (normalizedValue.length > max) {
+    return {
+      value: normalizedValue,
+      error: `${label} maksimal ${max} karakter.`,
+    };
+  }
+
+  return { value: normalizedValue || null, error: null };
+};
+
+export const parseNonNegativeNumber = (value, label = "Nilai") => {
+  const normalizedValue = String(value ?? "").replace(",", ".").trim();
+  const parsedValue = Number(normalizedValue);
+
+  if (!Number.isFinite(parsedValue) || parsedValue < 0) {
+    return { value: null, error: `${label} harus berupa angka 0 atau lebih.` };
+  }
+
+  return { value: parsedValue, error: null };
+};
+
+export const parsePositiveNumber = (value, label = "Nilai") => {
+  const result = parseNonNegativeNumber(value, label);
+  if (result.error) return result;
+
+  if (result.value <= 0) {
+    return { value: null, error: `${label} harus lebih besar dari 0.` };
+  }
+
+  return result;
+};
+
 export const handleApiError = (context, error, message = "Terjadi kesalahan server.") => {
   console.error(context, error);
   return failResponse(message, 500);

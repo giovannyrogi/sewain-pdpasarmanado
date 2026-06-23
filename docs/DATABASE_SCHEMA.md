@@ -533,6 +533,277 @@ Indexes:
 
 ---
 
+# Land Permit Tables
+
+Land permit tables support the Izin Lahan module. This module is separate from
+room rental transactions, but shares `locations`, `users`, `roles`,
+`tenant_identities`, and `notifications`.
+
+Migration SQL:
+
+* `docs/sql/20260622_land_permit_schema.sql`
+
+Important:
+
+* `Admin Izin Lahan` uses role ID `9`.
+* Land permit pricing does not use PPN, PPH, admin fee, down payment, or installments.
+* Land permit payment is full payment only.
+* Room rental tables such as `tenant_application`, `payments`, and `contracts`
+  must not be reused for land permit transactions.
+
+---
+
+## `land_sectors`
+
+Stores land permit sectors per location.
+
+| Column        | Type           | Constraint / Default                | Description              |
+| ------------- | -------------- | ----------------------------------- | ------------------------ |
+| `id`          | `SERIAL`       | `PRIMARY KEY`                       | Sector ID                |
+| `location_id` | `INTEGER`      | `NOT NULL REFERENCES locations(id)` | Related location         |
+| `sector_name` | `VARCHAR(120)` | `NOT NULL`                          | Sector name              |
+| `sector_code` | `VARCHAR(50)`  | nullable                            | Optional sector code     |
+| `description` | `TEXT`         | nullable                            | Sector notes/description |
+| `status`      | `VARCHAR(20)`  | `DEFAULT 'active'`                  | Sector status            |
+| `updated_at`  | `TIMESTAMP`    | `DEFAULT CURRENT_TIMESTAMP`         | Last update timestamp    |
+| `created_at`  | `TIMESTAMP`    | `DEFAULT CURRENT_TIMESTAMP`         | Creation timestamp       |
+
+Allowed `status` values:
+
+* `active`
+* `inactive`
+
+Constraints:
+
+* Unique `(location_id, sector_name)`
+* Unique `(location_id, sector_code)`
+
+---
+
+## `land_stalls`
+
+Stores land permit stalls/plots inside sectors.
+
+| Column         | Type            | Constraint / Default                   | Description                                      |
+| -------------- | --------------- | -------------------------------------- | ------------------------------------------------ |
+| `id`           | `SERIAL`        | `PRIMARY KEY`                          | Stall ID                                         |
+| `location_id`  | `INTEGER`       | `NOT NULL REFERENCES locations(id)`    | Related location                                 |
+| `sector_id`    | `INTEGER`       | `NOT NULL REFERENCES land_sectors(id)` | Related sector                                   |
+| `stall_number` | `VARCHAR(50)`   | `NOT NULL`                             | Stall/lapak number or label                      |
+| `stall_length` | `NUMERIC(8,4)`  | `NOT NULL DEFAULT 0`                   | Stall length                                     |
+| `stall_width`  | `NUMERIC(8,4)`  | `NOT NULL DEFAULT 0`                   | Stall width                                      |
+| `stall_area`   | `NUMERIC(18,6)` | generated stored                       | Auto-generated as `stall_length * stall_width`   |
+| `price_per_m2` | `NUMERIC(18,2)` | `NOT NULL DEFAULT 0`                   | Land permit price per square meter               |
+| `status`       | `VARCHAR(20)`   | `DEFAULT 'available'`                  | Stall availability status                        |
+| `notes`        | `TEXT`          | nullable                               | Notes                                            |
+| `updated_at`   | `TIMESTAMP`     | `DEFAULT CURRENT_TIMESTAMP`            | Last update timestamp                            |
+| `created_at`   | `TIMESTAMP`     | `DEFAULT CURRENT_TIMESTAMP`            | Creation timestamp                               |
+
+Allowed `status` values:
+
+* `available`
+* `occupied`
+* `unavailable`
+* `maintenance`
+
+Constraints:
+
+* Unique `(sector_id, stall_number)`
+
+---
+
+## `land_permit_applications`
+
+Stores land permit applications.
+
+| Column                 | Type            | Constraint / Default                                | Description                      |
+| ---------------------- | --------------- | --------------------------------------------------- | -------------------------------- |
+| `id`                   | `SERIAL`        | `PRIMARY KEY`                                       | Land permit application ID       |
+| `renewal_of`           | `INTEGER`       | `REFERENCES land_permit_applications(id)`           | Original application if renewal  |
+| `application_type`     | `VARCHAR(20)`   | `DEFAULT 'baru'`                                    | New or renewal application       |
+| `user_id`              | `INTEGER`       | `REFERENCES users(id)`                              | User who created the application |
+| `tenant_identity_id`   | `INTEGER`       | `NOT NULL REFERENCES tenant_identities(id)`         | Related identity                 |
+| `document_number`      | `VARCHAR(80)`   | nullable                                            | Application document number      |
+| `location_id`          | `INTEGER`       | `NOT NULL REFERENCES locations(id)`                 | Selected location                |
+| `sector_id`            | `INTEGER`       | `NOT NULL REFERENCES land_sectors(id)`              | Selected sector                  |
+| `stall_id`             | `INTEGER`       | `NOT NULL REFERENCES land_stalls(id)`               | Selected stall/lapak             |
+| `start_date`           | `DATE`          | `NOT NULL`                                          | Permit start date                |
+| `end_date`             | `DATE`          | `NOT NULL`                                          | Permit end date                  |
+| `lease_duration_years` | `INTEGER`       | `NOT NULL DEFAULT 1`                                | Permit duration in years         |
+| `annual_land_rent`     | `NUMERIC(18,2)` | `NOT NULL DEFAULT 0`                                | Annual land rent                 |
+| `total_payment_land`   | `NUMERIC(18,2)` | `NOT NULL DEFAULT 0`                                | Total rent based on duration     |
+| `total_payment`        | `NUMERIC(18,2)` | `NOT NULL DEFAULT 0`                                | Total payable amount             |
+| `approval_status`      | `VARCHAR(20)`   | `DEFAULT 'proses'`                                  | Approval status                  |
+| `current_step`         | `INTEGER`       | `DEFAULT 1`                                         | Current approval step            |
+| `payment_status`       | `VARCHAR(20)`   | `DEFAULT 'unpaid'`                                  | Payment status                   |
+| `is_fully_paid`        | `BOOLEAN`       | `DEFAULT FALSE`                                     | Fully paid flag                  |
+| `permit_status`        | `VARCHAR(20)`   | `DEFAULT 'draft'`                                   | Permit lifecycle status          |
+| `notes`                | `TEXT`          | nullable                                            | Notes                            |
+| `updated_at`           | `TIMESTAMP`     | `DEFAULT CURRENT_TIMESTAMP`                         | Last update timestamp            |
+| `created_at`           | `TIMESTAMP`     | `DEFAULT CURRENT_TIMESTAMP`                         | Creation timestamp               |
+
+Allowed values:
+
+* `application_type`: `baru`, `perpanjangan`
+* `approval_status`: `proses`, `approved`, `rejected`
+* `payment_status`: `unpaid`, `proses`, `paid`, `rejected`
+* `permit_status`: `draft`, `active`, `expired`, `terminated`
+
+Important:
+
+* `sector_id` and `stall_id` must belong to the selected `location_id`.
+* This is enforced by `trg_validate_land_permit_location`.
+
+---
+
+## `land_permit_approval`
+
+Stores approval steps for land permit applications.
+
+| Column                       | Type          | Constraint / Default                               | Description                     |
+| ---------------------------- | ------------- | -------------------------------------------------- | ------------------------------- |
+| `id`                         | `SERIAL`      | `PRIMARY KEY`                                      | Approval ID                     |
+| `land_permit_application_id` | `INTEGER`     | `NOT NULL REFERENCES land_permit_applications(id)` | Related land permit application |
+| `approver_id`                | `INTEGER`     | `REFERENCES users(id)`                             | User who approved/rejected      |
+| `role_id`                    | `INTEGER`     | `NOT NULL REFERENCES roles(id)`                    | Role responsible for this step  |
+| `step_order`                 | `INTEGER`     | `NOT NULL`                                         | Approval step order             |
+| `approved_at`                | `TIMESTAMP`   | nullable                                           | Approval/rejection timestamp    |
+| `status`                     | `VARCHAR(20)` | `DEFAULT 'pending'`                                | Approval step status            |
+| `notes`                      | `TEXT`        | nullable                                           | Approval/rejection notes        |
+| `updated_at`                 | `TIMESTAMP`   | `DEFAULT CURRENT_TIMESTAMP`                        | Last update timestamp           |
+| `created_at`                 | `TIMESTAMP`   | `DEFAULT CURRENT_TIMESTAMP`                        | Creation timestamp              |
+
+Allowed `status` values:
+
+* `pending`
+* `approved`
+* `rejected`
+
+---
+
+## `land_permit_payments`
+
+Stores land permit full payment uploads.
+
+| Column                       | Type            | Constraint / Default                               | Description                     |
+| ---------------------------- | --------------- | -------------------------------------------------- | ------------------------------- |
+| `id`                         | `SERIAL`        | `PRIMARY KEY`                                      | Payment ID                      |
+| `land_permit_application_id` | `INTEGER`       | `NOT NULL REFERENCES land_permit_applications(id)` | Related land permit application |
+| `payment_number`             | `INTEGER`       | `NOT NULL DEFAULT 1`                               | Payment number                  |
+| `amount`                     | `NUMERIC(18,2)` | `NOT NULL DEFAULT 0`                               | Paid amount                     |
+| `payment_date`               | `DATE`          | `NOT NULL`                                         | Payment date from trader        |
+| `accounting_date`            | `DATE`          | nullable                                           | Accounting date from finance    |
+| `proof_file_path`            | `TEXT`          | `NOT NULL`                                         | Uploaded payment proof path     |
+| `uploaded_by`                | `INTEGER`       | `NOT NULL REFERENCES users(id)`                    | User who uploaded proof         |
+| `approval_status`            | `VARCHAR(20)`   | `DEFAULT 'proses'`                                 | Finance approval status         |
+| `notes`                      | `TEXT`          | nullable                                           | Notes                           |
+| `updated_at`                 | `TIMESTAMP`     | `DEFAULT CURRENT_TIMESTAMP`                        | Last update timestamp           |
+| `created_at`                 | `TIMESTAMP`     | `DEFAULT CURRENT_TIMESTAMP`                        | Creation timestamp              |
+
+Allowed `approval_status` values:
+
+* `proses`
+* `approved`
+* `rejected`
+
+---
+
+## `land_permit_payment_approval`
+
+Stores finance validation steps for land permit payments.
+
+| Column                     | Type          | Constraint / Default                            | Description                     |
+| -------------------------- | ------------- | ----------------------------------------------- | ------------------------------- |
+| `id`                       | `SERIAL`      | `PRIMARY KEY`                                   | Payment approval ID             |
+| `land_permit_payment_id`   | `INTEGER`     | `NOT NULL REFERENCES land_permit_payments(id)`  | Related land permit payment     |
+| `role_id`                  | `INTEGER`     | `NOT NULL REFERENCES roles(id)`                 | Finance role                    |
+| `step_order`               | `INTEGER`     | `NOT NULL DEFAULT 1`                            | Approval step order             |
+| `status`                   | `VARCHAR(20)` | `DEFAULT 'pending'`                             | Approval status                 |
+| `approver_id`              | `INTEGER`     | `REFERENCES users(id)`                          | User who approved/rejected      |
+| `notes`                    | `TEXT`        | nullable                                        | Approval/rejection notes        |
+| `proof_verified_file_path` | `TEXT`        | nullable                                        | Finance verification proof file |
+| `approved_at`              | `TIMESTAMP`   | nullable                                        | Approval/rejection timestamp    |
+| `updated_at`               | `TIMESTAMP`   | `DEFAULT CURRENT_TIMESTAMP`                     | Last update timestamp           |
+| `created_at`               | `TIMESTAMP`   | `DEFAULT CURRENT_TIMESTAMP`                     | Creation timestamp              |
+
+---
+
+## `land_permit_terminations`
+
+Stores land permit termination/nonactive requests.
+
+| Column                       | Type          | Constraint / Default                               | Description                     |
+| ---------------------------- | ------------- | -------------------------------------------------- | ------------------------------- |
+| `id`                         | `SERIAL`      | `PRIMARY KEY`                                      | Termination ID                  |
+| `land_permit_application_id` | `INTEGER`     | `NOT NULL REFERENCES land_permit_applications(id)` | Related land permit application |
+| `reason`                     | `TEXT`        | `NOT NULL`                                         | Termination reason              |
+| `statement_file_path`        | `TEXT`        | nullable                                           | Statement file path             |
+| `processed_by`               | `INTEGER`     | `REFERENCES users(id)`                             | User who processed request      |
+| `terminated_at`              | `TIMESTAMP`   | `DEFAULT CURRENT_TIMESTAMP`                        | Termination request timestamp   |
+| `current_step`               | `INTEGER`     | `DEFAULT 1`                                        | Current approval step           |
+| `approval_status`            | `VARCHAR(20)` | `DEFAULT 'proses'`                                 | Termination approval status     |
+| `is_terminated`              | `BOOLEAN`     | `DEFAULT FALSE`                                    | Final terminated flag           |
+| `updated_at`                 | `TIMESTAMP`   | `DEFAULT CURRENT_TIMESTAMP`                        | Last update timestamp           |
+| `created_at`                 | `TIMESTAMP`   | `DEFAULT CURRENT_TIMESTAMP`                        | Creation timestamp              |
+
+---
+
+## `land_permit_termination_approval`
+
+Stores approval steps for land permit termination.
+
+| Column                       | Type          | Constraint / Default                               | Description                   |
+| ---------------------------- | ------------- | -------------------------------------------------- | ----------------------------- |
+| `id`                         | `SERIAL`      | `PRIMARY KEY`                                      | Termination approval ID       |
+| `land_permit_termination_id` | `INTEGER`     | `NOT NULL REFERENCES land_permit_terminations(id)` | Related termination request   |
+| `role_id`                    | `INTEGER`     | `NOT NULL REFERENCES roles(id)`                    | Role responsible for approval |
+| `step_order`                 | `INTEGER`     | `NOT NULL`                                         | Approval step order           |
+| `status`                     | `VARCHAR(20)` | `DEFAULT 'pending'`                                | Approval status               |
+| `approver_id`                | `INTEGER`     | `REFERENCES users(id)`                             | User who approved/rejected    |
+| `notes`                      | `TEXT`        | nullable                                           | Approval/rejection notes      |
+| `approved_at`                | `TIMESTAMP`   | nullable                                           | Approval/rejection timestamp  |
+| `updated_at`                 | `TIMESTAMP`   | `DEFAULT CURRENT_TIMESTAMP`                        | Last update timestamp         |
+| `created_at`                 | `TIMESTAMP`   | `DEFAULT CURRENT_TIMESTAMP`                        | Creation timestamp            |
+
+---
+
+## `land_permit_documents`
+
+Stores land permit documents, trader cards, and QR validation tokens.
+
+| Column                       | Type           | Constraint / Default                               | Description                     |
+| ---------------------------- | -------------- | -------------------------------------------------- | ------------------------------- |
+| `id`                         | `SERIAL`       | `PRIMARY KEY`                                      | Document ID                     |
+| `land_permit_application_id` | `INTEGER`      | `NOT NULL REFERENCES land_permit_applications(id)` | Related land permit application |
+| `document_type`              | `VARCHAR(40)`  | `NOT NULL`                                         | Document type                   |
+| `document_number`            | `VARCHAR(100)` | nullable                                           | Document/card number            |
+| `file_path`                  | `TEXT`         | nullable                                           | File path                       |
+| `qr_token`                   | `VARCHAR(120)` | `UNIQUE`                                           | QR validation token             |
+| `qr_generated_at`            | `TIMESTAMP`    | nullable                                           | QR generation timestamp         |
+| `printed_at`                 | `TIMESTAMP`    | nullable                                           | Print timestamp                 |
+| `printed_by`                 | `INTEGER`      | `REFERENCES users(id)`                             | User who printed document       |
+| `status`                     | `VARCHAR(20)`  | `DEFAULT 'draft'`                                  | Document status                 |
+| `notes`                      | `TEXT`         | nullable                                           | Notes                           |
+| `updated_at`                 | `TIMESTAMP`    | `DEFAULT CURRENT_TIMESTAMP`                        | Last update timestamp           |
+| `created_at`                 | `TIMESTAMP`    | `DEFAULT CURRENT_TIMESTAMP`                        | Creation timestamp              |
+
+Allowed `document_type` values:
+
+* `permit_document`
+* `trader_card`
+* `payment_proof`
+* `statement`
+* `other`
+
+Allowed `status` values:
+
+* `draft`
+* `printed`
+* `active`
+* `void`
+
+---
+
 # Notification Tables
 
 ## `notifications`
@@ -695,6 +966,24 @@ Behavior:
 
 ---
 
+## `validate_land_permit_location()`
+
+Purpose:
+
+* Validates that the selected land permit sector and stall belong to the selected
+  location.
+* Validates that the selected stall belongs to the selected sector.
+
+Behavior:
+
+* Looks up `land_sectors.location_id`.
+* Looks up `land_stalls.location_id` and `land_stalls.sector_id`.
+* Raises exception when sector or stall does not exist.
+* Raises exception when sector, stall, and location do not match.
+* Runs before insert or update on `land_permit_applications`.
+
+---
+
 # Triggers
 
 ## Auto-update `updated_at`
@@ -716,6 +1005,15 @@ The following tables have `BEFORE UPDATE` triggers that call `update_updated_at_
 * `contracts`
 * `tenant_identities`
 * `payment_receipts`
+* `land_sectors`
+* `land_stalls`
+* `land_permit_applications`
+* `land_permit_approval`
+* `land_permit_payments`
+* `land_permit_payment_approval`
+* `land_permit_terminations`
+* `land_permit_termination_approval`
+* `land_permit_documents`
 
 ## Room-location validation
 
@@ -738,6 +1036,32 @@ Function:
 Purpose:
 
 * Prevents creating/updating tenant applications where selected room does not belong to selected location.
+
+---
+
+## Land permit location validation
+
+Trigger:
+
+* `trg_validate_land_permit_location`
+
+Table:
+
+* `land_permit_applications`
+
+Timing:
+
+* `BEFORE INSERT OR UPDATE`
+
+Function:
+
+* `validate_land_permit_location()`
+
+Purpose:
+
+* Prevents creating/updating land permit applications where selected sector or
+  stall does not belong to the selected location.
+* Prevents selecting a stall that does not belong to the selected sector.
 
 ---
 
@@ -852,6 +1176,49 @@ Main foreign keys:
 
 ---
 
+## Land Permit
+
+```text
+locations
+  -> land_sectors
+       -> land_stalls
+
+tenant_identities
+  -> land_permit_applications
+
+users
+locations
+land_sectors
+land_stalls
+  -> land_permit_applications
+       -> land_permit_approval
+       -> land_permit_payments
+            -> land_permit_payment_approval
+       -> land_permit_terminations
+            -> land_permit_termination_approval
+       -> land_permit_documents
+```
+
+Main foreign keys:
+
+* `land_sectors.location_id -> locations.id`
+* `land_stalls.location_id -> locations.id`
+* `land_stalls.sector_id -> land_sectors.id`
+* `land_permit_applications.user_id -> users.id`
+* `land_permit_applications.tenant_identity_id -> tenant_identities.id`
+* `land_permit_applications.location_id -> locations.id`
+* `land_permit_applications.sector_id -> land_sectors.id`
+* `land_permit_applications.stall_id -> land_stalls.id`
+* `land_permit_applications.renewal_of -> land_permit_applications.id`
+* `land_permit_approval.land_permit_application_id -> land_permit_applications.id`
+* `land_permit_payments.land_permit_application_id -> land_permit_applications.id`
+* `land_permit_payment_approval.land_permit_payment_id -> land_permit_payments.id`
+* `land_permit_terminations.land_permit_application_id -> land_permit_applications.id`
+* `land_permit_termination_approval.land_permit_termination_id -> land_permit_terminations.id`
+* `land_permit_documents.land_permit_application_id -> land_permit_applications.id`
+
+---
+
 ## Documents And Contracts
 
 ```text
@@ -936,6 +1303,70 @@ Important:
 * `rejected`
 * `void`
 
+## Land Sector Status
+
+* `active`
+* `inactive`
+
+## Land Stall Status
+
+* `available`
+* `occupied`
+* `unavailable`
+* `maintenance`
+
+## Trader Profile Status
+
+* `active`
+* `inactive`
+* `blacklisted`
+
+## Land Permit Application Type
+
+* `baru`
+* `perpanjangan`
+
+## Land Permit Approval Status
+
+* `proses`
+* `approved`
+* `rejected`
+
+## Land Permit Step Status
+
+* `pending`
+* `approved`
+* `rejected`
+
+## Land Permit Payment Status
+
+* `unpaid`
+* `proses`
+* `paid`
+* `rejected`
+
+## Land Permit Status
+
+* `draft`
+* `active`
+* `expired`
+* `terminated`
+
+## Land Permit Document Type
+
+* `permit_document`
+* `trader_card`
+* `payment_proof`
+* `statement`
+* `other`
+
+## Land Permit Document Status
+
+* `draft`
+* `printed`
+* `active`
+* `void`
+
 ## Notification Priority
 
 * `low`
@@ -956,6 +1387,12 @@ When writing database queries:
 * Validate IDs before querying.
 * Validate entity ownership/relationship before mutations.
 * Use transactions for approval, payment, receipt, contract, notification, and termination flows.
+* Keep room rental and land permit queries scoped to their own transaction
+  tables. Do not join or mutate room rental tables for land permit workflows
+  unless a feature explicitly needs read-only shared master data.
+* For land permit notifications, use land permit entity types and
+  `metadata.module = 'land_permit'` so recipients do not receive notifications
+  from the wrong module.
 * Do not trust frontend-provided actor fields such as:
 
   * `user_id`

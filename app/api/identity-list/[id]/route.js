@@ -9,7 +9,7 @@ import {
 import { removeKtpFile } from "../fileHelpers";
 import { validateIdentityId } from "../validation";
 
-const MASTER_DATA_ROLES = [1, 2];
+const MASTER_DATA_ROLES = [1, 2, 9];
 
 const mapIdentityRow = (row) => ({
   id: row.id,
@@ -138,6 +138,44 @@ export async function DELETE(request, { params }) {
             409,
           );
         }
+      }
+    }
+
+    const activeLandPermitResult = await client.query(
+      `
+      SELECT 
+        lpa.id,
+        lpa.approval_status,
+        lpa.permit_status,
+        l.location_name,
+        ls.sector_name,
+        lst.stall_number
+      FROM land_permit_applications lpa
+      LEFT JOIN locations l ON lpa.location_id = l.id
+      LEFT JOIN land_sectors ls ON lpa.sector_id = ls.id
+      LEFT JOIN land_stalls lst ON lpa.stall_id = lst.id
+      WHERE lpa.tenant_identity_id = $1
+      ORDER BY lpa.created_at DESC
+      LIMIT 1
+      `,
+      [id],
+    );
+
+    if (activeLandPermitResult.rowCount > 0) {
+      const landPermit = activeLandPermitResult.rows[0];
+
+      if (landPermit.approval_status === "proses") {
+        return failResponse(
+          "Identitas masih digunakan pada permohonan izin lahan yang sedang proses approval.",
+          409,
+        );
+      }
+
+      if (landPermit.permit_status === "active") {
+        return failResponse(
+          `Identitas masih aktif pada izin lahan ${landPermit.location_name || "lokasi terkait"} sektor ${landPermit.sector_name || "-"} lapak ${landPermit.stall_number || "-"}.`,
+          409,
+        );
       }
     }
 

@@ -9,7 +9,7 @@ import {
 import { prepareKtpUpload, removeKtpFile, saveKtpFile } from "./fileHelpers";
 import { validateIdentityFormData } from "./validation";
 
-const MASTER_DATA_ROLES = [1, 2];
+const MASTER_DATA_ROLES = [1, 2, 9];
 
 const mapIdentityRow = (row) => ({
   id: row.id,

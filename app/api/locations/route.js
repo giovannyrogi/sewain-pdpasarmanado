@@ -8,7 +8,7 @@ import {
 } from "@/app/utils/apiValidation";
 import { validateLocationPayload } from "./validation";
 
-const MASTER_DATA_ROLES = [1, 2];
+const MASTER_DATA_ROLES = [1, 2, 9];
 
 // CREATE lokasi
 export async function POST(req) {

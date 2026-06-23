@@ -21,6 +21,7 @@ import { useThemeMode } from "@/app/components/themeprovider/ThemeContext";
 import Notification from "@/app/components/Notification";
 import LoadingBackdrop from "@/app/components/loading/Backdrop";
 import AppCopyrightFooter from "@/app/components/footer/AppCopyrightFooter";
+import { getDefaultRouteByRole } from "@/app/utils/defaultRouteByRole";
 
 export default function LoginPage() {
   const isMobile = useMediaQuery("(max-width:600px)");
@@ -43,7 +44,7 @@ export default function LoginPage() {
   const handleLogin = async () => {
     setLoading(true);
     try {
-      await axios.post("/api/login", { username, password });
+      const response = await axios.post("/api/login", { username, password });
       setSnackbar({
         open: true,
         message: "Login berhasil!",
@@ -51,7 +52,7 @@ export default function LoginPage() {
       });
 
       setTimeout(() => {
-        router.push("/dashboard");
+        router.push(getDefaultRouteByRole(response.data?.role_id));
       }, 800);
     } catch (err) {
       setSnackbar({

@@ -23,6 +23,8 @@ export default function TableActionButton({
   title,
   color = "primary",
   icon = "solar:menu-dots-bold-duotone",
+  keepLabelOnMobile = false,
+  fullWidthOnMobile = false,
   items = [],
   onClick,
 }) {
@@ -32,6 +34,7 @@ export default function TableActionButton({
   const openMenu = Boolean(anchorEl);
   const hasMenu = items.length > 0;
   const iconOnly = !label;
+  const hideLabelOnMobile = Boolean(label) && compact && !keepLabelOnMobile;
 
   const closeMenu = () => setAnchorEl(null);
 
@@ -61,17 +64,25 @@ export default function TableActionButton({
         aria-label={title || ariaLabel}
         sx={{
           minHeight: iconOnly ? 34 : 40,
-          minWidth: iconOnly ? 34 : { xs: compact ? 44 : 128, sm: 128 },
-          width: iconOnly ? 34 : { xs: compact ? 44 : "auto", sm: "auto" },
+          minWidth: iconOnly
+            ? 34
+            : fullWidthOnMobile
+              ? { xs: "100%", sm: 128 }
+              : { xs: hideLabelOnMobile ? 44 : 128, sm: 128 },
+          width: iconOnly
+            ? 34
+            : fullWidthOnMobile
+              ? { xs: "100%", sm: "auto" }
+              : { xs: hideLabelOnMobile ? 44 : "auto", sm: "auto" },
           borderRadius: 2,
-          px: iconOnly ? 0 : { xs: compact ? 1.25 : 2, sm: 2 },
+          px: iconOnly ? 0 : { xs: hideLabelOnMobile ? 1.25 : 2, sm: 2 },
           fontFamily: "Poppins",
           fontWeight: 700,
           textTransform: "none",
           flex: "0 0 auto",
           "& .MuiButton-startIcon": {
             m: iconOnly ? 0 : undefined,
-            mr: iconOnly ? 0 : { xs: compact ? 0 : 1, sm: 1 },
+            mr: iconOnly ? 0 : { xs: hideLabelOnMobile ? 0 : 1, sm: 1 },
           },
         }}
       >
@@ -79,7 +90,7 @@ export default function TableActionButton({
           <Typography
             component="span"
             sx={{
-              display: { xs: compact ? "none" : "inline", sm: "inline" },
+              display: { xs: hideLabelOnMobile ? "none" : "inline", sm: "inline" },
               fontSize: 13,
               fontWeight: 700,
             }}

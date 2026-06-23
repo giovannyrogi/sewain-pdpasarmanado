@@ -7,5 +7,6 @@ export const ROLES = {
   DIREKTUR_BISNIS: 6,
   DIREKTUR_UTAMA: 7,
   DIVISI_KEUANGAN: 8,
+  ADMIN_IZIN_LAHAN: 9,
 };
 

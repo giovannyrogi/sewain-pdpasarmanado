@@ -9,16 +9,29 @@ const MENU_CONFIG = [
     value: "dashboard",
     path: "/dashboard",
     icon: <Icon icon="svg-spinners:blocks-scale" fontSize="20px" />,
-    roles: Object.values(ROLES),
+    roles: [
+      ROLES.SUPERADMIN,
+      ROLES.DIVISI_KONTRAK,
+      ROLES.KEPALA_SEKSI,
+      ROLES.KEPALA_SUBDIVISI,
+      ROLES.KEPALA_DIVISI,
+      ROLES.DIREKTUR_BISNIS,
+      ROLES.DIREKTUR_UTAMA,
+      ROLES.DIVISI_KEUANGAN,
+    ],
+  },
+  {
+    label: "Dashboard Izin Lahan",
+    value: "land-permit-dashboard",
+    path: "/land-permit-dashboard",
+    icon: <Icon icon="solar:shop-2-bold-duotone" fontSize="20px" />,
+    roles: [ROLES.SUPERADMIN, ROLES.ADMIN_IZIN_LAHAN],
   },
   {
     label: "Data Master",
     value: "dataMaster",
     icon: <Icon icon="material-symbols:database" fontSize="20px" />,
-    roles: [
-      ROLES.SUPERADMIN,
-      ROLES.DIVISI_KONTRAK,
-    ],
+    roles: [ROLES.SUPERADMIN, ROLES.DIVISI_KONTRAK, ROLES.ADMIN_IZIN_LAHAN],
     submenu: [
       {
         label: "Peran",
@@ -41,10 +54,7 @@ const MENU_CONFIG = [
         value: "locations",
         path: "/locations",
         icon: <Icon icon="mdi:location-radius-outline" fontSize="20px" />,
-        roles: [
-          ROLES.SUPERADMIN,
-          ROLES.DIVISI_KONTRAK,
-        ],
+        roles: [ROLES.SUPERADMIN, ROLES.DIVISI_KONTRAK, ROLES.ADMIN_IZIN_LAHAN],
         showIcon: true,
       },
       {
@@ -52,10 +62,7 @@ const MENU_CONFIG = [
         value: "floor",
         path: "/floor",
         icon: <Icon icon="ion:pricetags-outline" fontSize="20px" />,
-        roles: [
-          ROLES.SUPERADMIN,
-          ROLES.DIVISI_KONTRAK,
-        ],
+        roles: [ROLES.SUPERADMIN, ROLES.DIVISI_KONTRAK],
         showIcon: true,
       },
       {
@@ -63,10 +70,25 @@ const MENU_CONFIG = [
         value: "rooms",
         path: "/rooms",
         icon: <Icon icon="cil:room" fontSize="20px" />,
-        roles: [
-          ROLES.SUPERADMIN,
-          ROLES.DIVISI_KONTRAK,
-        ],
+        roles: [ROLES.SUPERADMIN, ROLES.DIVISI_KONTRAK],
+        showIcon: true,
+      },
+      {
+        label: "Sektor",
+        value: "land-sectors",
+        path: "/land-sectors",
+        icon: (
+          <Icon icon="solar:map-arrow-square-bold-duotone" fontSize="20px" />
+        ),
+        roles: [ROLES.SUPERADMIN, ROLES.ADMIN_IZIN_LAHAN],
+        showIcon: true,
+      },
+      {
+        label: "Lapak",
+        value: "land-stalls",
+        path: "/land-stalls",
+        icon: <Icon icon="solar:shop-bold-duotone" fontSize="20px" />,
+        roles: [ROLES.SUPERADMIN, ROLES.ADMIN_IZIN_LAHAN],
         showIcon: true,
       },
       {
@@ -74,10 +96,7 @@ const MENU_CONFIG = [
         value: "identity-lists",
         path: "/identity-lists",
         icon: <Icon icon="qlementine-icons:id-card-16" fontSize="20px" />,
-        roles: [
-          ROLES.SUPERADMIN,
-          ROLES.DIVISI_KONTRAK,
-        ],
+        roles: [ROLES.SUPERADMIN, ROLES.DIVISI_KONTRAK, ROLES.ADMIN_IZIN_LAHAN],
         showIcon: true,
       },
     ],
@@ -102,10 +121,7 @@ const MENU_CONFIG = [
         value: "tenant-application",
         path: "/tenant-application",
         icon: <Icon icon="hugeicons:file-edit" fontSize="20px" />,
-        roles: [
-          ROLES.SUPERADMIN,
-          ROLES.DIVISI_KONTRAK,
-        ],
+        roles: [ROLES.SUPERADMIN, ROLES.DIVISI_KONTRAK],
         showIcon: true,
       },
       {
@@ -128,10 +144,7 @@ const MENU_CONFIG = [
         value: "tenant-terminations",
         path: "/tenant-terminations",
         icon: <Icon icon="pepicons-pop:lock-closed-circle" fontSize="20px" />,
-        roles: [
-          ROLES.SUPERADMIN,
-          ROLES.DIVISI_KONTRAK,
-        ],
+        roles: [ROLES.SUPERADMIN, ROLES.DIVISI_KONTRAK],
         showIcon: true,
       },
       {

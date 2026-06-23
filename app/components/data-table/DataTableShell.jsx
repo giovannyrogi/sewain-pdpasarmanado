@@ -33,8 +33,8 @@ export default function DataTableShell({
     >
       <Stack spacing={1.5} sx={{ p: { xs: 1.5, sm: 2 } }}>
         <Stack
-          direction="row"
-          alignItems="flex-start"
+          direction={{ xs: "column", sm: "row" }}
+          alignItems={{ xs: "stretch", sm: "flex-start" }}
           justifyContent="space-between"
           spacing={1.5}
         >
@@ -62,7 +62,8 @@ export default function DataTableShell({
           {headerAction && (
             <Box
               sx={{
-                flex: "0 0 auto",
+                width: { xs: "100%", sm: "auto" },
+                flex: { xs: "1 1 auto", sm: "0 0 auto" },
                 display: "flex",
                 justifyContent: "flex-end",
                 pt: { xs: 0.15, sm: 0 },

@@ -8,7 +8,7 @@ import {
 } from "@/app/utils/apiValidation";
 import { validateLocationPayload } from "../validation";
 
-const MASTER_DATA_ROLES = [1, 2];
+const MASTER_DATA_ROLES = [1, 2, 9];
 
 // UPDATE lokasi by id
 export async function PUT(request, { params }) {
@@ -124,6 +124,27 @@ export async function DELETE(_request, { params }) {
 
       return failResponse(
         `Lokasi tidak bisa dihapus, masih terdaftar dengan ruangan: ${roomList}`,
+        409,
+      );
+    }
+
+    const checkLandSectors = await pool.query(
+      `
+      SELECT sector_name
+      FROM land_sectors
+      WHERE location_id = $1
+      ORDER BY sector_name ASC
+      `,
+      [parsedId.value],
+    );
+
+    if (checkLandSectors.rows.length > 0) {
+      const sectorList = checkLandSectors.rows
+        .map((sector) => sector.sector_name)
+        .join(", ");
+
+      return failResponse(
+        `Lokasi tidak bisa dihapus, masih terdaftar dengan sektor izin lahan: ${sectorList}`,
         409,
       );
     }

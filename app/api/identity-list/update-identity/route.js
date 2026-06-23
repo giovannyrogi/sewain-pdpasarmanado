@@ -9,7 +9,7 @@ import {
 import { prepareKtpUpload, removeKtpFile, saveKtpFile } from "../fileHelpers";
 import { validateIdentityFormData, validateIdentityId } from "../validation";
 
-const MASTER_DATA_ROLES = [1, 2];
+const MASTER_DATA_ROLES = [1, 2, 9];
 
 export async function PUT(req) {
   let uploadedPath = null;
