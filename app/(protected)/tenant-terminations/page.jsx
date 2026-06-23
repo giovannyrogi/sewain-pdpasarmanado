@@ -502,6 +502,7 @@ const TenantTerminations = () => {
       <CrudConfirmModal
         open={cancelTenantTerminationsModal}
         title="Batalkan Nonaktif Tenant"
+        titleDescription="Konfirmasi pembatalan proses nonaktif tenant"
         description={
           <>
             Proses nonaktif untuk{" "}

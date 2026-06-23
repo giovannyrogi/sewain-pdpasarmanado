@@ -431,6 +431,7 @@ export default function FloorPrices() {
       <CrudConfirmModal
         open={deleteOpen}
         title="Hapus Lantai"
+        titleDescription="Konfirmasi penghapusan data lantai"
         description={
           <>
             Lantai{" "}

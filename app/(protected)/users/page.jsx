@@ -63,10 +63,14 @@ export default function Users() {
         return;
       }
 
-      showSnackbar(response.data?.message || "Gagal mengambil data pengguna.", "error");
+      showSnackbar(
+        response.data?.message || "Gagal mengambil data pengguna.",
+        "error",
+      );
     } catch (error) {
       showSnackbar(
-        error?.response?.data?.message || "Terjadi error saat mengambil data pengguna.",
+        error?.response?.data?.message ||
+          "Terjadi error saat mengambil data pengguna.",
         "error",
       );
     } finally {
@@ -82,7 +86,8 @@ export default function Users() {
       }
     } catch (error) {
       showSnackbar(
-        error?.response?.data?.message || "Terjadi error saat mengambil data peran.",
+        error?.response?.data?.message ||
+          "Terjadi error saat mengambil data peran.",
         "error",
       );
     }
@@ -126,7 +131,9 @@ export default function Users() {
     const approvalCount = users.filter((item) =>
       APPROVAL_ROLE_IDS.has(Number(item.role_id)),
     ).length;
-    const financeCount = users.filter((item) => Number(item.role_id) === 8).length;
+    const financeCount = users.filter(
+      (item) => Number(item.role_id) === 8,
+    ).length;
 
     return [
       {
@@ -203,7 +210,10 @@ export default function Users() {
 
     if (formErrors[field]) {
       const nextErrors = validateForm(nextForm, formMode);
-      setFormErrors((current) => ({ ...current, [field]: nextErrors[field] || "" }));
+      setFormErrors((current) => ({
+        ...current,
+        [field]: nextErrors[field] || "",
+      }));
     }
   };
 
@@ -246,10 +256,14 @@ export default function Users() {
         return;
       }
 
-      showSnackbar(response.data?.message || "Gagal menyimpan pengguna.", "error");
+      showSnackbar(
+        response.data?.message || "Gagal menyimpan pengguna.",
+        "error",
+      );
     } catch (error) {
       showSnackbar(
-        error?.response?.data?.message || "Terjadi error saat menyimpan pengguna.",
+        error?.response?.data?.message ||
+          "Terjadi error saat menyimpan pengguna.",
         "error",
       );
     } finally {
@@ -272,10 +286,14 @@ export default function Users() {
         return;
       }
 
-      showSnackbar(response.data?.message || "Gagal menghapus pengguna.", "error");
+      showSnackbar(
+        response.data?.message || "Gagal menghapus pengguna.",
+        "error",
+      );
     } catch (error) {
       showSnackbar(
-        error?.response?.data?.message || "Terjadi error saat menghapus pengguna.",
+        error?.response?.data?.message ||
+          "Terjadi error saat menghapus pengguna.",
         "error",
       );
     } finally {
@@ -410,8 +428,8 @@ export default function Users() {
       <CrudConfirmModal
         open={deleteOpen}
         title="Hapus Pengguna"
-        description="Akun pengguna akan dihapus dari sistem."
-        confirmDescription="Anda yakin ingin menghapus pengguna"
+        titleDescription="Akun pengguna akan dihapus dari sistem."
+        description="Anda yakin ingin menghapus pengguna"
         highlight={selectedUser?.full_name || "-"}
         confirmLabel="Hapus Pengguna"
         loadingLabel="Menghapus pengguna..."
@@ -420,7 +438,10 @@ export default function Users() {
         onConfirm={handleDeleteUser}
       />
 
-      <LoadingBackdrop message="Loading..." open={loading && !formOpen && !deleteOpen} />
+      <LoadingBackdrop
+        message="Loading..."
+        open={loading && !formOpen && !deleteOpen}
+      />
       <Notification
         open={snackbar.open}
         message={snackbar.message}

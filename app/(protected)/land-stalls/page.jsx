@@ -1,7 +1,16 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Box, Chip, Grid, IconButton, Stack, Tooltip, Typography, useTheme } from "@mui/material";
+import {
+  Box,
+  Chip,
+  Grid,
+  IconButton,
+  Stack,
+  Tooltip,
+  Typography,
+  useTheme,
+} from "@mui/material";
 import { Tag } from "antd";
 import { Icon } from "@iconify/react";
 import axios from "axios";
@@ -67,14 +76,18 @@ export default function LandStallsPage() {
   const fetchMasterData = useCallback(async () => {
     setLoading(true);
     try {
-      const [stallResponse, locationResponse, sectorResponse] = await Promise.all([
-        axios.get("/api/land-stalls"),
-        axios.get("/api/locations"),
-        axios.get("/api/land-sectors"),
-      ]);
+      const [stallResponse, locationResponse, sectorResponse] =
+        await Promise.all([
+          axios.get("/api/land-stalls"),
+          axios.get("/api/locations"),
+          axios.get("/api/land-sectors"),
+        ]);
 
       if (!stallResponse.data?.success) {
-        showSnackbar(stallResponse.data?.message || "Gagal mengambil data lapak.", "error");
+        showSnackbar(
+          stallResponse.data?.message || "Gagal mengambil data lapak.",
+          "error",
+        );
         return;
       }
 
@@ -88,7 +101,8 @@ export default function LandStallsPage() {
       setSectors(sectorResponse.data.data || []);
     } catch (error) {
       showSnackbar(
-        error?.response?.data?.message || "Terjadi kesalahan saat mengambil data lapak.",
+        error?.response?.data?.message ||
+          "Terjadi kesalahan saat mengambil data lapak.",
         "error",
       );
     } finally {
@@ -116,7 +130,9 @@ export default function LandStallsPage() {
   }, [searchText, stalls]);
 
   const stats = useMemo(() => {
-    const available = stalls.filter((item) => item.status === "available").length;
+    const available = stalls.filter(
+      (item) => item.status === "available",
+    ).length;
     const occupied = stalls.filter((item) => item.status === "occupied").length;
     const inactive = stalls.filter((item) =>
       ["maintenance", "unavailable"].includes(item.status),
@@ -204,7 +220,8 @@ export default function LandStallsPage() {
       showSnackbar(response.data?.message || "Gagal menyimpan lapak.", "error");
     } catch (error) {
       showSnackbar(
-        error?.response?.data?.message || "Terjadi kesalahan saat menyimpan lapak.",
+        error?.response?.data?.message ||
+          "Terjadi kesalahan saat menyimpan lapak.",
         "error",
       );
     } finally {
@@ -217,7 +234,9 @@ export default function LandStallsPage() {
 
     setLoading(true);
     try {
-      const response = await axios.delete(`/api/land-stalls/${selectedStall.id}`);
+      const response = await axios.delete(
+        `/api/land-stalls/${selectedStall.id}`,
+      );
 
       if (response.data?.success) {
         showSnackbar(response.data.message || "Lapak berhasil dihapus.");
@@ -230,7 +249,8 @@ export default function LandStallsPage() {
       showSnackbar(response.data?.message || "Gagal menghapus lapak.", "error");
     } catch (error) {
       showSnackbar(
-        error?.response?.data?.message || "Terjadi kesalahan saat menghapus lapak.",
+        error?.response?.data?.message ||
+          "Terjadi kesalahan saat menghapus lapak.",
         "error",
       );
     } finally {
@@ -300,7 +320,9 @@ export default function LandStallsPage() {
               {formatNumber(record.stall_length, { maxFractionDigits: 4 })} m x{" "}
               {formatNumber(record.stall_width, { maxFractionDigits: 4 })} m
             </Typography>
-            <Typography sx={{ color: theme.ui.mutedText, fontWeight: 700, fontSize: 12 }}>
+            <Typography
+              sx={{ color: theme.ui.mutedText, fontWeight: 700, fontSize: 12 }}
+            >
               Luas {formatNumber(record.stall_area, { useGrouping: true })} m²
             </Typography>
           </Stack>
@@ -311,7 +333,8 @@ export default function LandStallsPage() {
         dataIndex: "price_per_m2",
         width: 180,
         align: "right",
-        sorter: (a, b) => Number(a.price_per_m2 || 0) - Number(b.price_per_m2 || 0),
+        sorter: (a, b) =>
+          Number(a.price_per_m2 || 0) - Number(b.price_per_m2 || 0),
         render: (value) => (
           <Typography sx={{ fontWeight: 850, fontSize: 13 }}>
             {formatRupiah(value)}
@@ -362,12 +385,20 @@ export default function LandStallsPage() {
             className="land-stall-action-buttons"
           >
             <Tooltip title="Ubah lapak">
-              <IconButton size="small" color="info" onClick={() => openEditModal(record)}>
+              <IconButton
+                size="small"
+                color="info"
+                onClick={() => openEditModal(record)}
+              >
                 <Icon icon="solar:pen-new-square-bold-duotone" />
               </IconButton>
             </Tooltip>
             <Tooltip title="Hapus lapak">
-              <IconButton size="small" color="error" onClick={() => openDeleteModal(record)}>
+              <IconButton
+                size="small"
+                color="error"
+                onClick={() => openDeleteModal(record)}
+              >
                 <Icon icon="solar:trash-bin-trash-bold-duotone" />
               </IconButton>
             </Tooltip>
@@ -389,56 +420,56 @@ export default function LandStallsPage() {
       }}
     >
       <Stack spacing={{ xs: 1.5, lg: 2 }}>
-      <PageHeader
-        breadcrumbs={[
-          { label: "Data Master", icon: "solar:database-bold-duotone" },
-          { label: "Lapak Izin Lahan", icon: "solar:shop-bold-duotone" },
-        ]}
-        title="Lapak Izin Lahan"
-        description="Kelola lapak pada setiap sektor, termasuk ukuran, harga per meter, dan status ketersediaan."
-        action={
-          <TableActionButton
-            label="Tambah Lapak"
-            icon="solar:add-circle-bold-duotone"
-            keepLabelOnMobile
-            fullWidthOnMobile
-            onClick={openCreateModal}
-          />
-        }
-        actionSx={{ width: { xs: "100%", sm: "auto" } }}
-      />
-
-      <Grid container spacing={{ xs: 1.25, md: 1.5 }}>
-        {stats.map((item) => (
-          <Grid key={item.label} size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
-            <SummaryStatCard {...item} />
-          </Grid>
-        ))}
-      </Grid>
-
-      <DataTableShell
-        title="Daftar Lapak"
-        description={`${filteredStalls.length} dari ${stalls.length} lapak ditampilkan`}
-        searchValue={searchText}
-        searchPlaceholder="Cari lapak, lokasi, sektor, status, atau catatan"
-        onSearchChange={setSearchText}
-      >
-        <ReusableAntTable
-          rowKey="id"
-          columns={columns}
-          dataSource={filteredStalls}
-          loading={loading}
-          pageSize={pageSize}
-          pageSizeOptions={PAGE_SIZE_OPTIONS}
-          onPageSizeChange={setPageSize}
-          scroll={{ x: 1540, y: 430 }}
-          fixedActionColumn={{
-            className: "land-stall-action-column",
-            buttonsClassName: "land-stall-action-buttons",
-            width: 132,
-          }}
+        <PageHeader
+          breadcrumbs={[
+            { label: "Data Master", icon: "solar:database-bold-duotone" },
+            { label: "Lapak Izin Lahan", icon: "solar:shop-bold-duotone" },
+          ]}
+          title="Lapak Izin Lahan"
+          description="Kelola lapak pada setiap sektor, termasuk ukuran, harga per meter, dan status ketersediaan."
+          action={
+            <TableActionButton
+              label="Tambah Lapak"
+              icon="solar:add-circle-bold-duotone"
+              keepLabelOnMobile
+              fullWidthOnMobile
+              onClick={openCreateModal}
+            />
+          }
+          actionSx={{ width: { xs: "100%", sm: "auto" } }}
         />
-      </DataTableShell>
+
+        <Grid container spacing={{ xs: 1.25, md: 1.5 }}>
+          {stats.map((item) => (
+            <Grid key={item.label} size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
+              <SummaryStatCard {...item} />
+            </Grid>
+          ))}
+        </Grid>
+
+        <DataTableShell
+          title="Daftar Lapak"
+          description={`${filteredStalls.length} dari ${stalls.length} lapak ditampilkan`}
+          searchValue={searchText}
+          searchPlaceholder="Cari lapak, lokasi, sektor, status, atau catatan"
+          onSearchChange={setSearchText}
+        >
+          <ReusableAntTable
+            rowKey="id"
+            columns={columns}
+            dataSource={filteredStalls}
+            loading={loading}
+            pageSize={pageSize}
+            pageSizeOptions={PAGE_SIZE_OPTIONS}
+            onPageSizeChange={setPageSize}
+            scroll={{ x: 1540, y: 430 }}
+            fixedActionColumn={{
+              className: "land-stall-action-column",
+              buttonsClassName: "land-stall-action-buttons",
+              width: 132,
+            }}
+          />
+        </DataTableShell>
       </Stack>
 
       <LandStallFormModal
@@ -455,8 +486,8 @@ export default function LandStallsPage() {
       <CrudConfirmModal
         open={deleteOpen}
         title="Hapus Lapak"
-        description="Lapak yang sudah dipakai permohonan izin lahan tidak dapat dihapus."
-        confirmDescription="Anda yakin ingin menghapus lapak"
+        titleDescription="Lapak yang sudah dipakai permohonan izin lahan tidak dapat dihapus."
+        description="Lapak yang dihapus tidak dapat digunakan lagi. Pastikan lapak ini tidak sedang dipakai pada permohonan izin lahan aktif sebelum menghapus. Anda yakin ingin menghapus lapak"
         highlight={selectedStall?.stall_number}
         confirmLabel="Hapus Lapak"
         loading={loading}
@@ -465,7 +496,10 @@ export default function LandStallsPage() {
         onConfirm={handleDeleteStall}
       />
 
-      <LoadingBackdrop open={loading && !formOpen && !deleteOpen} message="Memuat data lapak..." />
+      <LoadingBackdrop
+        open={loading && !formOpen && !deleteOpen}
+        message="Memuat data lapak..."
+      />
 
       <Notification
         open={snackbar.open}

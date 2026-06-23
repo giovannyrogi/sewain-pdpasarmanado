@@ -622,8 +622,8 @@ const Payments = () => {
       <CrudConfirmModal
         open={openDeleteModal}
         title="Hapus Bukti Pembayaran"
-        description="Konfirmasi penghapusan bukti pembayaran dari sistem."
-        confirmDescription={
+        titleDescription="Konfirmasi penghapusan bukti pembayaran dari sistem."
+        description={
           <>
             Bukti pembayaran{" "}
             <Box component="strong" sx={{ color: "text.primary", fontWeight: 700 }}>

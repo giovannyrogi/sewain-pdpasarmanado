@@ -22,7 +22,7 @@ import { Icon } from "@iconify/react";
 export default function AppModal({
   open,
   title,
-  description,
+  titleDescription,
   icon = "solar:document-text-bold-duotone",
   width = 720,
   maxHeight = "92vh",
@@ -130,7 +130,7 @@ export default function AppModal({
               >
                 {title}
               </Typography>
-              {description && (
+              {titleDescription && (
                 <Typography
                   sx={{
                     color: theme.ui?.mutedText || "text.secondary",
@@ -141,7 +141,7 @@ export default function AppModal({
                     mt: 0.35,
                   }}
                 >
-                  {description}
+                  {titleDescription}
                 </Typography>
               )}
             </Box>

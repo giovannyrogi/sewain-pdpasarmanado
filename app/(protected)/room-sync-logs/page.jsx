@@ -557,8 +557,8 @@ export default function RoomSyncLogsPage() {
       <CrudConfirmModal
         open={deleteEmptyOpen}
         title="Hapus Log Kosong"
-        description="Hanya log sinkronisasi yang tidak memiliki data dicek, tersedia kembali, dilewati, error, atau detail item yang akan dihapus."
-        confirmDescription="Anda yakin ingin menghapus seluruh log kosong?"
+        titleDescription="Hanya log sinkronisasi yang tidak memiliki data dicek, tersedia kembali, dilewati, error, atau detail item yang akan dihapus."
+        description="Anda yakin ingin menghapus seluruh log kosong?"
         highlight={`${emptyLogCount} log kosong`}
         confirmLabel="Hapus Log Kosong"
         loadingLabel="Menghapus log kosong..."

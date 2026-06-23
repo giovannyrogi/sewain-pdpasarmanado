@@ -1,14 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  Box,
-  Button,
-  Grid,
-  Stack,
-  Typography,
-  useTheme,
-} from "@mui/material";
+import { Box, Button, Grid, Stack, Typography, useTheme } from "@mui/material";
 import { Tag } from "antd";
 import { Icon } from "@iconify/react";
 import axios from "axios";
@@ -87,8 +80,7 @@ export default function IdentityList() {
   const [selectedIdentity, setSelectedIdentity] = useState(null);
   const [pageSize, setPageSize] = useState(5);
   const [snackbar, setSnackbar] = useState(getInitialSnackbar);
-  const isLandPermitAdmin =
-    Number(user?.role_id) === ADMIN_IZIN_LAHAN_ROLE_ID;
+  const isLandPermitAdmin = Number(user?.role_id) === ADMIN_IZIN_LAHAN_ROLE_ID;
   const statusField = isLandPermitAdmin ? "land_permit_status" : "status";
   const statusNotesField = isLandPermitAdmin
     ? "land_permit_status_notes"
@@ -226,14 +218,19 @@ export default function IdentityList() {
       const response = await request;
 
       if (response.data?.success) {
-        showSnackbar(response.data.message || "Data identitas berhasil disimpan.");
+        showSnackbar(
+          response.data.message || "Data identitas berhasil disimpan.",
+        );
         setFormOpen(false);
         setSelectedIdentity(null);
         await fetchIdentities();
         return;
       }
 
-      showSnackbar(response.data?.message || "Gagal menyimpan data identitas.", "error");
+      showSnackbar(
+        response.data?.message || "Gagal menyimpan data identitas.",
+        "error",
+      );
     } catch (error) {
       showSnackbar(
         error?.response?.data?.message ||
@@ -250,17 +247,24 @@ export default function IdentityList() {
 
     setLoading(true);
     try {
-      const response = await axios.delete(`/api/identity-list/${selectedIdentity.id}`);
+      const response = await axios.delete(
+        `/api/identity-list/${selectedIdentity.id}`,
+      );
 
       if (response.data?.success) {
-        showSnackbar(response.data.message || "Data identitas berhasil dihapus.");
+        showSnackbar(
+          response.data.message || "Data identitas berhasil dihapus.",
+        );
         setDeleteOpen(false);
         setSelectedIdentity(null);
         await fetchIdentities();
         return;
       }
 
-      showSnackbar(response.data?.message || "Gagal menghapus data identitas.", "error");
+      showSnackbar(
+        response.data?.message || "Gagal menghapus data identitas.",
+        "error",
+      );
     } catch (error) {
       showSnackbar(
         error?.response?.data?.message ||
@@ -293,7 +297,13 @@ export default function IdentityList() {
             <Typography sx={{ fontWeight: 900, fontSize: 13 }}>
               {record.full_name || "-"}
             </Typography>
-            <Typography sx={{ color: theme.ui.mutedText, fontWeight: 700, fontSize: 11.5 }}>
+            <Typography
+              sx={{
+                color: theme.ui.mutedText,
+                fontWeight: 700,
+                fontSize: 11.5,
+              }}
+            >
               NIK {record.nik || "-"}
             </Typography>
           </Stack>
@@ -321,7 +331,13 @@ export default function IdentityList() {
             <Typography sx={{ fontWeight: 850, fontSize: 12 }}>
               {record.occupation || "-"}
             </Typography>
-            <Typography sx={{ color: theme.ui.mutedText, fontWeight: 650, fontSize: 11.5 }}>
+            <Typography
+              sx={{
+                color: theme.ui.mutedText,
+                fontWeight: 650,
+                fontSize: 11.5,
+              }}
+            >
               {record.phone || "-"} | {record.nationality || "-"}
             </Typography>
           </Stack>
@@ -336,14 +352,21 @@ export default function IdentityList() {
             <Typography sx={{ fontWeight: 800, fontSize: 12 }}>
               {record.street_address || "-"}
             </Typography>
-            <Typography sx={{ color: theme.ui.mutedText, fontWeight: 650, fontSize: 11.5 }}>
-              {record.kelurahan || "-"}, {record.district || "-"}, {record.city || "-"}
+            <Typography
+              sx={{
+                color: theme.ui.mutedText,
+                fontWeight: 650,
+                fontSize: 11.5,
+              }}
+            >
+              {record.kelurahan || "-"}, {record.district || "-"},{" "}
+              {record.city || "-"}
             </Typography>
           </Stack>
         ),
       },
       {
-        title: isLandPermitAdmin ? "Status Izin Lahan" : "Status",
+        title: "Status",
         dataIndex: statusField,
         width: 135,
         filters: [
@@ -366,29 +389,6 @@ export default function IdentityList() {
           </Tag>
         ),
       },
-      ...(isLandPermitAdmin
-        ? [
-            {
-              title: "Pas Foto",
-              dataIndex: "profile_photo_file_path",
-              width: 130,
-              align: "center",
-              render: (value) => (
-                <Tag
-                  color={value ? "green" : "default"}
-                  style={{
-                    borderRadius: 8,
-                    fontFamily: "Poppins",
-                    fontWeight: 850,
-                    padding: "3px 10px",
-                  }}
-                >
-                  {value ? "Ada" : "Opsional"}
-                </Tag>
-              ),
-            },
-          ]
-        : []),
       {
         title: "Diperbarui",
         dataIndex: "updated_at",
@@ -566,6 +566,7 @@ export default function IdentityList() {
         open={deleteOpen}
         title="Hapus Identitas"
         description="Data identitas yang dihapus tidak dapat digunakan lagi pada transaksi baru. Anda yakin ingin menghapus"
+        titleDescription="Form untuk menghapus data identitas."
         highlight={selectedIdentity?.full_name}
         confirmLabel="Hapus Identitas"
         loadingLabel="Menghapus..."

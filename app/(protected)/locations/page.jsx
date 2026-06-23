@@ -423,6 +423,7 @@ export default function Locations() {
       <CrudConfirmModal
         open={deleteOpen}
         title="Hapus Lokasi"
+        titleDescription="Konfirmasi penghapusan data lokasi"
         description="Lokasi yang dihapus tidak dapat digunakan lagi. Anda yakin ingin menghapus"
         highlight={selectedLocation?.location_name}
         confirmLabel="Hapus Lokasi"

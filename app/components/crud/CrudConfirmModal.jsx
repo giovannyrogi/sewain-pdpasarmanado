@@ -22,7 +22,7 @@ export default function CrudConfirmModal({
   open,
   title = "Konfirmasi Aksi",
   description,
-  confirmDescription,
+  titleDescription,
   highlight,
   confirmLabel = "Lanjutkan",
   loadingLabel = "Memproses...",
@@ -40,7 +40,7 @@ export default function CrudConfirmModal({
         open={open}
         onClose={loading ? undefined : onClose}
         title={title}
-        description={description}
+        titleDescription={titleDescription}
         icon="ion:trash-outline"
         width={430}
         showCloseButton={!loading}
@@ -63,11 +63,13 @@ export default function CrudConfirmModal({
               <Icon icon="ion:trash-outline" fontSize={38} />
             </Box>
             <Box sx={{ textAlign: "center" }}>
-                <Typography sx={{ fontFamily: "Poppins", fontWeight: 700, fontSize: 21 }}>
-                  {title}
-                </Typography>
-                {(confirmDescription || description) && (
-                  <Typography
+              <Typography
+                sx={{ fontFamily: "Poppins", fontWeight: 700, fontSize: 21 }}
+              >
+                {title}
+              </Typography>
+              {description && (
+                <Typography
                   sx={{
                     mt: 0.75,
                     color: theme.ui.mutedText,
@@ -76,16 +78,19 @@ export default function CrudConfirmModal({
                     fontSize: 13,
                     lineHeight: 1.7,
                   }}
-                  >
-                    {confirmDescription || description}{" "}
-                    {highlight && (
-                      <Box component="strong" sx={{ color: "text.primary", fontWeight: 700 }}>
-                        {highlight}
-                      </Box>
-                    )}
-                  </Typography>
-                )}
-              </Box>
+                >
+                  {description}{" "}
+                  {highlight && (
+                    <Box
+                      component="strong"
+                      sx={{ color: "text.primary", fontWeight: 700 }}
+                    >
+                      {highlight}
+                    </Box>
+                  )}
+                </Typography>
+              )}
+            </Box>
           </Stack>
 
           <Divider sx={{ borderColor: theme.ui.dashboardCardBorder }} />

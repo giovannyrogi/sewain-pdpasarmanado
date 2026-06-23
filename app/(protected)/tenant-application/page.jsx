@@ -592,6 +592,7 @@ const Applications = () => {
       <CrudConfirmModal
         open={openDeleteModal}
         title="Hapus Permohonan"
+        titleDescription="Konfirmasi penghapusan permohonan dari sistem."
         description={
           <>
             Permohonan atas nama{" "}

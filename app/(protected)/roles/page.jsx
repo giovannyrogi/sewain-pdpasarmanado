@@ -555,8 +555,8 @@ export default function Roles() {
       <CrudConfirmModal
         open={deleteOpen}
         title="Hapus Peran"
-        description="Peran ini tidak dapat digunakan lagi setelah dihapus."
-        confirmDescription="Anda yakin ingin menghapus peran"
+        titleDescription="Peran ini tidak dapat digunakan lagi setelah dihapus."
+        description="Anda yakin ingin menghapus peran"
         highlight={selectedRole?.role_name || "-"}
         confirmLabel="Hapus Peran"
         loadingLabel="Menghapus peran..."

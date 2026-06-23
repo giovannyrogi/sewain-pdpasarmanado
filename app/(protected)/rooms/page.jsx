@@ -1,14 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  Box,
-  Button,
-  Grid,
-  Stack,
-  Typography,
-  useTheme,
-} from "@mui/material";
+import { Box, Button, Grid, Stack, Typography, useTheme } from "@mui/material";
 import { Tag } from "antd";
 import { Icon } from "@iconify/react";
 import axios from "axios";
@@ -616,6 +609,7 @@ export default function Rooms() {
             tidak dapat digunakan lagi setelah dihapus.
           </>
         }
+        titleDescription="Form untuk menghapus data ruangan."
         confirmLabel="Hapus Ruangan"
         loadingLabel="Menghapus..."
         loading={loading}

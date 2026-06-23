@@ -1,7 +1,16 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Box, Chip, Grid, IconButton, Stack, Tooltip, Typography, useTheme } from "@mui/material";
+import {
+  Box,
+  Chip,
+  Grid,
+  IconButton,
+  Stack,
+  Tooltip,
+  Typography,
+  useTheme,
+} from "@mui/material";
 import { Tag } from "antd";
 import { Icon } from "@iconify/react";
 import axios from "axios";
@@ -75,7 +84,8 @@ export default function LandSectorsPage() {
       setLocations(locationResponse.data.data || []);
     } catch (error) {
       showSnackbar(
-        error?.response?.data?.message || "Terjadi kesalahan saat mengambil data sektor.",
+        error?.response?.data?.message ||
+          "Terjadi kesalahan saat mengambil data sektor.",
         "error",
       );
     } finally {
@@ -103,8 +113,12 @@ export default function LandSectorsPage() {
   }, [searchText, sectors]);
 
   const stats = useMemo(() => {
-    const activeCount = sectors.filter((item) => item.status === "active").length;
-    const inactiveCount = sectors.filter((item) => item.status === "inactive").length;
+    const activeCount = sectors.filter(
+      (item) => item.status === "active",
+    ).length;
+    const inactiveCount = sectors.filter(
+      (item) => item.status === "inactive",
+    ).length;
     const availableStalls = sectors.reduce(
       (total, item) => total + Number(item.available_stall_count || 0),
       0,
@@ -179,10 +193,14 @@ export default function LandSectorsPage() {
         return;
       }
 
-      showSnackbar(response.data?.message || "Gagal menyimpan sektor.", "error");
+      showSnackbar(
+        response.data?.message || "Gagal menyimpan sektor.",
+        "error",
+      );
     } catch (error) {
       showSnackbar(
-        error?.response?.data?.message || "Terjadi kesalahan saat menyimpan sektor.",
+        error?.response?.data?.message ||
+          "Terjadi kesalahan saat menyimpan sektor.",
         "error",
       );
     } finally {
@@ -195,7 +213,9 @@ export default function LandSectorsPage() {
 
     setLoading(true);
     try {
-      const response = await axios.delete(`/api/land-sectors/${selectedSector.id}`);
+      const response = await axios.delete(
+        `/api/land-sectors/${selectedSector.id}`,
+      );
 
       if (response.data?.success) {
         showSnackbar(response.data.message || "Sektor berhasil dihapus.");
@@ -205,10 +225,14 @@ export default function LandSectorsPage() {
         return;
       }
 
-      showSnackbar(response.data?.message || "Gagal menghapus sektor.", "error");
+      showSnackbar(
+        response.data?.message || "Gagal menghapus sektor.",
+        "error",
+      );
     } catch (error) {
       showSnackbar(
-        error?.response?.data?.message || "Terjadi kesalahan saat menghapus sektor.",
+        error?.response?.data?.message ||
+          "Terjadi kesalahan saat menghapus sektor.",
         "error",
       );
     } finally {
@@ -276,7 +300,9 @@ export default function LandSectorsPage() {
             <Typography sx={{ fontWeight: 800, fontSize: 13 }}>
               {record.available_stall_count || 0} tersedia
             </Typography>
-            <Typography sx={{ color: theme.ui.mutedText, fontWeight: 650, fontSize: 12 }}>
+            <Typography
+              sx={{ color: theme.ui.mutedText, fontWeight: 650, fontSize: 12 }}
+            >
               Total {record.stall_count || 0} lapak terdaftar
             </Typography>
           </Stack>
@@ -304,7 +330,9 @@ export default function LandSectorsPage() {
         dataIndex: "updated_at",
         width: 180,
         render: (value) => (
-          <Typography sx={{ color: theme.ui.mutedText, fontWeight: 700, fontSize: 12 }}>
+          <Typography
+            sx={{ color: theme.ui.mutedText, fontWeight: 700, fontSize: 12 }}
+          >
             {value || "-"}
           </Typography>
         ),
@@ -323,12 +351,20 @@ export default function LandSectorsPage() {
             className="land-sector-action-buttons"
           >
             <Tooltip title="Ubah sektor">
-              <IconButton size="small" color="info" onClick={() => openEditModal(record)}>
+              <IconButton
+                size="small"
+                color="info"
+                onClick={() => openEditModal(record)}
+              >
                 <Icon icon="solar:pen-new-square-bold-duotone" />
               </IconButton>
             </Tooltip>
             <Tooltip title="Hapus sektor">
-              <IconButton size="small" color="error" onClick={() => openDeleteModal(record)}>
+              <IconButton
+                size="small"
+                color="error"
+                onClick={() => openDeleteModal(record)}
+              >
                 <Icon icon="solar:trash-bin-trash-bold-duotone" />
               </IconButton>
             </Tooltip>
@@ -350,56 +386,59 @@ export default function LandSectorsPage() {
       }}
     >
       <Stack spacing={{ xs: 1.5, lg: 2 }}>
-      <PageHeader
-        breadcrumbs={[
-          { label: "Data Master", icon: "solar:database-bold-duotone" },
-          { label: "Sektor Izin Lahan", icon: "solar:map-arrow-square-bold-duotone" },
-        ]}
-        title="Sektor Izin Lahan"
-        description="Kelola sektor di setiap lokasi sebagai dasar pengelompokan lapak izin lahan."
-        action={
-          <TableActionButton
-            label="Tambah Sektor"
-            icon="solar:add-circle-bold-duotone"
-            keepLabelOnMobile
-            fullWidthOnMobile
-            onClick={openCreateModal}
-          />
-        }
-        actionSx={{ width: { xs: "100%", sm: "auto" } }}
-      />
-
-      <Grid container spacing={{ xs: 1.25, md: 1.5 }}>
-        {stats.map((item) => (
-          <Grid key={item.label} size={{ xs: 12, sm: 6, lg: 3 }}>
-            <SummaryStatCard {...item} />
-          </Grid>
-        ))}
-      </Grid>
-
-      <DataTableShell
-        title="Daftar Sektor"
-        description={`${filteredSectors.length} dari ${sectors.length} sektor ditampilkan`}
-        searchValue={searchText}
-        searchPlaceholder="Cari sektor, kode, lokasi, atau deskripsi"
-        onSearchChange={setSearchText}
-      >
-        <ReusableAntTable
-          rowKey="id"
-          columns={columns}
-          dataSource={filteredSectors}
-          loading={loading}
-          pageSize={pageSize}
-          pageSizeOptions={PAGE_SIZE_OPTIONS}
-          onPageSizeChange={setPageSize}
-          scroll={{ x: 1260, y: 430 }}
-          fixedActionColumn={{
-            className: "land-sector-action-column",
-            buttonsClassName: "land-sector-action-buttons",
-            width: 132,
-          }}
+        <PageHeader
+          breadcrumbs={[
+            { label: "Data Master", icon: "solar:database-bold-duotone" },
+            {
+              label: "Sektor Izin Lahan",
+              icon: "solar:map-arrow-square-bold-duotone",
+            },
+          ]}
+          title="Sektor Izin Lahan"
+          description="Kelola sektor di setiap lokasi sebagai dasar pengelompokan lapak izin lahan."
+          action={
+            <TableActionButton
+              label="Tambah Sektor"
+              icon="solar:add-circle-bold-duotone"
+              keepLabelOnMobile
+              fullWidthOnMobile
+              onClick={openCreateModal}
+            />
+          }
+          actionSx={{ width: { xs: "100%", sm: "auto" } }}
         />
-      </DataTableShell>
+
+        <Grid container spacing={{ xs: 1.25, md: 1.5 }}>
+          {stats.map((item) => (
+            <Grid key={item.label} size={{ xs: 12, sm: 6, lg: 3 }}>
+              <SummaryStatCard {...item} />
+            </Grid>
+          ))}
+        </Grid>
+
+        <DataTableShell
+          title="Daftar Sektor"
+          description={`${filteredSectors.length} dari ${sectors.length} sektor ditampilkan`}
+          searchValue={searchText}
+          searchPlaceholder="Cari sektor, kode, lokasi, atau deskripsi"
+          onSearchChange={setSearchText}
+        >
+          <ReusableAntTable
+            rowKey="id"
+            columns={columns}
+            dataSource={filteredSectors}
+            loading={loading}
+            pageSize={pageSize}
+            pageSizeOptions={PAGE_SIZE_OPTIONS}
+            onPageSizeChange={setPageSize}
+            scroll={{ x: 1260, y: 430 }}
+            fixedActionColumn={{
+              className: "land-sector-action-column",
+              buttonsClassName: "land-sector-action-buttons",
+              width: 132,
+            }}
+          />
+        </DataTableShell>
       </Stack>
 
       <LandSectorFormModal
@@ -415,8 +454,8 @@ export default function LandSectorsPage() {
       <CrudConfirmModal
         open={deleteOpen}
         title="Hapus Sektor"
-        description="Sektor yang sudah memiliki lapak tidak dapat dihapus."
-        confirmDescription="Anda yakin ingin menghapus sektor"
+        titleDescription="Sektor yang sudah memiliki lapak tidak dapat dihapus."
+        description="Sektor yang dihapus tidak dapat digunakan lagi. Pastikan tidak ada lapak aktif di sektor ini sebelum menghapus."
         highlight={selectedSector?.sector_name}
         confirmLabel="Hapus Sektor"
         loading={loading}
@@ -425,7 +464,10 @@ export default function LandSectorsPage() {
         onConfirm={handleDeleteSector}
       />
 
-      <LoadingBackdrop open={loading && !formOpen && !deleteOpen} message="Memuat data sektor..." />
+      <LoadingBackdrop
+        open={loading && !formOpen && !deleteOpen}
+        message="Memuat data sektor..."
+      />
 
       <Notification
         open={snackbar.open}
