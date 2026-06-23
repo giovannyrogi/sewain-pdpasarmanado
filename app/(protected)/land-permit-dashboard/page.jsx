@@ -7,7 +7,6 @@ import LoadingBackdrop from "@/app/components/loading/Backdrop";
 import Notification from "@/app/components/Notification";
 import PageHeader from "@/app/components/page-header/PageHeader";
 import SummaryStatCard from "@/app/components/stats/SummaryStatCard";
-import formatRupiah from "@/app/components/formatrupiah/page";
 
 const getInitialSnackbar = () => ({
   open: false,
@@ -72,9 +71,6 @@ export default function LandPermitDashboardPage() {
   const summary = useMemo(() => {
     const availableStalls = stalls.filter((item) => item.status === "available").length;
     const occupiedStalls = stalls.filter((item) => item.status === "occupied").length;
-    const availableAnnualEstimate = stalls
-      .filter((item) => item.status === "available")
-      .reduce((total, item) => total + Number(item.annual_land_rent || 0), 0);
 
     return [
       {
@@ -100,13 +96,6 @@ export default function LandPermitDashboardPage() {
         value: occupiedStalls,
         icon: "solar:lock-keyhole-bold-duotone",
         color: theme.palette.warning.main,
-      },
-      {
-        label: "Estimasi Lapak Tersedia",
-        value: formatRupiah(availableAnnualEstimate),
-        icon: "solar:wallet-money-bold-duotone",
-        color: theme.palette.info.main,
-        valueSx: { fontSize: { xs: 19, sm: 22 }, lineHeight: 1.2 },
       },
     ];
   }, [locations.length, sectors.length, stalls, theme]);

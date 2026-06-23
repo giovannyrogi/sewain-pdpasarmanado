@@ -233,7 +233,19 @@ export default function SidebarContent({
         Navigasi
       </Typography>
 
-      <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto", pr: 0.5 }}>
+      <Box
+        sx={{
+          flex: 1,
+          minHeight: 0,
+          overflowY: "auto",
+          pr: 0.5,
+          scrollbarWidth: "none",
+          msOverflowStyle: "none",
+          "&::-webkit-scrollbar": {
+            display: "none",
+          },
+        }}
+      >
         <List disablePadding>
           {menus
             .filter((menu) => !menu.hidden)

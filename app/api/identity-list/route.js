@@ -97,7 +97,10 @@ export async function POST(req) {
     let preparedProfilePhoto = { profile_photo_file_path: null };
 
     if (isLandPermitAdmin) {
-      const landPermitValidation = validateLandPermitIdentityFormData(formData);
+      const landPermitValidation = validateLandPermitIdentityFormData(
+        formData,
+        { requireProfilePhoto: true },
+      );
       if (landPermitValidation.error) {
         return failResponse(landPermitValidation.error, 400);
       }

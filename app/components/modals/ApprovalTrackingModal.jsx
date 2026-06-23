@@ -36,6 +36,15 @@ const TRACKING_CONFIG = {
     endpoint: "/api/payment-approval/",
     getEntityId: (data) => data?.payments?.payment_id || data?.payment_id,
   },
+  landPermit: {
+    title: "Progress Approval Izin Lahan",
+    description: "Riwayat tahapan persetujuan permohonan izin lahan.",
+    icon: "ph:seal-check-duotone",
+    loadingMessage: "Memperbarui data Approval Izin Lahan...",
+    waitingLabel: "Menunggu Persetujuan",
+    endpoint: "/api/land-permit-approval/",
+    getEntityId: (data) => data?.land_permit_application_id || data?.id,
+  },
 };
 
 const getStatusMeta = (status, theme) => {
@@ -156,7 +165,7 @@ export default function ApprovalTrackingModal({
       open={open}
       onClose={onClose}
       title={config.title}
-      description={config.description}
+      titleDescription={config.description}
       icon={config.icon}
       width={620}
     >

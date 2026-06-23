@@ -21,7 +21,7 @@ const MENU_CONFIG = [
     ],
   },
   {
-    label: "Dashboard Izin Lahan",
+    label: "Dashboard",
     value: "land-permit-dashboard",
     path: "/land-permit-dashboard",
     icon: <Icon icon="solar:shop-2-bold-duotone" fontSize="20px" />,
@@ -114,8 +114,17 @@ const MENU_CONFIG = [
       ROLES.DIREKTUR_BISNIS,
       ROLES.DIREKTUR_UTAMA,
       ROLES.DIVISI_KEUANGAN,
+      ROLES.ADMIN_IZIN_LAHAN,
     ],
     submenu: [
+      {
+        label: "Permohonan Izin Lahan",
+        value: "land-permit-applications",
+        path: "/land-permit-applications",
+        icon: <Icon icon="solar:document-add-bold-duotone" fontSize="20px" />,
+        roles: [ROLES.SUPERADMIN, ROLES.ADMIN_IZIN_LAHAN],
+        showIcon: true,
+      },
       {
         label: "Permohonan Sewa",
         value: "tenant-application",

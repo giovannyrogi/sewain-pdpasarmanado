@@ -22,7 +22,7 @@ export default function TerminationReasonModal({ open, onClose, selectedData }) 
       open={open}
       onClose={onClose}
       title="Alasan Non-Aktif Tenant"
-      description="Ringkasan alasan dan dokumen pendukung permintaan non-aktif kontrak."
+      titleDescription="Ringkasan alasan dan dokumen pendukung permintaan non-aktif kontrak."
       icon="solar:document-text-bold-duotone"
       width={620}
       contentSx={{ position: "relative" }}

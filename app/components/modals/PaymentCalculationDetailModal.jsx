@@ -197,7 +197,7 @@ export default function PaymentCalculationDetailModal({
       open={open}
       onClose={onClose}
       title="Rincian Biaya"
-      description="Ringkasan harga sewa, PPN, iuran administrasi, dan skema pembayaran."
+      titleDescription="Ringkasan harga sewa, PPN, iuran administrasi, dan skema pembayaran."
       icon="solar:wallet-money-bold-duotone"
       width={760}
     >

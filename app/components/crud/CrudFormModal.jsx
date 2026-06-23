@@ -38,7 +38,7 @@ export default function CrudFormModal({
       <AppModal
         open={open}
         title={title}
-        description={description}
+        titleDescription={description}
         icon={icon}
         width={width}
         onClose={loading ? undefined : onClose}

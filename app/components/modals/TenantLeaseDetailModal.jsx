@@ -292,7 +292,7 @@ export default function TenantLeaseDetailModal({
         open={open}
         onClose={approving ? undefined : onClose}
         title="Detail Data Pemohon"
-        description="Informasi pemohon, ruangan, masa kontrak, dan rincian pembayaran."
+        titleDescription="Informasi pemohon, ruangan, masa kontrak, dan rincian pembayaran."
         icon="solar:user-id-bold-duotone"
         width={980}
         contentSx={{ position: "relative" }}

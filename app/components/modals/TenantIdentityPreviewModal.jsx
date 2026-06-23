@@ -211,7 +211,7 @@ export default function TenantIdentityPreviewModal({
         open={open}
         onClose={onClose}
         title="Informasi Identitas Penyewa"
-        description={
+        titleDescription={
           showLandPermitFields
             ? "Data utama penyewa, alamat domisili, status izin lahan, KTP, dan pas foto."
             : "Data utama penyewa, alamat domisili, status, dan dokumen KTP."

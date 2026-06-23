@@ -21,7 +21,6 @@ const mapLandStallRow = (row) => ({
   stall_width: row.stall_width,
   stall_area: row.stall_area,
   price_per_m2: row.price_per_m2,
-  annual_land_rent: Number(row.stall_area || 0) * Number(row.price_per_m2 || 0),
   status: row.status,
   notes: row.notes,
   updated_at: row.updated_at

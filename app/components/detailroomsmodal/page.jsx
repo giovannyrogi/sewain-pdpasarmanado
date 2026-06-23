@@ -89,7 +89,7 @@ const DetailRoomsModal = ({ open, onClose, selectedDataRooms }) => {
       open={open}
       onClose={onClose}
       title="Detail Informasi Ruangan"
-      description="Nomor, ukuran, lantai, dan estimasi harga sewa ruangan per tahun."
+      titleDescription="Nomor, ukuran, lantai, dan estimasi harga sewa ruangan per tahun."
       icon="cil:room"
       width={620}
     >

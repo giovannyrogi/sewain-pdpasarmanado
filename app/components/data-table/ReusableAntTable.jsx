@@ -99,13 +99,13 @@ export default function ReusableAntTable({
     "--reusable-fixed-header-bg":
       muiTheme.palette.mode === "dark" ? "#1c1c1c" : "#f8f9fb",
     "--reusable-fixed-hover-bg":
-      muiTheme.palette.mode === "dark" ? "#2b2317" : "#fff6f6",
+      muiTheme.palette.mode === "dark" ? "#181818" : "#f5f6f8",
     "--reusable-fixed-total-bg":
       muiTheme.palette.mode === "dark" ? "#21190c" : "#fff3f3",
     "--reusable-row-bg":
       muiTheme.palette.mode === "dark" ? "#111111" : "#ffffff",
     "--reusable-row-hover-bg":
-      muiTheme.palette.mode === "dark" ? "#2b2317" : "#fff6f6",
+      muiTheme.palette.mode === "dark" ? "#181818" : "#f5f6f8",
     /**
      * AntD memakai layer sticky terpisah untuk fixed column. Semua cell table
      * dibuat punya background solid agar teks dari kolom yang sedang discroll
@@ -188,7 +188,7 @@ export default function ReusableAntTable({
         "--reusable-action-header-bg":
           muiTheme.palette.mode === "dark" ? "#1c1c1c" : "#f8f9fb",
         "--reusable-action-hover-bg":
-          muiTheme.palette.mode === "dark" ? "#2b2317" : "#fff6f6",
+          muiTheme.palette.mode === "dark" ? "#181818" : "#f5f6f8",
         /**
          * Fixed column Ant Design berada di layer sticky terpisah.
          * Background solid wajib dipasang supaya data kolom lain tidak
@@ -299,8 +299,8 @@ export default function ReusableAntTable({
                 : "rgba(17,24,39,0.035)",
             rowHoverBg:
               muiTheme.palette.mode === "dark"
-                ? "rgba(255,152,0,0.08)"
-                : "rgba(230,9,9,0.05)",
+                ? "rgba(255,255,255,0.045)"
+                : "rgba(17,24,39,0.035)",
           },
         },
       }}

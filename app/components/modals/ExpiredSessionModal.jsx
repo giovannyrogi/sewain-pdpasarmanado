@@ -23,7 +23,7 @@ export default function ExpiredSessionModal({ open, counter = 0 }) {
     <AppModal
       open={open}
       title="Sesi Login Berakhir"
-      description="Demi keamanan akun, Anda harus login kembali."
+      titleDescription="Demi keamanan akun, Anda harus login kembali."
       icon="solar:shield-warning-bold-duotone"
       width={480}
       showCloseButton={false}

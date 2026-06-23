@@ -39,7 +39,7 @@ export default function RejectReasonModal({
       open={open}
       onClose={loading ? undefined : onClose}
       title={title}
-      description={description}
+      titleDescription={description}
       icon="solar:close-circle-bold-duotone"
       width={520}
       showCloseButton={!loading}

@@ -77,6 +77,26 @@ const toDigits = (value, maxLength) =>
     .replace(/[^0-9]/g, "")
     .slice(0, maxLength);
 
+const uploadActionTextSx = {
+  display: { xs: "inline", sm: "none" },
+  fontSize: 13,
+  fontWeight: 850,
+  lineHeight: 1,
+};
+
+const getUploadActionButtonSx = (options = {}) => ({
+  width: { xs: "100%", sm: "auto" },
+  minWidth: { xs: "100%", sm: 40 },
+  height: { sm: 40 },
+  px: { xs: 2, sm: 0 },
+  ...(options.minWidth ? { minWidth: { xs: "100%", sm: options.minWidth } } : {}),
+  "& .MuiButton-startIcon": {
+    ml: 0,
+    mr: { xs: 1, sm: 0 },
+  },
+  ...(options.sx || {}),
+});
+
 /**
  * Modal form identitas penyewa.
  * Parent mengatur request API, sedangkan komponen ini hanya mengelola field,
@@ -261,6 +281,7 @@ export default function IdentityFormModal({
       ktpFile: file,
       ktpFilePath: URL.createObjectURL(file),
     }));
+    event.target.value = "";
   };
 
   const handleProfilePhotoChange = (event) => {
@@ -293,6 +314,23 @@ export default function IdentityFormModal({
       profilePhotoFile: file,
       profilePhotoFilePath: URL.createObjectURL(file),
     }));
+    event.target.value = "";
+  };
+
+  const clearKtpFile = () => {
+    setForm((current) => ({
+      ...current,
+      ktpFile: null,
+      ktpFilePath: "",
+    }));
+  };
+
+  const clearProfilePhotoFile = () => {
+    setForm((current) => ({
+      ...current,
+      profilePhotoFile: null,
+      profilePhotoFilePath: "",
+    }));
   };
 
   const openImagePreview = (url, alt) => {
@@ -302,6 +340,24 @@ export default function IdentityFormModal({
 
   const handleSubmit = (event) => {
     event.preventDefault();
+
+    if (!form.ktpFilePath) {
+      onNotify?.({
+        open: true,
+        message: "Silakan upload foto KTP.",
+        severity: "error",
+      });
+      return;
+    }
+
+    if (isLandPermitContext && !form.profilePhotoFilePath) {
+      onNotify?.({
+        open: true,
+        message: "Pas foto wajib diupload untuk Admin Izin Lahan.",
+        severity: "error",
+      });
+      return;
+    }
 
     const formData = new FormData();
     if (mode === "edit" && initialData?.id) {
@@ -685,9 +741,9 @@ export default function IdentityFormModal({
                         openImagePreview(ktpPreviewUrl, "Preview KTP")
                       }
                       startIcon={<Icon icon="solar:eye-bold-duotone" />}
+                      title="Lihat KTP"
                       sx={{
-                        width: { xs: "100%", sm: "auto" },
-                        minWidth: { sm: 106 },
+                        ...getUploadActionButtonSx(),
                         color: theme.palette.text.primary,
                         borderColor: theme.ui.dashboardCardBorder,
                         bgcolor:
@@ -703,7 +759,9 @@ export default function IdentityFormModal({
                         },
                       }}
                     >
-                      Lihat KTP
+                      <Box component="span" sx={uploadActionTextSx}>
+                        Lihat KTP
+                      </Box>
                     </Button>
                   )}
                   <Button
@@ -713,9 +771,9 @@ export default function IdentityFormModal({
                     component="label"
                     disabled={loading}
                     startIcon={<Icon icon="solar:upload-bold-duotone" />}
+                    title={form.ktpFilePath ? "Ganti KTP" : "Upload KTP"}
                     sx={{
-                      width: { xs: "100%", sm: "auto" },
-                      minWidth: { sm: 112 },
+                      ...getUploadActionButtonSx(),
                       ...(form.ktpFilePath && {
                         borderColor:
                           theme.palette.mode === "dark"
@@ -738,7 +796,9 @@ export default function IdentityFormModal({
                       }),
                     }}
                   >
-                    {form.ktpFilePath ? "Ganti KTP" : "Upload KTP"}
+                    <Box component="span" sx={uploadActionTextSx}>
+                      {form.ktpFilePath ? "Ganti KTP" : "Upload KTP"}
+                    </Box>
                     <input
                       type="file"
                       accept="image/jpeg,image/png"
@@ -752,19 +812,13 @@ export default function IdentityFormModal({
                       disabled={loading}
                       color="error"
                       variant="contained"
-                      onClick={() =>
-                        setForm((current) => ({
-                          ...current,
-                          ktpFile: null,
-                          ktpFilePath: "",
-                        }))
-                      }
+                      onClick={clearKtpFile}
                       startIcon={
                         <Icon icon="solar:trash-bin-trash-bold-duotone" />
                       }
+                      title="Hapus KTP"
                       sx={{
-                        width: { xs: "100%", sm: "auto" },
-                        minWidth: { sm: 96 },
+                        ...getUploadActionButtonSx(),
                         bgcolor: theme.palette.error.main,
                         boxShadow: "none",
                         "&:hover": {
@@ -775,7 +829,9 @@ export default function IdentityFormModal({
                         },
                       }}
                     >
-                      Hapus
+                      <Box component="span" sx={uploadActionTextSx}>
+                        Hapus
+                      </Box>
                     </Button>
                   )}
                 </Stack>
@@ -866,8 +922,7 @@ export default function IdentityFormModal({
                           lineHeight: 1.45,
                         }}
                       >
-                        Opsional untuk dokumen izin lahan dan kartu pedagang. JPG/PNG,
-                        maksimal 5MB.
+                        Wajib untuk Admin Izin Lahan. JPG/PNG, maksimal 5MB.
                       </Typography>
                     </Box>
                   </Stack>
@@ -897,18 +952,20 @@ export default function IdentityFormModal({
                           )
                         }
                         startIcon={<Icon icon="solar:eye-bold-duotone" />}
+                        title="Lihat Foto"
                         sx={{
-                          width: { xs: "100%", sm: "auto" },
-                          minWidth: { sm: 116 },
+                          ...getUploadActionButtonSx(),
                           color: theme.palette.text.primary,
                           borderColor: theme.ui.dashboardCardBorder,
                           bgcolor:
                             theme.palette.mode === "dark"
                               ? "rgba(255,255,255,0.08)"
-                              : "rgba(17,24,39,0.055)",
+                            : "rgba(17,24,39,0.055)",
                         }}
                       >
-                        Lihat Foto
+                        <Box component="span" sx={uploadActionTextSx}>
+                          Lihat Foto
+                        </Box>
                       </Button>
                     )}
                     <Button
@@ -918,12 +975,18 @@ export default function IdentityFormModal({
                       component="label"
                       disabled={loading}
                       startIcon={<Icon icon="solar:upload-bold-duotone" />}
+                      title={
+                        form.profilePhotoFilePath
+                          ? "Ganti Foto"
+                          : "Upload Pas Foto"
+                      }
                       sx={{
-                        width: { xs: "100%", sm: "auto" },
-                        minWidth: { sm: 128 },
+                        ...getUploadActionButtonSx(),
                       }}
                     >
-                      {form.profilePhotoFilePath ? "Ganti Foto" : "Upload Pas Foto"}
+                      <Box component="span" sx={uploadActionTextSx}>
+                        {form.profilePhotoFilePath ? "Ganti Foto" : "Upload Pas Foto"}
+                      </Box>
                       <input
                         type="file"
                         accept="image/jpeg,image/png"
@@ -931,6 +994,34 @@ export default function IdentityFormModal({
                         onChange={handleProfilePhotoChange}
                       />
                     </Button>
+                    {form.profilePhotoFilePath && (
+                      <Button
+                        size="small"
+                        disabled={loading}
+                        color="error"
+                        variant="contained"
+                        onClick={clearProfilePhotoFile}
+                        startIcon={
+                          <Icon icon="solar:trash-bin-trash-bold-duotone" />
+                        }
+                        title="Hapus Foto"
+                        sx={{
+                          ...getUploadActionButtonSx(),
+                          bgcolor: theme.palette.error.main,
+                          boxShadow: "none",
+                          "&:hover": {
+                            bgcolor:
+                              theme.palette.error.dark ||
+                              theme.palette.error.main,
+                            boxShadow: "none",
+                          },
+                        }}
+                      >
+                        <Box component="span" sx={uploadActionTextSx}>
+                          Hapus
+                        </Box>
+                      </Button>
+                    )}
                   </Stack>
                 </Stack>
               </Box>

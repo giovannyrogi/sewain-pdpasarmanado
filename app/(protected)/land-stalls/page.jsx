@@ -3,15 +3,13 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Box,
+  Button,
   Chip,
   Grid,
-  IconButton,
   Stack,
-  Tooltip,
   Typography,
   useTheme,
 } from "@mui/material";
-import { Tag } from "antd";
 import { Icon } from "@iconify/react";
 import axios from "axios";
 import LoadingBackdrop from "@/app/components/loading/Backdrop";
@@ -25,8 +23,10 @@ import SummaryStatCard from "@/app/components/stats/SummaryStatCard";
 import formatRupiah from "@/app/components/formatrupiah/page";
 import { formatNumber } from "@/app/utils/formatNumber";
 import LandStallFormModal from "./LandStallFormModal";
+import LandStallNotesModal from "./LandStallNotesModal";
 
 const PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
+const ACTION_COLUMN_WIDTH = 136;
 
 const normalizeText = (value) => String(value || "").toLowerCase();
 
@@ -43,11 +43,41 @@ const statusLabel = {
   unavailable: "Tidak Layak",
 };
 
-const statusColor = {
+const statusTone = {
   available: "success",
-  occupied: "processing",
+  occupied: "info",
   maintenance: "warning",
   unavailable: "error",
+};
+
+const getStatusChipSx = (theme, status) => {
+  const colorKey = statusTone[status] || "text";
+  const mainColor =
+    colorKey === "text"
+      ? theme.palette.text.secondary
+      : theme.palette[colorKey].main;
+
+  return {
+    alignSelf: "flex-start",
+    width: "fit-content",
+    maxWidth: "100%",
+    height: 22,
+    borderRadius: 1.25,
+    color: mainColor,
+    bgcolor:
+      theme.palette.mode === "dark"
+        ? `${mainColor}24`
+        : `${mainColor}18`,
+    border: `1px solid ${mainColor}33`,
+    "& .MuiChip-label": {
+      px: 1,
+      fontSize: 11.5,
+      fontWeight: 700,
+      overflow: "hidden",
+      textOverflow: "ellipsis",
+      whiteSpace: "nowrap",
+    },
+  };
 };
 
 /**
@@ -65,6 +95,7 @@ export default function LandStallsPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [formMode, setFormMode] = useState("create");
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [notesOpen, setNotesOpen] = useState(false);
   const [selectedStall, setSelectedStall] = useState(null);
   const [pageSize, setPageSize] = useState(5);
   const [snackbar, setSnackbar] = useState(getInitialSnackbar);
@@ -137,10 +168,6 @@ export default function LandStallsPage() {
     const inactive = stalls.filter((item) =>
       ["maintenance", "unavailable"].includes(item.status),
     ).length;
-    const totalAnnualRent = stalls
-      .filter((item) => item.status === "available")
-      .reduce((total, item) => total + Number(item.annual_land_rent || 0), 0);
-
     return [
       {
         label: "Total Lapak",
@@ -159,13 +186,6 @@ export default function LandStallsPage() {
         value: occupied,
         icon: "solar:lock-keyhole-bold-duotone",
         color: theme.palette.warning.main,
-      },
-      {
-        label: "Estimasi Tersedia",
-        value: formatRupiah(totalAnnualRent),
-        icon: "solar:wallet-money-bold-duotone",
-        color: theme.palette.info.main,
-        valueSx: { fontSize: { xs: 19, sm: 22 }, lineHeight: 1.2 },
       },
       {
         label: "Perlu Tindakan",
@@ -191,6 +211,11 @@ export default function LandStallsPage() {
   const openDeleteModal = (record) => {
     setSelectedStall(record);
     setDeleteOpen(true);
+  };
+
+  const openNotesModal = (record) => {
+    setSelectedStall(record);
+    setNotesOpen(true);
   };
 
   const closeFormModal = () => {
@@ -274,12 +299,14 @@ export default function LandStallsPage() {
         sorter: (a, b) => a.stall_number.localeCompare(b.stall_number),
         render: (_, record) => (
           <Stack spacing={0.6}>
-            <Typography sx={{ fontWeight: 850, fontSize: 13 }}>
+            <Typography sx={{ fontWeight: 700, fontSize: 13 }}>
               Lapak {record.stall_number}
             </Typography>
-            <Tag color={statusColor[record.status] || "default"}>
-              {statusLabel[record.status] || record.status}
-            </Tag>
+            <Chip
+              size="small"
+              label={statusLabel[record.status] || record.status || "-"}
+              sx={getStatusChipSx(theme, record.status)}
+            />
           </Stack>
         ),
       },
@@ -289,7 +316,7 @@ export default function LandStallsPage() {
         width: 280,
         render: (_, record) => (
           <Stack spacing={0.75}>
-            <Typography sx={{ fontWeight: 850, fontSize: 13 }}>
+            <Typography sx={{ fontWeight: 700, fontSize: 13 }}>
               {record.location_name || "-"}
             </Typography>
             <Chip
@@ -299,7 +326,7 @@ export default function LandStallsPage() {
                 width: "fit-content",
                 height: 22,
                 borderRadius: 1.25,
-                fontWeight: 750,
+                fontWeight: 700,
                 color: theme.palette.primary.main,
                 bgcolor:
                   theme.palette.mode === "dark"
@@ -316,7 +343,7 @@ export default function LandStallsPage() {
         width: 240,
         render: (_, record) => (
           <Stack spacing={0.35}>
-            <Typography sx={{ fontWeight: 800, fontSize: 13 }}>
+            <Typography sx={{ fontWeight: 700, fontSize: 13 }}>
               {formatNumber(record.stall_length, { maxFractionDigits: 4 })} m x{" "}
               {formatNumber(record.stall_width, { maxFractionDigits: 4 })} m
             </Typography>
@@ -336,20 +363,7 @@ export default function LandStallsPage() {
         sorter: (a, b) =>
           Number(a.price_per_m2 || 0) - Number(b.price_per_m2 || 0),
         render: (value) => (
-          <Typography sx={{ fontWeight: 850, fontSize: 13 }}>
-            {formatRupiah(value)}
-          </Typography>
-        ),
-      },
-      {
-        title: "Estimasi / Tahun",
-        dataIndex: "annual_land_rent",
-        width: 190,
-        align: "right",
-        sorter: (a, b) =>
-          Number(a.annual_land_rent || 0) - Number(b.annual_land_rent || 0),
-        render: (value) => (
-          <Typography sx={{ fontWeight: 850, fontSize: 13 }}>
+          <Typography sx={{ fontWeight: 700, fontSize: 13 }}>
             {formatRupiah(value)}
           </Typography>
         ),
@@ -357,52 +371,74 @@ export default function LandStallsPage() {
       {
         title: "Catatan",
         dataIndex: "notes",
-        width: 300,
-        render: (value) => (
-          <Typography
-            sx={{
-              color: value ? "text.primary" : theme.ui.mutedText,
-              fontWeight: 650,
-              fontSize: 12.5,
-              whiteSpace: "normal",
-            }}
-          >
-            {value || "Tidak ada catatan."}
-          </Typography>
-        ),
+        width: 150,
+        render: (_, record) => {
+          const hasNotes = Boolean(String(record.notes || "").trim());
+
+          return (
+            <Button
+              size="small"
+              variant={hasNotes ? "outlined" : "contained"}
+              color={hasNotes ? "warning" : "inherit"}
+              disabled={!hasNotes}
+              onClick={() => openNotesModal(record)}
+              startIcon={<Icon icon="solar:notes-bold-duotone" />}
+              sx={{
+                borderRadius: 2,
+                fontWeight: 700,
+                textTransform: "none",
+                whiteSpace: "nowrap",
+                ...(hasNotes
+                  ? {}
+                  : {
+                      color: theme.ui.mutedText,
+                      bgcolor:
+                        theme.palette.mode === "dark"
+                          ? "rgba(255,255,255,0.08)"
+                          : "rgba(17,24,39,0.06)",
+                      boxShadow: "none",
+                    }),
+              }}
+            >
+              Lihat
+            </Button>
+          );
+        },
       },
       {
         title: "Aksi",
         key: "actions",
-        width: 132,
+        width: ACTION_COLUMN_WIDTH,
         fixed: "right",
         className: "land-stall-action-column",
+        onHeaderCell: () => ({ className: "land-stall-action-column" }),
+        onCell: () => ({ className: "land-stall-action-column" }),
         render: (_, record) => (
-          <Stack
-            direction="row"
-            spacing={0.75}
-            justifyContent="center"
+          <Box
             className="land-stall-action-buttons"
+            sx={{
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 0.85,
+              width: "100%",
+              minWidth: 82,
+              flexWrap: "nowrap",
+            }}
           >
-            <Tooltip title="Ubah lapak">
-              <IconButton
-                size="small"
-                color="info"
-                onClick={() => openEditModal(record)}
-              >
-                <Icon icon="solar:pen-new-square-bold-duotone" />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Hapus lapak">
-              <IconButton
-                size="small"
-                color="error"
-                onClick={() => openDeleteModal(record)}
-              >
-                <Icon icon="solar:trash-bin-trash-bold-duotone" />
-              </IconButton>
-            </Tooltip>
-          </Stack>
+            <TableActionButton
+              title="Ubah lapak"
+              color="info"
+              icon="solar:pen-bold-duotone"
+              onClick={() => openEditModal(record)}
+            />
+            <TableActionButton
+              title="Hapus lapak"
+              color="error"
+              icon="solar:trash-bin-trash-bold-duotone"
+              onClick={() => openDeleteModal(record)}
+            />
+          </Box>
         ),
       },
     ],
@@ -428,20 +464,44 @@ export default function LandStallsPage() {
           title="Lapak Izin Lahan"
           description="Kelola lapak pada setiap sektor, termasuk ukuran, harga per meter, dan status ketersediaan."
           action={
-            <TableActionButton
-              label="Tambah Lapak"
-              icon="solar:add-circle-bold-duotone"
-              keepLabelOnMobile
-              fullWidthOnMobile
+            <Button
+              fullWidth
+              variant="contained"
+              startIcon={<Icon icon="solar:add-circle-bold-duotone" />}
               onClick={openCreateModal}
-            />
+              sx={{
+                minHeight: 46,
+                px: { xs: 2, sm: 2.5 },
+                borderRadius: 2,
+                fontFamily: "Poppins",
+                fontWeight: 900,
+                textTransform: "none",
+                boxShadow:
+                  theme.palette.mode === "dark"
+                    ? "0 6px 14px rgba(255, 152, 0, 0.18)"
+                    : "0 6px 14px rgba(230, 9, 9, 0.16)",
+                "&:hover": {
+                  boxShadow:
+                    theme.palette.mode === "dark"
+                      ? "0 8px 18px rgba(255, 152, 0, 0.22)"
+                      : "0 8px 18px rgba(230, 9, 9, 0.20)",
+                  transform: "translateY(-1px)",
+                },
+              }}
+            >
+              Tambah Lapak
+            </Button>
           }
-          actionSx={{ width: { xs: "100%", sm: "auto" } }}
+          actionSx={{
+            width: { xs: "100%", md: "auto" },
+            display: "flex",
+            justifyContent: { xs: "stretch", md: "flex-end" },
+          }}
         />
 
         <Grid container spacing={{ xs: 1.25, md: 1.5 }}>
           {stats.map((item) => (
-            <Grid key={item.label} size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
+            <Grid key={item.label} size={{ xs: 12, sm: 6, lg: 3 }}>
               <SummaryStatCard {...item} />
             </Grid>
           ))}
@@ -462,11 +522,13 @@ export default function LandStallsPage() {
             pageSize={pageSize}
             pageSizeOptions={PAGE_SIZE_OPTIONS}
             onPageSizeChange={setPageSize}
-            scroll={{ x: 1540, y: 430 }}
+            scroll={{ x: 1350, y: 430 }}
             fixedActionColumn={{
               className: "land-stall-action-column",
               buttonsClassName: "land-stall-action-buttons",
-              width: 132,
+              buttonsOffsetX: 6,
+              width: ACTION_COLUMN_WIDTH,
+              paddingX: 16,
             }}
           />
         </DataTableShell>
@@ -496,8 +558,14 @@ export default function LandStallsPage() {
         onConfirm={handleDeleteStall}
       />
 
+      <LandStallNotesModal
+        open={notesOpen}
+        onClose={() => setNotesOpen(false)}
+        selectedData={selectedStall}
+      />
+
       <LoadingBackdrop
-        open={loading && !formOpen && !deleteOpen}
+        open={loading && !formOpen && !deleteOpen && !notesOpen}
         message="Memuat data lapak..."
       />
 

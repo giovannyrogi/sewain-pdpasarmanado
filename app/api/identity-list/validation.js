@@ -109,7 +109,10 @@ export const validateIdentityFormData = (formData, { requireFile = false } = {})
  * `tenant_identities.status` agar nonaktif/blacklist izin lahan tidak otomatis
  * memblokir proses sewa kontrak ruangan.
  */
-export const validateLandPermitIdentityFormData = (formData) => {
+export const validateLandPermitIdentityFormData = (
+  formData,
+  { requireProfilePhoto = false } = {},
+) => {
   const landPermitStatus = String(formData.get("landPermitStatus") || "active").trim();
   if (!LAND_PERMIT_STATUS.includes(landPermitStatus)) {
     return { values: null, profilePhotoFile: null, error: "Status izin lahan tidak valid." };
@@ -131,13 +134,22 @@ export const validateLandPermitIdentityFormData = (formData) => {
     };
   }
 
+  const profilePhotoFile = formData.get("profilePhotoFile");
+  if (requireProfilePhoto && (!profilePhotoFile || !profilePhotoFile.name)) {
+    return {
+      values: null,
+      profilePhotoFile: null,
+      error: "Pas foto wajib diupload untuk Admin Izin Lahan.",
+    };
+  }
+
   return {
     values: {
       land_permit_status: landPermitStatus,
       land_permit_status_notes:
         landPermitStatus === "blacklisted" ? landPermitStatusNotes.value : "",
     },
-    profilePhotoFile: formData.get("profilePhotoFile"),
+    profilePhotoFile,
     error: null,
   };
 };

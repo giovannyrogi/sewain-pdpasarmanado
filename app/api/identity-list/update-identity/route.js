@@ -99,13 +99,14 @@ export async function PUT(req) {
         return failResponse(preparedProfilePhoto.error, 400);
       }
 
-      const oldProfilePhotoPath = normalizeStoredUploadPath(
-        formData.get("oldProfilePhotoPath"),
-      );
       profilePhotoFilePath =
-        preparedProfilePhoto.profile_photo_file_path ||
-        oldProfilePhotoPath ||
-        currentProfilePhotoPath;
+        preparedProfilePhoto.profile_photo_file_path || currentProfilePhotoPath;
+      if (!profilePhotoFilePath) {
+        return failResponse(
+          "Pas foto wajib diupload untuk Admin Izin Lahan.",
+          400,
+        );
+      }
       landPermitStatus = landPermitValidation.values.land_permit_status;
       landPermitStatusNotes =
         landPermitValidation.values.land_permit_status_notes;
@@ -153,11 +154,11 @@ export async function PUT(req) {
         notes = $17,
         status = $18,
         profile_photo_file_path = $19,
-        land_permit_status = $20,
-        land_permit_status_notes = $21,
+        land_permit_status = $20::varchar(20),
+        land_permit_status_notes = $21::text,
         land_permit_status_updated_at = CASE
-          WHEN land_permit_status IS DISTINCT FROM $20
-            OR COALESCE(land_permit_status_notes, '') IS DISTINCT FROM $21
+          WHEN land_permit_status IS DISTINCT FROM $20::varchar(20)
+            OR COALESCE(land_permit_status_notes, '') IS DISTINCT FROM $21::text
           THEN NOW()
           ELSE land_permit_status_updated_at
         END,
