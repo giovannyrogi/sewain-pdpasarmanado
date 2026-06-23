@@ -6,10 +6,21 @@ import {
   handleApiError,
   jsonResponse,
 } from "@/app/utils/apiValidation";
-import { prepareKtpUpload, removeKtpFile, saveKtpFile } from "./fileHelpers";
-import { validateIdentityFormData } from "./validation";
+import {
+  prepareKtpUpload,
+  prepareProfilePhotoUpload,
+  removeKtpFile,
+  removeProfilePhotoFile,
+  saveKtpFile,
+  saveProfilePhotoFile,
+} from "./fileHelpers";
+import {
+  validateIdentityFormData,
+  validateLandPermitIdentityFormData,
+} from "./validation";
 
 const MASTER_DATA_ROLES = [1, 2, 9];
+const ADMIN_IZIN_LAHAN_ROLE_ID = 9;
 
 const mapIdentityRow = (row) => ({
   id: row.id,
@@ -17,6 +28,7 @@ const mapIdentityRow = (row) => ({
   nik: row.nik,
   full_name: row.full_name,
   ktp_file_path: row.ktp_file_path,
+  profile_photo_file_path: row.profile_photo_file_path,
   birth_place: row.birth_place,
   birth_date: row.birth_date,
   nationality: row.nationality,
@@ -33,6 +45,11 @@ const mapIdentityRow = (row) => ({
   phone: row.phone,
   status: row.status,
   notes: row.notes,
+  land_permit_status: row.land_permit_status,
+  land_permit_status_notes: row.land_permit_status_notes,
+  land_permit_status_updated_at: row.land_permit_status_updated_at
+    ? moment(row.land_permit_status_updated_at).format("YYYY-MM-DD HH:mm:ss")
+    : null,
   updated_at: row.updated_at
     ? moment(row.updated_at).format("YYYY-MM-DD HH:mm:ss")
     : null,
@@ -43,10 +60,12 @@ const mapIdentityRow = (row) => ({
 
 export async function POST(req) {
   let uploadedPath = null;
+  let uploadedProfilePhotoPath = null;
 
   try {
-    const { response } = await requireRole(MASTER_DATA_ROLES);
+    const { user, response } = await requireRole(MASTER_DATA_ROLES);
     if (response) return response;
+    const isLandPermitAdmin = Number(user.role_id) === ADMIN_IZIN_LAHAN_ROLE_ID;
 
     const formData = await req.formData();
     const { values, ktpFile, error } = validateIdentityFormData(formData, {
@@ -71,20 +90,53 @@ export async function POST(req) {
       return failResponse(preparedFile.error, 400);
     }
 
+    let landPermitValues = {
+      land_permit_status: "active",
+      land_permit_status_notes: "",
+    };
+    let preparedProfilePhoto = { profile_photo_file_path: null };
+
+    if (isLandPermitAdmin) {
+      const landPermitValidation = validateLandPermitIdentityFormData(formData);
+      if (landPermitValidation.error) {
+        return failResponse(landPermitValidation.error, 400);
+      }
+
+      landPermitValues = landPermitValidation.values;
+      preparedProfilePhoto = await prepareProfilePhotoUpload(
+        landPermitValidation.profilePhotoFile,
+        values.full_name,
+      );
+
+      if (preparedProfilePhoto.error) {
+        return failResponse(preparedProfilePhoto.error, 400);
+      }
+    }
+
     await saveKtpFile(preparedFile.filename, preparedFile.fileBuffer);
     uploadedPath = preparedFile.ktp_file_path;
+
+    if (preparedProfilePhoto.fileBuffer && preparedProfilePhoto.filename) {
+      await saveProfilePhotoFile(
+        preparedProfilePhoto.filename,
+        preparedProfilePhoto.fileBuffer,
+      );
+      uploadedProfilePhotoPath = preparedProfilePhoto.profile_photo_file_path;
+    }
 
     const result = await pool.query(
       `
       INSERT INTO tenant_identities (
         nik, full_name, ktp_file_path, birth_place, birth_date, nationality,
         religion, occupation, street_address, rt, rw, kelurahan, district,
-        city, province, phone, status, notes
+        city, province, phone, status, notes, profile_photo_file_path,
+        land_permit_status, land_permit_status_notes, land_permit_status_updated_at
       )
       VALUES (
         $1, $2, $3, $4, $5, $6,
         $7, $8, $9, $10, $11, $12, $13,
-        $14, $15, $16, $17, $18
+        $14, $15, $16, $17, $18, $19,
+        $20, $21, NOW()
       )
       RETURNING *
       `,
@@ -107,6 +159,9 @@ export async function POST(req) {
         values.phone,
         values.status,
         values.notes,
+        preparedProfilePhoto.profile_photo_file_path,
+        landPermitValues.land_permit_status,
+        landPermitValues.land_permit_status_notes,
       ],
     );
 
@@ -121,6 +176,9 @@ export async function POST(req) {
   } catch (error) {
     await removeKtpFile(uploadedPath).catch((fileError) =>
       console.warn("Gagal membersihkan file KTP setelah error:", fileError),
+    );
+    await removeProfilePhotoFile(uploadedProfilePhotoPath).catch((fileError) =>
+      console.warn("Gagal membersihkan file pas foto setelah error:", fileError),
     );
     return handleApiError(
       "Error creating identity",
@@ -139,8 +197,10 @@ export async function GET() {
       `
       SELECT 
         id, user_id, nik, full_name, ktp_file_path, birth_place, birth_date,
+        profile_photo_file_path,
         nationality, religion, occupation, street_address, rt, rw, kelurahan,
         district, city, province, postal_code, phone, status, notes,
+        land_permit_status, land_permit_status_notes, land_permit_status_updated_at,
         created_at, updated_at
       FROM tenant_identities
       ORDER BY created_at DESC

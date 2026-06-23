@@ -173,14 +173,37 @@ function DetailSection({ icon, title, description, children }) {
  * dan daftar identitas. Komponen ini memakai AppModal sebagai shell utama agar
  * gaya modal tetap terpusat dan konsisten di theme dark/light.
  */
-export default function TenantIdentityPreviewModal({ open, onClose, selectedData }) {
+export default function TenantIdentityPreviewModal({
+  open,
+  onClose,
+  selectedData,
+  showLandPermitFields = false,
+}) {
   const theme = useTheme();
   const [openPreview, setOpenPreview] = useState(false);
+  const [previewImage, setPreviewImage] = useState({
+    url: "",
+    alt: "Preview dokumen",
+  });
   const ktpImageUrl = getUploadApiUrl(selectedData?.ktp_file_path);
+  const profilePhotoImageUrl = getUploadApiUrl(
+    selectedData?.profile_photo_file_path,
+  );
   const identityName = getIdentityName(selectedData);
   const identityNik = getIdentityNik(selectedData);
   const identityPhone = getIdentityPhone(selectedData);
-  const identityStatus = getIdentityStatus(selectedData);
+  const identityStatus = showLandPermitFields
+    ? selectedData?.land_permit_status
+    : getIdentityStatus(selectedData);
+  const identityStatusNote = showLandPermitFields
+    ? selectedData?.land_permit_status_notes
+    : selectedData?.notes || selectedData?.tenant_identity_notes;
+
+  const openImagePreview = (url, alt) => {
+    if (!url) return;
+    setPreviewImage({ url, alt });
+    setOpenPreview(true);
+  };
 
   return (
     <>
@@ -188,7 +211,11 @@ export default function TenantIdentityPreviewModal({ open, onClose, selectedData
         open={open}
         onClose={onClose}
         title="Informasi Identitas Penyewa"
-        description="Data utama penyewa, alamat domisili, status, dan dokumen KTP."
+        description={
+          showLandPermitFields
+            ? "Data utama penyewa, alamat domisili, status izin lahan, KTP, dan pas foto."
+            : "Data utama penyewa, alamat domisili, status, dan dokumen KTP."
+        }
         icon="solar:user-id-bold-duotone"
         width={760}
       >
@@ -241,7 +268,9 @@ export default function TenantIdentityPreviewModal({ open, onClose, selectedData
                       : "rgba(255,255,255,0.74)",
                   cursor: selectedData?.ktp_file_path ? "zoom-in" : "default",
                 }}
-                onClick={() => selectedData?.ktp_file_path && setOpenPreview(true)}
+                onClick={() =>
+                  openImagePreview(ktpImageUrl, "Preview KTP penyewa")
+                }
               >
                 {selectedData?.ktp_file_path ? (
                   <Box
@@ -290,12 +319,16 @@ export default function TenantIdentityPreviewModal({ open, onClose, selectedData
               <FieldCard icon="solar:global-bold-duotone" label="Kewarganegaraan" value={displayValue(selectedData?.nationality)} />
               <FieldCard icon="solar:moon-stars-bold-duotone" label="Agama" value={displayValue(selectedData?.religion)} />
               <FieldCard icon="solar:phone-bold-duotone" label="Nomor Telepon" value={identityPhone} />
-              <FieldCard icon="solar:shield-check-bold-duotone" label="Status" value={getStatusLabel(identityStatus)} />
+              <FieldCard
+                icon="solar:shield-check-bold-duotone"
+                label={showLandPermitFields ? "Status Izin Lahan" : "Status"}
+                value={getStatusLabel(identityStatus)}
+              />
               {identityStatus === "blacklisted" && (
                 <FieldCard
                   icon="solar:notes-bold-duotone"
                   label="Catatan"
-                  value={displayValue(selectedData?.notes || selectedData?.tenant_identity_notes)}
+                  value={displayValue(identityStatusNote)}
                   fullWidth
                 />
               )}
@@ -321,6 +354,84 @@ export default function TenantIdentityPreviewModal({ open, onClose, selectedData
               <FieldCard icon="solar:mailbox-bold-duotone" label="Kode Pos" value={displayValue(selectedData?.postal_code)} />
             </Grid>
           </DetailSection>
+
+          {showLandPermitFields && (
+            <DetailSection
+              icon="solar:user-id-bold-duotone"
+              title="Dokumen Izin Lahan"
+              description="Pas foto bersifat opsional dan dipakai untuk dokumen izin lahan atau kartu pedagang."
+            >
+              <Box
+                sx={{
+                  p: 1.5,
+                  borderRadius: 2,
+                  border: `1px solid ${theme.ui?.dashboardCardBorder || theme.palette.divider}`,
+                  bgcolor:
+                    theme.palette.mode === "dark"
+                      ? "rgba(255,255,255,0.035)"
+                      : "rgba(17,24,39,0.025)",
+                }}
+              >
+                <Stack
+                  direction={{ xs: "column", sm: "row" }}
+                  alignItems={{ xs: "stretch", sm: "center" }}
+                  justifyContent="space-between"
+                  spacing={1.5}
+                >
+                  <Stack direction="row" spacing={1.2} alignItems="center">
+                    <Box
+                      sx={{
+                        width: 42,
+                        height: 42,
+                        borderRadius: 1.8,
+                        display: "grid",
+                        placeItems: "center",
+                        color: theme.palette.primary.main,
+                        bgcolor: alpha(theme.palette.primary.main, 0.12),
+                      }}
+                    >
+                      <Icon icon="solar:user-id-bold-duotone" fontSize={21} />
+                    </Box>
+                    <Box sx={{ minWidth: 0 }}>
+                      <Typography sx={{ fontWeight: 900, fontSize: 13 }}>
+                        Pas Foto
+                      </Typography>
+                      <Typography
+                        sx={{
+                          color: theme.ui?.mutedText || "text.secondary",
+                          fontSize: 11.5,
+                          fontWeight: 650,
+                        }}
+                      >
+                        {selectedData?.profile_photo_file_path
+                          ? "Pas foto sudah tersedia."
+                          : "Belum ada pas foto."}
+                      </Typography>
+                    </Box>
+                  </Stack>
+
+                  <Button
+                    variant="outlined"
+                    disabled={!selectedData?.profile_photo_file_path}
+                    onClick={() =>
+                      openImagePreview(
+                        profilePhotoImageUrl,
+                        "Preview pas foto izin lahan",
+                      )
+                    }
+                    startIcon={<Icon icon="solar:eye-bold-duotone" />}
+                    sx={{
+                      borderRadius: 2,
+                      fontWeight: 850,
+                      textTransform: "none",
+                    }}
+                  >
+                    Lihat Foto
+                  </Button>
+                </Stack>
+              </Box>
+            </DetailSection>
+          )}
 
           <Stack direction={{ xs: "column-reverse", sm: "row" }} justifyContent="flex-end">
             <Button
@@ -354,8 +465,8 @@ export default function TenantIdentityPreviewModal({ open, onClose, selectedData
       <ImagePreviewModal
         open={openPreview}
         onClose={() => setOpenPreview(false)}
-        imageUrl={ktpImageUrl}
-        alt="Preview KTP"
+        imageUrl={previewImage.url}
+        alt={previewImage.alt}
       />
     </>
   );

@@ -432,6 +432,13 @@ Rules:
 - Use `tenant_identities` as the shared identity master for room rental and
   land permit flows. Do not duplicate KTP, NIK, name, address, or KTP file
   fields in land permit tables.
+- Optional identity photos for land permit documents/cards belong on
+  `tenant_identities.profile_photo_file_path`. Room rental flows must not
+  require this field.
+- Keep land permit identity eligibility separate from room rental identity
+  status by using `tenant_identities.land_permit_status`,
+  `tenant_identities.land_permit_status_notes`, and
+  `tenant_identities.land_permit_status_updated_at`.
 - Do not create a separate trader profile table unless a future requirement
   introduces trader-specific attributes that cannot belong to one permit
   application. Commodity/trade type for land permits belongs to the land permit

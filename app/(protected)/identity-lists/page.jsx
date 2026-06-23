@@ -22,11 +22,13 @@ import TableActionButton from "@/app/components/data-table/TableActionButton";
 import CrudConfirmModal from "@/app/components/crud/CrudConfirmModal";
 import SummaryStatCard from "@/app/components/stats/SummaryStatCard";
 import TenantIdentityPreviewModal from "@/app/components/modals/TenantIdentityPreviewModal";
+import { useUser } from "@/app/utils/useUser";
 import IdentityFormModal from "./IdentityFormModal";
 
 const PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
 const ACTION_COLUMN_WIDTH = 164;
 const TABLE_SCROLL_WIDTH = 1700;
+const ADMIN_IZIN_LAHAN_ROLE_ID = 9;
 
 const normalizeText = (value) => String(value || "").toLowerCase();
 
@@ -74,6 +76,7 @@ const formatDateTime = (value) =>
  */
 export default function IdentityList() {
   const theme = useTheme();
+  const { user } = useUser();
   const [identities, setIdentities] = useState([]);
   const [searchText, setSearchText] = useState("");
   const [loading, setLoading] = useState(false);
@@ -84,6 +87,12 @@ export default function IdentityList() {
   const [selectedIdentity, setSelectedIdentity] = useState(null);
   const [pageSize, setPageSize] = useState(5);
   const [snackbar, setSnackbar] = useState(getInitialSnackbar);
+  const isLandPermitAdmin =
+    Number(user?.role_id) === ADMIN_IZIN_LAHAN_ROLE_ID;
+  const statusField = isLandPermitAdmin ? "land_permit_status" : "status";
+  const statusNotesField = isLandPermitAdmin
+    ? "land_permit_status_notes"
+    : "notes";
 
   const showSnackbar = (message, severity = "success") => {
     setSnackbar({ open: true, message, severity });
@@ -128,7 +137,8 @@ export default function IdentityList() {
         item.nationality,
         item.birth_place,
         item.phone,
-        item.status,
+        item[statusField],
+        item[statusNotesField],
         item.street_address,
         item.kelurahan,
         item.district,
@@ -136,12 +146,18 @@ export default function IdentityList() {
         item.province,
       ].some((value) => normalizeText(value).includes(keyword)),
     );
-  }, [identities, searchText]);
+  }, [identities, searchText, statusField, statusNotesField]);
 
   const identityStats = useMemo(() => {
-    const active = identities.filter((item) => item.status === "active").length;
-    const inactive = identities.filter((item) => item.status === "inactive").length;
-    const blacklisted = identities.filter((item) => item.status === "blacklisted").length;
+    const active = identities.filter(
+      (item) => item[statusField] === "active",
+    ).length;
+    const inactive = identities.filter(
+      (item) => item[statusField] === "inactive",
+    ).length;
+    const blacklisted = identities.filter(
+      (item) => item[statusField] === "blacklisted",
+    ).length;
 
     return [
       {
@@ -151,25 +167,25 @@ export default function IdentityList() {
         color: theme.palette.primary.main,
       },
       {
-        label: "Aktif",
+        label: isLandPermitAdmin ? "Aktif Izin Lahan" : "Aktif",
         value: active,
         icon: "solar:user-check-bold-duotone",
         color: theme.palette.success.main,
       },
       {
-        label: "Tidak Aktif",
+        label: isLandPermitAdmin ? "Nonaktif Izin Lahan" : "Tidak Aktif",
         value: inactive,
         icon: "solar:user-cross-bold-duotone",
         color: theme.palette.error.main,
       },
       {
-        label: "Blacklist",
+        label: isLandPermitAdmin ? "Blacklist Izin Lahan" : "Blacklist",
         value: blacklisted,
         icon: "solar:shield-warning-bold-duotone",
         color: theme.palette.warning.main,
       },
     ];
-  }, [identities, theme]);
+  }, [identities, isLandPermitAdmin, statusField, theme]);
 
   const openCreateModal = () => {
     setSelectedIdentity(null);
@@ -327,15 +343,15 @@ export default function IdentityList() {
         ),
       },
       {
-        title: "Status",
-        dataIndex: "status",
+        title: isLandPermitAdmin ? "Status Izin Lahan" : "Status",
+        dataIndex: statusField,
         width: 135,
         filters: [
           { text: "Aktif", value: "active" },
           { text: "Tidak Aktif", value: "inactive" },
           { text: "Blacklist", value: "blacklisted" },
         ],
-        onFilter: createExactFilter("status"),
+        onFilter: createExactFilter(statusField),
         render: (value) => (
           <Tag
             color={STATUS_COLORS[value] || "default"}
@@ -350,6 +366,29 @@ export default function IdentityList() {
           </Tag>
         ),
       },
+      ...(isLandPermitAdmin
+        ? [
+            {
+              title: "Pas Foto",
+              dataIndex: "profile_photo_file_path",
+              width: 130,
+              align: "center",
+              render: (value) => (
+                <Tag
+                  color={value ? "green" : "default"}
+                  style={{
+                    borderRadius: 8,
+                    fontFamily: "Poppins",
+                    fontWeight: 850,
+                    padding: "3px 10px",
+                  }}
+                >
+                  {value ? "Ada" : "Opsional"}
+                </Tag>
+              ),
+            },
+          ]
+        : []),
       {
         title: "Diperbarui",
         dataIndex: "updated_at",
@@ -404,7 +443,7 @@ export default function IdentityList() {
         ),
       },
     ],
-    [identities, theme],
+    [identities, isLandPermitAdmin, statusField, theme],
   );
 
   return (
@@ -435,7 +474,11 @@ export default function IdentityList() {
             },
           ]}
           title="Identity Lists"
-          description="Kelola data identitas penyewa, NIK, alamat, status blacklist, dan dokumen KTP yang dipakai pada proses permohonan sewa."
+          description={
+            isLandPermitAdmin
+              ? "Kelola identitas bersama, status izin lahan, foto KTP, dan pas foto untuk kebutuhan pendaftaran izin lahan."
+              : "Kelola data identitas penyewa, NIK, alamat, status blacklist, dan dokumen KTP yang dipakai pada proses permohonan sewa."
+          }
           icon="qlementine-icons:id-card-16"
           actionSx={{
             width: { xs: "100%", md: "auto" },
@@ -512,6 +555,7 @@ export default function IdentityList() {
         open={formOpen}
         mode={formMode}
         initialData={selectedIdentity}
+        isLandPermitContext={isLandPermitAdmin}
         loading={loading}
         onClose={closeFormModal}
         onSubmit={handleSaveIdentity}
@@ -534,6 +578,7 @@ export default function IdentityList() {
         open={previewOpen}
         onClose={() => setPreviewOpen(false)}
         selectedData={selectedIdentity}
+        showLandPermitFields={isLandPermitAdmin}
       />
 
       <LoadingBackdrop

@@ -6,17 +6,31 @@ import {
   handleApiError,
   jsonResponse,
 } from "@/app/utils/apiValidation";
-import { prepareKtpUpload, removeKtpFile, saveKtpFile } from "../fileHelpers";
-import { validateIdentityFormData, validateIdentityId } from "../validation";
+import {
+  prepareKtpUpload,
+  prepareProfilePhotoUpload,
+  removeKtpFile,
+  removeProfilePhotoFile,
+  saveKtpFile,
+  saveProfilePhotoFile,
+} from "../fileHelpers";
+import {
+  validateIdentityFormData,
+  validateIdentityId,
+  validateLandPermitIdentityFormData,
+} from "../validation";
 
 const MASTER_DATA_ROLES = [1, 2, 9];
+const ADMIN_IZIN_LAHAN_ROLE_ID = 9;
 
 export async function PUT(req) {
   let uploadedPath = null;
+  let uploadedProfilePhotoPath = null;
 
   try {
-    const { response } = await requireRole(MASTER_DATA_ROLES);
+    const { user, response } = await requireRole(MASTER_DATA_ROLES);
     if (response) return response;
+    const isLandPermitAdmin = Number(user.role_id) === ADMIN_IZIN_LAHAN_ROLE_ID;
 
     const formData = await req.formData();
     const { value: id, error: idError } = validateIdentityId(formData.get("id"));
@@ -30,7 +44,14 @@ export async function PUT(req) {
     }
 
     const existingData = await pool.query(
-      "SELECT ktp_file_path FROM tenant_identities WHERE id = $1 LIMIT 1",
+      `
+      SELECT 
+        ktp_file_path, profile_photo_file_path, status, notes,
+        land_permit_status, land_permit_status_notes
+      FROM tenant_identities
+      WHERE id = $1
+      LIMIT 1
+      `,
       [id],
     );
 
@@ -52,14 +73,63 @@ export async function PUT(req) {
       return failResponse(preparedFile.error, 400);
     }
 
+    const oldKtpPath = normalizeStoredUploadPath(formData.get("oldKtpPath"));
+    const currentKtpPath = existingData.rows[0]?.ktp_file_path || null;
+    const ktpFilePath = preparedFile.ktp_file_path || oldKtpPath || currentKtpPath;
+    const currentProfilePhotoPath =
+      existingData.rows[0]?.profile_photo_file_path || null;
+    let profilePhotoFilePath = currentProfilePhotoPath;
+    let landPermitStatus = existingData.rows[0]?.land_permit_status || "active";
+    let landPermitStatusNotes =
+      existingData.rows[0]?.land_permit_status_notes || "";
+    let preparedProfilePhoto = { profile_photo_file_path: null };
+
+    if (isLandPermitAdmin) {
+      const landPermitValidation = validateLandPermitIdentityFormData(formData);
+      if (landPermitValidation.error) {
+        return failResponse(landPermitValidation.error, 400);
+      }
+
+      preparedProfilePhoto = await prepareProfilePhotoUpload(
+        landPermitValidation.profilePhotoFile,
+        values.full_name,
+      );
+
+      if (preparedProfilePhoto.error) {
+        return failResponse(preparedProfilePhoto.error, 400);
+      }
+
+      const oldProfilePhotoPath = normalizeStoredUploadPath(
+        formData.get("oldProfilePhotoPath"),
+      );
+      profilePhotoFilePath =
+        preparedProfilePhoto.profile_photo_file_path ||
+        oldProfilePhotoPath ||
+        currentProfilePhotoPath;
+      landPermitStatus = landPermitValidation.values.land_permit_status;
+      landPermitStatusNotes =
+        landPermitValidation.values.land_permit_status_notes;
+    }
+
+    const nextStatus = isLandPermitAdmin
+      ? existingData.rows[0]?.status || "active"
+      : values.status;
+    const nextNotes = isLandPermitAdmin
+      ? existingData.rows[0]?.notes || ""
+      : values.notes;
+
     if (preparedFile.fileBuffer && preparedFile.filename) {
       await saveKtpFile(preparedFile.filename, preparedFile.fileBuffer);
       uploadedPath = preparedFile.ktp_file_path;
     }
 
-    const oldKtpPath = normalizeStoredUploadPath(formData.get("oldKtpPath"));
-    const currentKtpPath = existingData.rows[0]?.ktp_file_path || null;
-    const ktpFilePath = preparedFile.ktp_file_path || oldKtpPath || currentKtpPath;
+    if (preparedProfilePhoto.fileBuffer && preparedProfilePhoto.filename) {
+      await saveProfilePhotoFile(
+        preparedProfilePhoto.filename,
+        preparedProfilePhoto.fileBuffer,
+      );
+      uploadedProfilePhotoPath = preparedProfilePhoto.profile_photo_file_path;
+    }
 
     const result = await pool.query(
       `
@@ -82,8 +152,17 @@ export async function PUT(req) {
         phone = $16,
         notes = $17,
         status = $18,
+        profile_photo_file_path = $19,
+        land_permit_status = $20,
+        land_permit_status_notes = $21,
+        land_permit_status_updated_at = CASE
+          WHEN land_permit_status IS DISTINCT FROM $20
+            OR COALESCE(land_permit_status_notes, '') IS DISTINCT FROM $21
+          THEN NOW()
+          ELSE land_permit_status_updated_at
+        END,
         updated_at = NOW()
-      WHERE id = $19
+      WHERE id = $22
       RETURNING *
       `,
       [
@@ -103,8 +182,11 @@ export async function PUT(req) {
         values.city,
         values.province,
         values.phone,
-        values.notes,
-        values.status,
+        nextNotes,
+        nextStatus,
+        profilePhotoFilePath,
+        landPermitStatus,
+        landPermitStatusNotes,
         id,
       ],
     );
@@ -112,6 +194,17 @@ export async function PUT(req) {
     if (preparedFile.fileBuffer && currentKtpPath && currentKtpPath !== ktpFilePath) {
       await removeKtpFile(currentKtpPath).catch((fileError) =>
         console.warn("Gagal menghapus file KTP lama:", fileError),
+      );
+    }
+
+    if (
+      isLandPermitAdmin &&
+      uploadedProfilePhotoPath &&
+      currentProfilePhotoPath &&
+      currentProfilePhotoPath !== profilePhotoFilePath
+    ) {
+      await removeProfilePhotoFile(currentProfilePhotoPath).catch((fileError) =>
+        console.warn("Gagal menghapus file pas foto lama:", fileError),
       );
     }
 
@@ -123,6 +216,9 @@ export async function PUT(req) {
   } catch (error) {
     await removeKtpFile(uploadedPath).catch((fileError) =>
       console.warn("Gagal membersihkan file KTP setelah error:", fileError),
+    );
+    await removeProfilePhotoFile(uploadedProfilePhotoPath).catch((fileError) =>
+      console.warn("Gagal membersihkan file pas foto setelah error:", fileError),
     );
     return handleApiError(
       "Error updating identity",

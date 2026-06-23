@@ -52,8 +52,12 @@ const emptyForm = {
   kelurahan: "",
   status: "active",
   notes: "",
+  landPermitStatus: "active",
+  landPermitStatusNotes: "",
   ktpFile: null,
   ktpFilePath: "",
+  profilePhotoFile: null,
+  profilePhotoFilePath: "",
 };
 
 const getProvinceOptions = () =>
@@ -82,6 +86,7 @@ export default function IdentityFormModal({
   open,
   mode = "create",
   initialData,
+  isLandPermitContext = false,
   loading,
   onClose,
   onSubmit,
@@ -94,6 +99,10 @@ export default function IdentityFormModal({
   const [districtCode, setDistrictCode] = useState("");
   const [villageCode, setVillageCode] = useState("");
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewImage, setPreviewImage] = useState({
+    url: "",
+    alt: "Preview dokumen",
+  });
 
   const provinces = useMemo(() => getProvinceOptions(), []);
   const cities = useMemo(() => getCityOptions(provinceCode), [provinceCode]);
@@ -105,6 +114,9 @@ export default function IdentityFormModal({
   const ktpPreviewUrl = form.ktpFilePath?.startsWith("blob:")
     ? form.ktpFilePath
     : getUploadApiUrl(form.ktpFilePath);
+  const profilePhotoPreviewUrl = form.profilePhotoFilePath?.startsWith("blob:")
+    ? form.profilePhotoFilePath
+    : getUploadApiUrl(form.profilePhotoFilePath);
   const remainingNikDigits = Math.max(
     16 - form.nomorIndukKependudukan.length,
     0,
@@ -165,8 +177,12 @@ export default function IdentityFormModal({
       kelurahan: initialData.kelurahan || "",
       status: initialData.status || "active",
       notes: initialData.notes || "",
+      landPermitStatus: initialData.land_permit_status || "active",
+      landPermitStatusNotes: initialData.land_permit_status_notes || "",
       ktpFile: null,
       ktpFilePath: initialData.ktp_file_path || "",
+      profilePhotoFile: null,
+      profilePhotoFilePath: initialData.profile_photo_file_path || "",
     });
   }, [initialData, open, provinces]);
 
@@ -247,6 +263,43 @@ export default function IdentityFormModal({
     }));
   };
 
+  const handleProfilePhotoChange = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const allowedTypes = ["image/jpeg", "image/png"];
+    if (!allowedTypes.includes(file.type)) {
+      onNotify?.({
+        open: true,
+        message: "Format pas foto harus JPG atau PNG.",
+        severity: "error",
+      });
+      event.target.value = "";
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      onNotify?.({
+        open: true,
+        message: "Ukuran pas foto maksimal 5MB.",
+        severity: "error",
+      });
+      event.target.value = "";
+      return;
+    }
+
+    setForm((current) => ({
+      ...current,
+      profilePhotoFile: file,
+      profilePhotoFilePath: URL.createObjectURL(file),
+    }));
+  };
+
+  const openImagePreview = (url, alt) => {
+    setPreviewImage({ url, alt });
+    setPreviewOpen(true);
+  };
+
   const handleSubmit = (event) => {
     event.preventDefault();
 
@@ -257,6 +310,12 @@ export default function IdentityFormModal({
         "oldKtpPath",
         normalizeStoredUploadPath(initialData.ktp_file_path),
       );
+      if (isLandPermitContext) {
+        formData.append(
+          "oldProfilePhotoPath",
+          normalizeStoredUploadPath(initialData.profile_photo_file_path),
+        );
+      }
     }
 
     formData.append("nomorIndukKependudukan", form.nomorIndukKependudukan);
@@ -290,8 +349,19 @@ export default function IdentityFormModal({
     formData.append("status", form.status);
     formData.append("notes", form.status === "blacklisted" ? form.notes : "");
 
+    if (isLandPermitContext) {
+      formData.append("landPermitStatus", form.landPermitStatus);
+      formData.append(
+        "landPermitStatusNotes",
+        form.landPermitStatus === "blacklisted" ? form.landPermitStatusNotes : "",
+      );
+    }
+
     if (form.ktpFile) {
       formData.append("ktpFile", form.ktpFile);
+    }
+    if (isLandPermitContext && form.profilePhotoFile) {
+      formData.append("profilePhotoFile", form.profilePhotoFile);
     }
 
     onSubmit?.(formData);
@@ -302,7 +372,11 @@ export default function IdentityFormModal({
       <CrudFormModal
         open={open}
         title={mode === "edit" ? "Ubah Identitas" : "Tambah Identitas"}
-        description="Lengkapi data pribadi, alamat, status, dan foto KTP penyewa untuk kebutuhan transaksi sewa."
+        description={
+          isLandPermitContext
+            ? "Lengkapi identitas, alamat, status izin lahan, foto KTP, dan pas foto untuk kebutuhan izin lahan."
+            : "Lengkapi data pribadi, alamat, status, dan foto KTP penyewa untuk kebutuhan transaksi sewa."
+        }
         icon="qlementine-icons:id-card-16"
         submitLabel={mode === "edit" ? "Simpan Perubahan" : "Tambah Identitas"}
         loadingLabel={mode === "edit" ? "Menyimpan..." : "Menambahkan..."}
@@ -607,7 +681,9 @@ export default function IdentityFormModal({
                     <Button
                       size="small"
                       variant="outlined"
-                      onClick={() => setPreviewOpen(true)}
+                      onClick={() =>
+                        openImagePreview(ktpPreviewUrl, "Preview KTP")
+                      }
                       startIcon={<Icon icon="solar:eye-bold-duotone" />}
                       sx={{
                         width: { xs: "100%", sm: "auto" },
@@ -706,6 +782,160 @@ export default function IdentityFormModal({
               </Stack>
             </Box>
           </Grid>
+
+          {isLandPermitContext && (
+            <Grid size={12}>
+              <Box
+                sx={{
+                  p: { xs: 1.35, sm: 1.45 },
+                  borderRadius: 2.2,
+                  border: `1px solid ${theme.ui.dashboardCardBorder}`,
+                  bgcolor:
+                    theme.palette.mode === "dark"
+                      ? "rgba(255,255,255,0.035)"
+                      : "rgba(17,24,39,0.025)",
+                }}
+              >
+                <Stack
+                  direction={{ xs: "column", md: "row" }}
+                  alignItems={{ xs: "stretch", md: "center" }}
+                  justifyContent="space-between"
+                  spacing={{ xs: 1.6, md: 1.5 }}
+                >
+                  <Stack direction="row" spacing={1.25} alignItems="center">
+                    <Box
+                      sx={{
+                        width: { xs: 44, sm: 48 },
+                        height: { xs: 44, sm: 48 },
+                        borderRadius: 2,
+                        display: "grid",
+                        placeItems: "center",
+                        flex: "0 0 auto",
+                        color: theme.palette.primary.main,
+                        bgcolor:
+                          theme.palette.mode === "dark"
+                            ? "rgba(255,152,0,0.13)"
+                            : "rgba(230,9,9,0.09)",
+                        border: `1px solid ${
+                          theme.palette.mode === "dark"
+                            ? "rgba(255,152,0,0.24)"
+                            : "rgba(230,9,9,0.16)"
+                        }`,
+                      }}
+                    >
+                      <Icon icon="solar:user-id-bold-duotone" fontSize={22} />
+                    </Box>
+
+                    <Box sx={{ minWidth: 0 }}>
+                      <Stack
+                        direction="row"
+                        alignItems="center"
+                        spacing={0.8}
+                        sx={{ flexWrap: "wrap", rowGap: 0.5 }}
+                      >
+                        <Typography sx={{ fontWeight: 850, fontSize: 13 }}>
+                          Pas Foto Izin Lahan
+                        </Typography>
+                        {form.profilePhotoFilePath && (
+                          <Box
+                            component="span"
+                            sx={{
+                              px: 0.75,
+                              py: 0.15,
+                              borderRadius: 999,
+                              fontSize: 10,
+                              fontWeight: 850,
+                              lineHeight: 1.4,
+                              color: theme.palette.success.main,
+                              bgcolor:
+                                theme.palette.mode === "dark"
+                                  ? "rgba(76,175,80,0.14)"
+                                  : "rgba(76,175,80,0.10)",
+                              border: `1px solid ${theme.palette.success.main}33`,
+                            }}
+                          >
+                            Terpilih
+                          </Box>
+                        )}
+                      </Stack>
+                      <Typography
+                        sx={{
+                          color: theme.ui.mutedText,
+                          fontWeight: 600,
+                          fontSize: 11.5,
+                          lineHeight: 1.45,
+                        }}
+                      >
+                        Opsional untuk dokumen izin lahan dan kartu pedagang. JPG/PNG,
+                        maksimal 5MB.
+                      </Typography>
+                    </Box>
+                  </Stack>
+
+                  <Stack
+                    direction={{ xs: "column", sm: "row" }}
+                    spacing={1}
+                    sx={{
+                      width: { xs: "100%", md: "auto" },
+                      "& .MuiButton-root": {
+                        minHeight: 38,
+                        borderRadius: 2,
+                        fontWeight: 850,
+                        textTransform: "none",
+                        whiteSpace: "nowrap",
+                      },
+                    }}
+                  >
+                    {form.profilePhotoFilePath && (
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        onClick={() =>
+                          openImagePreview(
+                            profilePhotoPreviewUrl,
+                            "Preview pas foto izin lahan",
+                          )
+                        }
+                        startIcon={<Icon icon="solar:eye-bold-duotone" />}
+                        sx={{
+                          width: { xs: "100%", sm: "auto" },
+                          minWidth: { sm: 116 },
+                          color: theme.palette.text.primary,
+                          borderColor: theme.ui.dashboardCardBorder,
+                          bgcolor:
+                            theme.palette.mode === "dark"
+                              ? "rgba(255,255,255,0.08)"
+                              : "rgba(17,24,39,0.055)",
+                        }}
+                      >
+                        Lihat Foto
+                      </Button>
+                    )}
+                    <Button
+                      size="small"
+                      variant={form.profilePhotoFilePath ? "outlined" : "contained"}
+                      color="primary"
+                      component="label"
+                      disabled={loading}
+                      startIcon={<Icon icon="solar:upload-bold-duotone" />}
+                      sx={{
+                        width: { xs: "100%", sm: "auto" },
+                        minWidth: { sm: 128 },
+                      }}
+                    >
+                      {form.profilePhotoFilePath ? "Ganti Foto" : "Upload Pas Foto"}
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png"
+                        hidden
+                        onChange={handleProfilePhotoChange}
+                      />
+                    </Button>
+                  </Stack>
+                </Stack>
+              </Box>
+            </Grid>
+          )}
 
           <Grid size={{ xs: 12, md: 6 }}>
             <Autocomplete
@@ -816,18 +1046,35 @@ export default function IdentityFormModal({
 
           <Grid size={12}>
             <FormControl fullWidth required>
-              <InputLabel id="identity-status-label">Status</InputLabel>
+              <InputLabel id="identity-status-label">
+                {isLandPermitContext ? "Status Izin Lahan" : "Status"}
+              </InputLabel>
               <Select
                 labelId="identity-status-label"
-                label="Status"
-                value={form.status}
+                label={isLandPermitContext ? "Status Izin Lahan" : "Status"}
+                value={
+                  isLandPermitContext ? form.landPermitStatus : form.status
+                }
                 onChange={(event) => {
                   const nextStatus = event.target.value;
-                  setForm((current) => ({
-                    ...current,
-                    status: nextStatus,
-                    notes: nextStatus === "blacklisted" ? current.notes : "",
-                  }));
+                  setForm((current) => {
+                    if (isLandPermitContext) {
+                      return {
+                        ...current,
+                        landPermitStatus: nextStatus,
+                        landPermitStatusNotes:
+                          nextStatus === "blacklisted"
+                            ? current.landPermitStatusNotes
+                            : "",
+                      };
+                    }
+
+                    return {
+                      ...current,
+                      status: nextStatus,
+                      notes: nextStatus === "blacklisted" ? current.notes : "",
+                    };
+                  });
                 }}
                 disabled={loading}
               >
@@ -838,20 +1085,40 @@ export default function IdentityFormModal({
             </FormControl>
           </Grid>
 
-          {form.status === "blacklisted" && (
+          {(isLandPermitContext
+            ? form.landPermitStatus
+            : form.status) === "blacklisted" && (
             <Grid size={12}>
               <TextField
-                label="Alasan Blacklist *"
-                value={form.notes}
-                onChange={(event) =>
-                  updateField("notes", event.target.value.slice(0, 150))
+                label={
+                  isLandPermitContext
+                    ? "Alasan Blacklist Izin Lahan *"
+                    : "Alasan Blacklist *"
                 }
+                value={
+                  isLandPermitContext
+                    ? form.landPermitStatusNotes
+                    : form.notes
+                }
+                onChange={(event) => {
+                  const nextValue = event.target.value.slice(0, 150);
+                  updateField(
+                    isLandPermitContext
+                      ? "landPermitStatusNotes"
+                      : "notes",
+                    nextValue,
+                  );
+                }}
                 disabled={loading}
                 fullWidth
                 multiline
                 minRows={3}
                 inputProps={{ maxLength: 150 }}
-                helperText={`${form.notes.length}/150 karakter`}
+                helperText={`${
+                  isLandPermitContext
+                    ? form.landPermitStatusNotes.length
+                    : form.notes.length
+                }/150 karakter`}
               />
             </Grid>
           )}
@@ -861,8 +1128,8 @@ export default function IdentityFormModal({
       <ImagePreviewModal
         open={previewOpen}
         onClose={() => setPreviewOpen(false)}
-        imageUrl={ktpPreviewUrl}
-        alt="Preview KTP"
+        imageUrl={previewImage.url}
+        alt={previewImage.alt}
       />
     </>
   );

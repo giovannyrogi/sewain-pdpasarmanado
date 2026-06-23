@@ -236,6 +236,7 @@ Stores tenant identity data.
 | `nik`            | `VARCHAR(20)`  | `UNIQUE NOT NULL`           | KTP/NIK number         |
 | `full_name`      | `VARCHAR(100)` | `NOT NULL`                  | Tenant full name       |
 | `ktp_file_path`  | `TEXT`         | `NOT NULL`                  | KTP file path/URL      |
+| `profile_photo_file_path` | `TEXT` | nullable | Optional profile/pass photo path for land permit documents/cards |
 | `birth_place`    | `VARCHAR(50)`  | nullable                    | Birth place            |
 | `birth_date`     | `DATE`         | nullable                    | Birth date             |
 | `nationality`    | `VARCHAR(50)`  | nullable                    | Nationality            |
@@ -250,16 +251,34 @@ Stores tenant identity data.
 | `province`       | `VARCHAR(100)` | nullable                    | Province               |
 | `postal_code`    | `VARCHAR(10)`  | nullable                    | Postal code            |
 | `phone`          | `VARCHAR(20)`  | nullable                    | Phone number           |
-| `status`         | `VARCHAR(20)`  | `DEFAULT 'active'`          | Tenant identity status |
-| `notes`          | `TEXT`         | nullable                    | Notes                  |
-| `updated_at`     | `TIMESTAMP`    | `DEFAULT CURRENT_TIMESTAMP` | Last update timestamp  |
-| `created_at`     | `TIMESTAMP`    | `DEFAULT CURRENT_TIMESTAMP` | Creation timestamp     |
+| `status`                         | `VARCHAR(20)`  | `DEFAULT 'active'`          | Room rental/general identity status      |
+| `notes`                          | `TEXT`         | nullable                    | Room rental/general identity notes       |
+| `land_permit_status`             | `VARCHAR(20)`  | `DEFAULT 'active'`          | Land permit identity status              |
+| `land_permit_status_notes`       | `TEXT`         | nullable                    | Land permit-specific status notes        |
+| `land_permit_status_updated_at`  | `TIMESTAMP`    | `DEFAULT CURRENT_TIMESTAMP` | Last land permit status update timestamp |
+| `updated_at`                     | `TIMESTAMP`    | `DEFAULT CURRENT_TIMESTAMP` | Last update timestamp                    |
+| `created_at`                     | `TIMESTAMP`    | `DEFAULT CURRENT_TIMESTAMP` | Creation timestamp                       |
 
 Allowed `status` values:
 
 * `active`
 * `inactive`
 * `blacklisted`
+
+Allowed `land_permit_status` values:
+
+* `active`
+* `inactive`
+* `blacklisted`
+
+Important:
+
+* `tenant_identities.status` is kept for the existing room rental/general identity flow.
+* `tenant_identities.land_permit_status` isolates land permit eligibility so a
+  land permit nonactive/blacklist decision does not automatically affect room
+  rental eligibility, and vice versa.
+* `tenant_identities.profile_photo_file_path` is optional and intended for land
+  permit documents/cards. Room rental flows must not require this photo.
 
 ---
 
@@ -539,15 +558,19 @@ Land permit tables support the Izin Lahan module. This module is separate from
 room rental transactions, but shares `locations`, `users`, `roles`,
 `tenant_identities`, and `notifications`.
 
-Migration SQL:
+Schema note:
 
-* `docs/sql/20260622_land_permit_schema.sql`
+* The latest land permit structure is documented in this file. The project no
+  longer keeps a separate SQL file for this module.
 
 Important:
 
 * `Admin Izin Lahan` uses role ID `9`.
 * Land permit pricing does not use PPN, PPH, admin fee, down payment, or installments.
 * Land permit payment is full payment only.
+* Land permit identity status is stored on `tenant_identities.land_permit_status`.
+* Optional land permit pass/profile photo is stored on `tenant_identities.profile_photo_file_path`.
+* Commodity/trade type is stored per application in `land_permit_applications`.
 * Room rental tables such as `tenant_application`, `payments`, and `contracts`
   must not be reused for land permit transactions.
 
@@ -623,6 +646,7 @@ Stores land permit applications.
 | `application_type`     | `VARCHAR(20)`   | `DEFAULT 'baru'`                                    | New or renewal application       |
 | `user_id`              | `INTEGER`       | `REFERENCES users(id)`                              | User who created the application |
 | `tenant_identity_id`   | `INTEGER`       | `NOT NULL REFERENCES tenant_identities(id)`         | Related identity                 |
+| `commodity_type`       | `VARCHAR(100)`  | `NOT NULL`                                          | Commodity/trade type             |
 | `document_number`      | `VARCHAR(80)`   | nullable                                            | Application document number      |
 | `location_id`          | `INTEGER`       | `NOT NULL REFERENCES locations(id)`                 | Selected location                |
 | `sector_id`            | `INTEGER`       | `NOT NULL REFERENCES land_sectors(id)`              | Selected sector                  |
@@ -1315,7 +1339,7 @@ Important:
 * `unavailable`
 * `maintenance`
 
-## Trader Profile Status
+## Land Permit Identity Status
 
 * `active`
 * `inactive`

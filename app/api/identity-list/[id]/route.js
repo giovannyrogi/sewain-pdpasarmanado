@@ -6,7 +6,7 @@ import {
   handleApiError,
   jsonResponse,
 } from "@/app/utils/apiValidation";
-import { removeKtpFile } from "../fileHelpers";
+import { removeKtpFile, removeProfilePhotoFile } from "../fileHelpers";
 import { validateIdentityId } from "../validation";
 
 const MASTER_DATA_ROLES = [1, 2, 9];
@@ -17,6 +17,7 @@ const mapIdentityRow = (row) => ({
   nik: row.nik,
   full_name: row.full_name,
   ktp_file_path: row.ktp_file_path,
+  profile_photo_file_path: row.profile_photo_file_path,
   birth_place: row.birth_place,
   birth_date: row.birth_date,
   nationality: row.nationality,
@@ -24,6 +25,11 @@ const mapIdentityRow = (row) => ({
   occupation: row.occupation,
   status: row.status,
   notes: row.notes,
+  land_permit_status: row.land_permit_status,
+  land_permit_status_notes: row.land_permit_status_notes,
+  land_permit_status_updated_at: row.land_permit_status_updated_at
+    ? moment(row.land_permit_status_updated_at).format("YYYY-MM-DD HH:mm:ss")
+    : null,
   street_address: row.street_address,
   rt: row.rt,
   rw: row.rw,
@@ -53,7 +59,17 @@ export async function GET(request, { params }) {
     }
 
     const result = await pool.query(
-      "SELECT * FROM tenant_identities WHERE id = $1 LIMIT 1",
+      `
+      SELECT
+        id, user_id, nik, full_name, ktp_file_path, profile_photo_file_path,
+        birth_place, birth_date, nationality, religion, occupation, status,
+        notes, land_permit_status, land_permit_status_notes,
+        land_permit_status_updated_at, street_address, rt, rw, kelurahan,
+        district, city, province, postal_code, phone, updated_at, created_at
+      FROM tenant_identities
+      WHERE id = $1
+      LIMIT 1
+      `,
       [id],
     );
 
@@ -91,7 +107,12 @@ export async function DELETE(request, { params }) {
     const today = moment().format("YYYY-MM-DD");
 
     const identityResult = await client.query(
-      "SELECT ktp_file_path, full_name FROM tenant_identities WHERE id = $1 LIMIT 1",
+      `
+      SELECT ktp_file_path, profile_photo_file_path, full_name
+      FROM tenant_identities
+      WHERE id = $1
+      LIMIT 1
+      `,
       [id],
     );
 
@@ -182,6 +203,9 @@ export async function DELETE(request, { params }) {
     await client.query("DELETE FROM tenant_identities WHERE id = $1", [id]);
     await removeKtpFile(identityResult.rows[0]?.ktp_file_path).catch((fileError) =>
       console.warn("Gagal menghapus file KTP:", fileError),
+    );
+    await removeProfilePhotoFile(identityResult.rows[0]?.profile_photo_file_path).catch(
+      (fileError) => console.warn("Gagal menghapus file pas foto:", fileError),
     );
 
     return jsonResponse({

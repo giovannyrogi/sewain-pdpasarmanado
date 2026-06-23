@@ -6,6 +6,7 @@ import {
 import { normalizeIndonesianPhone } from "@/app/utils/phoneNumber";
 
 const IDENTITY_STATUS = ["active", "inactive", "blacklisted"];
+const LAND_PERMIT_STATUS = ["active", "inactive", "blacklisted"];
 const NATIONALITY_OPTIONS = ["WNI", "WNA"];
 const NIK_PATTERN = /^[0-9]{16}$/;
 const SHORT_NUMBER_PATTERN = /^[0-9]{1,3}$/;
@@ -101,6 +102,44 @@ export const validateIdentityFormData = (formData, { requireFile = false } = {})
   }
 
   return { values: fields, ktpFile, error: null };
+};
+
+/**
+ * Validasi status khusus modul izin lahan. Status ini sengaja dipisahkan dari
+ * `tenant_identities.status` agar nonaktif/blacklist izin lahan tidak otomatis
+ * memblokir proses sewa kontrak ruangan.
+ */
+export const validateLandPermitIdentityFormData = (formData) => {
+  const landPermitStatus = String(formData.get("landPermitStatus") || "active").trim();
+  if (!LAND_PERMIT_STATUS.includes(landPermitStatus)) {
+    return { values: null, profilePhotoFile: null, error: "Status izin lahan tidak valid." };
+  }
+
+  const landPermitStatusNotes = normalizeOptionalString(
+    formData.get("landPermitStatusNotes"),
+    150,
+  );
+  if (landPermitStatusNotes.error) {
+    return { values: null, profilePhotoFile: null, error: landPermitStatusNotes.error };
+  }
+
+  if (landPermitStatus === "blacklisted" && !landPermitStatusNotes.value) {
+    return {
+      values: null,
+      profilePhotoFile: null,
+      error: "Alasan blacklist izin lahan wajib diisi.",
+    };
+  }
+
+  return {
+    values: {
+      land_permit_status: landPermitStatus,
+      land_permit_status_notes:
+        landPermitStatus === "blacklisted" ? landPermitStatusNotes.value : "",
+    },
+    profilePhotoFile: formData.get("profilePhotoFile"),
+    error: null,
+  };
 };
 
 export const validateIdentityId = (value) =>
