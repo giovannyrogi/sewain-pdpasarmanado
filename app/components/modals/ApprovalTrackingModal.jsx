@@ -45,6 +45,16 @@ const TRACKING_CONFIG = {
     endpoint: "/api/land-permit-approval/",
     getEntityId: (data) => data?.land_permit_application_id || data?.id,
   },
+  landPermitPayment: {
+    title: "Progress Verifikasi Pembayaran Izin Lahan",
+    description: "Riwayat validasi bukti pembayaran izin lahan oleh keuangan.",
+    icon: "solar:wallet-money-bold-duotone",
+    loadingMessage: "Memperbarui verifikasi pembayaran izin lahan...",
+    waitingLabel: "Menunggu Verifikasi Keuangan",
+    endpoint: "/api/land-permit-payment-approval/",
+    getEntityId: (data) =>
+      data?.land_permit_payment_id || data?.payment_id || data?.id,
+  },
 };
 
 const getStatusMeta = (status, theme) => {

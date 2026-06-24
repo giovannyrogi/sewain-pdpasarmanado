@@ -44,7 +44,7 @@ export async function PUT(request, { params }) {
     );
 
     if (existingStall.rowCount === 0) {
-      return failResponse("Lapak izin lahan tidak ditemukan.", 404);
+      return failResponse("Lahan tidak ditemukan.", 404);
     }
 
     const sectorIsValid = await ensureSectorBelongsToLocation(
@@ -70,7 +70,7 @@ export async function PUT(request, { params }) {
 
     if (activePermit.rowCount > 0 && values.status !== "occupied") {
       return failResponse(
-        "Lapak masih memiliki izin aktif. Status hanya dapat tetap sebagai terisi.",
+        "Lahan masih memiliki izin aktif. Status hanya dapat tetap sebagai terisi.",
         409,
       );
     }
@@ -86,7 +86,7 @@ export async function PUT(request, { params }) {
     );
 
     if (duplicateStall.rowCount > 0) {
-      return failResponse("Nomor lapak sudah terdaftar pada sektor ini.", 409);
+      return failResponse("Nomor lahan sudah terdaftar pada sektor ini.", 409);
     }
 
     const result = await client.query(
@@ -120,14 +120,14 @@ export async function PUT(request, { params }) {
 
     return jsonResponse({
       success: true,
-      message: "Lapak izin lahan berhasil diperbarui.",
+      message: "Lahan berhasil diperbarui.",
       data: result.rows[0],
     });
   } catch (error) {
     return handleApiError(
       "Error updating land stall",
       error,
-      "Terjadi kesalahan saat memperbarui lapak izin lahan.",
+      "Terjadi kesalahan saat memperbarui lahan.",
     );
   } finally {
     client.release();
@@ -156,7 +156,7 @@ export async function DELETE(_request, { params }) {
 
     if (activePermit.rowCount > 0) {
       return failResponse(
-        "Lapak tidak dapat dihapus karena sudah digunakan pada permohonan izin lahan.",
+        "Lahan tidak dapat dihapus karena sudah digunakan pada permohonan izin lahan.",
         409,
       );
     }
@@ -167,18 +167,18 @@ export async function DELETE(_request, { params }) {
     );
 
     if (result.rowCount === 0) {
-      return failResponse("Lapak izin lahan tidak ditemukan.", 404);
+      return failResponse("Lahan tidak ditemukan.", 404);
     }
 
     return jsonResponse({
       success: true,
-      message: "Lapak izin lahan berhasil dihapus.",
+      message: "Lahan berhasil dihapus.",
     });
   } catch (error) {
     return handleApiError(
       "Error deleting land stall",
       error,
-      "Terjadi kesalahan saat menghapus lapak izin lahan.",
+      "Terjadi kesalahan saat menghapus lahan.",
     );
   }
 }

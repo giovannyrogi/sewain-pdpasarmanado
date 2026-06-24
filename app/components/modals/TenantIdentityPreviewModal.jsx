@@ -4,7 +4,6 @@ import React, { useState } from "react";
 import {
   Box,
   Button,
-  Chip,
   Divider,
   Grid,
   Stack,
@@ -18,6 +17,7 @@ import AppModal from "@/app/components/modals/AppModal";
 import ImagePreviewModal from "@/app/components/modals/ImagePreviewModal";
 import { getUploadApiUrl } from "@/app/utils/uploadPath";
 import IdentityModuleBadges from "@/app/components/identity/IdentityModuleBadges";
+import CompactInfoChip from "@/app/components/chips/CompactInfoChip";
 
 const emptyValue = "-";
 
@@ -46,13 +46,6 @@ const getStatusLabel = (status) => {
   if (status === "inactive") return "Tidak Aktif";
   if (status === "blacklisted") return "Blacklist";
   return displayValue(status);
-};
-
-const getStatusColor = (status) => {
-  if (status === "active") return "success";
-  if (status === "inactive") return "error";
-  if (status === "blacklisted") return "warning";
-  return "default";
 };
 
 /**
@@ -243,16 +236,14 @@ export default function TenantIdentityPreviewModal({
                   {identityName}
                 </Typography>
                 <Stack direction="row" flexWrap="wrap" gap={1} sx={{ mt: 1 }}>
-                  <Chip size="small" label={`NIK: ${identityNik}`} sx={{ fontWeight: 800 }} />
-                  <Chip size="small" label={`Telp: ${identityPhone}`} sx={{ fontWeight: 800 }} />
-                  {identityStatus && (
-                    <Chip
-                      size="small"
-                      color={getStatusColor(identityStatus)}
-                      label={getStatusLabel(identityStatus)}
-                      sx={{ fontWeight: 850 }}
-                    />
-                  )}
+                  <CompactInfoChip
+                    label={`NIK: ${identityNik}`}
+                    color={theme.palette.text.secondary}
+                  />
+                  <CompactInfoChip
+                    label={`Telp: ${identityPhone}`}
+                    color={theme.palette.text.secondary}
+                  />
                 </Stack>
                 <Box sx={{ mt: 1.25 }}>
                   <IdentityModuleBadges identity={selectedData} />
@@ -416,6 +407,7 @@ export default function TenantIdentityPreviewModal({
 
                   <Button
                     variant="outlined"
+                    color="info"
                     disabled={!selectedData?.profile_photo_file_path}
                     onClick={() =>
                       openImagePreview(
@@ -428,6 +420,9 @@ export default function TenantIdentityPreviewModal({
                       borderRadius: 2,
                       fontWeight: 850,
                       textTransform: "none",
+                      color: theme.palette.info.main,
+                      borderColor: alpha(theme.palette.info.main, 0.55),
+                      bgcolor: alpha(theme.palette.info.main, 0.08),
                     }}
                   >
                     Lihat Foto

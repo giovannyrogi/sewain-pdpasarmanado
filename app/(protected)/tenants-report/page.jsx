@@ -32,13 +32,13 @@ const DEFAULT_LOADING_MESSAGE = "Loading...";
 
 const PAGE_BREADCRUMBS = [
   {
-    label: "Reports",
+    label: "Laporan",
     value: "reports",
     path: "#",
     icon: "solar:chart-square-bold-duotone",
   },
   {
-    label: "Report by Tenants",
+    label: "Laporan per Penyewa",
     value: "tenants-report",
     path: "/tenants-report",
     icon: "solar:users-group-rounded-bold-duotone",
@@ -287,7 +287,7 @@ export default function TenantsReportPage() {
     >
       <PageHeader
         breadcrumbs={PAGE_BREADCRUMBS}
-        title="Report by Tenants"
+        title="Laporan per Penyewa"
         description="Lihat rincian pendapatan setiap penyewa berdasarkan transaksi pembayaran, status cicilan/lunas, PPN, PPH, dan total bersih."
         icon="solar:users-group-rounded-bold-duotone"
       />

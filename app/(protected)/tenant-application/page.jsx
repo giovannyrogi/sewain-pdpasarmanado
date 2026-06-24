@@ -447,22 +447,22 @@ const Applications = () => {
     >
       <Stack spacing={{ xs: 1.5, lg: 2 }}>
         <PageHeader
-          eyebrow="Transactions"
+          eyebrow="Transaksi"
           breadcrumbs={[
             {
-              label: "Transactions",
+              label: "Transaksi",
               value: "transactions",
               icon: "solar:money-bag-bold-duotone",
               path: "#",
             },
             {
-              label: "Tenant Application",
+              label: "Permohonan Sewa Ruangan",
               value: "tenant-application",
               icon: "solar:document-add-bold-duotone",
               path: "/tenant-application",
             },
           ]}
-          title="Tenant Application"
+          title="Permohonan Sewa Ruangan"
           description="Kelola permohonan sewa ruangan, status approval, dokumen penyewa, pembayaran awal, dan dokumen cetak dalam satu halaman."
           icon="solar:document-add-bold-duotone"
           actionSx={{
@@ -548,8 +548,9 @@ const Applications = () => {
             fixedActionColumn={{
               className: "tenant-application-action-column",
               buttonsClassName: "tenant-application-action-buttons",
+              buttonsOffsetX: 6,
               width: ACTION_COLUMN_WIDTH,
-              paddingX: 14,
+              paddingX: 16,
             }}
             rowClassName={(record) => {
               if (record.is_fully_paid) return "rowFullyPaid";

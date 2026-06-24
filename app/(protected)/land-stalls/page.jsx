@@ -81,9 +81,9 @@ const getStatusChipSx = (theme, status) => {
 };
 
 /**
- * Halaman master lapak izin lahan.
- * Data ini menjadi sumber pilihan lapak saat Phase 2 permohonan izin lahan,
- * sehingga relasi lokasi-sektor-lapak harus terlihat jelas di table.
+ * Halaman master lahan izin.
+ * Data ini menjadi sumber pilihan lahan saat Phase 2 permohonan izin lahan,
+ * sehingga relasi lokasi-sektor-lahan harus terlihat jelas di tabel.
  */
 export default function LandStallsPage() {
   const theme = useTheme();
@@ -116,7 +116,7 @@ export default function LandStallsPage() {
 
       if (!stallResponse.data?.success) {
         showSnackbar(
-          stallResponse.data?.message || "Gagal mengambil data lapak.",
+          stallResponse.data?.message || "Gagal mengambil data lahan.",
           "error",
         );
         return;
@@ -133,7 +133,7 @@ export default function LandStallsPage() {
     } catch (error) {
       showSnackbar(
         error?.response?.data?.message ||
-          "Terjadi kesalahan saat mengambil data lapak.",
+          "Terjadi kesalahan saat mengambil data lahan.",
         "error",
       );
     } finally {
@@ -170,19 +170,19 @@ export default function LandStallsPage() {
     ).length;
     return [
       {
-        label: "Total Lapak",
+        label: "Total Lahan",
         value: stalls.length,
         icon: "solar:shop-bold-duotone",
         color: theme.palette.primary.main,
       },
       {
-        label: "Lapak Tersedia",
+        label: "Lahan Tersedia",
         value: available,
         icon: "solar:check-circle-bold-duotone",
         color: theme.palette.success.main,
       },
       {
-        label: "Lapak Terisi",
+        label: "Lahan Terisi",
         value: occupied,
         icon: "solar:lock-keyhole-bold-duotone",
         color: theme.palette.warning.main,
@@ -235,18 +235,18 @@ export default function LandStallsPage() {
       const response = await request;
 
       if (response.data?.success) {
-        showSnackbar(response.data.message || "Data lapak berhasil disimpan.");
+        showSnackbar(response.data.message || "Data lahan berhasil disimpan.");
         setFormOpen(false);
         setSelectedStall(null);
         await fetchMasterData();
         return;
       }
 
-      showSnackbar(response.data?.message || "Gagal menyimpan lapak.", "error");
+      showSnackbar(response.data?.message || "Gagal menyimpan lahan.", "error");
     } catch (error) {
       showSnackbar(
         error?.response?.data?.message ||
-          "Terjadi kesalahan saat menyimpan lapak.",
+          "Terjadi kesalahan saat menyimpan lahan.",
         "error",
       );
     } finally {
@@ -264,18 +264,18 @@ export default function LandStallsPage() {
       );
 
       if (response.data?.success) {
-        showSnackbar(response.data.message || "Lapak berhasil dihapus.");
+        showSnackbar(response.data.message || "Lahan berhasil dihapus.");
         setDeleteOpen(false);
         setSelectedStall(null);
         await fetchMasterData();
         return;
       }
 
-      showSnackbar(response.data?.message || "Gagal menghapus lapak.", "error");
+      showSnackbar(response.data?.message || "Gagal menghapus lahan.", "error");
     } catch (error) {
       showSnackbar(
         error?.response?.data?.message ||
-          "Terjadi kesalahan saat menghapus lapak.",
+          "Terjadi kesalahan saat menghapus lahan.",
         "error",
       );
     } finally {
@@ -292,7 +292,7 @@ export default function LandStallsPage() {
         render: (_, __, index) => index + 1,
       },
       {
-        title: "Lapak",
+        title: "Lahan",
         dataIndex: "stall_number",
         width: 220,
         fixed: "left",
@@ -300,7 +300,7 @@ export default function LandStallsPage() {
         render: (_, record) => (
           <Stack spacing={0.6}>
             <Typography sx={{ fontWeight: 700, fontSize: 13 }}>
-              Lapak {record.stall_number}
+              Lahan {record.stall_number}
             </Typography>
             <Chip
               size="small"
@@ -427,13 +427,13 @@ export default function LandStallsPage() {
             }}
           >
             <TableActionButton
-              title="Ubah lapak"
+              title="Ubah lahan"
               color="info"
               icon="solar:pen-bold-duotone"
               onClick={() => openEditModal(record)}
             />
             <TableActionButton
-              title="Hapus lapak"
+              title="Hapus lahan"
               color="error"
               icon="solar:trash-bin-trash-bold-duotone"
               onClick={() => openDeleteModal(record)}
@@ -459,10 +459,10 @@ export default function LandStallsPage() {
         <PageHeader
           breadcrumbs={[
             { label: "Data Master", icon: "solar:database-bold-duotone" },
-            { label: "Lapak Izin Lahan", icon: "solar:shop-bold-duotone" },
+            { label: "Lahan", icon: "solar:shop-bold-duotone" },
           ]}
-          title="Lapak Izin Lahan"
-          description="Kelola lapak pada setiap sektor, termasuk ukuran, harga per meter, dan status ketersediaan."
+          title="Lahan"
+          description="Kelola lahan pada setiap sektor, termasuk ukuran, harga per meter, dan status ketersediaan."
           action={
             <Button
               fullWidth
@@ -474,7 +474,7 @@ export default function LandStallsPage() {
                 px: { xs: 2, sm: 2.5 },
                 borderRadius: 2,
                 fontFamily: "Poppins",
-                fontWeight: 900,
+                fontWeight: 700,
                 textTransform: "none",
                 boxShadow:
                   theme.palette.mode === "dark"
@@ -489,7 +489,7 @@ export default function LandStallsPage() {
                 },
               }}
             >
-              Tambah Lapak
+              Tambah Lahan
             </Button>
           }
           actionSx={{
@@ -508,10 +508,10 @@ export default function LandStallsPage() {
         </Grid>
 
         <DataTableShell
-          title="Daftar Lapak"
-          description={`${filteredStalls.length} dari ${stalls.length} lapak ditampilkan`}
+          title="Daftar Lahan"
+          description={`${filteredStalls.length} dari ${stalls.length} lahan ditampilkan`}
           searchValue={searchText}
-          searchPlaceholder="Cari lapak, lokasi, sektor, status, atau catatan"
+          searchPlaceholder="Cari lahan, lokasi, sektor, status, atau catatan"
           onSearchChange={setSearchText}
         >
           <ReusableAntTable
@@ -547,13 +547,13 @@ export default function LandStallsPage() {
 
       <CrudConfirmModal
         open={deleteOpen}
-        title="Hapus Lapak"
-        titleDescription="Lapak yang sudah dipakai permohonan izin lahan tidak dapat dihapus."
-        description="Lapak yang dihapus tidak dapat digunakan lagi. Pastikan lapak ini tidak sedang dipakai pada permohonan izin lahan aktif sebelum menghapus. Anda yakin ingin menghapus lapak"
+        title="Hapus Lahan"
+        titleDescription="Lahan yang sudah dipakai permohonan izin lahan tidak dapat dihapus."
+        description="Lahan yang dihapus tidak dapat digunakan lagi. Pastikan lahan ini tidak sedang dipakai pada permohonan izin lahan aktif sebelum menghapus. Anda yakin ingin menghapus lahan"
         highlight={selectedStall?.stall_number}
-        confirmLabel="Hapus Lapak"
+        confirmLabel="Hapus Lahan"
         loading={loading}
-        loadingLabel="Menghapus lapak..."
+        loadingLabel="Menghapus lahan..."
         onClose={() => setDeleteOpen(false)}
         onConfirm={handleDeleteStall}
       />
@@ -566,7 +566,7 @@ export default function LandStallsPage() {
 
       <LoadingBackdrop
         open={loading && !formOpen && !deleteOpen && !notesOpen}
-        message="Memuat data lapak..."
+        message="Memuat data lahan..."
       />
 
       <Notification

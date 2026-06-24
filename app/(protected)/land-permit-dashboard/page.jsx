@@ -86,13 +86,13 @@ export default function LandPermitDashboardPage() {
         color: theme.palette.info.main,
       },
       {
-        label: "Lapak Tersedia",
+        label: "Lahan Tersedia",
         value: availableStalls,
         icon: "solar:shop-bold-duotone",
         color: theme.palette.success.main,
       },
       {
-        label: "Lapak Terisi",
+        label: "Lahan Terisi",
         value: occupiedStalls,
         icon: "solar:lock-keyhole-bold-duotone",
         color: theme.palette.warning.main,
@@ -112,7 +112,13 @@ export default function LandPermitDashboardPage() {
     >
       <Stack spacing={{ xs: 1.5, lg: 2 }}>
         <PageHeader
-          eyebrow="Modul Izin Lahan"
+          breadcrumbs={[
+            {
+              label: "Dashboard",
+              icon: "solar:shop-2-bold-duotone",
+              path: "/land-permit-dashboard",
+            },
+          ]}
           icon="solar:shop-2-bold-duotone"
           title="Dashboard"
           description="Ringkasan kesiapan data master izin lahan sebelum masuk ke proses permohonan, approval, pembayaran, dan dokumen izin."

@@ -517,19 +517,19 @@ const Payments = () => {
         <PageHeader
           breadcrumbs={[
             {
-              label: "Transactions",
+              label: "Transaksi",
               value: "transactions",
               icon: "solar:money-bag-bold-duotone",
               path: "#",
             },
             {
-              label: "Payments",
+              label: "Pembayaran Sewa Ruangan",
               value: "payments",
               icon: "streamline:payment-10-remix",
               path: "/payments",
             },
           ]}
-          title="Payments"
+          title="Pembayaran Sewa Ruangan"
           description="Kelola bukti pembayaran tenant, validasi keuangan, status verifikasi, dan cetak dokumen pembayaran dalam satu halaman."
           icon="streamline:payment-10-remix"
           actionSx={{
@@ -557,7 +557,7 @@ const Payments = () => {
                       : "0 6px 14px rgba(230, 9, 9, 0.16)",
                 }}
               >
-                Tambah Pembayaran
+                Tambah Pembayaran Sewa
               </Button>
             )
           }
@@ -572,7 +572,7 @@ const Payments = () => {
         </Grid>
 
         <DataTableShell
-          title="Daftar Pembayaran"
+          title="Daftar Pembayaran Sewa Ruangan"
           description={`${filteredData.length} dari ${dataPayments.length} pembayaran ditampilkan`}
           searchValue={searchText}
           searchPlaceholder="Cari penyewa, NIK, ruangan, status..."
@@ -591,8 +591,9 @@ const Payments = () => {
             fixedActionColumn={{
               className: "payments-action-column",
               buttonsClassName: "payments-action-buttons",
+              buttonsOffsetX: 6,
               width: PAYMENT_ACTION_COLUMN_WIDTH,
-              paddingX: 14,
+              paddingX: 16,
             }}
           />
         </DataTableShell>

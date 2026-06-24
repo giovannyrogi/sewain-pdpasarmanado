@@ -210,7 +210,7 @@ export async function DELETE(request, { params }) {
 
       if (landPermit.permit_status === "active") {
         return failResponse(
-          `Identitas masih aktif pada izin lahan ${landPermit.location_name || "lokasi terkait"} sektor ${landPermit.sector_name || "-"} lapak ${landPermit.stall_number || "-"}.`,
+          `Identitas masih aktif pada izin lahan ${landPermit.location_name || "lokasi terkait"} sektor ${landPermit.sector_name || "-"} lahan ${landPermit.stall_number || "-"}.`,
           409,
         );
       }

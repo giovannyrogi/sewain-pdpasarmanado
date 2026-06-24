@@ -1,4 +1,5 @@
 const NON_FINANCE_ROLES = [1, 2, 3, 4, 5, 6, 7];
+const LAND_PERMIT_APPROVAL_ROLES = [1, 3, 4, 5, 6, 7];
 const FINANCE_ROLE = 8;
 const SUPERADMIN_ROLE = 1;
 
@@ -35,6 +36,13 @@ const buildTenantMessage = (value = {}) => {
   const room = tenant.roomNumber ? `, Ruangan ${tenant.roomNumber}` : "";
   const location = tenant.locationName ? `, Lokasi ${tenant.locationName}` : "";
   return `Dokumen ${doc} atas nama ${tenant.tenantName || "-"}${room}${location}.`;
+};
+
+const buildLandPermitMessage = (value = {}) => {
+  const location = value.location_name ? `, Lokasi ${value.location_name}` : "";
+  const sector = value.sector_name ? `, Sektor ${value.sector_name}` : "";
+  const stall = value.stall_number ? `, Lahan ${value.stall_number}` : "";
+  return `Permohonan izin lahan atas nama ${value.tenant_name || "-"}${location}${sector}${stall}.`;
 };
 
 const normalizeTenantInfo = (value = {}) => ({
@@ -277,6 +285,29 @@ async function archiveWaitingApprovalNotifications(client, tenantId, roleId) {
       AND nr.archived_at IS NULL
     `,
     [tenantId, roleId],
+  );
+}
+
+async function archiveWaitingLandPermitApprovalNotifications(
+  client,
+  applicationId,
+  roleId,
+) {
+  await client.query(
+    `
+    UPDATE notification_recipients nr
+    SET
+      read_at = COALESCE(nr.read_at, NOW()),
+      archived_at = COALESCE(nr.archived_at, NOW())
+    FROM notifications n
+    WHERE n.id = nr.notification_id
+      AND n.type = 'land_permit_approval_waiting'
+      AND n.entity_type = 'land_permit_application'
+      AND n.entity_id = $1
+      AND nr.role_id = $2
+      AND nr.archived_at IS NULL
+    `,
+    [applicationId, roleId],
   );
 }
 
@@ -882,6 +913,290 @@ export async function notifyPaymentSubmitted(client, payment, createdBy) {
   });
 }
 
+export async function getLandPermitNotificationContext(client, applicationId) {
+  const result = await client.query(
+    `
+    SELECT
+      app.id,
+      app.user_id,
+      app.current_step,
+      app.approval_status,
+      identity.full_name AS tenant_name,
+      location.location_name,
+      sector.sector_name,
+      stall.stall_number
+    FROM land_permit_applications app
+    JOIN tenant_identities identity ON identity.id = app.tenant_identity_id
+    JOIN locations location ON location.id = app.location_id
+    JOIN land_sectors sector ON sector.id = app.sector_id
+    JOIN land_stalls stall ON stall.id = app.stall_id
+    WHERE app.id = $1
+    LIMIT 1
+    `,
+    [applicationId],
+  );
+
+  return result.rows[0] || null;
+}
+
+export async function getLandPermitPaymentNotificationContext(client, paymentId) {
+  const result = await client.query(
+    `
+    SELECT
+      payment.id AS payment_id,
+      payment.uploaded_by,
+      payment.amount,
+      payment.approval_status,
+      app.id AS land_permit_application_id,
+      app.user_id AS application_created_by,
+      identity.full_name AS tenant_name,
+      location.location_name,
+      sector.sector_name,
+      stall.stall_number
+    FROM land_permit_payments payment
+    JOIN land_permit_applications app
+      ON app.id = payment.land_permit_application_id
+    JOIN tenant_identities identity ON identity.id = app.tenant_identity_id
+    JOIN locations location ON location.id = app.location_id
+    JOIN land_sectors sector ON sector.id = app.sector_id
+    JOIN land_stalls stall ON stall.id = app.stall_id
+    WHERE payment.id = $1
+    LIMIT 1
+    `,
+    [paymentId],
+  );
+
+  return result.rows[0] || null;
+}
+
+export async function notifyLandPermitSubmitted(
+  client,
+  application,
+  createdBy,
+) {
+  await createNotificationForRoles(client, {
+    type: "land_permit_approval_waiting",
+    title: "Menunggu approval izin lahan",
+    message: `${buildLandPermitMessage(application)} Permohonan baru masuk ke giliran approval Anda.`,
+    entityType: "land_permit_application",
+    entityId: application.id,
+    actionUrl: `/land-permit-approval?land_permit_application_id=${application.id}&open=approval`,
+    priority: "urgent",
+    createdBy,
+    roleIds: [3],
+    metadata: {
+      ...application,
+      module: "land_permit",
+      current_approval_role_id: 3,
+    },
+  });
+}
+
+export async function notifyLandPermitResubmitted(
+  client,
+  application,
+  resumeStep,
+) {
+  const roleId = APPROVAL_STEP_ROLES[Number(resumeStep)];
+  if (!roleId) return;
+
+  await createNotificationForRoles(client, {
+    type: "land_permit_approval_waiting",
+    title: "Permohonan izin lahan diperbarui",
+    message: `${buildLandPermitMessage(application)} Data telah diperbaiki dan kembali menunggu approval Anda.`,
+    entityType: "land_permit_application",
+    entityId: application.id,
+    actionUrl: `/land-permit-approval?land_permit_application_id=${application.id}&open=approval`,
+    priority: "urgent",
+    createdBy: application.user_id,
+    roleIds: [roleId],
+    metadata: {
+      ...application,
+      module: "land_permit",
+      current_approval_role_id: roleId,
+      resumed_step: Number(resumeStep),
+    },
+  });
+}
+
+export async function notifyLandPermitApprovalActionCompleted(
+  client,
+  application,
+  actorId,
+  roleId,
+  status,
+) {
+  const actor = await getUserContext(client, actorId);
+  const roleLabel =
+    APPROVAL_ROLE_LABELS[actor?.role_id] || actor?.role_name || "Approver";
+
+  await archiveWaitingLandPermitApprovalNotifications(
+    client,
+    application.id,
+    roleId,
+  );
+
+  await createNotificationForUsers(client, {
+    type:
+      status === "approved"
+        ? "land_permit_approval_completed"
+        : "land_permit_approval_rejected_by_you",
+    title:
+      status === "approved"
+        ? "Approval izin lahan berhasil"
+        : "Penolakan izin lahan berhasil",
+    message: `${buildLandPermitMessage(application)} Anda telah ${status === "approved" ? "menyetujui" : "menolak"} sebagai ${roleLabel}.`,
+    entityType: "land_permit_application",
+    entityId: application.id,
+    actionUrl: `/land-permit-approval?land_permit_application_id=${application.id}&open=progress`,
+    createdBy: actorId,
+    userIds: [actorId],
+    metadata: {
+      ...application,
+      module: "land_permit",
+      action_status: status,
+      processed_by_name: actor?.full_name,
+      processed_by_role: roleLabel,
+    },
+  });
+}
+
+export async function notifyLandPermitApprovalMoved(
+  client,
+  application,
+  actorId,
+  nextRoleId,
+) {
+  const actor = await getUserContext(client, actorId);
+  const actorRole =
+    APPROVAL_ROLE_LABELS[actor?.role_id] || actor?.role_name || "Approver";
+
+  if (!nextRoleId) {
+    await createNotificationForRolesWithExclusions(client, {
+      type: "land_permit_application_approved",
+      title: "Izin lahan disetujui final",
+      message: `${buildLandPermitMessage(application)} Persetujuan final telah selesai.`,
+      entityType: "land_permit_application",
+      entityId: application.id,
+      actionUrl: `/land-permit-approval?land_permit_application_id=${application.id}&open=progress`,
+      priority: "high",
+      createdBy: actorId,
+      roleIds: LAND_PERMIT_APPROVAL_ROLES,
+      excludeUserIds: [actorId],
+      metadata: {
+        ...application,
+        module: "land_permit",
+        approved_by_name: actor?.full_name,
+        approved_by_role: actorRole,
+      },
+    });
+    await createNotificationForRoles(client, {
+      type: "land_permit_application_approved",
+      title: "Izin lahan disetujui final",
+      message: `${buildLandPermitMessage(application)} Persetujuan final telah selesai.`,
+      entityType: "land_permit_application",
+      entityId: application.id,
+      actionUrl: `/land-permit-applications?land_permit_application_id=${application.id}&open=approval`,
+      priority: "high",
+      createdBy: actorId,
+      roleIds: [9],
+      metadata: {
+        ...application,
+        module: "land_permit",
+        approved_by_name: actor?.full_name,
+        approved_by_role: actorRole,
+      },
+    });
+    return;
+  }
+
+  const nextRoleLabel = await buildRoleLabel(client, nextRoleId);
+  await createNotificationForRoles(client, {
+    type: "land_permit_approval_waiting",
+    title: "Menunggu approval izin lahan",
+    message: `${buildLandPermitMessage(application)} Permohonan sudah masuk ke giliran approval Anda.`,
+    entityType: "land_permit_application",
+    entityId: application.id,
+    actionUrl: `/land-permit-approval?land_permit_application_id=${application.id}&open=approval`,
+    priority: "urgent",
+    createdBy: actorId,
+    roleIds: [nextRoleId],
+    metadata: {
+      ...application,
+      module: "land_permit",
+      current_approval_role_id: nextRoleId,
+      waiting_role_label: nextRoleLabel,
+    },
+  });
+
+  await createNotificationForRolesWithExclusions(client, {
+    type: "land_permit_approval_progress",
+    title: `${actorRole} sudah approve izin lahan`,
+    message: `${buildLandPermitMessage(application)} Sekarang menunggu ${nextRoleLabel}.`,
+    entityType: "land_permit_application",
+    entityId: application.id,
+    actionUrl: `/land-permit-approval?land_permit_application_id=${application.id}&open=progress`,
+    createdBy: actorId,
+    roleIds: LAND_PERMIT_APPROVAL_ROLES,
+    excludeRoleIds: [nextRoleId],
+    excludeUserIds: [actorId],
+    metadata: {
+      ...application,
+      module: "land_permit",
+      approved_by_name: actor?.full_name,
+      approved_by_role: actorRole,
+      waiting_role_id: nextRoleId,
+      waiting_role_label: nextRoleLabel,
+    },
+  });
+}
+
+export async function notifyLandPermitApprovalRejected(
+  client,
+  application,
+  actorId,
+) {
+  const actor = await getUserContext(client, actorId);
+  const roleLabel =
+    APPROVAL_ROLE_LABELS[actor?.role_id] || actor?.role_name || "Approver";
+
+  await createNotificationForRolesWithExclusions(client, {
+    type: "land_permit_application_rejected",
+    title: "Permohonan izin lahan ditolak",
+    message: `${buildLandPermitMessage(application)} Ditolak oleh ${roleLabel}${actor?.full_name ? ` (${actor.full_name})` : ""}.`,
+    entityType: "land_permit_application",
+    entityId: application.id,
+    actionUrl: "/land-permit-applications",
+    priority: "high",
+    createdBy: actorId,
+    roleIds: LAND_PERMIT_APPROVAL_ROLES,
+    excludeUserIds: [actorId],
+    metadata: {
+      ...application,
+      module: "land_permit",
+      rejected_by_name: actor?.full_name,
+      rejected_by_role: roleLabel,
+    },
+  });
+  await createNotificationForRoles(client, {
+    type: "land_permit_application_rejected",
+    title: "Permohonan izin lahan ditolak",
+    message: `${buildLandPermitMessage(application)} Ditolak oleh ${roleLabel}${actor?.full_name ? ` (${actor.full_name})` : ""}.`,
+    entityType: "land_permit_application",
+    entityId: application.id,
+    actionUrl: "/land-permit-applications",
+    priority: "high",
+    createdBy: actorId,
+    roleIds: [9],
+    metadata: {
+      ...application,
+      module: "land_permit",
+      rejected_by_name: actor?.full_name,
+      rejected_by_role: roleLabel,
+    },
+  });
+}
+
 export async function notifyPaymentUpdated(client, payment, updatedBy) {
   const updater = await getUserContext(client, updatedBy);
   const updaterRoleLabel = updater?.role_name || "User";
@@ -958,6 +1273,127 @@ export async function notifyPaymentDecision(client, payment, approverId, status,
       decision_notes: notes || null,
       decided_by_name: approver?.full_name,
       decided_by_role: approverRoleLabel,
+    },
+  });
+}
+
+export async function notifyLandPermitPaymentSubmitted(
+  client,
+  payment,
+  createdBy,
+) {
+  const creator = await getUserContext(client, createdBy);
+
+  await createNotificationForRolesWithExclusions(client, {
+    type: "land_permit_payment_submitted",
+    title: "Bukti pembayaran izin lahan baru",
+    message: `${buildLandPermitMessage(payment)} Bukti pembayaran telah dibuat dan menunggu verifikasi keuangan.`,
+    entityType: "land_permit_payment",
+    entityId: payment.payment_id,
+    actionUrl: `/land-permit-payments?payment_id=${payment.payment_id}&open=detail`,
+    priority: "urgent",
+    createdBy,
+    roleIds: [SUPERADMIN_ROLE, FINANCE_ROLE],
+    excludeUserIds: [createdBy],
+    metadata: {
+      ...payment,
+      module: "land_permit",
+      submitted_by_name: creator?.full_name,
+      submitted_by_role: creator?.role_name,
+    },
+  });
+}
+
+export async function notifyLandPermitPaymentUpdated(
+  client,
+  payment,
+  updatedBy,
+) {
+  const updater = await getUserContext(client, updatedBy);
+
+  await createNotificationForRolesWithExclusions(client, {
+    type: "land_permit_payment_updated",
+    title: "Bukti pembayaran izin lahan diperbarui",
+    message: `${buildLandPermitMessage(payment)} Bukti pembayaran telah diperbarui dan perlu diverifikasi ulang.`,
+    entityType: "land_permit_payment",
+    entityId: payment.payment_id,
+    actionUrl: `/land-permit-payments?payment_id=${payment.payment_id}&open=detail`,
+    priority: "high",
+    createdBy: updatedBy,
+    roleIds: [SUPERADMIN_ROLE, FINANCE_ROLE],
+    excludeUserIds: [updatedBy],
+    metadata: {
+      ...payment,
+      module: "land_permit",
+      updated_by_name: updater?.full_name,
+      updated_by_role: updater?.role_name,
+    },
+  });
+}
+
+export async function notifyLandPermitPaymentDeleted(
+  client,
+  payment,
+  deletedBy,
+) {
+  const deleter = await getUserContext(client, deletedBy);
+
+  await createNotificationForRolesWithExclusions(client, {
+    type: "land_permit_payment_deleted",
+    title: "Bukti pembayaran izin lahan dihapus",
+    message: `${buildLandPermitMessage(payment)} Bukti pembayaran telah dihapus.`,
+    entityType: "land_permit_payment",
+    entityId: payment.payment_id,
+    actionUrl: `/land-permit-payments?payment_id=${payment.payment_id}&open=detail&deleted=1`,
+    priority: "high",
+    createdBy: deletedBy,
+    roleIds: [SUPERADMIN_ROLE, FINANCE_ROLE],
+    excludeUserIds: [deletedBy],
+    metadata: {
+      ...payment,
+      module: "land_permit",
+      deleted_by_name: deleter?.full_name,
+      deleted_by_role: deleter?.role_name,
+    },
+  });
+}
+
+export async function notifyLandPermitPaymentDecision(
+  client,
+  payment,
+  approverId,
+  status,
+  notes,
+) {
+  const approver = await getUserContext(client, approverId);
+
+  await createNotificationForUsers(client, {
+    type:
+      status === "approved"
+        ? "land_permit_payment_approved"
+        : "land_permit_payment_rejected",
+    title:
+      status === "approved"
+        ? "Pembayaran izin lahan disetujui"
+        : "Pembayaran izin lahan ditolak",
+    message:
+      status === "approved"
+        ? `${buildLandPermitMessage(payment)} Bukti pembayaran telah diverifikasi oleh keuangan.`
+        : `${buildLandPermitMessage(payment)} Bukti pembayaran ditolak. Tekan notifikasi untuk melihat alasan penolakan.`,
+    entityType: "land_permit_payment",
+    entityId: payment.payment_id,
+    actionUrl: `/land-permit-payments?payment_id=${payment.payment_id}&open=progress`,
+    priority: status === "approved" ? "normal" : "high",
+    createdBy: approverId,
+    userIds: [payment.uploaded_by, payment.application_created_by].filter(
+      (userId) => Number(userId) !== Number(approverId),
+    ),
+    metadata: {
+      ...payment,
+      module: "land_permit",
+      decision_notes: notes || null,
+      decided_by_name: approver?.full_name,
+      decided_by_role: approver?.role_name,
     },
   });
 }

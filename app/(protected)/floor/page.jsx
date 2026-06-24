@@ -346,13 +346,13 @@ export default function FloorPrices() {
               path: "#",
             },
             {
-              label: "Floor",
+              label: "Lantai",
               value: "floor",
               icon: "solar:tag-bold-duotone",
               path: "/floor",
             },
           ]}
-          title="Floor"
+          title="Lantai"
           description="Kelola lantai per lokasi untuk membantu pengelompokan ruangan, filter data operasional, dan proses transaksi sewa."
           icon="solar:tag-bold-duotone"
           actionSx={{

@@ -28,13 +28,13 @@ const DEFAULT_LOADING_MESSAGE = "Loading...";
 
 const PAGE_BREADCRUMBS = [
   {
-    label: "Transactions",
+    label: "Transaksi",
     value: "transactions",
     path: "#",
     icon: "solar:money-bag-bold-duotone",
   },
   {
-    label: "Termination Approval",
+    label: "Persetujuan Non-Aktif Ruangan",
     value: "tenant-terminations-approval",
     path: "/tenant-terminations-approval",
     icon: "solar:lock-keyhole-minimalistic-bold-duotone",
@@ -430,7 +430,7 @@ export default function TenantTerminationApprovalPage() {
     >
       <PageHeader
         breadcrumbs={PAGE_BREADCRUMBS}
-        title="Termination Approval"
+        title="Persetujuan Non-Aktif Ruangan"
         description="Tinjau permintaan non-aktif kontrak tenant sesuai tahapan role Anda, lalu proses approval atau penolakan dengan catatan yang jelas."
         icon="solar:lock-keyhole-minimalistic-bold-duotone"
       />
@@ -473,8 +473,9 @@ export default function TenantTerminationApprovalPage() {
           fixedActionColumn={{
             className: "termination-approval-action-column",
             buttonsClassName: "termination-approval-action-buttons",
+            buttonsOffsetX: 6,
             width: TERMINATION_APPROVAL_ACTION_COLUMN_WIDTH,
-            paddingX: 12,
+            paddingX: 16,
           }}
         />
       </DataTableShell>

@@ -848,6 +848,7 @@ export default function IdentityFormModal({
                     <Button
                       size="small"
                       variant="outlined"
+                      color="info"
                       onClick={() =>
                         openImagePreview(ktpPreviewUrl, "Preview KTP")
                       }
@@ -855,18 +856,12 @@ export default function IdentityFormModal({
                       title="Lihat KTP"
                       sx={{
                         ...getUploadActionButtonSx(),
-                        color: theme.palette.text.primary,
-                        borderColor: theme.ui.dashboardCardBorder,
-                        bgcolor:
-                          theme.palette.mode === "dark"
-                            ? "rgba(255,255,255,0.08)"
-                            : "rgba(17,24,39,0.055)",
+                        color: theme.palette.info.main,
+                        borderColor: `${theme.palette.info.main}88`,
+                        bgcolor: "rgba(33,150,243,0.08)",
                         "&:hover": {
-                          borderColor: theme.ui.dashboardCardBorder,
-                          bgcolor:
-                            theme.palette.mode === "dark"
-                              ? "rgba(255,255,255,0.12)"
-                              : "rgba(17,24,39,0.08)",
+                          borderColor: theme.palette.info.main,
+                          bgcolor: "rgba(33,150,243,0.14)",
                         },
                       }}
                     >
@@ -1056,6 +1051,7 @@ export default function IdentityFormModal({
                       <Button
                         size="small"
                         variant="outlined"
+                        color="info"
                         onClick={() =>
                           openImagePreview(
                             profilePhotoPreviewUrl,
@@ -1066,12 +1062,13 @@ export default function IdentityFormModal({
                         title="Lihat Foto"
                         sx={{
                           ...getUploadActionButtonSx(),
-                          color: theme.palette.text.primary,
-                          borderColor: theme.ui.dashboardCardBorder,
-                          bgcolor:
-                            theme.palette.mode === "dark"
-                              ? "rgba(255,255,255,0.08)"
-                            : "rgba(17,24,39,0.055)",
+                          color: theme.palette.info.main,
+                          borderColor: `${theme.palette.info.main}88`,
+                          bgcolor: "rgba(33,150,243,0.08)",
+                          "&:hover": {
+                            borderColor: theme.palette.info.main,
+                            bgcolor: "rgba(33,150,243,0.14)",
+                          },
                         }}
                       >
                         <Box component="span" sx={uploadActionTextSx}>

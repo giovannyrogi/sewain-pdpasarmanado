@@ -1,7 +1,16 @@
 "use client";
 
 import React, { useState } from "react";
-import { Box, Button, Divider, Grid, Stack, Typography, useTheme } from "@mui/material";
+import {
+  Box,
+  Button,
+  CircularProgress,
+  Divider,
+  Grid,
+  Stack,
+  Typography,
+  useTheme,
+} from "@mui/material";
 import { Icon } from "@iconify/react";
 import AppModal from "@/app/components/modals/AppModal";
 import ImagePreviewModal from "@/app/components/modals/ImagePreviewModal";
@@ -96,10 +105,30 @@ function DetailSection({ icon, title, description, children }) {
   );
 }
 
-export default function LandPermitApplicantDetailModal({ open, onClose, selectedData }) {
+export default function LandPermitApplicantDetailModal({
+  open,
+  onClose,
+  selectedData,
+  canApprove = false,
+  approving = false,
+  onApprove,
+}) {
   const theme = useTheme();
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewImage, setPreviewImage] = useState({
+    url: "",
+    alt: "Preview dokumen pemohon",
+  });
   const ktpUrl = getUploadApiUrl(selectedData?.ktp_file_path);
+  const profilePhotoUrl = getUploadApiUrl(
+    selectedData?.profile_photo_file_path,
+  );
+
+  const openPreview = (url, alt) => {
+    if (!url) return;
+    setPreviewImage({ url, alt });
+    setPreviewOpen(true);
+  };
 
   return (
     <>
@@ -132,43 +161,100 @@ export default function LandPermitApplicantDetailModal({ open, onClose, selected
                   NIK: {selectedData?.tenant_nik || "-"} | Telp: {selectedData?.tenant_phone || "-"}
                 </Typography>
               </Box>
-              <Box
-                sx={{
-                  width: { xs: "100%", md: 250 },
-                  height: 138,
-                  borderRadius: 2,
-                  border: `1px solid ${theme.ui.dashboardCardBorder}`,
-                  overflow: "hidden",
-                  cursor: selectedData?.ktp_file_path ? "zoom-in" : "default",
-                }}
-                onClick={() => selectedData?.ktp_file_path && setPreviewOpen(true)}
+              <Stack
+                direction="row"
+                spacing={1}
+                sx={{ width: { xs: "100%", md: 360 }, flex: "0 0 auto" }}
               >
-                {selectedData?.ktp_file_path ? (
-                  <Box
-                    component="img"
-                    src={ktpUrl}
-                    alt="Foto KTP penyewa"
-                    sx={{ width: "100%", height: "100%", objectFit: "contain", p: 1 }}
-                  />
-                ) : (
-                  <Stack alignItems="center" justifyContent="center" sx={{ height: "100%", color: theme.ui.mutedText }}>
-                    <Icon icon="solar:gallery-remove-bold-duotone" fontSize={28} />
-                    <Typography sx={{ fontSize: 12, fontWeight: 700 }}>Tidak ada foto KTP</Typography>
-                  </Stack>
-                )}
-              </Box>
+                <Box
+                  sx={{
+                    width: "68%",
+                    height: 138,
+                    borderRadius: 2,
+                    border: `1px solid ${theme.ui.dashboardCardBorder}`,
+                    overflow: "hidden",
+                    cursor: selectedData?.ktp_file_path ? "zoom-in" : "default",
+                  }}
+                  onClick={() =>
+                    openPreview(ktpUrl, "Preview KTP penyewa")
+                  }
+                >
+                  {selectedData?.ktp_file_path ? (
+                    <Box
+                      component="img"
+                      src={ktpUrl}
+                      alt="Foto KTP penyewa"
+                      sx={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "contain",
+                        p: 1,
+                      }}
+                    />
+                  ) : (
+                    <Stack
+                      alignItems="center"
+                      justifyContent="center"
+                      sx={{ height: "100%", color: theme.ui.mutedText }}
+                    >
+                      <Icon icon="solar:gallery-remove-bold-duotone" fontSize={28} />
+                      <Typography sx={{ fontSize: 11, fontWeight: 700 }}>
+                        KTP kosong
+                      </Typography>
+                    </Stack>
+                  )}
+                </Box>
+
+                <Box
+                  sx={{
+                    width: "32%",
+                    height: 138,
+                    borderRadius: 2,
+                    border: `1px solid ${theme.ui.dashboardCardBorder}`,
+                    overflow: "hidden",
+                    cursor: profilePhotoUrl ? "zoom-in" : "default",
+                  }}
+                  onClick={() =>
+                    openPreview(profilePhotoUrl, "Preview pas foto izin lahan")
+                  }
+                >
+                  {profilePhotoUrl ? (
+                    <Box
+                      component="img"
+                      src={profilePhotoUrl}
+                      alt="Pas foto pemohon izin lahan"
+                      sx={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                      }}
+                    />
+                  ) : (
+                    <Stack
+                      alignItems="center"
+                      justifyContent="center"
+                      sx={{ height: "100%", color: theme.ui.mutedText }}
+                    >
+                      <Icon icon="solar:user-cross-bold-duotone" fontSize={26} />
+                      <Typography sx={{ fontSize: 10, fontWeight: 700 }}>
+                        Pas foto kosong
+                      </Typography>
+                    </Stack>
+                  )}
+                </Box>
+              </Stack>
             </Stack>
           </Box>
 
           <DetailSection
             icon="solar:shop-bold-duotone"
-            title="Detail Lokasi & Lapak"
-            description="Lokasi, sektor, ukuran lapak, harga dasar, dan masa berlaku izin."
+            title="Detail Lokasi & Lahan"
+            description="Lokasi, sektor, ukuran lahan, harga dasar, dan masa berlaku izin."
           >
             <Grid container spacing={1.25}>
               <FieldCard icon="solar:map-point-bold-duotone" label="Nama Lokasi" value={selectedData?.location_name} />
               <FieldCard icon="solar:map-arrow-square-bold-duotone" label="Sektor" value={selectedData?.sector_name} />
-              <FieldCard icon="solar:shop-bold-duotone" label="Lapak" value={`No. ${selectedData?.stall_number || "-"}`} />
+              <FieldCard icon="solar:shop-bold-duotone" label="Lahan" value={`Lahan ${selectedData?.stall_number || "-"}`} />
               <FieldCard icon="solar:ruler-bold-duotone" label="Panjang" value={`${formatNumber(selectedData?.stall_length)} M`} />
               <FieldCard icon="solar:ruler-pen-bold-duotone" label="Lebar" value={`${formatNumber(selectedData?.stall_width)} M`} />
               <FieldCard icon="solar:widget-5-bold-duotone" label="Luas" value={`${formatNumber(selectedData?.stall_area)} m²`} />
@@ -193,7 +279,7 @@ export default function LandPermitApplicantDetailModal({ open, onClose, selected
           <DetailSection
             icon="solar:wallet-money-bold-duotone"
             title="Detail Biaya"
-            description="Rincian izin lahan tanpa PPN, iuran admin, DP, atau cicilan."
+            description="Rincian sewa tahunan, durasi izin, dan total pembayaran lahan."
           >
             <Grid container spacing={1.25}>
               <FieldCard icon="solar:bill-list-bold-duotone" label="Sewa per Tahun" value={formatRupiah(selectedData?.annual_land_rent)} />
@@ -202,10 +288,16 @@ export default function LandPermitApplicantDetailModal({ open, onClose, selected
             </Grid>
           </DetailSection>
 
-          <Stack direction={{ xs: "column-reverse", sm: "row" }} justifyContent="flex-end">
+          <Stack
+            direction={{ xs: "column-reverse", sm: "row" }}
+            justifyContent="flex-end"
+            spacing={1.25}
+            sx={{ pt: { xs: 1.5, sm: 2, md: 2.25 } }}
+          >
             <Button
               variant="contained"
               onClick={onClose}
+              disabled={approving}
               sx={{
                 borderRadius: 2,
                 fontWeight: 700,
@@ -219,6 +311,27 @@ export default function LandPermitApplicantDetailModal({ open, onClose, selected
             >
               Kembali
             </Button>
+            {canApprove && (
+              <Button
+                variant="contained"
+                color="success"
+                onClick={onApprove}
+                disabled={approving}
+                startIcon={
+                  approving ? (
+                    <CircularProgress size={18} color="inherit" />
+                  ) : null
+                }
+                sx={{
+                  borderRadius: 2,
+                  px: 3,
+                  fontWeight: 700,
+                  color: "#fff",
+                }}
+              >
+                {approving ? "Memproses..." : "Setujui Permohonan"}
+              </Button>
+            )}
           </Stack>
         </Stack>
       </AppModal>
@@ -226,8 +339,8 @@ export default function LandPermitApplicantDetailModal({ open, onClose, selected
       <ImagePreviewModal
         open={previewOpen}
         onClose={() => setPreviewOpen(false)}
-        imageUrl={ktpUrl}
-        alt="Preview KTP penyewa"
+        imageUrl={previewImage.url}
+        alt={previewImage.alt}
       />
     </>
   );

@@ -55,9 +55,7 @@ export default function LandPermitApplicationFormModal({
   const activeIdentities = useMemo(
     () =>
       identities.filter(
-        (item) =>
-          item.is_land_permit_registered &&
-          item.land_permit_status === "active",
+        (item) => item.land_permit_status === "active",
       ),
     [identities],
   );
@@ -88,7 +86,6 @@ export default function LandPermitApplicationFormModal({
       applications.filter(
         (item) =>
           item.approval_status === "approved" &&
-          item.is_land_permit_registered &&
           item.land_permit_status === "active" &&
           item.land_permit_application_id !== initialData?.land_permit_application_id,
       ),
@@ -210,7 +207,7 @@ export default function LandPermitApplicationFormModal({
       <CrudFormModal
         open={open}
         title={mode === "edit" ? "Ubah Permohonan Izin Lahan" : "Tambah Permohonan Izin Lahan"}
-        description="Lengkapi identitas, lokasi, sektor, lapak, masa izin, dan rincian biaya izin lahan."
+        description="Lengkapi identitas, lokasi, sektor, lahan, masa izin, dan rincian biaya izin lahan."
         icon="solar:document-add-bold-duotone"
         submitLabel={mode === "edit" ? "Simpan Perubahan" : "Simpan"}
         loadingLabel="Menyimpan..."
@@ -242,7 +239,7 @@ export default function LandPermitApplicationFormModal({
               <Autocomplete
                 options={renewalOptions}
                 getOptionLabel={(option) =>
-                  `${option.tenant_name || "-"} | Lapak ${option.stall_number || "-"} | ${option.end_date || "-"}`
+                  `${option.tenant_name || "-"} | Lahan ${option.stall_number || "-"} | ${option.end_date || "-"}`
                 }
                 value={
                   renewalOptions.find(
@@ -334,12 +331,12 @@ export default function LandPermitApplicationFormModal({
             <Autocomplete
               options={availableStalls}
               getOptionLabel={(option) =>
-                `Lapak ${option.stall_number || "-"} | ${formatRupiah(option.price_per_m2)}/m²`
+                `Lahan ${option.stall_number || "-"} | ${formatRupiah(option.price_per_m2)}/m²`
               }
               value={selectedStall || null}
               onChange={(_, value) => updateField("stall_id", value?.id || "")}
               disabled={loading || !form.sector_id}
-              renderInput={(params) => <TextField {...params} label="Pilih Lapak *" required />}
+              renderInput={(params) => <TextField {...params} label="Pilih Lahan *" required />}
             />
           </Grid>
 
@@ -386,8 +383,8 @@ export default function LandPermitApplicationFormModal({
                   border: `1px solid ${theme.ui.dashboardCardBorder}`,
                   bgcolor:
                     theme.palette.mode === "dark"
-                      ? "rgba(255,152,0,0.08)"
-                      : "rgba(230,9,9,0.05)",
+                      ? "rgba(255,255,255,0.035)"
+                      : "rgba(17,24,39,0.025)",
                 }}
               >
                 <Stack
@@ -407,6 +404,7 @@ export default function LandPermitApplicationFormModal({
                   <Button
                     size="small"
                     variant="outlined"
+                    color="primary"
                     onClick={() => setCostOpen(true)}
                     sx={{
                       borderRadius: 1.5,

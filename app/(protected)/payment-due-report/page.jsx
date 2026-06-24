@@ -41,13 +41,13 @@ const DEFAULT_STATUS_FILTER = "all";
 
 const PAGE_BREADCRUMBS = [
   {
-    label: "Reports",
+    label: "Laporan",
     value: "reports",
     path: "#",
     icon: "solar:chart-square-bold-duotone",
   },
   {
-    label: "Jatuh Tempo Pembayaran",
+    label: "Jatuh Tempo",
     value: "payment-due-report",
     path: "/payment-due-report",
     icon: "solar:alarm-bold-duotone",
@@ -383,7 +383,7 @@ export default function PaymentDueReportPage() {
     >
       <PageHeader
         breadcrumbs={PAGE_BREADCRUMBS}
-        title="Jatuh Tempo Pembayaran"
+        title="Jatuh Tempo"
         description="Pantau pembayaran cicilan yang akan jatuh tempo dalam 30 hari ke depan dan seluruh pembayaran yang sudah melewati jatuh tempo."
         icon="solar:alarm-bold-duotone"
         action={

@@ -60,7 +60,7 @@ const getStatusChipSx = (theme, status) => {
 
 /**
  * Halaman master sektor izin lahan.
- * Sektor menjadi pengelompokan lapak per lokasi, sehingga admin izin lahan bisa
+ * Sektor menjadi pengelompokan lahan per lokasi, sehingga admin izin lahan bisa
  * memisahkan area seperti sayur, daging, borito, booth, tenant, atau sektor A/B.
  */
 export default function LandSectorsPage() {
@@ -169,7 +169,7 @@ export default function LandSectorsPage() {
         color: theme.palette.warning.main,
       },
       {
-        label: "Lapak Tersedia",
+        label: "Lahan Tersedia",
         value: availableStalls,
         icon: "solar:shop-bold-duotone",
         color: theme.palette.info.main,
@@ -328,7 +328,7 @@ export default function LandSectorsPage() {
         ),
       },
       {
-        title: "Lapak",
+        title: "Lahan",
         dataIndex: "stall_count",
         width: 220,
         render: (_, record) => (
@@ -339,7 +339,7 @@ export default function LandSectorsPage() {
             <Typography
               sx={{ color: theme.ui.mutedText, fontWeight: 650, fontSize: 12 }}
             >
-              Total {record.stall_count || 0} lapak terdaftar
+              Total {record.stall_count || 0} lahan terdaftar
             </Typography>
           </Stack>
         ),
@@ -446,12 +446,12 @@ export default function LandSectorsPage() {
           breadcrumbs={[
             { label: "Data Master", icon: "solar:database-bold-duotone" },
             {
-              label: "Sektor Izin Lahan",
+              label: "Sektor",
               icon: "solar:map-arrow-square-bold-duotone",
             },
           ]}
-          title="Sektor Izin Lahan"
-          description="Kelola sektor di setiap lokasi sebagai dasar pengelompokan lapak izin lahan."
+          title="Sektor"
+          description="Kelola sektor di setiap lokasi sebagai dasar pengelompokan lahan izin."
           action={
             <Button
               fullWidth
@@ -463,7 +463,7 @@ export default function LandSectorsPage() {
                 px: { xs: 2, sm: 2.5 },
                 borderRadius: 2,
                 fontFamily: "Poppins",
-                fontWeight: 900,
+                fontWeight: 700,
                 textTransform: "none",
                 boxShadow:
                   theme.palette.mode === "dark"
@@ -536,8 +536,8 @@ export default function LandSectorsPage() {
       <CrudConfirmModal
         open={deleteOpen}
         title="Hapus Sektor"
-        titleDescription="Sektor yang sudah memiliki lapak tidak dapat dihapus."
-        description="Sektor yang dihapus tidak dapat digunakan lagi. Pastikan tidak ada lapak aktif di sektor ini sebelum menghapus."
+        titleDescription="Sektor yang sudah memiliki lahan tidak dapat dihapus."
+        description="Sektor yang dihapus tidak dapat digunakan lagi. Pastikan tidak ada lahan aktif di sektor ini sebelum menghapus."
         highlight={selectedSector?.sector_name}
         confirmLabel="Hapus Sektor"
         loading={loading}

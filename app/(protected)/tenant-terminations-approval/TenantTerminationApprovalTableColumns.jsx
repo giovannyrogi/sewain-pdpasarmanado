@@ -409,14 +409,15 @@ export const createTerminationApprovalColumns = ({
             display: "inline-flex",
             alignItems: "center",
             justifyContent: "center",
-            gap: 0.85,
-            minWidth: 0,
+            gap: 0.75,
+            minWidth: 118,
+            flexWrap: "nowrap",
           }}
         >
           <TableActionButton
             title="Detail data pemohon"
             color="info"
-            icon="solar:document-text-bold-duotone"
+            icon="solar:eye-bold-duotone"
             onClick={() => onDetail(record)}
           />
           <TableActionButton

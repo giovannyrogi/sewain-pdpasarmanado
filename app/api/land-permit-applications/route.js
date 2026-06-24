@@ -8,6 +8,10 @@ import {
 } from "@/app/utils/apiValidation";
 import { calculateAnnualLandRent } from "@/app/utils/landPermitCalculations";
 import { validateLandPermitApplicationPayload } from "./validation";
+import {
+  getLandPermitNotificationContext,
+  notifyLandPermitSubmitted,
+} from "@/app/utils/notifications";
 
 const LAND_PERMIT_APPLICATION_ROLES = [1, 9];
 const APPROVAL_STEPS = [
@@ -193,7 +197,7 @@ const getStallForApplication = async (client, values, currentApplicationId = nul
   );
 
   if (result.rowCount === 0) {
-    return { error: "Lapak tidak ditemukan pada lokasi dan sektor yang dipilih." };
+    return { error: "Lahan tidak ditemukan pada lokasi dan sektor yang dipilih." };
   }
 
   const stall = result.rows[0];
@@ -228,7 +232,7 @@ const getStallForApplication = async (client, values, currentApplicationId = nul
       : { rowCount: 0 };
 
     if (sameApplication.rowCount === 0) {
-      return { error: "Lapak yang dipilih tidak tersedia." };
+      return { error: "Lahan yang dipilih tidak tersedia." };
     }
   }
 
@@ -241,7 +245,6 @@ const ensureIdentityEligible = async (client, identityId) => {
     SELECT id
     FROM tenant_identities
     WHERE id = $1
-      AND is_land_permit_registered = TRUE
       AND land_permit_status = 'active'
     LIMIT 1
     `,
@@ -324,7 +327,7 @@ export async function POST(request) {
     if (!eligible) {
       await client.query("ROLLBACK");
       return failResponse(
-        "Identitas tidak terdaftar atau tidak aktif untuk izin lahan.",
+        "Identitas tidak aktif untuk izin lahan.",
         400,
       );
     }
@@ -385,11 +388,19 @@ export async function POST(request) {
       );
     }
 
+    const notificationContext = await getLandPermitNotificationContext(
+      client,
+      applicationId,
+    );
+    if (notificationContext) {
+      await notifyLandPermitSubmitted(client, notificationContext, authUser.id);
+    }
+
     await client.query(
       "UPDATE land_stalls SET status = 'occupied', notes = $2 WHERE id = $1",
       [
         values.stall_id,
-        `Lapak sedang diproses untuk permohonan izin lahan mulai ${values.start_date} s/d ${values.end_date}.`,
+        `Lahan sedang diproses untuk permohonan izin lahan mulai ${values.start_date} s/d ${values.end_date}.`,
       ],
     );
 

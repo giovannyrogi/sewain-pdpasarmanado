@@ -142,8 +142,14 @@ export default function Dashboard() {
       <Grid container spacing={{ xs: 1.5, lg: 2 }}>
         <Grid size={12}>
           <PageHeader
-            eyebrow="Pusat Monitoring"
-            title="Dashboard Monitoring"
+            breadcrumbs={[
+              {
+                label: "Dashboard",
+                icon: "solar:chart-2-bold-duotone",
+                path: "/dashboard",
+              },
+            ]}
+            title="Dashboard"
             description="Pantau kondisi kontrak, ruangan, pembayaran, persetujuan, terminasi, dan aktivitas terbaru dalam satu halaman."
             icon="solar:chart-2-bold-duotone"
             actionSx={{

@@ -1,8 +1,8 @@
 "use client";
 
 import React from "react";
-import { Box, Chip, Stack, Typography } from "@mui/material";
-import { Tag } from "antd";
+import { Box, Stack, Typography } from "@mui/material";
+import CompactInfoChip from "@/app/components/chips/CompactInfoChip";
 import ApprovalStatusChip from "@/app/components/status/ApprovalStatusChip";
 import TableActionButton from "@/app/components/data-table/TableActionButton";
 import formatRupiah from "@/app/components/formatrupiah/page";
@@ -48,22 +48,25 @@ export const getLandPermitApplicationColumns = ({
         <Typography sx={{ fontWeight: 700, fontSize: 13 }}>
           {record.tenant_name || "-"}
         </Typography>
-        <Stack direction="row" spacing={0.75} flexWrap="wrap" useFlexGap>
-          <Chip
-            size="small"
+        <Stack
+          direction="row"
+          spacing={0.75}
+          alignItems="center"
+          flexWrap="wrap"
+          useFlexGap
+        >
+          <CompactInfoChip
             label={APPLICATION_TYPE_LABEL[record.application_type] || "-"}
-            sx={{
-              height: 22,
-              borderRadius: 1.2,
-              color: theme.palette.primary.main,
-              bgcolor:
-                theme.palette.mode === "dark"
-                  ? "rgba(255,152,0,0.13)"
-                  : "rgba(230,9,9,0.10)",
-              "& .MuiChip-label": { px: 1, fontWeight: 700 },
-            }}
+            color={theme.palette.primary.main}
           />
-          <Typography sx={{ color: theme.ui.mutedText, fontSize: 12, fontWeight: 600 }}>
+          <Typography
+            sx={{
+              color: theme.ui.mutedText,
+              fontSize: 12,
+              fontWeight: 600,
+              lineHeight: "23px",
+            }}
+          >
             NIK {record.tenant_nik || "-"}
           </Typography>
         </Stack>
@@ -71,7 +74,7 @@ export const getLandPermitApplicationColumns = ({
     ),
   },
   {
-    title: "Lokasi, Sektor & Lapak",
+    title: "Lokasi, Sektor & Lahan",
     dataIndex: "location_name",
     width: 350,
     filters: generateFilters(data, "location_name"),
@@ -82,15 +85,26 @@ export const getLandPermitApplicationColumns = ({
         <Typography sx={{ fontWeight: 700, fontSize: 13 }}>
           {record.location_name || "-"}
         </Typography>
-        <Stack direction="row" spacing={0.75} flexWrap="wrap" useFlexGap>
-          <Tag
-            color={theme.palette.mode === "dark" ? "orange" : "red"}
-            style={{ borderRadius: 8, fontWeight: 700, marginInlineEnd: 0 }}
+        <Stack
+          direction="row"
+          spacing={0.75}
+          alignItems="center"
+          flexWrap="wrap"
+          useFlexGap
+        >
+          <CompactInfoChip
+            label={record.sector_name || "-"}
+            color={theme.palette.primary.main}
+          />
+          <Typography
+            sx={{
+              color: theme.ui.mutedText,
+              fontSize: 12,
+              fontWeight: 600,
+              lineHeight: "23px",
+            }}
           >
-            {record.sector_name || "-"}
-          </Tag>
-          <Typography sx={{ color: theme.ui.mutedText, fontSize: 12, fontWeight: 650 }}>
-            Lapak {record.stall_number || "-"}
+            Lahan {record.stall_number || "-"}
           </Typography>
         </Stack>
       </Stack>
@@ -159,33 +173,40 @@ export const getLandPermitApplicationColumns = ({
     render: (_, record) => (
       <Box
         className="land-permit-action-buttons"
-        sx={{ display: "inline-flex", gap: 0.75, justifyContent: "center" }}
+        sx={{
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 0.75,
+          minWidth: 154,
+          flexWrap: "nowrap",
+        }}
       >
         {record.approval_status !== "approved" && (
           <TableActionButton
             title="Edit Data"
             color="info"
-            icon="line-md:edit"
+            icon="solar:pen-bold-duotone"
             onClick={() => onEdit(record)}
           />
         )}
         <TableActionButton
           title="Detail Data Pemohon"
           color="success"
-          icon="mdi:smart-card-outline"
+          icon="solar:eye-bold-duotone"
           onClick={() => onDetail(record)}
         />
         <TableActionButton
           title="Print Dokumen"
-          color="primary"
-          icon="streamline-ultimate:print-text"
+          color="warning"
+          icon="solar:printer-2-bold-duotone"
           onClick={() => onPrint(record)}
         />
         {record.approval_status !== "approved" && (
           <TableActionButton
             title="Hapus Data"
             color="error"
-            icon="line-md:close-circle"
+            icon="solar:trash-bin-trash-bold-duotone"
             onClick={() => onDelete(record)}
           />
         )}

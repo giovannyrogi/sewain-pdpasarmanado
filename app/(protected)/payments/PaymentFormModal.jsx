@@ -150,8 +150,8 @@ function PaymentProofUploadCard({
         <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
           {hasProof && (
             <Button
-              variant="contained"
-              color="inherit"
+              variant="outlined"
+              color="info"
               startIcon={<Icon icon="solar:eye-bold-duotone" />}
               onClick={onPreview}
               disabled={disabled}
@@ -160,8 +160,15 @@ function PaymentProofUploadCard({
                 borderRadius: 2,
                 fontWeight: 700,
                 textTransform: "none",
+                color: theme.palette.info.main,
+                borderColor: alpha(theme.palette.info.main, 0.55),
+                bgcolor: alpha(theme.palette.info.main, 0.08),
                 minWidth: { xs: "100%", sm: 42, md: 42 },
                 px: { xs: 1.5, sm: 1.1, md: 1.1 },
+                "&:hover": {
+                  borderColor: theme.palette.info.main,
+                  bgcolor: alpha(theme.palette.info.main, 0.14),
+                },
                 "& .MuiButton-startIcon": {
                   mr: { xs: 1, sm: 0, md: 0 },
                   ml: 0,

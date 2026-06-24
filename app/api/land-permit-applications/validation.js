@@ -24,7 +24,7 @@ export const validateLandPermitApplicationPayload = (body, { mode = "create" } =
     ["tenant_identity_id", "ID identitas"],
     ["location_id", "ID lokasi"],
     ["sector_id", "ID sektor"],
-    ["stall_id", "ID lapak"],
+    ["stall_id", "ID lahan"],
   ];
   const values = { application_type: applicationType };
 

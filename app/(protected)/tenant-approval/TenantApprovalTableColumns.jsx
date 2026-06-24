@@ -7,10 +7,11 @@ import { Icon } from "@iconify/react";
 import moment from "moment";
 import ApprovalStatusChip from "@/app/components/status/ApprovalStatusChip";
 import TableActionButton from "@/app/components/data-table/TableActionButton";
+import CompactInfoChip from "@/app/components/chips/CompactInfoChip";
 
 export const TENANT_APPROVAL_PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
 export const TENANT_APPROVAL_TABLE_SCROLL_WIDTH = 1240;
-export const TENANT_APPROVAL_ACTION_COLUMN_WIDTH = 126;
+export const TENANT_APPROVAL_ACTION_COLUMN_WIDTH = 136;
 
 const normalizeText = (value) => String(value || "").toLowerCase();
 
@@ -221,19 +222,8 @@ export const createTenantApprovalColumns = ({
             {record?.tenant_name || "-"}
           </Typography>
           <Stack direction="row" spacing={0.75} flexWrap="wrap" useFlexGap alignItems="center">
-            <Chip
-              size="small"
+            <CompactInfoChip
               label={`Dokumen ${getDocumentNumberOnly(record?.document_number)}`}
-              sx={{
-                height: 23,
-                color: theme.palette.primary.main,
-                fontFamily: "Poppins",
-                fontWeight: 700,
-                bgcolor: alpha(
-                  theme.palette.primary.main,
-                  theme.palette.mode === "dark" ? 0.16 : 0.09,
-                ),
-              }}
             />
             <Typography sx={{ color: theme.ui.mutedText, fontSize: 12, fontWeight: 600 }}>
               NIK {record?.tenant_nik || "-"}
@@ -286,7 +276,9 @@ export const createTenantApprovalColumns = ({
             onClick={() => onProgress(record)}
             theme={theme}
           />
-          <StagePill record={record} user={user} theme={theme} />
+          {isApprovalWaitingForUser(record, user) && (
+            <StagePill record={record} user={user} theme={theme} />
+          )}
         </Stack>
       ),
     },
@@ -333,14 +325,15 @@ export const createTenantApprovalColumns = ({
               display: "inline-flex",
               alignItems: "center",
               justifyContent: "center",
-              gap: 0.85,
-              minWidth: 0,
+              gap: 0.75,
+              minWidth: 82,
+              flexWrap: "nowrap",
             }}
           >
             <TableActionButton
               title="Detail data pemohon"
               color="info"
-              icon="solar:document-text-bold-duotone"
+              icon="solar:eye-bold-duotone"
               onClick={() => onDetail(record)}
             />
             {canReject ? (

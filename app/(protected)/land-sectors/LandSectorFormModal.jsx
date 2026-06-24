@@ -72,7 +72,7 @@ export default function LandSectorFormModal({
     <CrudFormModal
       open={open}
       title={mode === "edit" ? "Ubah Sektor" : "Tambah Sektor"}
-      description="Kelola sektor izin lahan berdasarkan lokasi agar lapak dapat dikelompokkan dengan jelas."
+      description="Kelola sektor izin lahan berdasarkan lokasi agar lahan dapat dikelompokkan dengan jelas."
       icon="solar:map-arrow-square-bold-duotone"
       submitLabel={mode === "edit" ? "Simpan Perubahan" : "Tambah Sektor"}
       loadingLabel={mode === "edit" ? "Menyimpan..." : "Menambahkan..."}

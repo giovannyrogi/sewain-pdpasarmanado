@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Box, Button, Grid, Stack, useMediaQuery, useTheme } from "@mui/material";
 import { Icon } from "@iconify/react";
 import axios from "axios";
@@ -19,6 +19,8 @@ import {
   filterLandPermitApplications,
 } from "./landPermitApplicationUtils";
 import { getLandPermitApplicationColumns } from "./LandPermitApplicationTableColumns";
+import { useReactToPrint } from "react-to-print";
+import SuratPernyataanIzinLahan from "@/app/components/documents/SuratPernyataanIzinLahan";
 
 const PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
 const ACTION_COLUMN_WIDTH = 190;
@@ -47,8 +49,10 @@ export default function LandPermitApplicationsPage() {
   const [approvalOpen, setApprovalOpen] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
   const [selectedData, setSelectedData] = useState(null);
+  const [printData, setPrintData] = useState(null);
   const [pageSize, setPageSize] = useState(5);
   const [snackbar, setSnackbar] = useState(getInitialSnackbar);
+  const printRef = useRef(null);
 
   const showSnackbar = (message, severity = "success") => {
     setSnackbar({ open: true, message, severity });
@@ -195,6 +199,56 @@ export default function LandPermitApplicationsPage() {
     }
   };
 
+  const handlePrintAction = useReactToPrint({
+    contentRef: printRef,
+    documentTitle: printData?.tenant_name
+      ? `Surat Pernyataan Izin Lahan - ${printData.tenant_name}`
+      : "Surat Pernyataan Izin Lahan",
+    pageStyle: `
+      @page {
+        size: auto portrait;
+        margin: 8mm 10mm;
+      }
+
+      @media print {
+        html, body {
+          margin: 0 !important;
+          padding: 0 !important;
+          min-width: 0 !important;
+          width: auto !important;
+          background: #fff !important;
+          color: #000 !important;
+          overflow: visible !important;
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+        }
+
+        .land-permit-statement {
+          width: 100% !important;
+          max-width: none !important;
+          min-height: 0 !important;
+          box-shadow: none !important;
+          break-after: auto;
+        }
+      }
+    `,
+    onAfterPrint: () => setTimeout(() => setPrintData(null), 300),
+    onPrintError: () => {
+      setPrintData(null);
+      showSnackbar("Dokumen izin lahan gagal dicetak.", "error");
+    },
+  });
+
+  useEffect(() => {
+    if (!printData) return;
+
+    const timeout = setTimeout(() => {
+      if (printRef.current) handlePrintAction();
+    }, 250);
+
+    return () => clearTimeout(timeout);
+  }, [handlePrintAction, printData]);
+
   const columns = useMemo(
     () =>
       getLandPermitApplicationColumns({
@@ -212,7 +266,7 @@ export default function LandPermitApplicationsPage() {
           setSelectedData(record);
           setDetailOpen(true);
         },
-        onPrint: () => showSnackbar("Fitur print dokumen izin lahan belum tersedia.", "info"),
+        onPrint: (record) => setPrintData(record),
       }),
     [applications, isMobile, theme],
   );
@@ -235,7 +289,7 @@ export default function LandPermitApplicationsPage() {
             { label: "Permohonan Izin Lahan", icon: "solar:document-add-bold-duotone" },
           ]}
           title="Permohonan Izin Lahan"
-          description="Kelola permohonan izin lahan, identitas pedagang, lokasi, lapak, masa izin, dan progress persetujuan."
+          description="Kelola permohonan izin lahan, identitas pedagang, lokasi, lahan, masa izin, dan progress persetujuan."
           icon="solar:document-add-bold-duotone"
           action={
             <Button
@@ -248,7 +302,7 @@ export default function LandPermitApplicationsPage() {
                 px: { xs: 2, sm: 2.5 },
                 borderRadius: 2,
                 fontFamily: "Poppins",
-                fontWeight: 900,
+                fontWeight: 700,
                 textTransform: "none",
                 boxShadow:
                   theme.palette.mode === "dark"
@@ -278,7 +332,7 @@ export default function LandPermitApplicationsPage() {
           title="Daftar Permohonan Izin Lahan"
           description={`${filteredApplications.length} dari ${applications.length} permohonan ditampilkan`}
           searchValue={searchText}
-          searchPlaceholder="Cari pemohon, NIK, lokasi, sektor, lapak, status..."
+          searchPlaceholder="Cari pemohon, NIK, lokasi, sektor, lahan, status..."
           onSearchChange={setSearchText}
         >
           <ReusableAntTable
@@ -351,6 +405,12 @@ export default function LandPermitApplicationsPage() {
         severity={snackbar.severity}
         onClose={() => setSnackbar((current) => ({ ...current, open: false }))}
       />
+
+      <Box sx={{ display: "none" }}>
+        {printData && (
+          <SuratPernyataanIzinLahan ref={printRef} data={printData} />
+        )}
+      </Box>
     </Box>
   );
 }

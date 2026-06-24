@@ -21,18 +21,18 @@ export const validateLandStallPayload = (payload = {}) => {
   const sectorId = parsePositiveInteger(payload.sector_id, "Sektor");
   if (sectorId.error) return { values: null, error: sectorId.error };
 
-  const stallNumber = normalizeRequiredString(payload.stall_number, "Nomor lapak", {
+  const stallNumber = normalizeRequiredString(payload.stall_number, "Nomor lahan", {
     max: 50,
     pattern: STALL_NUMBER_PATTERN,
     patternMessage:
-      "Nomor lapak hanya boleh berisi huruf, angka, spasi, titik, garis miring, strip, underscore, dan tanda kurung.",
+      "Nomor lahan hanya boleh berisi huruf, angka, spasi, titik, garis miring, strip, underscore, dan tanda kurung.",
   });
   if (stallNumber.error) return { values: null, error: stallNumber.error };
 
-  const stallLength = parsePositiveNumber(payload.stall_length, "Panjang lapak");
+  const stallLength = parsePositiveNumber(payload.stall_length, "Panjang lahan");
   if (stallLength.error) return { values: null, error: stallLength.error };
 
-  const stallWidth = parsePositiveNumber(payload.stall_width, "Lebar lapak");
+  const stallWidth = parsePositiveNumber(payload.stall_width, "Lebar lahan");
   if (stallWidth.error) return { values: null, error: stallWidth.error };
 
   const price = parsePositiveNumber(payload.price_per_m2, "Harga per m²");
@@ -40,7 +40,7 @@ export const validateLandStallPayload = (payload = {}) => {
 
   const status = String(payload.status || "available").trim();
   if (!LAND_STALL_STATUSES.includes(status)) {
-    return { values: null, error: "Status lapak tidak valid." };
+    return { values: null, error: "Status lahan tidak valid." };
   }
 
   const notes = normalizeOptionalString(payload.notes, "Catatan", 180);
@@ -49,7 +49,7 @@ export const validateLandStallPayload = (payload = {}) => {
   if (["maintenance", "unavailable"].includes(status) && !notes.value) {
     return {
       values: null,
-      error: "Catatan wajib diisi untuk lapak dalam perbaikan atau tidak layak.",
+      error: "Catatan wajib diisi untuk lahan dalam perbaikan atau tidak layak.",
     };
   }
 
@@ -69,4 +69,4 @@ export const validateLandStallPayload = (payload = {}) => {
 };
 
 export const validateLandStallId = (value) =>
-  parsePositiveInteger(value, "ID lapak");
+  parsePositiveInteger(value, "ID lahan");

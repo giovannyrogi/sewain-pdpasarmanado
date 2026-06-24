@@ -272,7 +272,14 @@ export function createPaymentColumns({
       render: (_text, record) => (
         <Box
           className="payments-action-buttons"
-          sx={{ display: "inline-flex", gap: 0.75, justifyContent: "center" }}
+          sx={{
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 0.75,
+            minWidth: 202,
+            flexWrap: "nowrap",
+          }}
         >
           {Number(user?.role_id) !== 8 &&
             ["rejected", "proses"].includes(record.payments?.approval_status) && (
@@ -286,22 +293,22 @@ export function createPaymentColumns({
           <TableActionButton
             title="Detail pembayaran"
             color="success"
-            icon="solar:bill-check-bold-duotone"
+            icon="solar:eye-bold-duotone"
             onClick={() => onDetail(record)}
           />
           {record.payments?.approval_status === "approved" && (
             <TableActionButton
               title="Print bukti bayar"
-              color="primary"
-              icon="streamline-ultimate:print-text"
+              color="warning"
+              icon="solar:printer-2-bold-duotone"
               onClick={() => onPrintProof(record)}
             />
           )}
           {canPrintReceipt && (
             <TableActionButton
               title="Cetak kwitansi penerimaan dan PPH"
-              color="warning"
-              icon="mdi:receipt-text-check-outline"
+              color="primary"
+              icon="solar:bill-check-bold-duotone"
               onClick={() => onPrintReceiptBundle(record)}
             />
           )}
@@ -319,7 +326,7 @@ export function createPaymentColumns({
               <TableActionButton
                 title="Tolak pembayaran"
                 color="error"
-                icon="line-md:close-circle"
+                icon="solar:close-circle-bold-duotone"
                 onClick={() => onReject(record)}
               />
             )}

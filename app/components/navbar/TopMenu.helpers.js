@@ -127,6 +127,22 @@ export const getNotificationTargetUrl = (notification, user) => {
     return `/payments?payment_id=${notification.entity_id}&open=${openMode}${deletedParam}`;
   }
 
+  if (
+    notification?.entity_type === "land_permit_payment" &&
+    notification?.entity_id
+  ) {
+    const deletedParam =
+      notification.type === "land_permit_payment_deleted" ? "&deleted=1" : "";
+    const openMode = [
+      "land_permit_payment_approved",
+      "land_permit_payment_rejected",
+    ].includes(notification.type)
+      ? "progress"
+      : "detail";
+
+    return `/land-permit-payments?payment_id=${notification.entity_id}&open=${openMode}${deletedParam}`;
+  }
+
   return notification?.action_url;
 };
 
@@ -184,6 +200,17 @@ export const persistNotificationTargets = (targetUrl) => {
 
   persistUrlTarget(
     targetUrl,
+    "sewain:land-permit-payment-target",
+    (url) => {
+      if (!url.pathname.startsWith("/land-permit-payments")) return null;
+      const paymentId = url.searchParams.get("payment_id");
+      if (!paymentId) return null;
+      return { paymentId: Number(paymentId), defaultOpenMode: "detail" };
+    },
+  );
+
+  persistUrlTarget(
+    targetUrl,
     "sewain:tenant-application-target",
     (url) => {
       const tenantApplicationId = url.searchParams.get("tenant_application_id");
@@ -216,6 +243,9 @@ export const dispatchNotificationOpenEvents = () => {
   window.dispatchEvent(new Event("sewain:tenant-application-notification-open"));
   window.dispatchEvent(new Event("sewain:tenant-termination-notification-open"));
   window.dispatchEvent(new Event("sewain:payment-notification-open"));
+  window.dispatchEvent(
+    new Event("sewain:land-permit-payment-notification-open"),
+  );
 };
 
 export const isTenantApprovalUrl = (url) =>
@@ -223,6 +253,9 @@ export const isTenantApprovalUrl = (url) =>
 
 export const isPaymentUrl = (url) =>
   typeof url === "string" && url.startsWith("/payments");
+
+export const isLandPermitPaymentUrl = (url) =>
+  typeof url === "string" && url.startsWith("/land-permit-payments");
 
 export const isTenantApplicationUrl = (url) =>
   typeof url === "string" && url.startsWith("/tenant-application");

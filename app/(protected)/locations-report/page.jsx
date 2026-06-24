@@ -32,13 +32,13 @@ const DEFAULT_LOADING_MESSAGE = "Loading...";
 
 const PAGE_BREADCRUMBS = [
   {
-    label: "Reports",
+    label: "Laporan",
     value: "reports",
     path: "#",
     icon: "solar:chart-square-bold-duotone",
   },
   {
-    label: "Report by Locations",
+    label: "Laporan per Lokasi",
     value: "locations-report",
     path: "/locations-report",
     icon: "solar:map-point-wave-bold-duotone",
@@ -269,7 +269,7 @@ export default function LocationsReportPage() {
     >
       <PageHeader
         breadcrumbs={PAGE_BREADCRUMBS}
-        title="Report by Locations"
+        title="Laporan per Lokasi"
         description="Pantau pendapatan sewa berdasarkan lokasi, termasuk kontrak murni, JTU, PPN, PPH, dan total bersih dalam periode laporan."
         icon="solar:map-point-wave-bold-duotone"
       />

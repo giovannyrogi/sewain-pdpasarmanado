@@ -497,13 +497,13 @@ export default function Rooms() {
               path: "#",
             },
             {
-              label: "Rooms",
+              label: "Ruangan",
               value: "rooms",
               icon: "solar:home-angle-bold-duotone",
               path: "/rooms",
             },
           ]}
-          title="Rooms"
+          title="Ruangan"
           description="Kelola ruangan per lokasi dan lantai, termasuk dimensi, harga sewa, status ketersediaan, dan catatan operasional."
           icon="solar:home-angle-bold-duotone"
           actionSx={{

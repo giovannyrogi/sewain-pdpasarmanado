@@ -77,7 +77,7 @@ export async function POST(req) {
     );
 
     if (duplicateStall.rowCount > 0) {
-      return failResponse("Nomor lapak sudah terdaftar pada sektor ini.", 409);
+      return failResponse("Nomor lahan sudah terdaftar pada sektor ini.", 409);
     }
 
     const result = await client.query(
@@ -104,7 +104,7 @@ export async function POST(req) {
     return jsonResponse(
       {
         success: true,
-        message: "Lapak izin lahan berhasil ditambahkan.",
+        message: "Lahan berhasil ditambahkan.",
         data: result.rows[0],
       },
       201,
@@ -113,7 +113,7 @@ export async function POST(req) {
     return handleApiError(
       "Error creating land stall",
       error,
-      "Terjadi kesalahan saat menambah lapak izin lahan.",
+      "Terjadi kesalahan saat menambah lahan.",
     );
   } finally {
     client.release();
@@ -179,14 +179,14 @@ export async function GET(request) {
 
     return jsonResponse({
       success: true,
-      message: "Berhasil mengambil data lapak izin lahan.",
+      message: "Berhasil mengambil data lahan.",
       data: result.rows.map(mapLandStallRow),
     });
   } catch (error) {
     return handleApiError(
       "Error fetching land stalls",
       error,
-      "Terjadi kesalahan saat mengambil data lapak izin lahan.",
+      "Terjadi kesalahan saat mengambil data lahan.",
     );
   }
 }

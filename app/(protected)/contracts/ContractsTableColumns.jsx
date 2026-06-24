@@ -8,7 +8,7 @@ import TableActionButton from "@/app/components/data-table/TableActionButton";
 
 export const CONTRACTS_PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
 export const CONTRACTS_TABLE_SCROLL_WIDTH = 1240;
-export const CONTRACTS_ACTION_COLUMN_WIDTH = 104;
+export const CONTRACTS_ACTION_COLUMN_WIDTH = 112;
 
 const normalizeText = (value) => String(value || "").toLowerCase();
 
@@ -282,7 +282,8 @@ export const createContractColumns = ({ data, theme, isMobile, onDownload }) => 
         direction="row"
         alignItems="center"
         justifyContent="center"
-        spacing={0.8}
+        spacing={0.75}
+        sx={{ minWidth: 42, flexWrap: "nowrap" }}
       >
         <TableActionButton
           title="Download kontrak"

@@ -84,7 +84,7 @@ const MENU_CONFIG = [
         showIcon: true,
       },
       {
-        label: "Lapak",
+        label: "Lahan",
         value: "land-stalls",
         path: "/land-stalls",
         icon: <Icon icon="solar:shop-bold-duotone" fontSize="20px" />,
@@ -126,7 +126,7 @@ const MENU_CONFIG = [
         showIcon: true,
       },
       {
-        label: "Permohonan Sewa",
+        label: "Permohonan Sewa Ruangan",
         value: "tenant-application",
         path: "/tenant-application",
         icon: <Icon icon="hugeicons:file-edit" fontSize="20px" />,
@@ -134,7 +134,7 @@ const MENU_CONFIG = [
         showIcon: true,
       },
       {
-        label: "Persetujuan Sewa",
+        label: "Persetujuan Sewa Ruangan",
         value: "tenant-approval",
         path: "/tenant-approval",
         icon: <Icon icon="carbon:document-set" fontSize="20px" />,
@@ -149,7 +149,22 @@ const MENU_CONFIG = [
         showIcon: true,
       },
       {
-        label: "Non-Aktif Tenant",
+        label: "Persetujuan Izin Lahan",
+        value: "land-permit-approval",
+        path: "/land-permit-approval",
+        icon: <Icon icon="ph:seal-check-duotone" fontSize="20px" />,
+        roles: [
+          ROLES.SUPERADMIN,
+          ROLES.KEPALA_SEKSI,
+          ROLES.KEPALA_SUBDIVISI,
+          ROLES.KEPALA_DIVISI,
+          ROLES.DIREKTUR_BISNIS,
+          ROLES.DIREKTUR_UTAMA,
+        ],
+        showIcon: true,
+      },
+      {
+        label: "Non-Aktif Ruangan",
         value: "tenant-terminations",
         path: "/tenant-terminations",
         icon: <Icon icon="pepicons-pop:lock-closed-circle" fontSize="20px" />,
@@ -157,7 +172,7 @@ const MENU_CONFIG = [
         showIcon: true,
       },
       {
-        label: "Persetujuan Non-Aktif",
+        label: "Persetujuan Non-Aktif Ruangan",
         value: "tenant-terminations-approval",
         path: "/tenant-terminations-approval",
         icon: <Icon icon="pepicons-pop:lock-closed-circle" fontSize="20px" />,
@@ -172,7 +187,7 @@ const MENU_CONFIG = [
         showIcon: true,
       },
       {
-        label: "Pembayaran",
+        label: "Pembayaran Sewa Ruangan",
         value: "payments",
         path: "/payments",
         icon: (
@@ -185,6 +200,20 @@ const MENU_CONFIG = [
           ROLES.KEPALA_SUBDIVISI,
           ROLES.KEPALA_DIVISI,
           ROLES.DIVISI_KEUANGAN,
+        ],
+        showIcon: true,
+      },
+      {
+        label: "Pembayaran Izin Lahan",
+        value: "land-permit-payments",
+        path: "/land-permit-payments",
+        icon: (
+          <Icon icon="solar:wallet-money-bold-duotone" fontSize="20px" />
+        ),
+        roles: [
+          ROLES.SUPERADMIN,
+          ROLES.DIVISI_KEUANGAN,
+          ROLES.ADMIN_IZIN_LAHAN,
         ],
         showIcon: true,
       },

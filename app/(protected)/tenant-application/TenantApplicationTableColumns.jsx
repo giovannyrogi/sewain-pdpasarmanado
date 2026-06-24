@@ -1,11 +1,11 @@
 "use client";
 
 import React from "react";
-import { Box, Chip, Stack, Typography } from "@mui/material";
-import { Tag } from "antd";
+import { Box, Stack, Typography } from "@mui/material";
 import formatRupiah from "@/app/components/formatrupiah/page";
 import ApprovalStatusChip from "@/app/components/status/ApprovalStatusChip";
 import TableActionButton from "@/app/components/data-table/TableActionButton";
+import CompactInfoChip from "@/app/components/chips/CompactInfoChip";
 
 /**
  * Filter dinamis AntD berdasarkan data yang sedang aktif di halaman.
@@ -134,19 +134,8 @@ export const getTenantApplicationColumns = ({
               alignItems="center"
               flexWrap="wrap"
             >
-              <Chip
-                size="small"
+              <CompactInfoChip
                 label={`Dokumen ${documentNumberOnly}`}
-                sx={{
-                  height: 22,
-                  borderRadius: 1.2,
-                  fontWeight: 600,
-                  color: theme.palette.primary.main,
-                  bgcolor:
-                    theme.palette.mode === "dark"
-                      ? "rgba(255,152,0,0.13)"
-                      : "rgba(230,9,9,0.10)",
-                }}
               />
               <Typography
                 sx={{
@@ -182,12 +171,9 @@ export const getTenantApplicationColumns = ({
             alignItems="center"
             flexWrap="wrap"
           >
-            <Tag
-              color={theme.palette.mode === "dark" ? "orange" : "red"}
-              style={{ borderRadius: 8, fontWeight: 600, marginInlineEnd: 0 }}
-            >
-              Ruangan No. {record.room_number || "-"}
-            </Tag>
+            <CompactInfoChip
+              label={`Ruangan No. ${record.room_number || "-"}`}
+            />
             <Typography
               sx={{ color: theme.ui.mutedText, fontSize: 12, fontWeight: 650 }}
             >
@@ -212,13 +198,16 @@ export const getTenantApplicationColumns = ({
             alignItems="center"
             flexWrap="wrap"
           >
-            <Tag
-              color={record.payment_type === "cicilan" ? "blue" : "green"}
-              style={{ borderRadius: 8, fontWeight: 700, marginInlineEnd: 0 }}
-            >
-              {record.payment_type === "cicilan" ? "Cicilan" : "Lunas"}{" "}
-              {record?.lease_duration_years || "-"} Tahun
-            </Tag>
+            <CompactInfoChip
+              label={`${record.payment_type === "cicilan" ? "Cicilan" : "Lunas"} ${
+                record?.lease_duration_years || "-"
+              } Tahun`}
+              color={
+                record.payment_type === "cicilan"
+                  ? theme.palette.info.main
+                  : theme.palette.success.main
+              }
+            />
             <Typography
               sx={{ fontWeight: 600, fontSize: 13, letterSpacing: 0.5 }}
             >
@@ -263,13 +252,20 @@ export const getTenantApplicationColumns = ({
       render: (_, record) => (
         <Box
           className="tenant-application-action-buttons"
-          sx={{ display: "inline-flex", gap: 0.75, justifyContent: "center" }}
+          sx={{
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 0.75,
+            minWidth: 154,
+            flexWrap: "nowrap",
+          }}
         >
           {record.approval_status !== "approved" && (
             <TableActionButton
               title="Edit Data"
               color="info"
-              icon="line-md:edit"
+              icon="solar:pen-bold-duotone"
               onClick={() => onEdit(record)}
             />
           )}
@@ -277,14 +273,14 @@ export const getTenantApplicationColumns = ({
           <TableActionButton
             title="Detail Data Pemohon"
             color="success"
-            icon="mdi:smart-card-outline"
+            icon="solar:eye-bold-duotone"
             onClick={() => onDetail(record)}
           />
 
           <TableActionButton
             title="Print Dokumen"
-            color="primary"
-            icon="streamline-ultimate:print-text"
+            color="warning"
+            icon="solar:printer-2-bold-duotone"
             onClick={() => onPrint(record)}
           />
 
@@ -299,7 +295,7 @@ export const getTenantApplicationColumns = ({
               <TableActionButton
                 title="Hapus Data"
                 color="error"
-                icon="line-md:close-circle"
+                icon="solar:trash-bin-trash-bold-duotone"
                 onClick={() => onDelete(record)}
               />
             </>

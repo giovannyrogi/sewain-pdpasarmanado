@@ -26,13 +26,13 @@ const DEFAULT_LOADING_MESSAGE = "Loading...";
 
 const PAGE_BREADCRUMBS = [
   {
-    label: "Transactions",
+    label: "Transaksi",
     value: "transactions",
     path: "#",
     icon: "solar:money-bag-bold-duotone",
   },
   {
-    label: "Contracts",
+    label: "Buku Kontrak",
     value: "contracts",
     path: "/contracts",
     icon: "solar:document-text-bold-duotone",
@@ -151,7 +151,7 @@ export default function ContractsPage() {
     >
       <PageHeader
         breadcrumbs={PAGE_BREADCRUMBS}
-        title="Contracts"
+        title="Buku Kontrak"
         description="Buat buku kontrak untuk tenant yang sudah lunas, pantau daftar kontrak aktif, dan unduh dokumen kontrak otomatis."
         icon="solar:document-text-bold-duotone"
         actionSx={{
@@ -222,8 +222,9 @@ export default function ContractsPage() {
           fixedActionColumn={{
             className: "contracts-action-column",
             buttonsClassName: "contracts-action-buttons",
+            buttonsOffsetX: 6,
             width: CONTRACTS_ACTION_COLUMN_WIDTH,
-            paddingX: 12,
+            paddingX: 16,
           }}
         />
       </DataTableShell>

@@ -26,13 +26,13 @@ const DEFAULT_LOADING_MESSAGE = "Loading...";
 
 const PAGE_BREADCRUMBS = [
   {
-    label: "Transactions",
+    label: "Transaksi",
     value: "transactions",
     path: "#",
     icon: "healthicons:money-bag",
   },
   {
-    label: "Tenant Approval",
+    label: "Persetujuan Sewa Ruangan",
     value: "tenant-approval",
     path: "/tenant-approval",
     icon: "carbon:document-set",
@@ -419,7 +419,7 @@ const TenantApproval = () => {
     >
       <PageHeader
         breadcrumbs={PAGE_BREADCRUMBS}
-        title="Tenant Approval"
+        title="Persetujuan Sewa Ruangan"
         description="Tinjau permohonan sewa sesuai tahapan role Anda, lalu proses persetujuan atau penolakan dengan catatan yang jelas."
         icon="carbon:document-set"
       />
@@ -462,8 +462,9 @@ const TenantApproval = () => {
           fixedActionColumn={{
             className: "tenant-approval-action-column",
             buttonsClassName: "tenant-approval-action-buttons",
+            buttonsOffsetX: 6,
             width: TENANT_APPROVAL_ACTION_COLUMN_WIDTH,
-            paddingX: 12,
+            paddingX: 16,
           }}
         />
       </DataTableShell>

@@ -74,7 +74,7 @@ const statusOptions = [
 ];
 
 /**
- * Form master lapak izin lahan.
+ * Form master lahan izin.
  * Form ini sengaja mengikuti pola form ruangan agar pengelolaan master aset
  * terasa konsisten, sementara kalkulasi final transaksi tetap dilakukan di fase permohonan.
  */
@@ -189,10 +189,10 @@ export default function LandStallFormModal({
   return (
     <CrudFormModal
       open={open}
-      title={mode === "edit" ? "Ubah Lapak" : "Tambah Lapak"}
-      description="Daftarkan lapak berdasarkan lokasi dan sektor, lengkap dengan ukuran serta harga per meter."
+      title={mode === "edit" ? "Ubah Lahan" : "Tambah Lahan"}
+      description="Daftarkan lahan berdasarkan lokasi dan sektor, lengkap dengan ukuran serta harga per meter."
       icon="solar:shop-bold-duotone"
-      submitLabel={mode === "edit" ? "Simpan Perubahan" : "Tambah Lapak"}
+      submitLabel={mode === "edit" ? "Simpan Perubahan" : "Tambah Lahan"}
       loadingLabel={mode === "edit" ? "Menyimpan..." : "Menambahkan..."}
       loading={loading}
       width={820}
@@ -237,7 +237,7 @@ export default function LandStallFormModal({
           <TextField
             required
             fullWidth
-            label="Nomor/Nama Lapak"
+            label="Nomor/Nama Lahan"
             value={form.stall_number}
             onChange={(event) => updateField("stall_number", event.target.value)}
             disabled={loading}
@@ -246,10 +246,10 @@ export default function LandStallFormModal({
 
         <Grid size={{ xs: 12, md: 6 }}>
           <FormControl fullWidth required>
-            <InputLabel id="land-stall-status-label">Status Lapak</InputLabel>
+            <InputLabel id="land-stall-status-label">Status Lahan</InputLabel>
             <Select
               labelId="land-stall-status-label"
-              label="Status Lapak"
+              label="Status Lahan"
               value={form.status}
               onChange={(event) => handleStatusChange(event.target.value)}
               disabled={loading}
@@ -325,7 +325,7 @@ export default function LandStallFormModal({
           <Grid size={12}>
             <TextField
               label="Catatan Status *"
-              placeholder="Tuliskan alasan lapak belum dapat digunakan..."
+              placeholder="Tuliskan alasan lahan belum dapat digunakan..."
               value={form.notes}
               onChange={(event) =>
                 updateField("notes", event.target.value.slice(0, 180))
@@ -374,7 +374,7 @@ export default function LandStallFormModal({
               </Box>
               <Box sx={{ minWidth: 0 }}>
                 <Typography sx={{ fontWeight: 850, fontSize: 12.5 }}>
-                  Perhitungan Sewa Lapak
+                  Perhitungan Sewa Lahan
                 </Typography>
                 <Typography
                   sx={{

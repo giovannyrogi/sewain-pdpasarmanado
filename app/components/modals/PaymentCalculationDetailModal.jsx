@@ -4,7 +4,6 @@ import React, { useMemo } from "react";
 import {
   Box,
   Button,
-  Chip,
   Divider,
   Grid,
   Stack,
@@ -16,6 +15,7 @@ import { Icon } from "@iconify/react";
 import moment from "moment";
 import AppModal from "@/app/components/modals/AppModal";
 import formatRupiah from "@/app/components/formatrupiah/page";
+import CompactInfoChip from "@/app/components/chips/CompactInfoChip";
 
 const emptyValue = "-";
 
@@ -221,16 +221,17 @@ export default function PaymentCalculationDetailModal({
           >
             <Box>
               <Stack direction="row" flexWrap="wrap" gap={1} sx={{ mb: 1 }}>
-                <Chip
-                  size="small"
+                <CompactInfoChip
                   label={isInstallment ? "Pembayaran Cicilan" : "Pembayaran Lunas"}
-                  color={isInstallment ? "warning" : "success"}
-                  sx={{ fontWeight: 850 }}
+                  color={
+                    isInstallment
+                      ? theme.palette.warning.main
+                      : theme.palette.success.main
+                  }
                 />
-                <Chip
-                  size="small"
+                <CompactInfoChip
                   label={`Durasi ${leaseDurationYears || 1} Tahun`}
-                  sx={{ fontWeight: 850 }}
+                  color={theme.palette.text.secondary}
                 />
               </Stack>
               <Typography

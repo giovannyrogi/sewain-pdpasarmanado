@@ -339,13 +339,13 @@ export default function Locations() {
               path: "#",
             },
             {
-              label: "Locations",
+              label: "Lokasi",
               value: "locations",
               icon: "solar:map-point-wave-bold-duotone",
               path: "/locations",
             },
           ]}
-          title="Locations"
+          title="Lokasi"
           description="Kelola daftar lokasi pasar atau gedung, kode lokasi, wilayah administratif, dan alamat operasional yang dipakai di data ruangan serta transaksi sewa."
           icon="solar:map-point-wave-bold-duotone"
           actionSx={{

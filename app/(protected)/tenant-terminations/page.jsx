@@ -405,19 +405,19 @@ const TenantTerminations = () => {
         <PageHeader
           breadcrumbs={[
             {
-              label: "Transactions",
+              label: "Transaksi",
               value: "transactions",
               icon: "solar:money-bag-bold-duotone",
               path: "#",
             },
             {
-              label: "Tenant Terminations",
+              label: "Non-Aktif Ruangan",
               value: "tenant-terminations",
               icon: "solar:lock-keyhole-minimalistic-bold-duotone",
               path: "/tenant-terminations",
             },
           ]}
-          title="Tenant Terminations"
+          title="Non-Aktif Ruangan"
           description="Kelola pengajuan nonaktif tenant untuk kontrak aktif, pantau status approval berjenjang, dan buka detail pemohon tanpa memenuhi tabel dengan alasan panjang."
           icon="solar:lock-keyhole-minimalistic-bold-duotone"
           actionSx={{
@@ -482,8 +482,9 @@ const TenantTerminations = () => {
             fixedActionColumn={{
               className: "tenant-terminations-action-column",
               buttonsClassName: "tenant-terminations-action-buttons",
+              buttonsOffsetX: 6,
               width: ACTION_COLUMN_WIDTH,
-              paddingX: 14,
+              paddingX: 16,
             }}
           />
         </DataTableShell>

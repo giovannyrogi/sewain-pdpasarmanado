@@ -8,6 +8,10 @@ import {
 } from "@/app/utils/apiValidation";
 import { calculateAnnualLandRent } from "@/app/utils/landPermitCalculations";
 import { validateLandPermitApplicationPayload } from "../validation";
+import {
+  getLandPermitNotificationContext,
+  notifyLandPermitResubmitted,
+} from "@/app/utils/notifications";
 
 const LAND_PERMIT_APPLICATION_ROLES = [1, 9];
 
@@ -22,7 +26,6 @@ const ensureIdentityEligible = async (client, identityId) => {
     SELECT id
     FROM tenant_identities
     WHERE id = $1
-      AND is_land_permit_registered = TRUE
       AND land_permit_status = 'active'
     LIMIT 1
     `,
@@ -54,7 +57,7 @@ const getStallForApplication = async (client, values, applicationId) => {
   );
 
   if (result.rowCount === 0) {
-    return { error: "Lapak tidak ditemukan pada lokasi dan sektor yang dipilih." };
+    return { error: "Lahan tidak ditemukan pada lokasi dan sektor yang dipilih." };
   }
 
   const stall = result.rows[0];
@@ -69,7 +72,7 @@ const getStallForApplication = async (client, values, applicationId) => {
     );
 
     if (sameApplication.rowCount === 0) {
-      return { error: "Lapak yang dipilih tidak tersedia." };
+      return { error: "Lahan yang dipilih tidak tersedia." };
     }
   }
 
@@ -125,7 +128,7 @@ export async function PUT(request, { params }) {
 
     const existing = await client.query(
       `
-      SELECT tenant_identity_id, stall_id, approval_status
+      SELECT tenant_identity_id, stall_id, approval_status, current_step
       FROM land_permit_applications
       WHERE id = $1
       LIMIT 1
@@ -152,7 +155,7 @@ export async function PUT(request, { params }) {
     if (!eligible) {
       await client.query("ROLLBACK");
       return failResponse(
-        "Identitas tidak terdaftar atau tidak aktif untuk izin lahan.",
+        "Identitas tidak aktif untuk izin lahan.",
         400,
       );
     }
@@ -169,6 +172,23 @@ export async function PUT(request, { params }) {
 
     const annualLandRent = calculateAnnualLandRent(stall);
     const totalPaymentLand = annualLandRent * values.lease_duration_years;
+    const wasRejected = existing.rows[0].approval_status === "rejected";
+
+    let resumeStep = Number(existing.rows[0].current_step) || 1;
+    if (wasRejected) {
+      const rejectedStep = await client.query(
+        `
+        SELECT step_order
+        FROM land_permit_approval
+        WHERE land_permit_application_id = $1
+          AND status = 'rejected'
+        ORDER BY step_order ASC
+        LIMIT 1
+        `,
+        [applicationId],
+      );
+      resumeStep = Number(rejectedStep.rows[0]?.step_order || resumeStep);
+    }
 
     await client.query(
       `
@@ -186,8 +206,10 @@ export async function PUT(request, { params }) {
         annual_land_rent = $10,
         total_payment_land = $11,
         total_payment = $12,
+        approval_status = CASE WHEN $13 THEN 'proses' ELSE approval_status END,
+        current_step = CASE WHEN $13 THEN $14 ELSE current_step END,
         updated_at = NOW()
-      WHERE id = $13
+      WHERE id = $15
       `,
       [
         values.renewal_of,
@@ -202,20 +224,52 @@ export async function PUT(request, { params }) {
         annualLandRent,
         totalPaymentLand,
         totalPaymentLand,
+        wasRejected,
+        resumeStep,
         applicationId,
       ],
     );
+
+    if (wasRejected) {
+      await client.query(
+        `
+        UPDATE land_permit_approval
+        SET status = 'pending',
+            approver_id = NULL,
+            approved_at = NULL,
+            notes = NULL,
+            updated_at = NOW()
+        WHERE land_permit_application_id = $1
+          AND step_order >= $2
+        `,
+        [applicationId, resumeStep],
+      );
+    }
 
     await client.query(
       "UPDATE land_stalls SET status = 'occupied', notes = $2 WHERE id = $1",
       [
         values.stall_id,
-        `Lapak sedang diproses untuk permohonan izin lahan mulai ${values.start_date} s/d ${values.end_date}.`,
+        `Lahan sedang diproses untuk permohonan izin lahan mulai ${values.start_date} s/d ${values.end_date}.`,
       ],
     );
 
     if (Number(existing.rows[0].stall_id) !== Number(values.stall_id)) {
       await releaseStallIfUnused(client, existing.rows[0].stall_id);
+    }
+
+    if (wasRejected) {
+      const notificationContext = await getLandPermitNotificationContext(
+        client,
+        applicationId,
+      );
+      if (notificationContext) {
+        await notifyLandPermitResubmitted(
+          client,
+          notificationContext,
+          resumeStep,
+        );
+      }
     }
 
     await client.query("COMMIT");

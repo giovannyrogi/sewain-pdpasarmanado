@@ -9,6 +9,7 @@ import {
   useMediaQuery,
   useTheme,
 } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import { Icon } from "@iconify/react";
 
 /**
@@ -35,6 +36,8 @@ export default function TableActionButton({
   const hasMenu = items.length > 0;
   const iconOnly = !label;
   const hideLabelOnMobile = Boolean(label) && compact && !keepLabelOnMobile;
+  const actionColor =
+    theme.palette[color]?.main || theme.palette.primary.main;
 
   const closeMenu = () => setAnchorEl(null);
 
@@ -55,7 +58,7 @@ export default function TableActionButton({
   return (
     <>
       <Button
-        variant={theme.palette.mode === "dark" ? "outlined" : "contained"}
+        variant={iconOnly ? "outlined" : theme.palette.mode === "dark" ? "outlined" : "contained"}
         color={color}
         disabled={disabled}
         onClick={handleClick}
@@ -80,6 +83,32 @@ export default function TableActionButton({
           fontWeight: 700,
           textTransform: "none",
           flex: "0 0 auto",
+          ...(iconOnly && {
+            color: actionColor,
+            borderColor: alpha(actionColor, theme.palette.mode === "dark" ? 0.55 : 0.42),
+            bgcolor: alpha(actionColor, theme.palette.mode === "dark" ? 0.12 : 0.08),
+            boxShadow:
+              theme.palette.mode === "dark"
+                ? `0 4px 12px ${alpha(actionColor, 0.08)}`
+                : `0 4px 12px ${alpha(actionColor, 0.12)}`,
+            "&:hover": {
+              color: actionColor,
+              borderColor: alpha(actionColor, 0.75),
+              bgcolor: alpha(actionColor, theme.palette.mode === "dark" ? 0.2 : 0.14),
+              boxShadow: `0 6px 16px ${alpha(actionColor, 0.2)}`,
+              transform: "translateY(-1px)",
+            },
+            "&:active": {
+              transform: "translateY(0)",
+              boxShadow: `0 2px 8px ${alpha(actionColor, 0.16)}`,
+            },
+            "&.Mui-disabled": {
+              color: theme.palette.action.disabled,
+              borderColor: theme.palette.action.disabledBackground,
+              bgcolor: alpha(theme.palette.action.disabled, 0.05),
+              boxShadow: "none",
+            },
+          }),
           "& .MuiButton-startIcon": {
             m: iconOnly ? 0 : undefined,
             mr: iconOnly ? 0 : { xs: hideLabelOnMobile ? 0 : 1, sm: 1 },

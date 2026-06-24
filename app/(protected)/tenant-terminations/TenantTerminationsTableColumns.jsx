@@ -208,13 +208,17 @@ export function createTenantTerminationColumns({
           direction="row"
           alignItems="center"
           justifyContent="center"
-          spacing={0.8}
-          sx={{ width: "max-content" }}
+          spacing={0.75}
+          sx={{
+            width: "max-content",
+            minWidth: 118,
+            flexWrap: "nowrap",
+          }}
         >
           <TableActionButton
             title="Detail data pemohon"
             color="info"
-            icon="mdi:smart-card-outline"
+            icon="solar:eye-bold-duotone"
             onClick={() => onViewDetail(record)}
           />
           <TableActionButton
@@ -227,7 +231,7 @@ export function createTenantTerminationColumns({
             <TableActionButton
               title="Batalkan non-aktif"
               color="error"
-              icon="line-md:close-circle"
+              icon="solar:close-circle-bold-duotone"
               onClick={() => onCancel(record)}
             />
           )}

@@ -5,7 +5,7 @@ import { Box, Button, Divider, Modal, Stack, Typography, useTheme } from "@mui/m
 import { Icon } from "@iconify/react";
 
 /**
- * Modal kecil untuk membaca catatan lapak tanpa membuat cell tabel melebar.
+ * Modal kecil untuk membaca catatan lahan tanpa membuat sel tabel melebar.
  */
 export default function LandStallNotesModal({ open, onClose, selectedData }) {
   const theme = useTheme();
@@ -59,9 +59,9 @@ export default function LandStallNotesModal({ open, onClose, selectedData }) {
           </Box>
 
           <Box sx={{ minWidth: 0 }}>
-            <Typography sx={{ fontWeight: 700, fontSize: 20 }}>Catatan Lapak</Typography>
+            <Typography sx={{ fontWeight: 700, fontSize: 20 }}>Catatan Lahan</Typography>
             <Typography sx={{ color: theme.ui.mutedText, fontWeight: 650, fontSize: 12 }}>
-              Lapak {selectedData?.stall_number || "-"} | {selectedData?.location_name || "-"}
+              Lahan {selectedData?.stall_number || "-"} | {selectedData?.location_name || "-"}
             </Typography>
           </Box>
         </Stack>
@@ -79,7 +79,7 @@ export default function LandStallNotesModal({ open, onClose, selectedData }) {
               overflowWrap: "anywhere",
             }}
           >
-            {selectedData?.notes || "Tidak ada catatan untuk lapak ini."}
+            {selectedData?.notes || "Tidak ada catatan untuk lahan ini."}
           </Typography>
         </Box>
 

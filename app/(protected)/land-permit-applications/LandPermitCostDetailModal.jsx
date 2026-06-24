@@ -48,7 +48,7 @@ export default function LandPermitCostDetailModal({
       open={open}
       onClose={onClose}
       title="Rincian Izin Lahan"
-      titleDescription="Detail lokasi, sektor, lapak, masa izin, dan total pembayaran izin lahan."
+      titleDescription="Detail lokasi, sektor, lahan, masa izin, dan total pembayaran izin lahan."
       icon="solar:wallet-money-bold-duotone"
       width={760}
     >
@@ -57,11 +57,11 @@ export default function LandPermitCostDetailModal({
           <Grid size={{ xs: 12, md: 6 }}>
             <Box sx={{ p: 1.6, borderRadius: 2.4, border: `1px solid ${theme.ui.dashboardCardBorder}` }}>
               <Typography sx={{ fontWeight: 700, fontSize: 15, mb: 1 }}>
-                Detail Lokasi & Lapak
+                Detail Lokasi & Lahan
               </Typography>
               <DetailRow label="Lokasi" value={location?.location_name || stall?.location_name} />
               <DetailRow label="Sektor" value={sector?.sector_name || stall?.sector_name} />
-              <DetailRow label="Lapak" value={stall?.stall_number ? `Lapak ${stall.stall_number}` : "-"} />
+              <DetailRow label="Lahan" value={stall?.stall_number ? `Lahan ${stall.stall_number}` : "-"} />
               <DetailRow
                 label="Ukuran"
                 value={`${formatNumber(stall?.stall_length)} m x ${formatNumber(stall?.stall_width)} m`}
@@ -76,9 +76,9 @@ export default function LandPermitCostDetailModal({
               </Typography>
               <DetailRow label="Harga per m² / Tahun" value={formatRupiah(stall?.price_per_m2)} />
               <DetailRow label="Sewa per Tahun" value={formatRupiah(cost.annualRent)} />
-              <DetailRow label="Durasi Izin" value={`${durationYears || 1} Tahun`} />
-              <DetailRow label="Mulai Izin" value={startDate || "-"} />
-              <DetailRow label="Izin Berakhir" value={endDate || "-"} />
+              <DetailRow label="Durasi Sewa" value={`${durationYears || 1} Tahun`} />
+              <DetailRow label="Tanggal Mulai" value={startDate || "-"} />
+              <DetailRow label="Tanggal Berakhir" value={endDate || "-"} />
               <DetailRow label="Total Pembayaran" value={formatRupiah(cost.totalPayment)} />
             </Box>
           </Grid>

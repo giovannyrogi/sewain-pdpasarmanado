@@ -144,7 +144,7 @@ export async function DELETE(_request, { params }) {
         .join(", ");
 
       return failResponse(
-        `Sektor tidak dapat dihapus karena masih memiliki lapak: ${stallList}.`,
+        `Sektor tidak dapat dihapus karena masih memiliki lahan: ${stallList}.`,
         409,
       );
     }

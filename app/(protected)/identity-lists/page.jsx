@@ -473,13 +473,13 @@ export default function IdentityList() {
               path: "#",
             },
             {
-              label: "Identity Lists",
+              label: "Daftar Identitas",
               value: "identity-lists",
               icon: "qlementine-icons:id-card-16",
               path: "/identity-lists",
             },
           ]}
-          title="Identity Lists"
+          title="Daftar Identitas"
           description={
             isLandPermitAdmin
               ? "Kelola identitas bersama, status izin lahan, foto KTP, dan pas foto untuk kebutuhan pendaftaran izin lahan."

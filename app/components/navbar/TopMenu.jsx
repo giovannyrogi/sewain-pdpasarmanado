@@ -126,6 +126,22 @@ const getNotificationTargetUrl = (notification, user) => {
     return `/payments?payment_id=${notification.entity_id}&open=${openMode}${deletedParam}`;
   }
 
+  if (
+    notification?.entity_type === "land_permit_payment" &&
+    notification?.entity_id
+  ) {
+    const deletedParam =
+      notification.type === "land_permit_payment_deleted" ? "&deleted=1" : "";
+    const openMode = [
+      "land_permit_payment_approved",
+      "land_permit_payment_rejected",
+    ].includes(notification.type)
+      ? "progress"
+      : "detail";
+
+    return `/land-permit-payments?payment_id=${notification.entity_id}&open=${openMode}${deletedParam}`;
+  }
+
   return notification?.action_url;
 };
 
@@ -179,6 +195,33 @@ const persistPaymentTarget = (targetUrl) => {
     console.log("Error persist payment notification target", err);
   }
 };
+
+const persistLandPermitPaymentTarget = (targetUrl) => {
+  if (typeof window === "undefined") return;
+
+  try {
+    const url = new URL(targetUrl, window.location.origin);
+    if (!url.pathname.startsWith("/land-permit-payments")) return;
+
+    const paymentId = url.searchParams.get("payment_id");
+    if (!paymentId) return;
+
+    window.sessionStorage.setItem(
+      "sewain:land-permit-payment-target",
+      JSON.stringify({
+        paymentId: Number(paymentId),
+        openMode: url.searchParams.get("open") || "detail",
+        deleted: url.searchParams.get("deleted") === "1",
+        requestedAt: Date.now(),
+      }),
+    );
+  } catch (err) {
+    console.log("Error persist land permit payment notification target", err);
+  }
+};
+
+const isLandPermitPaymentUrl = (url) =>
+  typeof url === "string" && url.startsWith("/land-permit-payments");
 
 const persistTenantApplicationTarget = (targetUrl) => {
   if (typeof window === "undefined") return;
@@ -441,7 +484,9 @@ const TopMenu = ({
       const targetUrl = getNotificationTargetUrl(notification, user);
 
       setLoadingMessage?.(
-        notification.entity_type === "payment"
+        notification.entity_type === "land_permit_payment"
+          ? "Menampilkan pembayaran izin lahan..."
+          : notification.entity_type === "payment"
           ? "Menampilkan detail pembayaran..."
           : notification.entity_type === "tenant_termination"
           ? "Menampilkan data nonaktif tenant..."
@@ -465,11 +510,15 @@ const TopMenu = ({
         persistTenantApplicationTarget(targetUrl);
         persistTenantTerminationTarget(targetUrl);
         persistPaymentTarget(targetUrl);
+        persistLandPermitPaymentTarget(targetUrl);
         router.push(targetUrl);
         window.dispatchEvent(new Event("sewain:tenant-approval-notification-open"));
         window.dispatchEvent(new Event("sewain:tenant-application-notification-open"));
         window.dispatchEvent(new Event("sewain:tenant-termination-notification-open"));
         window.dispatchEvent(new Event("sewain:payment-notification-open"));
+        window.dispatchEvent(
+          new Event("sewain:land-permit-payment-notification-open"),
+        );
 
         /**
          * Untuk notifikasi approval, loading dimatikan oleh halaman tujuan setelah
@@ -480,7 +529,8 @@ const TopMenu = ({
           !isTenantApprovalUrl(targetUrl) &&
           !isTenantApplicationUrl(targetUrl) &&
           !isTenantTerminationUrl(targetUrl) &&
-          !isPaymentUrl(targetUrl)
+          !isPaymentUrl(targetUrl) &&
+          !isLandPermitPaymentUrl(targetUrl)
         ) {
           onHideLoading?.();
         }

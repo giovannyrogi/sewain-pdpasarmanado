@@ -6,7 +6,7 @@ export const parseLandPermitNumber = (value) => {
 };
 
 /**
- * Menghitung luas lapak izin lahan.
+ * Menghitung luas lahan izin.
  * Rumus ini dipakai untuk preview UI; database tetap menyimpan `stall_area`
  * sebagai generated column agar nilai akhir konsisten di server.
  */

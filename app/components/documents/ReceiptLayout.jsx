@@ -77,6 +77,7 @@ const ReceiptLayout = ({
   breakAfter = true,
 }) => {
   const isPph = type === "pph";
+  const isLandPermit = type === "landPermit";
   const payment = data?.payments || {};
   const tenant = data?.tenant_application || {};
   const room = data?.room || {};
@@ -108,6 +109,7 @@ const ReceiptLayout = ({
   const totalAmount = firstPositive(
     isPph ? pphAmount : receipt?.amount,
     isPph ? 0 : payment.payment_amount,
+    isLandPermit ? tenant.total_payment : 0,
   );
   const title = isPph ? "KWITANSI PEMBAYARAN" : "KWITANSI PENERIMAAN";
   const receiptDate = receipt?.receipt_date || payment.payment_date;
@@ -286,7 +288,9 @@ const ReceiptLayout = ({
                 boxSizing: "border-box",
               }}
             >
-              <HeaderText sx={{ lineHeight: 2 }}>No. Bukti :</HeaderText>
+              <HeaderText sx={{ lineHeight: 2 }}>
+                No. Bukti : {receipt?.receipt_number || ""}
+              </HeaderText>
               <HeaderText sx={{ lineHeight: 2 }}>
                 Tanggal :{" "}
                 {receiptDate ? moment(receiptDate).format("D MMM YYYY") : ""}
@@ -330,7 +334,27 @@ const ReceiptLayout = ({
                 boxSizing: "border-box",
               }}
             >
-              {isPph ? (
+              {isLandPermit ? (
+                <>
+                  <Text>Izin Lahan</Text>
+                  <Text>An. {tenant.tenant_name}</Text>
+                  <Text>
+                    {location.location_name || "-"}, Sektor{" "}
+                    {data?.sector?.sector_name || "-"}, Lahan{" "}
+                    {data?.stall?.stall_number || "-"}
+                  </Text>
+                  <Text>
+                    Masa berlaku{" "}
+                    {tenant.start_date
+                      ? moment(tenant.start_date).format("D MMM YYYY")
+                      : ""}{" "}
+                    -{" "}
+                    {tenant.end_date
+                      ? moment(tenant.end_date).format("D MMM YYYY")
+                      : ""}
+                  </Text>
+                </>
+              ) : isPph ? (
                 <>
                   <Text>Pajak PPH Psl 4(2)</Text>
                   <Text>An. {tenant.tenant_name}</Text>
@@ -374,7 +398,9 @@ const ReceiptLayout = ({
               }}
             >
               <HeaderText>
-                {receipt?.account_code || (isPph ? "5-192" : "4-250")}
+                {isLandPermit
+                  ? receipt?.account_code || ""
+                  : receipt?.account_code || (isPph ? "5-192" : "4-250")}
               </HeaderText>
             </Grid>
             <Grid
@@ -385,7 +411,13 @@ const ReceiptLayout = ({
                 textAlign: "right",
               }}
             >
-              {isPph ? (
+              {isLandPermit ? (
+                <HeaderText sx={{ lineHeight: 2.15 }}>
+                  {totalAmount > 0
+                    ? formatRupiah(totalAmount, "hideRp")
+                    : ""}
+                </HeaderText>
+              ) : isPph ? (
                 <HeaderText sx={{ lineHeight: 2.15 }}>
                   {pphAmount > 0 ? formatRupiah(pphAmount, "hideRp") : ""}
                 </HeaderText>

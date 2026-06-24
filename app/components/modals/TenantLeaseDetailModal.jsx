@@ -4,7 +4,6 @@ import React, { useMemo, useState } from "react";
 import {
   Box,
   Button,
-  Chip,
   CircularProgress,
   Divider,
   Grid,
@@ -22,6 +21,7 @@ import formatRupiah from "@/app/components/formatrupiah/page";
 import { buildPaymentDetail } from "@/app/utils/buildPaymentDetail";
 import { formatNumber } from "@/app/utils/formatNumber";
 import { getUploadApiUrl } from "@/app/utils/uploadPath";
+import CompactInfoChip from "@/app/components/chips/CompactInfoChip";
 
 const emptyValue = "-";
 
@@ -320,15 +320,13 @@ export default function TenantLeaseDetailModal({
                   {displayValue(selectedData?.tenant_name)}
                 </Typography>
                 <Stack direction="row" flexWrap="wrap" gap={1} sx={{ mt: 1 }}>
-                  <Chip
-                    size="small"
+                  <CompactInfoChip
                     label={`NIK: ${displayValue(selectedData?.tenant_nik)}`}
-                    sx={{ fontWeight: 700 }}
+                    color={theme.palette.text.secondary}
                   />
-                  <Chip
-                    size="small"
+                  <CompactInfoChip
                     label={`Telp: ${displayValue(selectedData?.tenant_phone)}`}
-                    sx={{ fontWeight: 700 }}
+                    color={theme.palette.text.secondary}
                   />
                 </Stack>
               </Box>
@@ -694,6 +692,7 @@ export default function TenantLeaseDetailModal({
                       {paymentContext?.proof_file_path && (
                         <Button
                           variant="contained"
+                          color="primary"
                           startIcon={<Icon icon="solar:eye-bold-duotone" />}
                           onClick={() =>
                             openDocumentPreview(
@@ -762,6 +761,7 @@ export default function TenantLeaseDetailModal({
                               <Button
                                 size="small"
                                 variant="outlined"
+                                color="primary"
                                 startIcon={<Icon icon="solar:eye-bold-duotone" />}
                                 onClick={() =>
                                   openDocumentPreview(
