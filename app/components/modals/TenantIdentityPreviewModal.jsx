@@ -17,6 +17,7 @@ import moment from "moment";
 import AppModal from "@/app/components/modals/AppModal";
 import ImagePreviewModal from "@/app/components/modals/ImagePreviewModal";
 import { getUploadApiUrl } from "@/app/utils/uploadPath";
+import IdentityModuleBadges from "@/app/components/identity/IdentityModuleBadges";
 
 const emptyValue = "-";
 
@@ -253,6 +254,9 @@ export default function TenantIdentityPreviewModal({
                     />
                   )}
                 </Stack>
+                <Box sx={{ mt: 1.25 }}>
+                  <IdentityModuleBadges identity={selectedData} />
+                </Box>
               </Box>
 
               <Box

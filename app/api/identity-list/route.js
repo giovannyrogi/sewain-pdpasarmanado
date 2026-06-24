@@ -18,9 +18,14 @@ import {
   validateIdentityFormData,
   validateLandPermitIdentityFormData,
 } from "./validation";
+import {
+  ADMIN_IZIN_LAHAN_ROLE_ID,
+  getIdentityRegistrationForRole,
+  SUPERADMIN_ROLE_ID,
+  validateIdentityRegistration,
+} from "@/app/utils/identityModules";
 
 const MASTER_DATA_ROLES = [1, 2, 9];
-const ADMIN_IZIN_LAHAN_ROLE_ID = 9;
 
 const mapIdentityRow = (row) => ({
   id: row.id,
@@ -50,6 +55,10 @@ const mapIdentityRow = (row) => ({
   land_permit_status_updated_at: row.land_permit_status_updated_at
     ? moment(row.land_permit_status_updated_at).format("YYYY-MM-DD HH:mm:ss")
     : null,
+  is_room_rental_registered: row.is_room_rental_registered,
+  is_land_permit_registered: row.is_land_permit_registered,
+  has_room_rental_application: row.has_room_rental_application,
+  has_land_permit_application: row.has_land_permit_application,
   updated_at: row.updated_at
     ? moment(row.updated_at).format("YYYY-MM-DD HH:mm:ss")
     : null,
@@ -66,6 +75,7 @@ export async function POST(req) {
     const { user, response } = await requireRole(MASTER_DATA_ROLES);
     if (response) return response;
     const isLandPermitAdmin = Number(user.role_id) === ADMIN_IZIN_LAHAN_ROLE_ID;
+    const isSuperadmin = Number(user.role_id) === SUPERADMIN_ROLE_ID;
 
     const formData = await req.formData();
     const { values, ktpFile, error } = validateIdentityFormData(formData, {
@@ -85,6 +95,15 @@ export async function POST(req) {
       return failResponse("NIK sudah terdaftar.", 409);
     }
 
+    const registration = getIdentityRegistrationForRole({
+      roleId: user.role_id,
+      formData,
+    });
+    const registrationError = validateIdentityRegistration(registration);
+    if (registrationError) {
+      return failResponse(registrationError, 400);
+    }
+
     const preparedFile = await prepareKtpUpload(ktpFile, values.full_name);
     if (preparedFile.error) {
       return failResponse(preparedFile.error, 400);
@@ -96,10 +115,10 @@ export async function POST(req) {
     };
     let preparedProfilePhoto = { profile_photo_file_path: null };
 
-    if (isLandPermitAdmin) {
+    if (isLandPermitAdmin || isSuperadmin) {
       const landPermitValidation = validateLandPermitIdentityFormData(
         formData,
-        { requireProfilePhoto: true },
+        { requireProfilePhoto: isLandPermitAdmin },
       );
       if (landPermitValidation.error) {
         return failResponse(landPermitValidation.error, 400);
@@ -133,13 +152,14 @@ export async function POST(req) {
         nik, full_name, ktp_file_path, birth_place, birth_date, nationality,
         religion, occupation, street_address, rt, rw, kelurahan, district,
         city, province, phone, status, notes, profile_photo_file_path,
-        land_permit_status, land_permit_status_notes, land_permit_status_updated_at
+        land_permit_status, land_permit_status_notes, land_permit_status_updated_at,
+        is_room_rental_registered, is_land_permit_registered
       )
       VALUES (
         $1, $2, $3, $4, $5, $6,
         $7, $8, $9, $10, $11, $12, $13,
         $14, $15, $16, $17, $18, $19,
-        $20, $21, NOW()
+        $20, $21, NOW(), $22, $23
       )
       RETURNING *
       `,
@@ -165,6 +185,8 @@ export async function POST(req) {
         preparedProfilePhoto.profile_photo_file_path,
         landPermitValues.land_permit_status,
         landPermitValues.land_permit_status_notes,
+        registration.is_room_rental_registered,
+        registration.is_land_permit_registered,
       ],
     );
 
@@ -204,8 +226,19 @@ export async function GET() {
         nationality, religion, occupation, street_address, rt, rw, kelurahan,
         district, city, province, postal_code, phone, status, notes,
         land_permit_status, land_permit_status_notes, land_permit_status_updated_at,
+        is_room_rental_registered, is_land_permit_registered,
+        EXISTS (
+          SELECT 1
+          FROM tenant_application ta
+          WHERE ta.tenant_identity_id = ti.id
+        ) AS has_room_rental_application,
+        EXISTS (
+          SELECT 1
+          FROM land_permit_applications lpa
+          WHERE lpa.tenant_identity_id = ti.id
+        ) AS has_land_permit_application,
         created_at, updated_at
-      FROM tenant_identities
+      FROM tenant_identities ti
       ORDER BY created_at DESC
       `,
     );

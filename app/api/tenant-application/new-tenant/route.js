@@ -33,11 +33,15 @@ export async function GET(req) {
         ti.phone,
         ti.status,
         ti.notes,
+        ti.land_permit_status,
+        ti.is_room_rental_registered,
+        ti.is_land_permit_registered,
         ti.created_at,
         ti.updated_at
       FROM tenant_identities ti
       WHERE 
         ti.status = 'active'
+        AND ti.is_room_rental_registered = TRUE
       ORDER BY ti.created_at DESC
       `
     );
@@ -55,6 +59,9 @@ export async function GET(req) {
       occupation: row.occupation,
       status: row.status,
       notes: row.notes,
+      land_permit_status: row.land_permit_status,
+      is_room_rental_registered: row.is_room_rental_registered,
+      is_land_permit_registered: row.is_land_permit_registered,
 
       street_address: row.street_address,
       rt: row.rt,

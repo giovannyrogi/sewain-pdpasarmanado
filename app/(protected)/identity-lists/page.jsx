@@ -15,6 +15,7 @@ import TableActionButton from "@/app/components/data-table/TableActionButton";
 import CrudConfirmModal from "@/app/components/crud/CrudConfirmModal";
 import SummaryStatCard from "@/app/components/stats/SummaryStatCard";
 import TenantIdentityPreviewModal from "@/app/components/modals/TenantIdentityPreviewModal";
+import IdentityModuleBadges from "@/app/components/identity/IdentityModuleBadges";
 import { useUser } from "@/app/utils/useUser";
 import IdentityFormModal from "./IdentityFormModal";
 
@@ -81,6 +82,8 @@ export default function IdentityList() {
   const [pageSize, setPageSize] = useState(5);
   const [snackbar, setSnackbar] = useState(getInitialSnackbar);
   const isLandPermitAdmin = Number(user?.role_id) === ADMIN_IZIN_LAHAN_ROLE_ID;
+  const isSuperadmin = Number(user?.role_id) === 1;
+  const canViewLandPermitFields = isLandPermitAdmin || isSuperadmin;
   const statusField = isLandPermitAdmin ? "land_permit_status" : "status";
   const statusNotesField = isLandPermitAdmin
     ? "land_permit_status_notes"
@@ -136,6 +139,8 @@ export default function IdentityList() {
         item.district,
         item.city,
         item.province,
+        item.is_room_rental_registered ? "sewa ruangan" : "",
+        item.is_land_permit_registered ? "izin lahan" : "",
       ].some((value) => normalizeText(value).includes(keyword)),
     );
   }, [identities, searchText, statusField, statusNotesField]);
@@ -306,6 +311,7 @@ export default function IdentityList() {
             >
               NIK {record.nik || "-"}
             </Typography>
+            <IdentityModuleBadges identity={record} compact />
           </Stack>
         ),
       },
@@ -556,6 +562,7 @@ export default function IdentityList() {
         mode={formMode}
         initialData={selectedIdentity}
         isLandPermitContext={isLandPermitAdmin}
+        userRoleId={user?.role_id}
         loading={loading}
         onClose={closeFormModal}
         onSubmit={handleSaveIdentity}
@@ -579,7 +586,7 @@ export default function IdentityList() {
         open={previewOpen}
         onClose={() => setPreviewOpen(false)}
         selectedData={selectedIdentity}
-        showLandPermitFields={isLandPermitAdmin}
+        showLandPermitFields={canViewLandPermitFields}
       />
 
       <LoadingBackdrop

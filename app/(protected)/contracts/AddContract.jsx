@@ -103,6 +103,11 @@ export default function AddContract({
           latest_contract_number_only: item.contracts.latest_contract_number_only,
           status: item.tenant_identities.status,
           notes: item.tenant_identities.notes,
+          land_permit_status: item.tenant_identities.land_permit_status,
+          is_room_rental_registered:
+            item.tenant_identities.is_room_rental_registered,
+          is_land_permit_registered:
+            item.tenant_identities.is_land_permit_registered,
           room_number: item.rooms.room_number,
           location_name: item.locations.location_name,
           fully_paid_date: item.payments?.fully_paid_date,

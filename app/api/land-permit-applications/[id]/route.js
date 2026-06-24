@@ -21,7 +21,9 @@ const ensureIdentityEligible = async (client, identityId) => {
     `
     SELECT id
     FROM tenant_identities
-    WHERE id = $1 AND land_permit_status = 'active'
+    WHERE id = $1
+      AND is_land_permit_registered = TRUE
+      AND land_permit_status = 'active'
     LIMIT 1
     `,
     [identityId],
@@ -142,7 +144,10 @@ export async function PUT(request, { params }) {
     const eligible = await ensureIdentityEligible(client, values.tenant_identity_id);
     if (!eligible) {
       await client.query("ROLLBACK");
-      return failResponse("Identitas tidak aktif untuk izin lahan.", 400);
+      return failResponse(
+        "Identitas tidak terdaftar atau tidak aktif untuk izin lahan.",
+        400,
+      );
     }
 
     const { stall, error: stallError } = await getStallForApplication(

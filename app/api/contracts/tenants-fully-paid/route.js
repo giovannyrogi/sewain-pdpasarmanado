@@ -95,6 +95,9 @@ export async function GET() {
         ti.province,
         ti.status,
         ti.notes,
+        ti.land_permit_status,
+        ti.is_room_rental_registered,
+        ti.is_land_permit_registered,
 
         -- rooms
         rm.id AS room_id2,
@@ -216,6 +219,9 @@ export async function GET() {
         province: row.province,
         status: row.status,
         notes: row.notes,
+        land_permit_status: row.land_permit_status,
+        is_room_rental_registered: row.is_room_rental_registered,
+        is_land_permit_registered: row.is_land_permit_registered,
       },
       rooms: {
         id: row.room_id2,

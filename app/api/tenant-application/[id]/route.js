@@ -2,7 +2,11 @@ import fs from "fs";
 import path from "path";
 import pool from "@/lib/dbConfig";
 import moment from "moment";
-import { getAuthenticatedUser, unauthorizedResponse } from "@/app/utils/auth";
+import {
+  getAuthenticatedUser,
+  requireRole,
+  unauthorizedResponse,
+} from "@/app/utils/auth";
 import {
   notifyTenantApplicationDeleted,
   notifyTenantApplicationUpdated,
@@ -13,10 +17,33 @@ import { calculateLeaseEndDate, normalizeLeaseDurationYears } from "@/app/utils/
 const isMoneyEqual = (left, right) =>
   Math.abs(Number(left || 0) - Number(right || 0)) < 1;
 
+const TENANT_APPLICATION_ROLES = [1, 2];
+
+const isRoomRentalIdentityEligible = async (identityId) => {
+  const result = await pool.query(
+    `
+    SELECT 1
+    FROM tenant_identities
+    WHERE id = $1
+      AND is_room_rental_registered = TRUE
+      AND status = 'active'
+    LIMIT 1
+    `,
+    [identityId],
+  );
+
+  return result.rowCount > 0;
+};
+
 export async function PUT(req, { params }) {
   const { id } = await params;
 
   try {
+    const { response: roleResponse } = await requireRole(
+      TENANT_APPLICATION_ROLES,
+    );
+    if (roleResponse) return roleResponse;
+
     const formData = await req.formData();
 
     // Ambil fields
@@ -76,6 +103,17 @@ export async function PUT(req, { params }) {
     if (!tenant_identity_id) {
       return Response.json(
         { success: false, message: "Identitas wajib diisi." },
+        { status: 400 },
+      );
+    }
+
+    if (!(await isRoomRentalIdentityEligible(tenant_identity_id))) {
+      return Response.json(
+        {
+          success: false,
+          message:
+            "Identitas tidak terdaftar atau tidak aktif untuk Sewa Ruangan.",
+        },
         { status: 400 },
       );
     }

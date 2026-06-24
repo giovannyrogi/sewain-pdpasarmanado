@@ -53,7 +53,12 @@ export default function LandPermitApplicationFormModal({
   const [costOpen, setCostOpen] = useState(false);
 
   const activeIdentities = useMemo(
-    () => identities.filter((item) => item.land_permit_status === "active"),
+    () =>
+      identities.filter(
+        (item) =>
+          item.is_land_permit_registered &&
+          item.land_permit_status === "active",
+      ),
     [identities],
   );
   const activeSectors = useMemo(
@@ -83,6 +88,8 @@ export default function LandPermitApplicationFormModal({
       applications.filter(
         (item) =>
           item.approval_status === "approved" &&
+          item.is_land_permit_registered &&
+          item.land_permit_status === "active" &&
           item.land_permit_application_id !== initialData?.land_permit_application_id,
       ),
     [applications, initialData?.land_permit_application_id],

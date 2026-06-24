@@ -36,6 +36,7 @@ export async function GET(req) {
         AND ta.end_date IS NOT NULL
         AND ta.end_date <= $1
         AND is_fully_paid = true
+        AND ti.is_room_rental_registered = TRUE
         AND ti.status = 'active'
         -- hanya pilih tenant_application yang merupakan leaf (tidak punya renewal/child)
         AND NOT EXISTS (

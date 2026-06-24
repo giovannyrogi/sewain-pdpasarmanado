@@ -5,7 +5,9 @@ import {
   Autocomplete,
   Box,
   Button,
+  Checkbox,
   FormControl,
+  FormControlLabel,
   Grid,
   IconButton,
   InputAdornment,
@@ -33,6 +35,11 @@ import {
   normalizeIndonesianPhoneInput,
   validateIndonesianPhoneLocal,
 } from "@/app/utils/phoneNumber";
+import {
+  ADMIN_IZIN_LAHAN_ROLE_ID,
+  ADMIN_KONTRAK_ROLE_ID,
+  SUPERADMIN_ROLE_ID,
+} from "@/app/utils/identityModules";
 
 const emptyForm = {
   nomorIndukKependudukan: "",
@@ -54,6 +61,8 @@ const emptyForm = {
   notes: "",
   landPermitStatus: "active",
   landPermitStatusNotes: "",
+  isRoomRentalRegistered: true,
+  isLandPermitRegistered: false,
   ktpFile: null,
   ktpFilePath: "",
   profilePhotoFile: null,
@@ -107,12 +116,28 @@ export default function IdentityFormModal({
   mode = "create",
   initialData,
   isLandPermitContext = false,
+  userRoleId,
   loading,
   onClose,
   onSubmit,
   onNotify,
 }) {
   const theme = useTheme();
+  const normalizedRoleId = Number(userRoleId);
+  const isSuperadmin = normalizedRoleId === SUPERADMIN_ROLE_ID;
+  const isLandPermitAdmin =
+    normalizedRoleId === ADMIN_IZIN_LAHAN_ROLE_ID || isLandPermitContext;
+  const canManageRoomRental =
+    isSuperadmin || normalizedRoleId === ADMIN_KONTRAK_ROLE_ID;
+  const canManageLandPermit = isSuperadmin || isLandPermitAdmin;
+  const initialEmptyForm = useMemo(
+    () => ({
+      ...emptyForm,
+      isRoomRentalRegistered: !isLandPermitAdmin,
+      isLandPermitRegistered: isLandPermitAdmin,
+    }),
+    [isLandPermitAdmin],
+  );
   const [form, setForm] = useState(emptyForm);
   const [provinceCode, setProvinceCode] = useState("");
   const [cityCode, setCityCode] = useState("");
@@ -149,7 +174,7 @@ export default function IdentityFormModal({
     if (!open) return;
 
     if (!initialData) {
-      setForm(emptyForm);
+      setForm(initialEmptyForm);
       setProvinceCode("");
       setCityCode("");
       setDistrictCode("");
@@ -199,12 +224,18 @@ export default function IdentityFormModal({
       notes: initialData.notes || "",
       landPermitStatus: initialData.land_permit_status || "active",
       landPermitStatusNotes: initialData.land_permit_status_notes || "",
+      isRoomRentalRegistered: Boolean(
+        initialData.is_room_rental_registered,
+      ),
+      isLandPermitRegistered: Boolean(
+        initialData.is_land_permit_registered,
+      ),
       ktpFile: null,
       ktpFilePath: initialData.ktp_file_path || "",
       profilePhotoFile: null,
       profilePhotoFilePath: initialData.profile_photo_file_path || "",
     });
-  }, [initialData, open, provinces]);
+  }, [initialData, initialEmptyForm, open, provinces]);
 
   const updateField = (key, value) => {
     setForm((current) => ({ ...current, [key]: value }));
@@ -350,7 +381,19 @@ export default function IdentityFormModal({
       return;
     }
 
-    if (isLandPermitContext && !form.profilePhotoFilePath) {
+    if (
+      !form.isRoomRentalRegistered &&
+      !form.isLandPermitRegistered
+    ) {
+      onNotify?.({
+        open: true,
+        message: "Pilih minimal satu modul untuk identitas.",
+        severity: "error",
+      });
+      return;
+    }
+
+    if (isLandPermitAdmin && !form.profilePhotoFilePath) {
       onNotify?.({
         open: true,
         message: "Pas foto wajib diupload untuk Admin Izin Lahan.",
@@ -366,7 +409,7 @@ export default function IdentityFormModal({
         "oldKtpPath",
         normalizeStoredUploadPath(initialData.ktp_file_path),
       );
-      if (isLandPermitContext) {
+      if (canManageLandPermit) {
         formData.append(
           "oldProfilePhotoPath",
           normalizeStoredUploadPath(initialData.profile_photo_file_path),
@@ -404,8 +447,16 @@ export default function IdentityFormModal({
     formData.append("kelurahan", form.kelurahan);
     formData.append("status", form.status);
     formData.append("notes", form.status === "blacklisted" ? form.notes : "");
+    formData.append(
+      "isRoomRentalRegistered",
+      String(form.isRoomRentalRegistered),
+    );
+    formData.append(
+      "isLandPermitRegistered",
+      String(form.isLandPermitRegistered),
+    );
 
-    if (isLandPermitContext) {
+    if (canManageLandPermit) {
       formData.append("landPermitStatus", form.landPermitStatus);
       formData.append(
         "landPermitStatusNotes",
@@ -416,11 +467,69 @@ export default function IdentityFormModal({
     if (form.ktpFile) {
       formData.append("ktpFile", form.ktpFile);
     }
-    if (isLandPermitContext && form.profilePhotoFile) {
+    if (canManageLandPermit && form.profilePhotoFile) {
       formData.append("profilePhotoFile", form.profilePhotoFile);
     }
 
     onSubmit?.(formData);
+  };
+
+  const renderStatusControl = ({
+    label,
+    statusKey,
+    notesKey,
+    gridSize = 12,
+  }) => {
+    const status = form[statusKey];
+    const notes = form[notesKey];
+    const labelId = `${statusKey}-label`;
+
+    return (
+      <>
+        <Grid size={gridSize}>
+          <FormControl fullWidth required>
+            <InputLabel id={labelId}>{label}</InputLabel>
+            <Select
+              labelId={labelId}
+              label={label}
+              value={status}
+              onChange={(event) => {
+                const nextStatus = event.target.value;
+                setForm((current) => ({
+                  ...current,
+                  [statusKey]: nextStatus,
+                  [notesKey]:
+                    nextStatus === "blacklisted" ? current[notesKey] : "",
+                }));
+              }}
+              disabled={loading}
+            >
+              <MenuItem value="active">Aktif</MenuItem>
+              <MenuItem value="inactive">Tidak Aktif</MenuItem>
+              <MenuItem value="blacklisted">Blacklist</MenuItem>
+            </Select>
+          </FormControl>
+        </Grid>
+
+        {status === "blacklisted" && (
+          <Grid size={12}>
+            <TextField
+              label={`Alasan Blacklist ${label.replace("Status ", "")} *`}
+              value={notes}
+              onChange={(event) =>
+                updateField(notesKey, event.target.value.slice(0, 150))
+              }
+              disabled={loading}
+              fullWidth
+              multiline
+              minRows={3}
+              inputProps={{ maxLength: 150 }}
+              helperText={`${notes.length}/150 karakter`}
+            />
+          </Grid>
+        )}
+      </>
+    );
   };
 
   return (
@@ -429,8 +538,10 @@ export default function IdentityFormModal({
         open={open}
         title={mode === "edit" ? "Ubah Identitas" : "Tambah Identitas"}
         description={
-          isLandPermitContext
+          isLandPermitAdmin
             ? "Lengkapi identitas, alamat, status izin lahan, foto KTP, dan pas foto untuk kebutuhan izin lahan."
+            : isSuperadmin
+              ? "Kelola identitas bersama, cakupan modul, status, dan dokumen pendukung."
             : "Lengkapi data pribadi, alamat, status, dan foto KTP penyewa untuk kebutuhan transaksi sewa."
         }
         icon="qlementine-icons:id-card-16"
@@ -839,7 +950,7 @@ export default function IdentityFormModal({
             </Box>
           </Grid>
 
-          {isLandPermitContext && (
+          {canManageLandPermit && form.isLandPermitRegistered && (
             <Grid size={12}>
               <Box
                 sx={{
@@ -1135,84 +1246,88 @@ export default function IdentityFormModal({
             />
           </Grid>
 
-          <Grid size={12}>
-            <FormControl fullWidth required>
-              <InputLabel id="identity-status-label">
-                {isLandPermitContext ? "Status Izin Lahan" : "Status"}
-              </InputLabel>
-              <Select
-                labelId="identity-status-label"
-                label={isLandPermitContext ? "Status Izin Lahan" : "Status"}
-                value={
-                  isLandPermitContext ? form.landPermitStatus : form.status
-                }
-                onChange={(event) => {
-                  const nextStatus = event.target.value;
-                  setForm((current) => {
-                    if (isLandPermitContext) {
-                      return {
-                        ...current,
-                        landPermitStatus: nextStatus,
-                        landPermitStatusNotes:
-                          nextStatus === "blacklisted"
-                            ? current.landPermitStatusNotes
-                            : "",
-                      };
-                    }
-
-                    return {
-                      ...current,
-                      status: nextStatus,
-                      notes: nextStatus === "blacklisted" ? current.notes : "",
-                    };
-                  });
-                }}
-                disabled={loading}
-              >
-                <MenuItem value="active">Aktif</MenuItem>
-                <MenuItem value="inactive">Tidak Aktif</MenuItem>
-                <MenuItem value="blacklisted">Blacklist</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
-
-          {(isLandPermitContext
-            ? form.landPermitStatus
-            : form.status) === "blacklisted" && (
+          {isSuperadmin && (
             <Grid size={12}>
-              <TextField
-                label={
-                  isLandPermitContext
-                    ? "Alasan Blacklist Izin Lahan *"
-                    : "Alasan Blacklist *"
-                }
-                value={
-                  isLandPermitContext
-                    ? form.landPermitStatusNotes
-                    : form.notes
-                }
-                onChange={(event) => {
-                  const nextValue = event.target.value.slice(0, 150);
-                  updateField(
-                    isLandPermitContext
-                      ? "landPermitStatusNotes"
-                      : "notes",
-                    nextValue,
-                  );
+              <Box
+                sx={{
+                  p: 1.25,
+                  borderRadius: 2,
+                  border: `1px solid ${theme.ui.dashboardCardBorder}`,
+                  bgcolor:
+                    theme.palette.mode === "dark"
+                      ? "rgba(255,255,255,0.025)"
+                      : "rgba(17,24,39,0.02)",
                 }}
-                disabled={loading}
-                fullWidth
-                multiline
-                minRows={3}
-                inputProps={{ maxLength: 150 }}
-                helperText={`${
-                  isLandPermitContext
-                    ? form.landPermitStatusNotes.length
-                    : form.notes.length
-                }/150 karakter`}
-              />
+              >
+                <Typography sx={{ fontSize: 12, fontWeight: 700, mb: 0.75 }}>
+                  Terdaftar pada modul *
+                </Typography>
+                <Stack direction={{ xs: "column", sm: "row" }} spacing={0.75}>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={form.isRoomRentalRegistered}
+                        onChange={(event) =>
+                          updateField(
+                            "isRoomRentalRegistered",
+                            event.target.checked,
+                          )
+                        }
+                        disabled={loading}
+                      />
+                    }
+                    label="Sewa Ruangan"
+                    sx={{ m: 0, flex: 1 }}
+                  />
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={form.isLandPermitRegistered}
+                        onChange={(event) =>
+                          updateField(
+                            "isLandPermitRegistered",
+                            event.target.checked,
+                          )
+                        }
+                        disabled={loading}
+                      />
+                    }
+                    label="Izin Lahan"
+                    sx={{ m: 0, flex: 1 }}
+                  />
+                </Stack>
+                <Typography
+                  sx={{
+                    color: theme.ui.mutedText,
+                    fontSize: 10.5,
+                    fontWeight: 600,
+                    mt: 0.5,
+                  }}
+                >
+                  Modul dengan riwayat permohonan tidak dapat dilepas. Gunakan
+                  status Nonaktif bila identitas tidak digunakan lagi.
+                </Typography>
+              </Box>
             </Grid>
           )}
+
+          {canManageRoomRental &&
+            form.isRoomRentalRegistered &&
+            renderStatusControl({
+              label: "Status Sewa Ruangan",
+              statusKey: "status",
+              notesKey: "notes",
+              gridSize: isSuperadmin ? { xs: 12, md: 6 } : 12,
+            })}
+
+          {canManageLandPermit &&
+            form.isLandPermitRegistered &&
+            renderStatusControl({
+              label: "Status Izin Lahan",
+              statusKey: "landPermitStatus",
+              notesKey: "landPermitStatusNotes",
+              gridSize: isSuperadmin ? { xs: 12, md: 6 } : 12,
+            })}
         </Grid>
       </CrudFormModal>
 

@@ -30,6 +30,10 @@ const mapIdentityRow = (row) => ({
   land_permit_status_updated_at: row.land_permit_status_updated_at
     ? moment(row.land_permit_status_updated_at).format("YYYY-MM-DD HH:mm:ss")
     : null,
+  is_room_rental_registered: row.is_room_rental_registered,
+  is_land_permit_registered: row.is_land_permit_registered,
+  has_room_rental_application: row.has_room_rental_application,
+  has_land_permit_application: row.has_land_permit_application,
   street_address: row.street_address,
   rt: row.rt,
   rw: row.rw,
@@ -64,9 +68,21 @@ export async function GET(request, { params }) {
         id, user_id, nik, full_name, ktp_file_path, profile_photo_file_path,
         birth_place, birth_date, nationality, religion, occupation, status,
         notes, land_permit_status, land_permit_status_notes,
-        land_permit_status_updated_at, street_address, rt, rw, kelurahan,
+        land_permit_status_updated_at, is_room_rental_registered,
+        is_land_permit_registered,
+        EXISTS (
+          SELECT 1
+          FROM tenant_application ta
+          WHERE ta.tenant_identity_id = ti.id
+        ) AS has_room_rental_application,
+        EXISTS (
+          SELECT 1
+          FROM land_permit_applications lpa
+          WHERE lpa.tenant_identity_id = ti.id
+        ) AS has_land_permit_application,
+        street_address, rt, rw, kelurahan,
         district, city, province, postal_code, phone, updated_at, created_at
-      FROM tenant_identities
+      FROM tenant_identities ti
       WHERE id = $1
       LIMIT 1
       `,

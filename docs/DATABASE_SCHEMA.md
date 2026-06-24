@@ -256,6 +256,8 @@ Stores tenant identity data.
 | `land_permit_status`             | `VARCHAR(20)`  | `DEFAULT 'active'`          | Land permit identity status              |
 | `land_permit_status_notes`       | `TEXT`         | nullable                    | Land permit-specific status notes        |
 | `land_permit_status_updated_at`  | `TIMESTAMP`    | `DEFAULT CURRENT_TIMESTAMP` | Last land permit status update timestamp |
+| `is_room_rental_registered`      | `BOOLEAN`      | `NOT NULL DEFAULT FALSE`    | Identity is registered for room rental   |
+| `is_land_permit_registered`      | `BOOLEAN`      | `NOT NULL DEFAULT FALSE`    | Identity is registered for land permits  |
 | `updated_at`                     | `TIMESTAMP`    | `DEFAULT CURRENT_TIMESTAMP` | Last update timestamp                    |
 | `created_at`                     | `TIMESTAMP`    | `DEFAULT CURRENT_TIMESTAMP` | Creation timestamp                       |
 
@@ -279,6 +281,8 @@ Important:
   rental eligibility, and vice versa.
 * `tenant_identities.profile_photo_file_path` is optional and intended for land
   permit documents/cards. Room rental flows must not require this photo.
+* At least one registration flag must be true. Disabling a module uses its
+  module-specific status and does not remove the registration flag or history.
 
 ---
 

@@ -48,6 +48,9 @@ const mapApplicationRow = (row) => ({
   postal_code: row.postal_code,
   land_permit_status: row.land_permit_status,
   land_permit_status_notes: row.land_permit_status_notes,
+  status: row.identity_status,
+  is_room_rental_registered: row.is_room_rental_registered,
+  is_land_permit_registered: row.is_land_permit_registered,
   commodity_type: row.commodity_type,
   document_number: row.document_number,
   location_id: row.location_id,
@@ -136,6 +139,9 @@ const selectApplicationsSql = `
     ti.postal_code,
     ti.land_permit_status,
     ti.land_permit_status_notes,
+    ti.status AS identity_status,
+    ti.is_room_rental_registered,
+    ti.is_land_permit_registered,
     l.location_name,
     ls.sector_name,
     ls.sector_code,
@@ -234,7 +240,9 @@ const ensureIdentityEligible = async (client, identityId) => {
     `
     SELECT id
     FROM tenant_identities
-    WHERE id = $1 AND land_permit_status = 'active'
+    WHERE id = $1
+      AND is_land_permit_registered = TRUE
+      AND land_permit_status = 'active'
     LIMIT 1
     `,
     [identityId],
@@ -308,7 +316,10 @@ export async function POST(request) {
     const eligible = await ensureIdentityEligible(client, values.tenant_identity_id);
     if (!eligible) {
       await client.query("ROLLBACK");
-      return failResponse("Identitas tidak aktif untuk izin lahan.", 400);
+      return failResponse(
+        "Identitas tidak terdaftar atau tidak aktif untuk izin lahan.",
+        400,
+      );
     }
 
     const { stall, error: stallError } = await getStallForApplication(client, values);

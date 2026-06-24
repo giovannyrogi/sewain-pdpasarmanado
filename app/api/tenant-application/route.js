@@ -12,6 +12,22 @@ const TENANT_APPLICATION_ROLES = [1, 2];
 const isMoneyEqual = (left, right) =>
   Math.abs(Number(left || 0) - Number(right || 0)) < 1;
 
+const isRoomRentalIdentityEligible = async (identityId) => {
+  const result = await pool.query(
+    `
+    SELECT 1
+    FROM tenant_identities
+    WHERE id = $1
+      AND is_room_rental_registered = TRUE
+      AND status = 'active'
+    LIMIT 1
+    `,
+    [identityId],
+  );
+
+  return result.rowCount > 0;
+};
+
 export async function POST(req) {
   try {
     const { response: roleResponse } = await requireRole(TENANT_APPLICATION_ROLES);
@@ -80,6 +96,17 @@ export async function POST(req) {
     if (!tenant_identity_id) {
       return Response.json(
         { success: false, message: "Identitas wajib diisi." },
+        { status: 400 },
+      );
+    }
+
+    if (!(await isRoomRentalIdentityEligible(tenant_identity_id))) {
+      return Response.json(
+        {
+          success: false,
+          message:
+            "Identitas tidak terdaftar atau tidak aktif untuk Sewa Ruangan.",
+        },
         { status: 400 },
       );
     }
@@ -441,6 +468,10 @@ export async function GET(req) {
         ti.nik AS tenant_nik,
         ti.phone AS tenant_phone,
         ti.ktp_file_path AS ktp_file_path,
+        ti.status AS tenant_identity_status,
+        ti.land_permit_status,
+        ti.is_room_rental_registered,
+        ti.is_land_permit_registered,
 
         -- lokasi & ruangan
         l.id AS location_id,
@@ -495,6 +526,11 @@ export async function GET(req) {
       tenant_nik: row.tenant_nik,
       tenant_phone: row.tenant_phone,
       ktp_file_path: row.ktp_file_path,
+      status: row.tenant_identity_status,
+      tenant_identity_status: row.tenant_identity_status,
+      land_permit_status: row.land_permit_status,
+      is_room_rental_registered: row.is_room_rental_registered,
+      is_land_permit_registered: row.is_land_permit_registered,
       start_date: row.start_date,
       end_date: row.end_date,
       estimated_installment_1: row.estimated_installment_1,

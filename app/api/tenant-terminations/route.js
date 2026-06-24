@@ -238,6 +238,9 @@ export async function GET(req) {
         ti.postal_code,
         ti.status AS tenant_identity_status,
         ti.notes AS tenant_identity_notes,
+        ti.land_permit_status,
+        ti.is_room_rental_registered,
+        ti.is_land_permit_registered,
 
         -- data application
         ta.start_date,
@@ -334,6 +337,9 @@ export async function GET(req) {
       postal_code: row.postal_code,
       tenant_identity_status: row.tenant_identity_status,
       tenant_identity_notes: row.tenant_identity_notes,
+      land_permit_status: row.land_permit_status,
+      is_room_rental_registered: row.is_room_rental_registered,
+      is_land_permit_registered: row.is_land_permit_registered,
 
       // data application
       start_date: row.start_date,

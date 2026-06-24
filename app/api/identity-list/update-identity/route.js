@@ -19,9 +19,14 @@ import {
   validateIdentityId,
   validateLandPermitIdentityFormData,
 } from "../validation";
+import {
+  ADMIN_IZIN_LAHAN_ROLE_ID,
+  getIdentityRegistrationForRole,
+  SUPERADMIN_ROLE_ID,
+  validateIdentityRegistration,
+} from "@/app/utils/identityModules";
 
 const MASTER_DATA_ROLES = [1, 2, 9];
-const ADMIN_IZIN_LAHAN_ROLE_ID = 9;
 
 export async function PUT(req) {
   let uploadedPath = null;
@@ -31,6 +36,7 @@ export async function PUT(req) {
     const { user, response } = await requireRole(MASTER_DATA_ROLES);
     if (response) return response;
     const isLandPermitAdmin = Number(user.role_id) === ADMIN_IZIN_LAHAN_ROLE_ID;
+    const isSuperadmin = Number(user.role_id) === SUPERADMIN_ROLE_ID;
 
     const formData = await req.formData();
     const { value: id, error: idError } = validateIdentityId(formData.get("id"));
@@ -47,7 +53,8 @@ export async function PUT(req) {
       `
       SELECT 
         ktp_file_path, profile_photo_file_path, status, notes,
-        land_permit_status, land_permit_status_notes
+        land_permit_status, land_permit_status_notes,
+        is_room_rental_registered, is_land_permit_registered
       FROM tenant_identities
       WHERE id = $1
       LIMIT 1
@@ -68,6 +75,50 @@ export async function PUT(req) {
       return failResponse("NIK sudah terdaftar.", 409);
     }
 
+    const registration = getIdentityRegistrationForRole({
+      roleId: user.role_id,
+      formData,
+      existing: existingData.rows[0],
+    });
+    const registrationError = validateIdentityRegistration(registration);
+    if (registrationError) {
+      return failResponse(registrationError, 400);
+    }
+
+    if (
+      isSuperadmin &&
+      existingData.rows[0].is_room_rental_registered &&
+      !registration.is_room_rental_registered
+    ) {
+      const roomHistory = await pool.query(
+        "SELECT 1 FROM tenant_application WHERE tenant_identity_id = $1 LIMIT 1",
+        [id],
+      );
+      if (roomHistory.rowCount > 0) {
+        return failResponse(
+          "Modul Sewa Ruangan tidak dapat dilepas karena sudah memiliki riwayat permohonan. Ubah status menjadi nonaktif.",
+          409,
+        );
+      }
+    }
+
+    if (
+      isSuperadmin &&
+      existingData.rows[0].is_land_permit_registered &&
+      !registration.is_land_permit_registered
+    ) {
+      const landHistory = await pool.query(
+        "SELECT 1 FROM land_permit_applications WHERE tenant_identity_id = $1 LIMIT 1",
+        [id],
+      );
+      if (landHistory.rowCount > 0) {
+        return failResponse(
+          "Modul Izin Lahan tidak dapat dilepas karena sudah memiliki riwayat permohonan. Ubah status menjadi nonaktif.",
+          409,
+        );
+      }
+    }
+
     const preparedFile = await prepareKtpUpload(ktpFile, values.full_name);
     if (preparedFile.error) {
       return failResponse(preparedFile.error, 400);
@@ -84,7 +135,7 @@ export async function PUT(req) {
       existingData.rows[0]?.land_permit_status_notes || "";
     let preparedProfilePhoto = { profile_photo_file_path: null };
 
-    if (isLandPermitAdmin) {
+    if (isLandPermitAdmin || isSuperadmin) {
       const landPermitValidation = validateLandPermitIdentityFormData(formData);
       if (landPermitValidation.error) {
         return failResponse(landPermitValidation.error, 400);
@@ -101,7 +152,7 @@ export async function PUT(req) {
 
       profilePhotoFilePath =
         preparedProfilePhoto.profile_photo_file_path || currentProfilePhotoPath;
-      if (!profilePhotoFilePath) {
+      if (isLandPermitAdmin && !profilePhotoFilePath) {
         return failResponse(
           "Pas foto wajib diupload untuk Admin Izin Lahan.",
           400,
@@ -162,8 +213,10 @@ export async function PUT(req) {
           THEN NOW()
           ELSE land_permit_status_updated_at
         END,
+        is_room_rental_registered = $22,
+        is_land_permit_registered = $23,
         updated_at = NOW()
-      WHERE id = $22
+      WHERE id = $24
       RETURNING *
       `,
       [
@@ -188,6 +241,8 @@ export async function PUT(req) {
         profilePhotoFilePath,
         landPermitStatus,
         landPermitStatusNotes,
+        registration.is_room_rental_registered,
+        registration.is_land_permit_registered,
         id,
       ],
     );
@@ -199,7 +254,7 @@ export async function PUT(req) {
     }
 
     if (
-      isLandPermitAdmin &&
+      (isLandPermitAdmin || isSuperadmin) &&
       uploadedProfilePhotoPath &&
       currentProfilePhotoPath &&
       currentProfilePhotoPath !== profilePhotoFilePath
