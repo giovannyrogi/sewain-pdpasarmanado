@@ -8,7 +8,7 @@ import {
   notifyLandPermitPaymentSubmitted,
 } from "@/app/utils/notifications";
 
-const ACCESS_ROLES = [1, 8, 9];
+const ACCESS_ROLES = [1, 3, 4, 5, 8, 9];
 const WRITE_ROLES = [1, 9];
 const MAX_PROOF_FILE_SIZE = 5 * 1024 * 1024;
 const ALLOWED_PROOF_EXTENSIONS = [".jpg", ".jpeg", ".png", ".pdf"];

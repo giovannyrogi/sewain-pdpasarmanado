@@ -118,7 +118,7 @@ const MENU_CONFIG = [
     ],
     submenu: [
       {
-        label: "Permohonan Izin Lahan",
+        label: "Permohonan Lahan",
         value: "land-permit-applications",
         path: "/land-permit-applications",
         icon: <Icon icon="solar:document-add-bold-duotone" fontSize="20px" />,
@@ -126,7 +126,7 @@ const MENU_CONFIG = [
         showIcon: true,
       },
       {
-        label: "Permohonan Sewa Ruangan",
+        label: "Permohonan Ruangan",
         value: "tenant-application",
         path: "/tenant-application",
         icon: <Icon icon="hugeicons:file-edit" fontSize="20px" />,
@@ -134,7 +134,7 @@ const MENU_CONFIG = [
         showIcon: true,
       },
       {
-        label: "Persetujuan Sewa Ruangan",
+        label: "Persetujuan Ruangan",
         value: "tenant-approval",
         path: "/tenant-approval",
         icon: <Icon icon="carbon:document-set" fontSize="20px" />,
@@ -149,7 +149,7 @@ const MENU_CONFIG = [
         showIcon: true,
       },
       {
-        label: "Persetujuan Izin Lahan",
+        label: "Persetujuan Lahan",
         value: "land-permit-approval",
         path: "/land-permit-approval",
         icon: <Icon icon="ph:seal-check-duotone" fontSize="20px" />,
@@ -187,7 +187,7 @@ const MENU_CONFIG = [
         showIcon: true,
       },
       {
-        label: "Pembayaran Sewa Ruangan",
+        label: "Pembayaran Ruangan",
         value: "payments",
         path: "/payments",
         icon: (
@@ -204,7 +204,7 @@ const MENU_CONFIG = [
         showIcon: true,
       },
       {
-        label: "Pembayaran Izin Lahan",
+        label: "Pembayaran Lahan",
         value: "land-permit-payments",
         path: "/land-permit-payments",
         icon: (
@@ -212,7 +212,26 @@ const MENU_CONFIG = [
         ),
         roles: [
           ROLES.SUPERADMIN,
+          ROLES.KEPALA_SEKSI,
+          ROLES.KEPALA_SUBDIVISI,
+          ROLES.KEPALA_DIVISI,
           ROLES.DIVISI_KEUANGAN,
+          ROLES.ADMIN_IZIN_LAHAN,
+        ],
+        showIcon: true,
+      },
+      {
+        label: "Dokumen Izin Lahan",
+        value: "land-permit-documents",
+        path: "/land-permit-documents",
+        icon: <Icon icon="solar:document-text-bold-duotone" fontSize="20px" />,
+        roles: [
+          ROLES.SUPERADMIN,
+          ROLES.KEPALA_SEKSI,
+          ROLES.KEPALA_SUBDIVISI,
+          ROLES.KEPALA_DIVISI,
+          ROLES.DIREKTUR_BISNIS,
+          ROLES.DIREKTUR_UTAMA,
           ROLES.ADMIN_IZIN_LAHAN,
         ],
         showIcon: true,

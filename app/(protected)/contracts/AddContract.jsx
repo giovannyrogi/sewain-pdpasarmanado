@@ -197,7 +197,7 @@ export default function AddContract({
         open={open}
         onClose={handleClose}
         title="Buat Kontrak Baru"
-        description="Pilih tenant yang sudah lunas, isi nomor kontrak, lalu sistem akan membentuk format nomor kontrak otomatis."
+        titleDescription="Pilih tenant yang sudah lunas, isi nomor kontrak, lalu sistem akan membentuk format nomor kontrak otomatis."
         icon="solar:document-add-bold-duotone"
         width={720}
         contentSx={{ p: 0 }}

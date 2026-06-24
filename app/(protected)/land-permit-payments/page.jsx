@@ -512,7 +512,7 @@ export default function LandPermitPaymentsPage() {
       <RejectReasonModal
         open={rejectOpen}
         onClose={() => !loading && setRejectOpen(false)}
-        title="Tolak Pembayaran Izin Lahan"
+        title="Tolak Bukti Pembayaran"
         description="Tuliskan alasan penolakan agar admin izin lahan dapat memperbaiki bukti pembayaran."
         confirmLabel="Tolak Pembayaran"
         loading={loading}
@@ -520,7 +520,7 @@ export default function LandPermitPaymentsPage() {
       />
       <CrudConfirmModal
         open={deleteOpen}
-        title="Hapus Pembayaran Izin Lahan"
+        title="Hapus Bukti Pembayaran"
         titleDescription="Konfirmasi penghapusan bukti pembayaran dari sistem."
         description={`Bukti pembayaran atas nama ${selectedData?.tenant_name || "-"} akan dihapus. Status pembayaran permohonan akan kembali menjadi belum dibayar.`}
         confirmLabel="Hapus Data"

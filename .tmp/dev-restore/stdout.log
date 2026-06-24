@@ -1,0 +1,43 @@
+
+> sewain-pdpasar@0.1.0 dev
+> cross-env NODE_ENV=development next dev -p 3001
+
+   ▲ Next.js 15.5.19
+   - Local:        http://localhost:3001
+   - Network:      http://192.168.1.4:3001
+   - Environments: .env.development
+
+ ✓ Starting...
+ ✓ Ready in 1711ms
+ ○ Compiling /middleware ...
+ ✓ Compiled /middleware in 643ms (128 modules)
+ ○ Compiling /login ...
+ ✓ Compiled /login in 7s (2662 modules)
+ GET /login 200 in 7701ms
+ ○ Compiling /land-permit-documents ...
+ ✓ Compiled /land-permit-documents in 13.3s (9001 modules)
+ GET /land-permit-documents 200 in 14512ms
+ ○ Compiling /api/land-permit-documents ...
+ ✓ Compiled /api/land-permit-documents in 5.9s (9007 modules)
+[dotenv@17.2.3] injecting env (0) from .env.development -- tip: 🔄 add secrets lifecycle management: https://dotenvx.com/ops
+[DB] Mode aktif: development
+[DB] File env dibaca: .env.development
+ GET /api/land-permit-documents 200 in 6175ms
+ ✓ Compiled in 971ms (4393 modules)
+ ✓ Compiled in 443ms (4395 modules)
+ ✓ Compiled in 385ms (4395 modules)
+ ✓ Compiled in 1202ms (4395 modules)
+   ▲ Next.js 15.5.19
+   - Local:        http://localhost:3001
+   - Network:      http://192.168.1.4:3001
+   - Environments: .env.development
+
+ ✓ Starting...
+ ✓ Ready in 2.2s
+   ▲ Next.js 15.5.19
+   - Local:        http://localhost:3001
+   - Network:      http://192.168.1.4:3001
+   - Environments: .env.development
+
+ ✓ Starting...
+ ✓ Ready in 2.3s

@@ -20,6 +20,7 @@ export async function PUT(request, { params }) {
     const paymentId = Number(body.payment_id);
     const status = String(body.status || "").toLowerCase();
     const notes = String(body.notes || "").trim();
+    const isApproved = status === "approved";
 
     if (!Number.isInteger(approvalId) || approvalId <= 0) {
       return Response.json(
@@ -125,13 +126,13 @@ export async function PUT(request, { params }) {
       SET approval_status = $1,
           notes = $2,
           accounting_date = CASE
-            WHEN $1 = 'approved' THEN CURRENT_DATE
+            WHEN $4::boolean THEN CURRENT_DATE
             ELSE accounting_date
           END,
           updated_at = NOW()
       WHERE id = $3
       `,
-      [status, notes || null, paymentId],
+      [status, notes || null, paymentId, isApproved],
     );
 
     await client.query(
@@ -140,15 +141,15 @@ export async function PUT(request, { params }) {
       SET payment_status = $1,
           is_fully_paid = $2,
           permit_status = CASE
-            WHEN $1 = 'paid' THEN 'active'
+            WHEN $2::boolean THEN 'active'
             ELSE permit_status
           END,
           updated_at = NOW()
       WHERE id = $3
       `,
       [
-        status === "approved" ? "paid" : "rejected",
-        status === "approved",
+        isApproved ? "paid" : "rejected",
+        isApproved,
         approval.land_permit_application_id,
       ],
     );

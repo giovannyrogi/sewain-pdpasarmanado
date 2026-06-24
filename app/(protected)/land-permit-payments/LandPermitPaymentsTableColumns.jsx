@@ -76,7 +76,7 @@ export function createLandPermitPaymentColumns({
   onReject,
 }) {
   const isFinance = Number(user?.role_id) === 8;
-  const canPrint = [1, 8, 9].includes(Number(user?.role_id));
+  const canPrintReceipt = [3, 4, 5, 9].includes(Number(user?.role_id));
 
   return [
     {
@@ -150,13 +150,13 @@ export function createLandPermitPaymentColumns({
             {formatRupiah(record.payment_amount)}
           </Typography>
           <Typography sx={{ color: theme.ui.mutedText, fontSize: 11.5, fontWeight: 600 }}>
-            Lunas | {record.payment_date ? moment(record.payment_date).format("D MMMM YYYY") : "-"}
+           {record.payment_date ? moment(record.payment_date).format("D MMMM YYYY") : "-"}
           </Typography>
         </Stack>
       ),
     },
     {
-      title: "Masa Izin",
+      title: "Masa Berlaku",
       width: 230,
       render: (_value, record) => (
         <Stack spacing={0.35}>
@@ -179,7 +179,7 @@ export function createLandPermitPaymentColumns({
           totalStep={1}
           label={
             record.payment_approval_status === "proses"
-              ? "Menunggu Keuangan"
+              ? "Menunggu Verifikasi"
               : undefined
           }
           onClick={() => onProgress(record)}
@@ -230,14 +230,15 @@ export function createLandPermitPaymentColumns({
               icon="solar:eye-bold-duotone"
               onClick={() => onDetail(record)}
             />
-            {canPrint && (
-              <TableActionButton
-                title="Cetak kwitansi penerimaan"
-                color="warning"
-                icon="solar:printer-2-bold-duotone"
-                onClick={() => onPrint(record)}
-              />
-            )}
+            {canPrintReceipt &&
+              record.payment_approval_status === "proses" && (
+                <TableActionButton
+                  title="Cetak kwitansi penerimaan"
+                  color="warning"
+                  icon="solar:printer-2-bold-duotone"
+                  onClick={() => onPrint(record)}
+                />
+              )}
             {editable && (
               <TableActionButton
                 title="Hapus pembayaran"
