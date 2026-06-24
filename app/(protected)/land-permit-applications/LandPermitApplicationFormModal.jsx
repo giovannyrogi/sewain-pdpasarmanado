@@ -218,7 +218,11 @@ export default function LandPermitApplicationFormModal({
         onClose={onClose}
         onSubmit={handleSubmit}
       >
-        <Grid container spacing={{ xs: 2, sm: 2.2 }}>
+        <Grid
+          container
+          rowSpacing={{ xs: 2.75, sm: 3, md: 3.25 }}
+          columnSpacing={{ xs: 2, sm: 2.25, md: 2.5 }}
+        >
           <Grid size={12}>
             <TextField
               select
@@ -269,7 +273,10 @@ export default function LandPermitApplicationFormModal({
               <Button
                 size="small"
                 onClick={() => setIdentityPreviewOpen(true)}
-                sx={linkButtonSx}
+                sx={{
+                  ...linkButtonSx,
+                  mt: { xs: 0.85, sm: 1 },
+                }}
               >
                 Lihat Data Penyewa
               </Button>

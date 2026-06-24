@@ -92,9 +92,16 @@ const releaseStallIfUnused = async (client, stallId) => {
   );
 
   if (used.rowCount === 0) {
-    await client.query("UPDATE land_stalls SET status = 'available' WHERE id = $1", [
-      stallId,
-    ]);
+    await client.query(
+      `
+      UPDATE land_stalls
+      SET status = 'available',
+          notes = NULL,
+          updated_at = NOW()
+      WHERE id = $1
+      `,
+      [stallId],
+    );
   }
 };
 
