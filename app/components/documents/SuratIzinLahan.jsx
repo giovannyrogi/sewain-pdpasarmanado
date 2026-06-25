@@ -19,11 +19,25 @@ const bodyText = {
   textAlign: "justify",
 };
 
+const sectionLayout = {
+  display: "grid",
+  gridTemplateColumns: "8mm minmax(0, 1fr)",
+  columnGap: "2.5mm",
+};
+
+const sectionLabel = {
+  ...bodyText,
+  fontWeight: 700,
+  textAlign: "left",
+  whiteSpace: "nowrap",
+  mb: "3mm",
+};
+
+const sectionContentIndent = "5mm";
+
 const buildAddress = (data) => {
   const rtRw =
-    data?.rt || data?.rw
-      ? `RT ${data?.rt || "-"} / RW ${data?.rw || "-"}`
-      : "";
+    data?.rt || data?.rw ? `RT ${data?.rt || "-"} / RW ${data?.rw || "-"}` : "";
 
   return [
     data?.street_address,
@@ -120,46 +134,51 @@ const SuratIzinLahan = forwardRef(({ data }, ref) => {
         >
           SURAT IZIN LAHAN
         </Typography>
-        <Typography sx={{ ...bodyText, textAlign: "center", fontSize: "9.2pt" }}>
+        <Typography
+          sx={{ ...bodyText, textAlign: "center", fontSize: "9.2pt" }}
+        >
           Nomor: {data.document_number || "-"}
         </Typography>
       </Box>
 
-      <Box
-        sx={{
-          display: "grid",
-          gridTemplateColumns: "19mm minmax(0, 1fr)",
-          columnGap: "2.5mm",
-          mb: "6mm",
-        }}
-      >
-        <Typography sx={{ ...bodyText, fontWeight: 700, letterSpacing: "3px" }}>
+      <Box sx={{ mb: "6mm" }}>
+        <Typography
+          sx={{
+            ...sectionLabel,
+            letterSpacing: "3px",
+          }}
+        >
           I. DASAR :
         </Typography>
-        <Box sx={{ display: "grid", rowGap: "1.8mm" }}>
+
+        <Box
+          sx={{
+            display: "grid",
+            rowGap: "1.8mm",
+            ml: sectionContentIndent,
+          }}
+        >
           <NumberedItem number="1">
             Peraturan Daerah Kota Manado Nomor 2 Tahun 2024 Tentang Perusahaan
             Umum Daerah Pasar Manado.
           </NumberedItem>
           <NumberedItem number="2">
-            Peraturan Direksi Perusahaan Daerah Pasar Kota Manado Nomor: 04 Tahun
-            2024 Tentang Penetapan Iuran Kontrak pemakaian Tempat usaha,
-            Pengelolaan Pasar, Kebersihan, Jasa Parkir, Reklame, dan Promosi Serta
-            Iuran Jasa Administrasi.
+            Peraturan Direksi Perusahaan Daerah Pasar Kota Manado Nomor: 04
+            Tahun 2024 Tentang Penetapan Iuran Kontrak pemakaian Tempat usaha,
+            Pengelolaan Pasar, Kebersihan, Jasa Parkir, Reklame, dan Promosi
+            Serta Iuran Jasa Administrasi.
           </NumberedItem>
         </Box>
       </Box>
 
       <Box
         sx={{
-          display: "grid",
-          gridTemplateColumns: "19mm minmax(0, 1fr)",
-          columnGap: "2.5mm",
+          ...sectionLayout,
           mb: "6mm",
         }}
       >
-        <Typography sx={{ ...bodyText, fontWeight: 700 }}>II.</Typography>
-        <Box>
+        <Typography sx={sectionLabel}>II.</Typography>
+        <Box sx={{ ml: "-6mm" }}>
           <Typography sx={{ ...bodyText, fontWeight: 700, mb: "4mm" }}>
             Setelah meneliti dan mengkaji kelayakan pemberian Surat Izin Lahan
             ini, maka dengan ini dinyatakan layak untuk diberikan izin kepada:
@@ -183,13 +202,19 @@ const SuratIzinLahan = forwardRef(({ data }, ref) => {
               ["Iuran Jasa Administrasi", formatRupiah(data.total_payment)],
             ].map(([label, value]) => (
               <React.Fragment key={label}>
-                <Typography sx={{ ...bodyText, fontWeight: 700, textAlign: "left" }}>
+                <Typography
+                  sx={{ ...bodyText, fontWeight: 700, textAlign: "left" }}
+                >
                   {label}
                 </Typography>
-                <Typography sx={{ ...bodyText, fontWeight: 700, textAlign: "left" }}>
+                <Typography
+                  sx={{ ...bodyText, fontWeight: 700, textAlign: "left" }}
+                >
                   :
                 </Typography>
-                <Typography sx={{ ...bodyText, fontWeight: 700, textAlign: "left" }}>
+                <Typography
+                  sx={{ ...bodyText, fontWeight: 700, textAlign: "left" }}
+                >
                   {value}
                 </Typography>
               </React.Fragment>
@@ -198,15 +223,9 @@ const SuratIzinLahan = forwardRef(({ data }, ref) => {
         </Box>
       </Box>
 
-      <Box
-        sx={{
-          display: "grid",
-          gridTemplateColumns: "19mm minmax(0, 1fr)",
-          columnGap: "2.5mm",
-        }}
-      >
-        <Typography sx={{ ...bodyText, fontWeight: 700 }}>III.</Typography>
-        <Box>
+      <Box sx={sectionLayout}>
+        <Typography sx={sectionLabel}>III.</Typography>
+        <Box sx={{ ml: "-6mm" }}>
           <Typography sx={{ ...bodyText, fontWeight: 700, mb: "2.8mm" }}>
             Pengusaha/Pedagang selama melaksanakan usaha, memperhatikan
             ketentuan-ketentuan sebagai berikut:
@@ -238,8 +257,8 @@ const SuratIzinLahan = forwardRef(({ data }, ref) => {
                   Manado.
                 </LetteredItem>
                 <LetteredItem marker="c">
-                  Adanya perencanaan kembali lokasi tersebut dari Pemerintah Kota
-                  (Perusahaan Umum Daerah Pasar Manado).
+                  Adanya perencanaan kembali lokasi tersebut dari Pemerintah
+                  Kota (Perusahaan Umum Daerah Pasar Manado).
                 </LetteredItem>
               </Box>
             </Box>
@@ -248,19 +267,19 @@ const SuratIzinLahan = forwardRef(({ data }, ref) => {
               Petugas yang berwenang.
             </NumberedItem>
             <NumberedItem number="5">
-              Surat Izin Lahan ini berlaku selama {data.lease_duration_years || 1}{" "}
-              ({data.lease_duration_years || 1}) Tahun terhitung sejak tanggal
-              ditetapkan dan dapat diperpanjang kembali sesudah Pengusaha /
-              Pedagang menyelesaikan administrasinya di Perusahaan Umum Daerah
-              Pasar Manado.
+              Surat Izin Lahan ini berlaku selama{" "}
+              {data.lease_duration_years || 1} ({data.lease_duration_years || 1}
+              ) Tahun terhitung sejak tanggal ditetapkan dan dapat diperpanjang
+              kembali sesudah Pengusaha / Pedagang menyelesaikan administrasinya
+              di Perusahaan Umum Daerah Pasar Manado.
             </NumberedItem>
             <NumberedItem number="6">
               Surat Izin Lahan ini berlaku sejak tanggal{" "}
-              <Box component="span" sx={{ fontWeight: 700}}>
+              <Box component="span" sx={{ fontWeight: 700 }}>
                 {formatDate(data.start_date)}
               </Box>{" "}
               s/d tanggal{" "}
-              <Box component="span" sx={{ fontWeight: 700}}>
+              <Box component="span" sx={{ fontWeight: 700 }}>
                 {formatDate(data.end_date)}
               </Box>
               .
@@ -273,21 +292,23 @@ const SuratIzinLahan = forwardRef(({ data }, ref) => {
         sx={{
           display: "grid",
           gridTemplateColumns: "42mm 24mm minmax(0, 1fr)",
-          columnGap: "12mm",
+          columnGap: "25mm",
           alignItems: "start",
           mt: "5mm",
           breakInside: "avoid",
           pageBreakInside: "avoid",
+          ml: "6mm",
         }}
       >
-        <Box sx={{ display: "flex", justifyContent: "flex-start", pl: "3mm" }}>
+        <Box sx={{ display: "flex", justifyContent: "flex-start" }}>
           <QRCode
             value={`SEWAIN-LAND-PERMIT-DUMMY-${data.document_number || data.document_id || "SIL"}`}
             size={138}
             bordered={false}
             errorLevel="M"
-            icon="/logo-perumda-pasar-manado.png"
-            iconSize={26}
+            icon="/logo-pm-red-transparent.png"
+            iconSize={40}
+            color="#E60909"
           />
         </Box>
 
@@ -319,7 +340,7 @@ const SuratIzinLahan = forwardRef(({ data }, ref) => {
                 textAlign: "center",
               }}
             >
-              Belum ada pas foto
+              Belum ada pas foto 3x4
             </Typography>
           )}
         </Box>
@@ -334,14 +355,25 @@ const SuratIzinLahan = forwardRef(({ data }, ref) => {
           >
             <Typography sx={bodyText}>Dikeluarkan di</Typography>
             <Typography sx={bodyText}>:</Typography>
-            <Typography sx={{ ...bodyText, fontWeight: 700, letterSpacing: "4px" }}>
+            <Typography
+              sx={{ ...bodyText, fontWeight: 700, letterSpacing: "4px" }}
+            >
               Manado
             </Typography>
             <Typography sx={bodyText}>Pada Tanggal</Typography>
             <Typography sx={bodyText}>:</Typography>
-            <Typography sx={{ ...bodyText, fontWeight: 700 }}>{printedDate}</Typography>
+            <Typography sx={{ ...bodyText, fontWeight: 700 }}>
+              {printedDate}
+            </Typography>
           </Box>
-          <Typography sx={{ ...bodyText, mt: "3mm", fontWeight: 700, textAlign: "center" }}>
+          <Typography
+            sx={{
+              ...bodyText,
+              mt: "3mm",
+              fontWeight: 700,
+              textAlign: "center",
+            }}
+          >
             DIREKTUR UTAMA
           </Typography>
           <Box sx={{ height: "16mm" }} />
