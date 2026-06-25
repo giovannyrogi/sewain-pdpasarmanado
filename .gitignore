@@ -27,6 +27,8 @@
 /uploads/bukti_transfer/
 /uploads/ktp/
 /uploads/surat_pernyataan/
+/uploads/pas_foto/
+/uploads/bukti_transfer_ijin_lahan/
 
 # debug
 npm-debug.log*
