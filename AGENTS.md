@@ -316,6 +316,10 @@ Always:
 - Keep server-only configuration inside API routes, server utilities, or backend
   helpers. Only use `NEXT_PUBLIC_*` for values that are intentionally safe for
   the browser.
+- Land permit QR document URLs may use `NEXT_PUBLIC_APP_BASE_URL` because the
+  value is a public browser URL, not a secret. In local network testing this can
+  point to a LAN address such as `http://192.168.1.4:3000`; in production it
+  must point to the real public application domain.
 - When adding a new required environment variable, document the key in
   `.env.example` and make missing configuration fail with a safe, clear server
   error.
@@ -334,6 +338,39 @@ Do not expose:
 - Internal implementation details.
 
 Do not put private backend configuration into `NEXT_PUBLIC_*`.
+
+## Public Route Rules
+
+Most SewaIN pages are protected and must require login. Public pages are
+exceptions and must be explicitly designed for unauthenticated access.
+
+Current public route:
+
+- `/verify/izin-lahan/[token]` for QR validation of land permit documents.
+
+Rules:
+
+- Put public pages under `app/(public)` so the folder structure clearly
+  separates public pages from protected pages. Route groups do not appear in the
+  URL, so `app/(public)/verify/izin-lahan/[token]/page.jsx` still serves
+  `/verify/izin-lahan/[token]`.
+- Do not assume a route is public just because it is inside `(public)`.
+  `middleware.js` must explicitly whitelist public paths or prefixes.
+- Keep the public whitelist narrow. At the moment, only `/login` and
+  `/verify/izin-lahan` should bypass the login redirect.
+- `AppProviders.jsx` must treat public pages like login pages for session
+  expiry behavior: do not show expired-session modals and do not redirect public
+  verification pages to `/login`.
+- Public verification pages should include `noindex, nofollow` metadata so they
+  are not indexed by search engines.
+- Public route UI should be split cleanly when it needs interactive behavior:
+  keep `page.jsx` as the server component for fetching/metadata, and move MUI
+  styling callbacks, image preview, state, and other browser behavior into a
+  dedicated client component such as `LandPermitVerificationClient.jsx`.
+- Public pages must still be theme-aware, mobile-first, and responsive on
+  mobile, tablet, and desktop.
+- Public APIs must remain read-only unless a future requirement explicitly says
+  otherwise.
 
 ## API Call Rules
 
@@ -451,6 +488,121 @@ Rules:
   reuses the same UI components and approval role sequence.
 - Land permit QR validation must use opaque tokens. Do not place full NIK,
   private identity data, or complete payment details directly in QR payloads.
+
+### Land Permit QR Verification Rules
+
+Land permit documents use QR codes for field validation by officers. The QR code
+must open a public, read-only validation page without requiring login, but only
+safe information may be shown.
+
+Architecture:
+
+- The public page lives at `/verify/izin-lahan/[token]`.
+- The source file should live under
+  `app/(public)/verify/izin-lahan/[token]/page.jsx`.
+- Keep server-only fetching and metadata in `page.jsx`.
+- Put interactive UI in a client component such as
+  `LandPermitVerificationClient.jsx`.
+- Use shared service/query logic such as
+  `app/utils/landPermitVerificationService.js` for both server page loading and
+  public API response mapping when possible.
+- The public API endpoint is
+  `/api/public/land-permit-verification/[token]`.
+
+Token behavior:
+
+- Use `land_permit_documents.qr_token` as the only value in the QR URL.
+- The QR token is an opaque random token, not a NIK, application ID, document
+  number, database ID, or encoded private data.
+- Generate the token once when a land permit document is created.
+- Backfill old documents that do not yet have a token.
+- The token should not change every scan. It stays stable for that document so
+  the printed QR remains usable.
+- The token only changes if a future explicit regenerate/revoke feature is
+  implemented, or if the document is deleted and recreated.
+- Anyone who has the URL containing the token can open the public verification
+  page. Treat the token as a public bearer validation link and therefore expose
+  only safe, whitelisted fields.
+- Validate token format before querying, and use parameterized SQL.
+
+QR URL rules:
+
+- Printed QR codes should use `NEXT_PUBLIC_APP_BASE_URL` when available.
+- Fallback to `window.location.origin` only when a configured base URL is not
+  available.
+- For local testing from another device, use a LAN base URL such as
+  `http://192.168.1.4:3000` instead of `localhost`, because `localhost` on a
+  phone points to the phone itself.
+- Production QR codes must use the real deployed domain, not a LAN or localhost
+  URL.
+
+Allowed public data:
+
+- Validation status label and clear reason in simple Indonesian.
+- Document number.
+- Tenant/trader name.
+- Masked NIK only.
+- Profile photo/pass photo, because it is needed for field matching.
+- Location, sector, land/stall number.
+- Commodity/trade type.
+- Land/stall dimensions.
+- Permit validity dates.
+- Document created/printed date when available.
+- Land permit identity status using safe labels.
+
+Never expose on the public QR page or public API:
+
+- Full NIK.
+- Phone number.
+- Full home address.
+- KTP photo/file.
+- Payment nominal or detailed payment history.
+- Approval history.
+- Internal database IDs.
+- Raw database errors or stack traces.
+
+Validation statuses should be written in simple Indonesian for non-technical
+users:
+
+- `Izin Aktif`: the permit is registered and currently valid.
+- `Belum Mulai`: the permit exists but the validity period has not started yet.
+- `Masa Izin Habis`: the permit validity period has expired.
+- `Izin Dinonaktifkan`: the permit was terminated, cancelled, or disabled and
+  must not be treated as active.
+- `Pedagang Nonaktif`: the identity is no longer active for the land permit
+  module.
+- `Pedagang Diblokir`: the identity is blacklisted for the land permit module.
+- `Izin Belum Aktif`: the document/application/payment state is not complete
+  enough to be considered active.
+- `Data Tidak Ditemukan`: the token is invalid, unknown, or the document is no
+  longer available.
+
+Nonactive and terminated permits:
+
+- A terminated or nonactive permit must still be viewable from its QR page as
+  historical validation data.
+- If `land_permit_applications.permit_status = 'terminated'`, show the status as
+  `Izin Dinonaktifkan`.
+- For final approved terminations, read the reason from
+  `land_permit_terminations.reason` where `approval_status = 'approved'` and
+  `is_terminated = true`.
+- If the identity is inactive or blacklisted for the land permit module, show
+  the safe status and reason from
+  `tenant_identities.land_permit_status_notes` when available.
+- Do not hide the record just because it is inactive; make the inactive status
+  clear so field officers can understand why the permit is no longer valid.
+
+Security expectations:
+
+- Public verification APIs are read-only and must return a whitelist object,
+  never raw table rows.
+- Add light rate limiting when practical.
+- Keep protected detail pages as the only place for full identity, payment,
+  approval, and internal workflow information.
+- Do not widen middleware public access to all `(public)` routes automatically.
+  Public access must be explicit and intentional.
+- If a future QR revoke/regenerate feature is added, preserve old document audit
+  history and clearly define whether old printed QR codes should stop working.
 
 ## Notification Flow Rules
 

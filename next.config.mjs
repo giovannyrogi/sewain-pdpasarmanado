@@ -12,6 +12,9 @@ const nextConfig = {
 
   // Standar untuk runtime modern
   output: "standalone", // terbaik untuk deployment VPS
+
+  // Izinkan perangkat satu jaringan mengakses asset dev server saat testing QR.
+  allowedDevOrigins: ["192.168.1.4"],
 };
 
 export default nextConfig;

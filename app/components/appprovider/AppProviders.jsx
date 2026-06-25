@@ -37,6 +37,10 @@ export default function AppProviders({ children }) {
   const [counter, setCounter] = useState(SESSION_MODAL_COUNTDOWN);
 
   const isLoginPage = pathname === "/login";
+  const isPublicPage =
+    isLoginPage ||
+    pathname === "/verify/izin-lahan" ||
+    pathname?.startsWith("/verify/izin-lahan/");
 
   const openExpiredSessionModal = () => {
     setShowModal((alreadyOpen) => {
@@ -53,7 +57,7 @@ export default function AppProviders({ children }) {
    * API menolak request setelah `expiresAt`, sedangkan client hanya mengatur UX.
    */
   useEffect(() => {
-    if (isLoginPage) {
+    if (isPublicPage) {
       sessionStorage.removeItem(SESSION_EXPIRY_STORAGE_KEY);
       setShowModal(false);
       return undefined;
@@ -97,7 +101,7 @@ export default function AppProviders({ children }) {
     const interval = setInterval(checkSession, SESSION_CHECK_INTERVAL);
 
     return () => clearInterval(interval);
-  }, [isLoginPage]);
+  }, [isPublicPage]);
 
   useEffect(() => {
     if (!showModal) return undefined;

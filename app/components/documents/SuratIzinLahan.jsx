@@ -89,6 +89,20 @@ const LetteredItem = ({ marker, children }) => (
   </Box>
 );
 
+const buildVerificationUrl = (token) => {
+  if (!token) return "SEWAIN-LAND-PERMIT-NO-TOKEN";
+
+  const path = `/verify/izin-lahan/${token}`;
+  const configuredBaseUrl = process.env.NEXT_PUBLIC_APP_BASE_URL?.trim();
+  const runtimeBaseUrl =
+    typeof window !== "undefined" ? window.location.origin : "";
+  const baseUrl = configuredBaseUrl || runtimeBaseUrl;
+
+  if (!baseUrl) return path;
+
+  return `${baseUrl.replace(/\/$/, "")}${path}`;
+};
+
 const SuratIzinLahan = forwardRef(({ data }, ref) => {
   if (!data) return null;
 
@@ -103,6 +117,7 @@ const SuratIzinLahan = forwardRef(({ data }, ref) => {
   const tradeAndStall = `${data.commodity_type || "-"} / ${
     data.stall_number || "-"
   } (Pasar ${data.location_name || "-"})`;
+  const verificationUrl = buildVerificationUrl(data.qr_token);
 
   return (
     <Box
@@ -302,7 +317,7 @@ const SuratIzinLahan = forwardRef(({ data }, ref) => {
       >
         <Box sx={{ display: "flex", justifyContent: "flex-start" }}>
           <QRCode
-            value={`SEWAIN-LAND-PERMIT-DUMMY-${data.document_number || data.document_id || "SIL"}`}
+            value={verificationUrl}
             size={138}
             bordered={false}
             errorLevel="M"

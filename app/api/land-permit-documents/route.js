@@ -1,4 +1,5 @@
 import moment from "moment";
+import { randomBytes } from "crypto";
 import pool from "@/lib/dbConfig";
 import { requireRole } from "@/app/utils/auth";
 
@@ -23,11 +24,53 @@ const ROMAN_MONTHS = [
 const getRomanMonth = (value) =>
   value && moment(value).isValid() ? ROMAN_MONTHS[moment(value).month()] : null;
 
+const generateQrToken = () => randomBytes(32).toString("base64url");
+
+const assignQrToken = async (documentId) => {
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    try {
+      await pool.query(
+        `
+        UPDATE land_permit_documents
+        SET qr_token = $1,
+            qr_generated_at = COALESCE(qr_generated_at, NOW()),
+            updated_at = NOW()
+        WHERE id = $2
+          AND (qr_token IS NULL OR qr_token = '')
+        `,
+        [generateQrToken(), documentId],
+      );
+      return;
+    } catch (error) {
+      if (error?.code !== "23505" || attempt === 4) throw error;
+    }
+  }
+};
+
+const backfillMissingQrTokens = async () => {
+  const missingResult = await pool.query(
+    `
+    SELECT id
+    FROM land_permit_documents
+    WHERE document_type = $1
+      AND (qr_token IS NULL OR qr_token = '')
+    LIMIT 100
+    `,
+    [DOCUMENT_TYPE],
+  );
+
+  for (const row of missingResult.rows) {
+    await assignQrToken(row.id);
+  }
+};
+
 const mapRow = (row) => ({
   document_id: row.document_id,
   document_number: row.document_number,
   document_status: row.document_status,
   document_created_at: row.document_created_at,
+  qr_token: row.qr_token,
+  qr_generated_at: row.qr_generated_at,
   printed_at: row.printed_at,
   printed_by: row.printed_by,
   land_permit_application_id: row.land_permit_application_id,
@@ -96,6 +139,8 @@ const BASE_SELECT = `
     document.document_number,
     document.status AS document_status,
     document.created_at AS document_created_at,
+    document.qr_token,
+    document.qr_generated_at,
     document.printed_at,
     document.printed_by,
     app.id AS land_permit_application_id,
@@ -185,6 +230,8 @@ export async function GET() {
   try {
     const { response } = await requireRole(ACCESS_ROLES);
     if (response) return response;
+
+    await backfillMissingQrTokens();
 
     const [documentsResult, eligibleResult] = await Promise.all([
       pool.query(`
@@ -349,6 +396,7 @@ export async function POST(request) {
 
     const fullDocumentNumber =
       `${documentNumberOnly}/PM/SIL-${locationCode}/${monthRoman}/${year}`;
+    const qrToken = generateQrToken();
 
     const result = await client.query(
       `
@@ -356,12 +404,14 @@ export async function POST(request) {
         land_permit_application_id,
         document_type,
         document_number,
+        qr_token,
+        qr_generated_at,
         status
       )
-      VALUES ($1, $2, $3, 'active')
-      RETURNING id, land_permit_application_id, document_number, status, created_at
+      VALUES ($1, $2, $3, $4, NOW(), 'active')
+      RETURNING id, land_permit_application_id, document_number, qr_token, status, created_at
       `,
-      [applicationId, DOCUMENT_TYPE, fullDocumentNumber],
+      [applicationId, DOCUMENT_TYPE, fullDocumentNumber, qrToken],
     );
 
     await client.query("COMMIT");

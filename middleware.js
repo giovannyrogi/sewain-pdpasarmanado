@@ -22,6 +22,14 @@ const buildAccessMap = (menus) => {
 };
 
 const ACCESS_MAP = buildAccessMap(MENU_CONFIG);
+const PUBLIC_PATHS = ["/login"];
+const PUBLIC_PATH_PREFIXES = ["/verify/izin-lahan"];
+
+const isPublicPath = (pathname) =>
+  PUBLIC_PATHS.includes(pathname) ||
+  PUBLIC_PATH_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+  );
 
 const clearLoginCookie = (response) => {
   response.cookies.set("loggedInUser", "", {
@@ -34,8 +42,13 @@ const clearLoginCookie = (response) => {
 export function middleware(req) {
   const { pathname } = req.nextUrl;
   const loggedInUser = req.cookies.get("loggedInUser");
+  const publicPath = isPublicPath(pathname);
 
-  if (!loggedInUser && pathname !== "/login") {
+  if (publicPath && pathname !== "/login") {
+    return NextResponse.next();
+  }
+
+  if (!loggedInUser && !publicPath) {
     return NextResponse.redirect(new URL("/login", req.url));
   }
 
