@@ -315,8 +315,14 @@ export default function LandPermitVerificationClient({
                   </Box>
                 </Box>
 
-                <Box sx={{ minWidth: 0, flex: 1, }}>
-                  <Typography sx={{ color: "text.secondary", fontWeight: 600 }}>
+                <Box sx={{ minWidth: 0, flex: 1 }}>
+                  <Typography
+                    sx={{
+                      color: "text.secondary",
+                      fontWeight: 600,
+                      textAlign: "center",
+                    }}
+                  >
                     Keterangan
                   </Typography>
 
@@ -327,6 +333,7 @@ export default function LandPermitVerificationClient({
                       fontWeight: 600,
                       fontSize: { xs: 16, sm: 18 },
                       lineHeight: 1.45,
+                      textAlign: "center",
                     }}
                   >
                     {data.status?.reason}
@@ -342,7 +349,7 @@ export default function LandPermitVerificationClient({
                     sx={{
                       mt: 2,
                       display: "flex",
-                      justifyContent: { xs: "center", sm: "flex-start" },
+                      justifyContent: { xs: "center", sm: "center" },
                     }}
                   >
                     <CompactInfoChip
