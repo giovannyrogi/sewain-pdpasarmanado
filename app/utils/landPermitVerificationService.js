@@ -18,9 +18,16 @@ export const isValidLandPermitQrToken = (token) =>
 
 const maskNik = (value) => {
   const nik = String(value || "").replace(/\D/g, "");
-  if (nik.length <= 8) return nik || "-";
+  if (!nik) return "-";
 
-  return `${nik.slice(0, 4)}${"*".repeat(Math.max(nik.length - 8, 4))}${nik.slice(-4)}`;
+  const visibleStart = 4;
+  const visibleEnd = 5;
+
+  if (nik.length <= visibleStart + visibleEnd) return nik;
+
+  const maskedLength = nik.length - visibleStart - visibleEnd;
+
+  return `${nik.slice(0, visibleStart)}${"*".repeat(maskedLength)}${nik.slice(-visibleEnd)}`;
 };
 
 const toIsoDate = (value) =>
@@ -47,7 +54,9 @@ const getPublicProfilePhotoDataUrl = async (filePath) => {
 
 const buildStatus = (row) => {
   const today = moment().startOf("day");
-  const startDate = row.start_date ? moment(row.start_date).startOf("day") : null;
+  const startDate = row.start_date
+    ? moment(row.start_date).startOf("day")
+    : null;
   const endDate = row.end_date ? moment(row.end_date).startOf("day") : null;
   const landPermitStatus = String(row.land_permit_status || "").toLowerCase();
 
@@ -98,7 +107,8 @@ const buildStatus = (row) => {
       code: "not_started",
       label: "Belum Mulai",
       tone: "warning",
-      reason: "Izin lahan ini sudah terdaftar, tetapi tanggal berlakunya belum mulai.",
+      reason:
+        "Izin lahan ini sudah terdaftar, tetapi tanggal berlakunya belum mulai.",
     };
   }
 

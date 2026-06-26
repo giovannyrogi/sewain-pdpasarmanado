@@ -3,7 +3,14 @@
 import { useState } from "react";
 import moment from "moment";
 import "moment/locale/id";
-import { Box, Container, Divider, Paper, Stack, Typography } from "@mui/material";
+import {
+  Box,
+  Container,
+  Divider,
+  Paper,
+  Stack,
+  Typography,
+} from "@mui/material";
 import { alpha, useTheme } from "@mui/material/styles";
 import { Icon } from "@iconify/react";
 import CompactInfoChip from "@/app/components/chips/CompactInfoChip";
@@ -73,7 +80,7 @@ const InfoCard = ({ icon, label, value }) => (
           fontWeight: 600,
           lineHeight: 1.35,
           overflowWrap: "anywhere",
-          fontSize: { xs: 14, sm: 13 },
+          fontSize: { xs: 13, sm: 12 },
         }}
       >
         {value || "-"}
@@ -198,23 +205,6 @@ export default function LandPermitVerificationClient({
                 >
                   {data.tenant_name}
                 </Typography>
-                 
-                  <CompactInfoChip
-                    label={`No. Dokumen : ${data?.document_number || "-"}`}
-                    color={theme.palette.primary.main}
-                    sx={{
-                      px: 1,
-                      mt: 2,
-                      height: 36,
-                      borderRadius: 999,
-                      letterSpacing: 0.5,
-                      "& .MuiChip-label": {
-                        px: 1.35,
-                        fontSize: 12,
-                        fontWeight: 600,
-                      },
-                    }}
-                  />
               </Box>
               <CompactInfoChip
                 label={data.status?.label || "Status Tidak Diketahui"}
@@ -248,49 +238,57 @@ export default function LandPermitVerificationClient({
             >
               <Stack
                 direction={{ xs: "column", sm: "row" }}
-                spacing={2.5}
-                alignItems="center"
+                spacing={{ xs: 2.5, sm: 3 }}
+                alignItems={{ xs: "stretch", sm: "center" }}
               >
                 <Box
-                  component={data.profile_photo_data_url ? "button" : "div"}
-                  type={data.profile_photo_data_url ? "button" : undefined}
-                  onClick={
-                    data.profile_photo_data_url
-                      ? () => setPreviewOpen(true)
-                      : undefined
-                  }
                   sx={{
-                    width: { xs: 118, sm: 132 },
-                    height: { xs: 158, sm: 176 },
-                    borderRadius: 2,
-                    border: "1px solid",
-                    borderColor: "divider",
-                    overflow: "hidden",
-                    bgcolor: "background.default",
-                    display: "grid",
-                    placeItems: "center",
+                    width: { xs: "100%", sm: "auto" },
+                    display: "flex",
+                    justifyContent: { xs: "center", sm: "flex-start" },
                     flexShrink: 0,
-                    mx: { xs: "auto", sm: 0 },
-                    p: 0,
-                    cursor: data.profile_photo_data_url ? "zoom-in" : "default",
-                    position: "relative",
-                    transition:
-                      "border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease",
-                    "&:hover": data.profile_photo_data_url
-                      ? {
-                          borderColor: "primary.main",
-                          boxShadow: (theme) =>
-                            `0 0 0 3px ${alpha(
-                              theme.palette.primary.main,
-                              0.16,
-                            )}`,
-                          transform: "translateY(-1px)",
-                        }
-                      : undefined,
                   }}
                 >
-                  {data.profile_photo_data_url ? (
-                    <>
+                  <Box
+                    component={data.profile_photo_data_url ? "button" : "div"}
+                    type={data.profile_photo_data_url ? "button" : undefined}
+                    onClick={
+                      data.profile_photo_data_url
+                        ? () => setPreviewOpen(true)
+                        : undefined
+                    }
+                    sx={{
+                      width: { xs: 118, sm: 132 },
+                      height: { xs: 158, sm: 176 },
+                      borderRadius: 2,
+                      border: "1px solid",
+                      borderColor: "divider",
+                      overflow: "hidden",
+                      bgcolor: "background.default",
+                      display: "grid",
+                      placeItems: "center",
+                      flexShrink: 0,
+                      p: 0,
+                      cursor: data.profile_photo_data_url
+                        ? "zoom-in"
+                        : "default",
+                      position: "relative",
+                      transition:
+                        "border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease",
+                      "&:hover": data.profile_photo_data_url
+                        ? {
+                            borderColor: "primary.main",
+                            boxShadow: (theme) =>
+                              `0 0 0 3px ${alpha(
+                                theme.palette.primary.main,
+                                0.16,
+                              )}`,
+                            transform: "translateY(-1px)",
+                          }
+                        : undefined,
+                    }}
+                  >
+                    {data.profile_photo_data_url ? (
                       <Box
                         component="img"
                         src={data.profile_photo_data_url}
@@ -301,44 +299,74 @@ export default function LandPermitVerificationClient({
                           objectFit: "cover",
                         }}
                       />
-                    </>
-                  ) : (
-                    <Typography
-                      sx={{
-                        color: "text.secondary",
-                        fontSize: 12,
-                        fontWeight: 600,
-                        textAlign: "center",
-                        px: 1.5,
-                      }}
-                    >
-                      Belum ada pas foto
-                    </Typography>
-                  )}
+                    ) : (
+                      <Typography
+                        sx={{
+                          color: "text.secondary",
+                          fontSize: 12,
+                          fontWeight: 600,
+                          textAlign: "center",
+                          px: 1.5,
+                        }}
+                      >
+                        Belum ada pas foto
+                      </Typography>
+                    )}
+                  </Box>
                 </Box>
-                <Box sx={{ minWidth: 0, flex: 1 }}>
-                  <Stack direction="row" spacing={1} alignItems="center">
-                    <Typography
-                      sx={{ color: "text.secondary", fontWeight: 600, }}
-                    >
-                      Keterangan
-                    </Typography>
-                  </Stack>
+
+                <Box sx={{ minWidth: 0, flex: 1, }}>
+                  <Typography sx={{ color: "text.secondary", fontWeight: 600 }}>
+                    Keterangan
+                  </Typography>
+
                   <Typography
                     sx={{
-                      mt: 1,
+                      mt: 0.5,
                       color: "text.primary",
                       fontWeight: 600,
                       fontSize: { xs: 16, sm: 18 },
+                      lineHeight: 1.45,
                     }}
                   >
                     {data.status?.reason}
                   </Typography>
+
                   {data.status?.terminated_at && (
                     <Typography sx={{ color: "text.secondary", mt: 1 }}>
                       Dinonaktifkan pada {formatDate(data.status.terminated_at)}
                     </Typography>
                   )}
+
+                  <Box
+                    sx={{
+                      mt: 2,
+                      display: "flex",
+                      justifyContent: { xs: "center", sm: "flex-start" },
+                    }}
+                  >
+                    <CompactInfoChip
+                      label={`No. Dokumen : ${data?.document_number || "-"}`}
+                      color={theme.palette.primary.main}
+                      sx={{
+                        px: 1,
+                        minHeight: 36,
+                        height: "auto",
+                        maxWidth: "100%",
+                        borderRadius: 999,
+                        letterSpacing: 0.5,
+                        "& .MuiChip-label": {
+                          px: 1.35,
+                          py: 0.75,
+                          fontSize: { xs: 11.5, sm: 12 },
+                          fontWeight: 600,
+                          whiteSpace: "normal",
+                          overflowWrap: "anywhere",
+                          textAlign: "center",
+                        },
+                      }}
+                    />
+                  </Box>
                 </Box>
               </Stack>
             </Paper>
@@ -421,8 +449,8 @@ export default function LandPermitVerificationClient({
                 mt: 3,
               }}
             >
-              Halaman ini digunakan untuk kebutuhan verifikasi data izin lahan di
-              lapangan.
+              Halaman ini digunakan untuk kebutuhan verifikasi data izin lahan
+              di lapangan.
             </Typography>
           </Box>
         </Paper>
