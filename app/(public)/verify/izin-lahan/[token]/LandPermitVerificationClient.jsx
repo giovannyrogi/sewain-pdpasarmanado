@@ -312,11 +312,11 @@ export default function LandPermitVerificationClient({
                           display: "grid",
                           placeItems: "center",
                           color: "primary.contrastText",
-                          bgcolor: (theme) =>
-                            alpha(theme.palette.primary.main, 0.92),
+                          // bgcolor: (theme) =>
+                          //   alpha(theme.palette.primary.main, 0.92),
                         }}
                       >
-                        <Icon icon="solar:magnifer-zoom-in-bold" width={17} />
+                        <Icon icon="solar:magnifer-zoom-in-bold" width={17} color="white"/>
                       </Box>
                     </>
                   ) : (
