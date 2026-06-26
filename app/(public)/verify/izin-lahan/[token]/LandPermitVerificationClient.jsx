@@ -301,23 +301,6 @@ export default function LandPermitVerificationClient({
                           objectFit: "cover",
                         }}
                       />
-                      <Box
-                        sx={{
-                          position: "absolute",
-                          right: 8,
-                          bottom: 8,
-                          width: 30,
-                          height: 30,
-                          borderRadius: 1.4,
-                          display: "grid",
-                          placeItems: "center",
-                          color: "primary.contrastText",
-                          // bgcolor: (theme) =>
-                          //   alpha(theme.palette.primary.main, 0.92),
-                        }}
-                      >
-                        <Icon icon="solar:magnifer-zoom-in-bold" width={22} color={theme.palette.primary.main}/>
-                      </Box>
                     </>
                   ) : (
                     <Typography
