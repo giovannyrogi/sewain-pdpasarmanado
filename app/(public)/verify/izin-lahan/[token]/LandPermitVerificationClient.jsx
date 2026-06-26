@@ -210,7 +210,7 @@ export default function LandPermitVerificationClient({
                       letterSpacing: 0.5,
                       "& .MuiChip-label": {
                         px: 1.35,
-                        fontSize: 13,
+                        fontSize: 12,
                         fontWeight: 600,
                       },
                     }}

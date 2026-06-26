@@ -119,8 +119,7 @@ const SuratPernyataanIzinLahan = forwardRef(({ data }, ref) => {
         boxSizing: "border-box",
         bgcolor: "#fff",
         color: "#000",
-        px: "4mm",
-        py: "2mm",
+        padding: "30px 50px 0px 30px",
         fontFamily: '"Arial", "Calibri", sans-serif',
       }}
     >
