@@ -5,7 +5,7 @@ import { ROLES } from "./ConstantRoles";
 
 const MENU_CONFIG = [
   {
-    label: "Dashboard",
+    label: "Dashboard Sewa Ruangan",
     value: "dashboard",
     path: "/dashboard",
     icon: <Icon icon="svg-spinners:blocks-scale" fontSize="20px" />,
@@ -21,11 +21,20 @@ const MENU_CONFIG = [
     ],
   },
   {
-    label: "Dashboard",
+    label: "Dashboard Izin Lahan",
     value: "land-permit-dashboard",
     path: "/land-permit-dashboard",
     icon: <Icon icon="solar:shop-2-bold-duotone" fontSize="20px" />,
-    roles: [ROLES.SUPERADMIN, ROLES.ADMIN_IZIN_LAHAN],
+    roles: [
+      ROLES.SUPERADMIN,
+      ROLES.ADMIN_IZIN_LAHAN,
+      ROLES.KEPALA_SEKSI,
+      ROLES.KEPALA_SUBDIVISI,
+      ROLES.KEPALA_DIVISI,
+      ROLES.DIREKTUR_BISNIS,
+      ROLES.DIREKTUR_UTAMA,
+      ROLES.DIVISI_KEUANGAN,
+    ],
   },
   {
     label: "Data Master",
@@ -196,9 +205,6 @@ const MENU_CONFIG = [
         roles: [
           ROLES.SUPERADMIN,
           ROLES.DIVISI_KONTRAK,
-          ROLES.KEPALA_SEKSI,
-          ROLES.KEPALA_SUBDIVISI,
-          ROLES.KEPALA_DIVISI,
           ROLES.DIVISI_KEUANGAN,
         ],
         showIcon: true,
@@ -207,31 +213,10 @@ const MENU_CONFIG = [
         label: "Pembayaran Lahan",
         value: "land-permit-payments",
         path: "/land-permit-payments",
-        icon: (
-          <Icon icon="solar:wallet-money-bold-duotone" fontSize="20px" />
-        ),
+        icon: <Icon icon="solar:wallet-money-bold-duotone" fontSize="20px" />,
         roles: [
           ROLES.SUPERADMIN,
-          ROLES.KEPALA_SEKSI,
-          ROLES.KEPALA_SUBDIVISI,
-          ROLES.KEPALA_DIVISI,
           ROLES.DIVISI_KEUANGAN,
-          ROLES.ADMIN_IZIN_LAHAN,
-        ],
-        showIcon: true,
-      },
-      {
-        label: "Dokumen Izin Lahan",
-        value: "land-permit-documents",
-        path: "/land-permit-documents",
-        icon: <Icon icon="solar:document-text-bold-duotone" fontSize="20px" />,
-        roles: [
-          ROLES.SUPERADMIN,
-          ROLES.KEPALA_SEKSI,
-          ROLES.KEPALA_SUBDIVISI,
-          ROLES.KEPALA_DIVISI,
-          ROLES.DIREKTUR_BISNIS,
-          ROLES.DIREKTUR_UTAMA,
           ROLES.ADMIN_IZIN_LAHAN,
         ],
         showIcon: true,
@@ -244,11 +229,17 @@ const MENU_CONFIG = [
         roles: [
           ROLES.SUPERADMIN,
           ROLES.DIVISI_KONTRAK,
-          ROLES.KEPALA_SEKSI,
-          ROLES.KEPALA_SUBDIVISI,
-          ROLES.KEPALA_DIVISI,
-          ROLES.DIREKTUR_BISNIS,
-          ROLES.DIREKTUR_UTAMA,
+        ],
+        showIcon: true,
+      },
+      {
+        label: "Dokumen Izin Lahan",
+        value: "land-permit-documents",
+        path: "/land-permit-documents",
+        icon: <Icon icon="solar:document-text-bold-duotone" fontSize="20px" />,
+        roles: [
+          ROLES.SUPERADMIN,
+          ROLES.ADMIN_IZIN_LAHAN,
         ],
         showIcon: true,
       },
@@ -269,23 +260,6 @@ const MENU_CONFIG = [
       ROLES.DIVISI_KEUANGAN,
     ],
     submenu: [
-      // {
-      //   label: "Room Status",
-      //   value: "room-status",
-      //   path: "/room-status",
-      //   icon: <Icon icon="ic:baseline-meeting-room" fontSize="20px" />,
-      //   roles: [
-      //     ROLES.SUPERADMIN,
-      //     ROLES.DIVISI_KONTRAK,
-      //     ROLES.KEPALA_SEKSI,
-      //     ROLES.KEPALA_SUBDIVISI,
-      //     ROLES.KEPALA_DIVISI,
-      //     ROLES.DIREKTUR_BISNIS,
-      //     ROLES.DIREKTUR_UTAMA,
-      //     ROLES.DIVISI_KEUANGAN,
-      //   ],
-      //   showIcon: true,
-      // },
       {
         label: "Laporan per Lokasi",
         value: "locations-report",

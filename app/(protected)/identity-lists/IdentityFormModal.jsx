@@ -106,6 +106,26 @@ const getUploadActionButtonSx = (options = {}) => ({
   ...(options.sx || {}),
 });
 
+// Menjaga ritme form tambah/edit identitas tetap lapang dan konsisten
+// di mobile, tablet, dan desktop tanpa mengulang sx di setiap field.
+const identityFormGridSx = {
+  pt: { xs: 0.25, sm: 0.4 },
+  "& .MuiFormControl-root": {
+    minWidth: 0,
+  },
+  "& .MuiInputBase-root": {
+    minHeight: { xs: 56, sm: 58 },
+    alignItems: "center",
+  },
+  "& .MuiInputLabel-root": {
+    lineHeight: 1.25,
+  },
+  "& .MuiFormHelperText-root": {
+    mt: 0.75,
+    lineHeight: 1.45,
+  },
+};
+
 /**
  * Modal form identitas penyewa.
  * Parent mengatur request API, sedangkan komponen ini hanya mengelola field,
@@ -224,12 +244,14 @@ export default function IdentityFormModal({
       notes: initialData.notes || "",
       landPermitStatus: initialData.land_permit_status || "active",
       landPermitStatusNotes: initialData.land_permit_status_notes || "",
+      // Admin Izin Lahan boleh menyiapkan identitas lama untuk modul izin
+      // lahan, jadi form edit harus langsung membuka field pas foto/status
+      // izin lahan meskipun data lama belum pernah ditandai untuk modul ini.
       isRoomRentalRegistered: Boolean(
         initialData.is_room_rental_registered,
       ),
-      isLandPermitRegistered: Boolean(
-        initialData.is_land_permit_registered,
-      ),
+      isLandPermitRegistered:
+        isLandPermitAdmin || Boolean(initialData.is_land_permit_registered),
       ktpFile: null,
       ktpFilePath: initialData.ktp_file_path || "",
       profilePhotoFile: null,
@@ -551,7 +573,12 @@ export default function IdentityFormModal({
         onClose={onClose}
         onSubmit={handleSubmit}
       >
-        <Grid container spacing={{ xs: 2.8, sm: 2.25 }}>
+        <Grid
+          container
+          rowSpacing={{ xs: 3, sm: 2.85, md: 2.65 }}
+          columnSpacing={{ xs: 2, sm: 2.25, md: 2.5 }}
+          sx={identityFormGridSx}
+        >
           <Grid size={{ xs: 12, md: 6 }}>
             <TextField
               label="Nama Lengkap *"

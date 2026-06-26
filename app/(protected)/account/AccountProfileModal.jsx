@@ -137,7 +137,7 @@ export default function AccountProfileModal({
           />
         </Grid>
 
-        <Grid size={12}>
+        {/* <Grid size={12}>
           <Typography
             sx={{
               color: theme.ui.mutedText,
@@ -150,7 +150,7 @@ export default function AccountProfileModal({
             Nomor HP akan tersimpan sebagai format internasional, misalnya
             +628123456789, agar siap dipakai untuk integrasi WhatsApp.
           </Typography>
-        </Grid>
+        </Grid> */}
       </Grid>
     </CrudFormModal>
   );
