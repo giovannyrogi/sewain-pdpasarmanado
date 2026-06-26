@@ -73,7 +73,7 @@ const InfoCard = ({ icon, label, value }) => (
           fontWeight: 600,
           lineHeight: 1.35,
           overflowWrap: "anywhere",
-          fontSize: { xs: 14, sm: 15 },
+          fontSize: { xs: 14, sm: 13 },
         }}
       >
         {value || "-"}
