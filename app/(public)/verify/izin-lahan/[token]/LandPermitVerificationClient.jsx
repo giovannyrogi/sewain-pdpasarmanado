@@ -316,7 +316,7 @@ export default function LandPermitVerificationClient({
                           //   alpha(theme.palette.primary.main, 0.92),
                         }}
                       >
-                        <Icon icon="solar:magnifer-zoom-in-bold" width={17} color="white"/>
+                        <Icon icon="solar:magnifer-zoom-in-bold" width={22} color={theme.palette.primary.main}/>
                       </Box>
                     </>
                   ) : (
