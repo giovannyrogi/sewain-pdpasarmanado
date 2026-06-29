@@ -22,7 +22,7 @@ import {
   exportReportToExcel,
   exportReportToPDF,
 } from "@/app/utils/reportExportUtils";
-import { getDaysLabel } from "../dashboard/dashboardUtils";
+import { getDaysLabel } from "@/app/components/dashboard/dashboardUtils";
 import {
   buildPaymentContext,
   normalizePaymentForLeaseDetail,

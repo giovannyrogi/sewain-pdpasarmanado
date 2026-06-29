@@ -10,7 +10,7 @@ import {
   useTheme,
 } from "@mui/material";
 import { Icon } from "@iconify/react";
-import { getDashboardCardSx } from "./dashboardStyles";
+import { getDashboardCardSx } from "@/app/components/dashboard/dashboardStyles";
 import formatRupiah from "@/app/components/formatrupiah/page";
 
 const getMetricTone = (theme, color) => {

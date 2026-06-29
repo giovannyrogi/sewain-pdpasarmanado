@@ -37,12 +37,6 @@ const FilterButton = ({ active, children, count, onClick }) => {
         border: `1px solid ${
           active ? `${theme.palette.primary.main}44` : "transparent"
         }`,
-        "&:hover": {
-          bgcolor:
-            theme.palette.mode === "dark"
-              ? "rgba(255, 152, 0, 0.12)"
-              : "rgba(230, 9, 9, 0.08)",
-        },
       }}
     >
       <Box component="span">{children}</Box>
@@ -53,16 +47,13 @@ const FilterButton = ({ active, children, count, onClick }) => {
             width: 20,
             height: 20,
             minWidth: 20,
-            p: 0,
             borderRadius: 999,
             display: "inline-flex",
             alignItems: "center",
             justifyContent: "center",
             fontSize: 10,
             fontWeight: 600,
-            lineHeight: "20px",
             color: active ? theme.palette.primary.main : theme.palette.text.primary,
-            fontVariantNumeric: "tabular-nums",
             bgcolor:
               theme.palette.mode === "dark"
                 ? active
@@ -71,11 +62,6 @@ const FilterButton = ({ active, children, count, onClick }) => {
                 : active
                 ? "rgba(230, 9, 9, 0.12)"
                 : "rgba(17,24,39,0.08)",
-            border: `1px solid ${
-              active
-                ? `${theme.palette.primary.main}55`
-                : theme.ui.dashboardCardBorder
-            }`,
           }}
         >
           {count}
@@ -121,12 +107,6 @@ const QueueItem = ({
   const color = theme.palette[tone]?.main || theme.palette.primary.main;
   const handleActionClick = () => {
     if (!actionLoadingMessage || typeof window === "undefined") return;
-
-    /**
-     * Loading global dipakai untuk navigasi yang perlu membuka modal di halaman
-     * tujuan. Halaman tujuan bertanggung jawab mematikan loading setelah data
-     * fresh berhasil diambil dan modal target sudah diproses.
-     */
     window.dispatchEvent(
       new CustomEvent("sewain:global-loading-show", {
         detail: { message: actionLoadingMessage },
@@ -155,7 +135,10 @@ const QueueItem = ({
         <Typography noWrap sx={{ fontWeight: 600, fontSize: 13 }}>
           {title}
         </Typography>
-        <Typography noWrap sx={{ color: theme.ui.mutedText, fontWeight: 650, fontSize: 12 }}>
+        <Typography
+          noWrap
+          sx={{ color: theme.ui.mutedText, fontWeight: 650, fontSize: 12 }}
+        >
           {subtitle}
         </Typography>
         {status && (
@@ -167,7 +150,9 @@ const QueueItem = ({
 
       <Stack alignItems="flex-end" spacing={0.75} sx={{ flex: "0 0 auto" }}>
         {meta && (
-          <Typography sx={{ color, fontWeight: 600, fontSize: 11, textAlign: "right" }}>
+          <Typography
+            sx={{ color, fontWeight: 600, fontSize: 11, textAlign: "right" }}
+          >
             {meta}
           </Typography>
         )}
@@ -194,34 +179,6 @@ const QueueItem = ({
                   ? "rgba(255, 152, 0, 0.14)"
                   : "rgba(230, 9, 9, 0.10)",
               border: `1px solid ${theme.palette.primary.main}55`,
-              boxShadow:
-                theme.palette.mode === "dark"
-                  ? "0 8px 18px rgba(255,152,0,0.08)"
-                  : "0 8px 18px rgba(230,9,9,0.08)",
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              "& .MuiButton-startIcon": {
-                mr: 0.55,
-                ml: 0,
-                alignItems: "center",
-              },
-              "& .MuiButton-endIcon": {
-                ml: 0.35,
-                mr: 0,
-                alignItems: "center",
-              },
-              "& .MuiButton-startIcon svg, & .MuiButton-endIcon svg": {
-                display: "block",
-                fontSize: 15,
-              },
-              "&:hover": {
-                bgcolor:
-                  theme.palette.mode === "dark"
-                    ? "rgba(255, 152, 0, 0.22)"
-                    : "rgba(230, 9, 9, 0.16)",
-                borderColor: `${theme.palette.primary.main}88`,
-              },
             }}
           >
             {actionLabel}
@@ -232,54 +189,47 @@ const QueueItem = ({
   );
 };
 
-/**
- * Membentuk antrean approval sesuai role login.
- * Tiap item membawa URL detail supaya modal approval terbuka dari halaman tujuan.
- */
 const buildApprovalItems = (queues = {}) => [
-  ...(queues.tenantApproval?.items || []).map((item) => ({
-    key: `tenant-${item.approval_id}`,
+  ...(queues.applicationApproval?.items || []).map((item) => ({
+    key: `application-${item.approval_id}`,
     icon: "solar:document-add-bold-duotone",
     title: item.tenant_name,
-    subtitle: `${item.location_name} - ${item.room_number}`,
-    status: "Permohonan sewa menunggu approval",
+    subtitle: `${item.location_name} - ${item.sector_name} - Lahan ${item.stall_number}`,
+    status: "Permohonan izin lahan menunggu approval",
     meta: "Permohonan",
     tone: "info",
-    actionHref: `/tenant-approval?tenant_application_id=${item.tenant_application_id}&open=approval`,
+    actionHref: `/land-permit-approval?land_permit_application_id=${item.land_permit_application_id}&open=approval`,
+    actionLoadingMessage: "Menampilkan detail approval izin lahan...",
   })),
   ...(queues.terminationApproval?.items || []).map((item) => ({
     key: `termination-${item.approval_id}`,
     icon: "solar:lock-keyhole-bold-duotone",
     title: item.tenant_name,
-    subtitle: item.reason || "Permintaan terminasi/nonaktif",
-    status: "Terminasi menunggu approval",
-    meta: "Terminasi",
+    subtitle: item.reason || "Pengajuan non-aktif izin lahan",
+    status: "Non-aktif izin lahan menunggu approval",
+    meta: "Non-Aktif",
     tone: "warning",
-    actionHref: `/tenant-terminations-approval?tenant_early_termination_id=${item.termination_id}&open=approval`,
+    actionHref: `/land-permit-termination-approval?land_permit_termination_id=${item.land_permit_termination_id}&open=approval`,
+    actionLoadingMessage: "Menampilkan detail approval non-aktif izin lahan...",
   })),
 ];
 
-/**
- * Panel-panel antrean kerja dashboard.
- * Komponen ini mengatur visibilitas role, filter lokal, dan link detail tanpa
- * mengubah keamanan halaman tujuan.
- */
-export default function DashboardQueues({ overview, loading }) {
+export default function LandPermitQueues({ overview, loading }) {
   const access = overview?.access || {};
   const queues = overview?.queues || {};
   const [paymentFilter, setPaymentFilter] = useState("dueSoon");
-  const [contractFilter, setContractFilter] = useState("soon");
+  const [expiryFilter, setExpiryFilter] = useState("soon");
   const approvalItems = useMemo(() => buildApprovalItems(queues), [queues]);
+  const paymentValidationItems = queues.paymentValidation?.items || [];
   const dueItems = queues.duePayments || [];
-  const expiringItems = queues.expiringContracts || [];
-  const paymentValidationItems = queues.paymentApproval?.items || [];
+  const expiringItems = queues.expiringPermits || [];
   const dueSoonCount = dueItems.filter((item) => item.due_status === "dueSoon").length;
   const overdueCount = dueItems.filter((item) => item.due_status === "overdue").length;
   const expiringSoonCount = expiringItems.filter(
-    (item) => item.contract_status === "expiringSoon",
+    (item) => item.permit_expiry_status === "expiringSoon",
   ).length;
   const expiredCount = expiringItems.filter(
-    (item) => item.contract_status === "expired",
+    (item) => item.permit_expiry_status === "expired",
   ).length;
 
   const filteredPayments = dueItems.filter((item) =>
@@ -287,10 +237,10 @@ export default function DashboardQueues({ overview, loading }) {
       ? item.due_status === "dueSoon"
       : item.due_status === "overdue",
   );
-  const filteredContracts = expiringItems.filter((item) =>
-    contractFilter === "soon"
-      ? item.contract_status === "expiringSoon"
-      : item.contract_status === "expired",
+  const filteredPermits = expiringItems.filter((item) =>
+    expiryFilter === "soon"
+      ? item.permit_expiry_status === "expiringSoon"
+      : item.permit_expiry_status === "expired",
   );
 
   return (
@@ -305,10 +255,11 @@ export default function DashboardQueues({ overview, loading }) {
         alignItems: "start",
       }}
     >
-      {access.canSeeTenantApprovalQueue && (
+      {(access.canSeeApplicationApprovalQueue ||
+        access.canSeeTerminationApprovalQueue) && (
         <DashboardPanel
           title="Butuh Tindakan"
-          caption="Permohonan dan terminasi yang sudah masuk giliran role Anda"
+          caption="Permohonan dan non-aktif izin lahan yang masuk giliran role Anda"
           loading={loading}
           empty={!approvalItems.length}
           emptyText="Tidak ada tindakan yang menunggu."
@@ -324,7 +275,7 @@ export default function DashboardQueues({ overview, loading }) {
       {access.canSeePaymentValidationQueue && (
         <DashboardPanel
           title="Validasi Pembayaran"
-          caption="Bukti pembayaran yang menunggu validasi keuangan"
+          caption="Bukti pembayaran izin lahan yang menunggu validasi keuangan"
           loading={loading}
           empty={!paymentValidationItems.length}
           emptyText="Tidak ada pembayaran yang perlu divalidasi."
@@ -335,23 +286,23 @@ export default function DashboardQueues({ overview, loading }) {
                 key={`payment-${item.approval_id}`}
                 icon="solar:wallet-money-bold-duotone"
                 title={item.tenant_name}
-                subtitle={`${formatRupiah(item.amount || 0)} - ${formatDate(item.payment_date)}`}
-                status="Menunggu persetujuan Anda"
-                meta="Payment"
+                subtitle={`${item.location_name} - ${item.sector_name} - Lahan ${item.stall_number}`}
+                status={`Dibayar ${formatDate(item.payment_date)}`}
+                meta={formatRupiah(item.amount || 0)}
                 tone="success"
-                actionHref={`/payments?payment_id=${item.payment_id}&open=approval`}
+                actionHref={`/land-permit-payments?payment_id=${item.payment_id}&open=approval`}
                 actionLabel="Setujui"
-                actionLoadingMessage="Menampilkan detail validasi pembayaran..."
+                actionLoadingMessage="Menampilkan detail validasi pembayaran izin lahan..."
               />
             ))}
           </Stack>
         </DashboardPanel>
       )}
 
-      {access.canSeeDuePayments && (
+      {access.canSeePaymentDue && (
         <DashboardPanel
           title="Jatuh Tempo Pembayaran"
-          caption="Pantau pembayaran cicilan yang akan jatuh tempo 30 hari ke depan dan yang sudah terlambat"
+          caption="Izin yang tanggal mulainya dekat atau sudah lewat tetapi belum dibayar"
           loading={loading}
           empty={false}
         >
@@ -375,10 +326,10 @@ export default function DashboardQueues({ overview, loading }) {
             {filteredPayments.length ? (
               filteredPayments.slice(0, 6).map((item) => (
                 <QueueItem
-                  key={`due-${item.tenant_application_id}`}
+                  key={`due-${item.land_permit_application_id}`}
                   icon="solar:alarm-bold-duotone"
                   title={item.tenant_name}
-                  subtitle={`${item.location_name} - ${item.room_number} | ${item.payment_step_label || "Pembayaran"} jatuh tempo ${formatDate(item.due_date)}`}
+                  subtitle={`${item.location_name} - ${item.sector_name} - Lahan ${item.stall_number} | Mulai ${formatDate(item.start_date)}`}
                   meta={getDaysLabel(item.days_remaining)}
                   tone={Number(item.days_remaining) < 0 ? "error" : "warning"}
                 />
@@ -390,43 +341,43 @@ export default function DashboardQueues({ overview, loading }) {
         </DashboardPanel>
       )}
 
-      {access.canSeeExpiringContracts && (
+      {access.canSeeExpiringPermits && (
         <DashboardPanel
-          title="Kontrak Segera Berakhir"
-          caption="Pantau kontrak aktif yang akan berakhir 30 hari ke depan dan yang sudah berakhir"
+          title="Izin Lahan Segera Berakhir"
+          caption="Izin aktif yang akan berakhir 30 hari ke depan dan yang sudah berakhir"
           loading={loading}
           empty={false}
         >
           <Stack spacing={1.25}>
             <Box sx={{ display: "flex", gap: 0.75, flexWrap: "wrap" }}>
               <FilterButton
-                active={contractFilter === "soon"}
+                active={expiryFilter === "soon"}
                 count={expiringSoonCount}
-                onClick={() => setContractFilter("soon")}
+                onClick={() => setExpiryFilter("soon")}
               >
                 30 Hari Lagi
               </FilterButton>
               <FilterButton
-                active={contractFilter === "expired"}
+                active={expiryFilter === "expired"}
                 count={expiredCount}
-                onClick={() => setContractFilter("expired")}
+                onClick={() => setExpiryFilter("expired")}
               >
                 Sudah Berakhir
               </FilterButton>
             </Box>
-            {filteredContracts.length ? (
-              filteredContracts.slice(0, 6).map((item) => (
+            {filteredPermits.length ? (
+              filteredPermits.slice(0, 6).map((item) => (
                 <QueueItem
-                  key={`exp-${item.tenant_application_id}`}
+                  key={`exp-${item.land_permit_application_id}`}
                   icon="solar:calendar-mark-bold-duotone"
                   title={item.tenant_name}
-                  subtitle={`${item.location_name} - ${item.room_number} | Berakhir ${formatDate(item.end_date)}`}
+                  subtitle={`${item.location_name} - ${item.sector_name} - Lahan ${item.stall_number} | Berakhir ${formatDate(item.end_date)}`}
                   meta={getContractDaysLabel(item.days_remaining)}
                   tone={Number(item.days_remaining) < 0 ? "error" : "warning"}
                 />
               ))
             ) : (
-              <EmptyQueueState text="Tidak ada kontrak pada filter ini." />
+              <EmptyQueueState text="Tidak ada izin lahan pada filter ini." />
             )}
           </Stack>
         </DashboardPanel>

@@ -7,7 +7,7 @@ import { Icon } from "@iconify/react";
 import moment from "moment";
 import formatRupiah from "@/app/components/formatrupiah/page";
 import TableActionButton from "@/app/components/data-table/TableActionButton";
-import { getDaysLabel } from "../dashboard/dashboardUtils";
+import { getDaysLabel } from "@/app/components/dashboard/dashboardUtils";
 
 export const PAYMENT_DUE_PAGE_SIZE_OPTIONS = [10, 20, 50];
 export const PAYMENT_DUE_SCROLL_WIDTH = 1220;

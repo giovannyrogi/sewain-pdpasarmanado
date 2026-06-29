@@ -6,7 +6,7 @@ import { alpha } from "@mui/material/styles";
 import { Icon } from "@iconify/react";
 import moment from "moment";
 import TableActionButton from "@/app/components/data-table/TableActionButton";
-import { getContractDaysLabel } from "../dashboard/dashboardUtils";
+import { getContractDaysLabel } from "@/app/components/dashboard/dashboardUtils";
 
 export const CONTRACT_EXPIRY_PAGE_SIZE_OPTIONS = [10, 20, 50];
 export const CONTRACT_EXPIRY_SCROLL_WIDTH = 1520;

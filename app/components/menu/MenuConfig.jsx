@@ -215,7 +215,7 @@ const MENU_CONFIG = [
         showIcon: true,
       },
       {
-        label: "Persetujuan Non-Aktif Ruangan",
+        label: "Non-Aktif Ruangan",
         value: "tenant-terminations-approval",
         path: "/tenant-terminations-approval",
         icon: <Icon icon="pepicons-pop:lock-closed-circle" fontSize="20px" />,
@@ -230,7 +230,7 @@ const MENU_CONFIG = [
         showIcon: true,
       },
       {
-        label: "Persetujuan Non-Aktif Izin Lahan",
+        label: "Non-Aktif Izin Lahan",
         value: "land-permit-termination-approval",
         path: "/land-permit-termination-approval",
         icon: (

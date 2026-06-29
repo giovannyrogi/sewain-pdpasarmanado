@@ -20,27 +20,24 @@ import {
   LineChart,
   markElementClasses,
 } from "@mui/x-charts/LineChart";
-import formatRupiah from "@/app/components/formatrupiah/page";
 import DashboardPanel from "@/app/components/dashboard/DashboardPanel";
 import {
   MONTH_OPTIONS,
   getYearOptions,
 } from "@/app/components/dashboard/dashboardUtils";
+import formatRupiah from "@/app/components/formatrupiah/page";
 
 const parseBucketDate = (value) => {
   if (!value) return null;
-
   const rawValue = String(value);
   const date = /^\d{4}-\d{2}-\d{2}$/.test(rawValue)
     ? new Date(`${rawValue}T00:00:00`)
     : new Date(rawValue);
-
   return Number.isNaN(date.getTime()) ? null : date;
 };
 
 const formatTooltipLabel = (row, period) => {
   const date = parseBucketDate(row?.bucket_date);
-
   if (!date) return row?.tooltip_label || row?.label || "";
 
   return new Intl.DateTimeFormat("id-ID", {
@@ -51,21 +48,25 @@ const formatTooltipLabel = (row, period) => {
   }).format(date);
 };
 
-/**
- * Kontrol filter chart pendapatan.
- * Dibuat controlled dari page agar perubahan filter langsung melakukan fetch ulang.
- */
 function IncomeFilters({ filters, onChange }) {
   const theme = useTheme();
   const fieldSx = {
     height: 36,
     color: theme.palette.text.primary,
-    ".MuiOutlinedInput-notchedOutline": { borderColor: theme.ui.dashboardCardBorder },
-    "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: theme.palette.primary.main },
+    ".MuiOutlinedInput-notchedOutline": {
+      borderColor: theme.ui.dashboardCardBorder,
+    },
+    "&:hover .MuiOutlinedInput-notchedOutline": {
+      borderColor: theme.palette.primary.main,
+    },
   };
 
   return (
-    <Stack direction={{ xs: "column", sm: "row" }} spacing={1} alignItems={{ xs: "stretch", sm: "center" }}>
+    <Stack
+      direction={{ xs: "column", sm: "row" }}
+      spacing={1}
+      alignItems={{ xs: "stretch", sm: "center" }}
+    >
       <ToggleButtonGroup
         exclusive
         size="small"
@@ -125,26 +126,29 @@ function IncomeFilters({ filters, onChange }) {
   );
 }
 
-/**
- * Chart pendapatan utama dashboard.
- * Mendukung filter tahunan dan bulanan; data tetap berasal dari backend agar aman dan konsisten.
- */
-export default function IncomeTrendPanel({ data, filters, onFilterChange, loading }) {
+export default function LandPermitIncomeTrendPanel({
+  data,
+  filters,
+  onFilterChange,
+  loading,
+}) {
   const theme = useTheme();
   const isMobile = useMediaQuery("(max-width:700px)");
   const chartRows = Array.isArray(data) ? data : [];
   const xLabels = chartRows.map((item) => item.label);
   const tooltipLabelByTick = new Map(
-    chartRows.map((item) => [item.label, formatTooltipLabel(item, filters.period)]),
+    chartRows.map((item) => [
+      item.label,
+      formatTooltipLabel(item, filters.period),
+    ]),
   );
-  const withTaxData = chartRows.map((item) => Number(item.total_with_tax || 0));
-  const withoutTaxData = chartRows.map((item) => Number(item.total_without_tax || 0));
-  const hasData = withTaxData.some(Boolean) || withoutTaxData.some(Boolean);
+  const incomeData = chartRows.map((item) => Number(item.total_income || 0));
+  const hasData = incomeData.some(Boolean);
 
   return (
     <DashboardPanel
-      title="Tren Pendapatan"
-      caption="Bandingkan pendapatan bersih dan pendapatan termasuk PPN"
+      title="Tren Pendapatan Izin Lahan"
+      caption="Pendapatan bersih izin lahan berdasarkan pembayaran yang sudah disetujui"
       loading={false}
       sx={{ minHeight: { xs: 430, md: 500 } }}
     >
@@ -163,7 +167,9 @@ export default function IncomeTrendPanel({ data, filters, onFilterChange, loadin
               textAlign: "center",
             }}
           >
-            <Typography sx={{ fontWeight: 600 }}>Belum ada pendapatan pada periode ini.</Typography>
+            <Typography sx={{ fontWeight: 600 }}>
+              Belum ada pendapatan izin lahan pada periode ini.
+            </Typography>
           </Box>
         ) : (
           <Box sx={{ width: "100%", overflow: "hidden" }}>
@@ -189,8 +195,12 @@ export default function IncomeTrendPanel({ data, filters, onFilterChange, loadin
                 {
                   width: isMobile ? 44 : 62,
                   valueFormatter: (value) => {
-                    if (value >= 1_000_000_000) return `${(value / 1_000_000_000).toFixed(1)}M`;
-                    if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}JT`;
+                    if (value >= 1_000_000_000) {
+                      return `${(value / 1_000_000_000).toFixed(1)}M`;
+                    }
+                    if (value >= 1_000_000) {
+                      return `${(value / 1_000_000).toFixed(1)}JT`;
+                    }
                     if (value >= 1_000) return `${(value / 1_000).toFixed(0)}K`;
                     return value;
                   },
@@ -204,22 +214,12 @@ export default function IncomeTrendPanel({ data, filters, onFilterChange, loadin
               ]}
               series={[
                 {
-                  id: "withoutTax",
+                  id: "landPermitIncome",
                   label: "Pendapatan Bersih",
-                  data: withoutTaxData,
+                  data: incomeData,
                   area: true,
                   showMark: true,
                   color: theme.palette.success.main,
-                  curve: "monotoneX",
-                  valueFormatter: (value) => formatRupiah(value),
-                },
-                {
-                  id: "withTax",
-                  label: "Dengan PPN",
-                  data: withTaxData,
-                  area: true,
-                  showMark: true,
-                  color: theme.palette.warning.main,
                   curve: "monotoneX",
                   valueFormatter: (value) => formatRupiah(value),
                 },
@@ -228,7 +228,7 @@ export default function IncomeTrendPanel({ data, filters, onFilterChange, loadin
               margin={{ top: isMobile ? 72 : 58, right: 18, bottom: 34, left: 4 }}
               slotProps={{
                 legend: {
-                  direction: isMobile ? "column" : "row",
+                  direction: "row",
                   position: { vertical: "top", horizontal: "middle" },
                 },
               }}
@@ -251,24 +251,31 @@ export default function IncomeTrendPanel({ data, filters, onFilterChange, loadin
                 "& .MuiChartsAxis-line, & .MuiChartsAxis-tick": {
                   stroke: theme.ui.dashboardCardBorder,
                 },
-                [`& .${areaElementClasses.series}-withoutTax`]: {
-                  fill: "url(#income-green-gradient)",
-                },
-                [`& .${areaElementClasses.series}-withTax`]: {
-                  fill: "url(#income-yellow-gradient)",
+                [`& .${areaElementClasses.series}-landPermitIncome`]: {
+                  fill: "url(#land-permit-income-gradient)",
                 },
                 [`& .${lineElementClasses.root}`]: { strokeWidth: 3 },
                 [`& .${markElementClasses.root}`]: { strokeWidth: 2, r: 4 },
               }}
             >
               <defs>
-                <linearGradient id="income-green-gradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={theme.palette.success.main} stopOpacity="0.34" />
-                  <stop offset="100%" stopColor={theme.palette.success.main} stopOpacity="0" />
-                </linearGradient>
-                <linearGradient id="income-yellow-gradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={theme.palette.warning.main} stopOpacity="0.30" />
-                  <stop offset="100%" stopColor={theme.palette.warning.main} stopOpacity="0" />
+                <linearGradient
+                  id="land-permit-income-gradient"
+                  x1="0"
+                  y1="0"
+                  x2="0"
+                  y2="1"
+                >
+                  <stop
+                    offset="0%"
+                    stopColor={theme.palette.success.main}
+                    stopOpacity="0.34"
+                  />
+                  <stop
+                    offset="100%"
+                    stopColor={theme.palette.success.main}
+                    stopOpacity="0"
+                  />
                 </linearGradient>
               </defs>
             </LineChart>

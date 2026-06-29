@@ -39,10 +39,10 @@ const buildTenantMessage = (value = {}) => {
 };
 
 const buildLandPermitMessage = (value = {}) => {
-  const location = value.location_name ? `, Lokasi ${value.location_name}` : "";
-  const sector = value.sector_name ? `, Sektor ${value.sector_name}` : "";
-  const stall = value.stall_number ? `, Lahan ${value.stall_number}` : "";
-  return `Permohonan izin lahan atas nama ${value.tenant_name || "-"}${location}${sector}${stall}.`;
+  const location = value.location_name ? ` | ${value.location_name}` : "";
+  const sector = value.sector_name ? ` | Sektor ${value.sector_name}` : "";
+  const stall = value.stall_number ? ` | Lahan ${value.stall_number}` : "";
+  return `Pemohon ${value.tenant_name || "-"}${location}${sector}${stall}.`;
 };
 
 const normalizeTenantInfo = (value = {}) => ({
@@ -921,6 +921,7 @@ export async function getLandPermitNotificationContext(client, applicationId) {
       app.user_id,
       app.current_step,
       app.approval_status,
+      app.commodity_type,
       identity.full_name AS tenant_name,
       location.location_name,
       sector.sector_name,
@@ -949,6 +950,7 @@ export async function getLandPermitPaymentNotificationContext(client, paymentId)
       payment.approval_status,
       app.id AS land_permit_application_id,
       app.user_id AS application_created_by,
+      app.commodity_type,
       identity.full_name AS tenant_name,
       location.location_name,
       sector.sector_name,
@@ -977,7 +979,7 @@ export async function notifyLandPermitSubmitted(
   await createNotificationForRoles(client, {
     type: "land_permit_approval_waiting",
     title: "Menunggu approval izin lahan",
-    message: `${buildLandPermitMessage(application)} Permohonan baru masuk ke giliran approval Anda.`,
+    message: `${buildLandPermitMessage(application)} Perlu approval Anda.`,
     entityType: "land_permit_application",
     entityId: application.id,
     actionUrl: `/land-permit-approval?land_permit_application_id=${application.id}&open=approval`,
@@ -1003,7 +1005,7 @@ export async function notifyLandPermitResubmitted(
   await createNotificationForRoles(client, {
     type: "land_permit_approval_waiting",
     title: "Permohonan izin lahan diperbarui",
-    message: `${buildLandPermitMessage(application)} Data telah diperbaiki dan kembali menunggu approval Anda.`,
+    message: `${buildLandPermitMessage(application)} Data diperbarui dan kembali menunggu approval Anda.`,
     entityType: "land_permit_application",
     entityId: application.id,
     actionUrl: `/land-permit-approval?land_permit_application_id=${application.id}&open=approval`,
@@ -1045,7 +1047,7 @@ export async function notifyLandPermitApprovalActionCompleted(
       status === "approved"
         ? "Approval izin lahan berhasil"
         : "Penolakan izin lahan berhasil",
-    message: `${buildLandPermitMessage(application)} Anda telah ${status === "approved" ? "menyetujui" : "menolak"} sebagai ${roleLabel}.`,
+    message: `${buildLandPermitMessage(application)} Anda ${status === "approved" ? "menyetujui" : "menolak"} sebagai ${roleLabel}.`,
     entityType: "land_permit_application",
     entityId: application.id,
     actionUrl: `/land-permit-approval?land_permit_application_id=${application.id}&open=progress`,
@@ -1075,7 +1077,7 @@ export async function notifyLandPermitApprovalMoved(
     await createNotificationForRolesWithExclusions(client, {
       type: "land_permit_application_approved",
       title: "Izin lahan disetujui final",
-      message: `${buildLandPermitMessage(application)} Persetujuan final telah selesai.`,
+      message: `${buildLandPermitMessage(application)} Persetujuan final selesai.`,
       entityType: "land_permit_application",
       entityId: application.id,
       actionUrl: `/land-permit-approval?land_permit_application_id=${application.id}&open=progress`,
@@ -1093,7 +1095,7 @@ export async function notifyLandPermitApprovalMoved(
     await createNotificationForRoles(client, {
       type: "land_permit_application_approved",
       title: "Izin lahan disetujui final",
-      message: `${buildLandPermitMessage(application)} Persetujuan final telah selesai.`,
+      message: `${buildLandPermitMessage(application)} Persetujuan final selesai.`,
       entityType: "land_permit_application",
       entityId: application.id,
       actionUrl: `/land-permit-applications?land_permit_application_id=${application.id}&open=approval`,
@@ -1114,7 +1116,7 @@ export async function notifyLandPermitApprovalMoved(
   await createNotificationForRoles(client, {
     type: "land_permit_approval_waiting",
     title: "Menunggu approval izin lahan",
-    message: `${buildLandPermitMessage(application)} Permohonan sudah masuk ke giliran approval Anda.`,
+    message: `${buildLandPermitMessage(application)} Perlu approval Anda.`,
     entityType: "land_permit_application",
     entityId: application.id,
     actionUrl: `/land-permit-approval?land_permit_application_id=${application.id}&open=approval`,
@@ -1132,7 +1134,7 @@ export async function notifyLandPermitApprovalMoved(
   await createNotificationForRolesWithExclusions(client, {
     type: "land_permit_approval_progress",
     title: `${actorRole} sudah approve izin lahan`,
-    message: `${buildLandPermitMessage(application)} Sekarang menunggu ${nextRoleLabel}.`,
+    message: `${buildLandPermitMessage(application)} Disetujui ${actorRole}; menunggu ${nextRoleLabel}.`,
     entityType: "land_permit_application",
     entityId: application.id,
     actionUrl: `/land-permit-approval?land_permit_application_id=${application.id}&open=progress`,
@@ -1287,7 +1289,7 @@ export async function notifyLandPermitPaymentSubmitted(
   await createNotificationForRolesWithExclusions(client, {
     type: "land_permit_payment_submitted",
     title: "Bukti pembayaran izin lahan baru",
-    message: `${buildLandPermitMessage(payment)} Bukti pembayaran telah dibuat dan menunggu verifikasi keuangan.`,
+    message: `${buildLandPermitMessage(payment)} Bukti bayar menunggu verifikasi keuangan.`,
     entityType: "land_permit_payment",
     entityId: payment.payment_id,
     actionUrl: `/land-permit-payments?payment_id=${payment.payment_id}&open=detail`,
@@ -1314,7 +1316,7 @@ export async function notifyLandPermitPaymentUpdated(
   await createNotificationForRolesWithExclusions(client, {
     type: "land_permit_payment_updated",
     title: "Bukti pembayaran izin lahan diperbarui",
-    message: `${buildLandPermitMessage(payment)} Bukti pembayaran telah diperbarui dan perlu diverifikasi ulang.`,
+    message: `${buildLandPermitMessage(payment)} Bukti bayar diperbarui dan perlu diverifikasi ulang.`,
     entityType: "land_permit_payment",
     entityId: payment.payment_id,
     actionUrl: `/land-permit-payments?payment_id=${payment.payment_id}&open=detail`,
@@ -1341,7 +1343,7 @@ export async function notifyLandPermitPaymentDeleted(
   await createNotificationForRolesWithExclusions(client, {
     type: "land_permit_payment_deleted",
     title: "Bukti pembayaran izin lahan dihapus",
-    message: `${buildLandPermitMessage(payment)} Bukti pembayaran telah dihapus.`,
+    message: `${buildLandPermitMessage(payment)} Bukti bayar dihapus.`,
     entityType: "land_permit_payment",
     entityId: payment.payment_id,
     actionUrl: `/land-permit-payments?payment_id=${payment.payment_id}&open=detail&deleted=1`,
@@ -1378,8 +1380,8 @@ export async function notifyLandPermitPaymentDecision(
         : "Pembayaran izin lahan ditolak",
     message:
       status === "approved"
-        ? `${buildLandPermitMessage(payment)} Bukti pembayaran telah diverifikasi oleh keuangan.`
-        : `${buildLandPermitMessage(payment)} Bukti pembayaran ditolak. Tekan notifikasi untuk melihat alasan penolakan.`,
+        ? `${buildLandPermitMessage(payment)} Pembayaran sudah diverifikasi keuangan.`
+        : `${buildLandPermitMessage(payment)} Pembayaran ditolak. Tekan notifikasi untuk melihat alasan penolakan.`,
     entityType: "land_permit_payment",
     entityId: payment.payment_id,
     actionUrl: `/land-permit-payments?payment_id=${payment.payment_id}&open=progress`,

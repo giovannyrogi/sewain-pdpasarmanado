@@ -32,8 +32,15 @@ const getNotificationDetail = (notification) => {
     roomNumber: metadata.roomNumber || metadata.room_number || "-",
     locationName: metadata.locationName || metadata.location_name || "-",
     paymentNumber: metadata.paymentNumber || metadata.payment_number,
+    sectorName: metadata.sectorName || metadata.sector_name || "-",
+    stallNumber: metadata.stallNumber || metadata.stall_number || "-",
+    commodity: metadata.commodity || metadata.commodity_type || "-",
   };
 };
+
+const isLandPermitNotification = (notification) =>
+  notification?.metadata?.module === "land_permit" ||
+  String(notification?.entity_type || "").startsWith("land_permit");
 
 const HighlightText = ({ children }) => (
   <Box component="strong" sx={{ color: "text.primary", fontWeight: 800 }}>
@@ -75,6 +82,29 @@ const BaseTenantInfo = ({ detail }) => (
     {detail.locationName !== "-" && (
       <>
         , <HighlightText>Lokasi {detail.locationName}</HighlightText>
+      </>
+    )}
+  </>
+);
+
+const BaseLandPermitInfo = ({ detail }) => (
+  <>
+    Pemohon <HighlightText>{detail.tenantName}</HighlightText>
+    {detail.locationName !== "-" && (
+      <>
+        {" "}
+        di <HighlightText>{detail.locationName}</HighlightText>
+      </>
+    )}
+    {detail.sectorName !== "-" && (
+      <>
+        {" "}
+        sektor <HighlightText>{detail.sectorName}</HighlightText>
+      </>
+    )}
+    {detail.stallNumber !== "-" && (
+      <>
+        , lahan <HighlightText>{detail.stallNumber}</HighlightText>
       </>
     )}
   </>
@@ -286,6 +316,115 @@ const NotificationActionText = ({ notification }) => {
           . Tekan notifikasi ini untuk melihat alasan penolakan.
         </>
       );
+    case "land_permit_approval_waiting":
+      return <>Perlu dicek dan diproses sesuai giliran approval Anda.</>;
+    case "land_permit_approval_completed":
+      return (
+        <>
+          Anda sudah menyetujui sebagai{" "}
+          <HighlightText>
+            {getRoleUserLabel(
+              metadata.processed_by_role,
+              metadata.processed_by_name,
+            )}
+          </HighlightText>
+          .
+        </>
+      );
+    case "land_permit_approval_rejected_by_you":
+      return (
+        <>
+          Anda sudah menolak sebagai{" "}
+          <HighlightText>
+            {getRoleUserLabel(
+              metadata.processed_by_role,
+              metadata.processed_by_name,
+            )}
+          </HighlightText>
+          .
+        </>
+      );
+    case "land_permit_approval_progress":
+      return (
+        <>
+          Disetujui oleh{" "}
+          <HighlightText>
+            {getRoleUserLabel(
+              metadata.approved_by_role,
+              metadata.approved_by_name,
+            )}
+          </HighlightText>
+          . Menunggu{" "}
+          <HighlightText>{metadata.waiting_role_label || "approval berikutnya"}</HighlightText>
+          .
+        </>
+      );
+    case "land_permit_application_approved":
+      return (
+        <>
+          Persetujuan final selesai. Lanjutkan proses pembayaran dan dokumen
+          izin lahan.
+        </>
+      );
+    case "land_permit_application_rejected":
+      return (
+        <>
+          Ditolak oleh{" "}
+          <HighlightText>
+            {getRoleUserLabel(metadata.rejected_by_role, metadata.rejected_by_name)}
+          </HighlightText>
+          . Tekan notifikasi ini untuk melihat alasan penolakan.
+        </>
+      );
+    case "land_permit_payment_submitted":
+      return <>Bukti pembayaran baru menunggu verifikasi keuangan.</>;
+    case "land_permit_payment_updated":
+      return <>Bukti pembayaran diperbarui dan perlu diverifikasi ulang.</>;
+    case "land_permit_payment_deleted":
+      return (
+        <>
+          Bukti pembayaran dihapus oleh{" "}
+          <HighlightText>
+            {getRoleUserLabel(metadata.deleted_by_role, metadata.deleted_by_name)}
+          </HighlightText>
+          .
+        </>
+      );
+    case "land_permit_payment_approved":
+      return <>Pembayaran sudah diverifikasi oleh keuangan.</>;
+    case "land_permit_payment_rejected":
+      return (
+        <>
+          Pembayaran ditolak. Tekan notifikasi ini untuk melihat alasan
+          penolakan.
+        </>
+      );
+    case "land_permit_termination_waiting":
+      return <>Pengajuan nonaktif izin lahan perlu diproses oleh Anda.</>;
+    case "land_permit_termination_progress":
+      return (
+        <>
+          Nonaktif izin lahan disetujui oleh{" "}
+          <HighlightText>
+            {getRoleUserLabel(
+              metadata.approved_by_role,
+              metadata.approved_by_name,
+            )}
+          </HighlightText>
+          . Menunggu{" "}
+          <HighlightText>{metadata.waiting_role_label || "approval berikutnya"}</HighlightText>
+          .
+        </>
+      );
+    case "land_permit_termination_approved":
+      return <>Pengajuan nonaktif izin lahan disetujui final.</>;
+    case "land_permit_termination_rejected":
+      return (
+        <>
+          Pengajuan nonaktif izin lahan ditolak. Tekan notifikasi ini untuk
+          melihat alasan penolakan.
+        </>
+      );
     case "contract_created":
       return (
         <>
@@ -330,12 +469,33 @@ export const getNotificationTitle = (notification) => {
     )} sudah approve nonaktif`;
   }
 
+  if (
+    notification?.type === "land_permit_approval_progress" &&
+    (metadata.approved_by_role || metadata.approved_by_name)
+  ) {
+    return `${getRoleUserLabel(
+      metadata.approved_by_role,
+      metadata.approved_by_name,
+    )} sudah approve izin lahan`;
+  }
+
+  if (
+    notification?.type === "land_permit_termination_progress" &&
+    (metadata.approved_by_role || metadata.approved_by_name)
+  ) {
+    return `${getRoleUserLabel(
+      metadata.approved_by_role,
+      metadata.approved_by_name,
+    )} sudah approve nonaktif izin lahan`;
+  }
+
   return notification?.title;
 };
 
 const NotificationMessage = ({ notification }) => {
   const detail = getNotificationDetail(notification);
   const isPayment = notification?.entity_type === "payment";
+  const isLandPermit = isLandPermitNotification(notification);
 
   return (
     <Box sx={{ mt: 0.35 }}>
@@ -350,8 +510,15 @@ const NotificationMessage = ({ notification }) => {
         }}
       >
         <Box component="span">
-          <BaseTenantInfo detail={detail} />
-          {isPayment && <PaymentLabel paymentNumber={detail.paymentNumber} />}.{" "}
+          {isLandPermit ? (
+            <BaseLandPermitInfo detail={detail} />
+          ) : (
+            <BaseTenantInfo detail={detail} />
+          )}
+          {isPayment && !isLandPermit && (
+            <PaymentLabel paymentNumber={detail.paymentNumber} />
+          )}
+          .{" "}
           <NotificationActionText notification={notification} />
         </Box>
       </Typography>

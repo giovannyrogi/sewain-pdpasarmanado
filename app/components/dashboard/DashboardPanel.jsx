@@ -1,7 +1,15 @@
 "use client";
 
 import React from "react";
-import { Box, Button, Divider, Skeleton, Stack, Typography, useTheme } from "@mui/material";
+import {
+  Box,
+  Button,
+  Divider,
+  Skeleton,
+  Stack,
+  Typography,
+  useTheme,
+} from "@mui/material";
 import { Icon } from "@iconify/react";
 import Link from "next/link";
 import { getDashboardDividerSx, getDashboardPanelSx } from "./dashboardStyles";
@@ -25,29 +33,55 @@ export default function DashboardPanel({
   const theme = useTheme();
 
   return (
-    <Box sx={getDashboardPanelSx(theme, { p: { xs: 1.5, sm: 2 }, minHeight: 260, ...sx })}>
+    <Box
+      sx={getDashboardPanelSx(theme, {
+        p: { xs: 1.5, sm: 2 },
+        minHeight: 260,
+        ...sx,
+      })}
+    >
       <Stack spacing={1.5} sx={{ height: "100%" }}>
-        <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 1 }}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "flex-start",
+            justifyContent: "space-between",
+            gap: 1,
+          }}
+        >
           <Box>
-            <Typography sx={{ fontWeight: 600, fontSize: 16 }}>{title}</Typography>
+            <Typography sx={{ fontWeight: 600, fontSize: 16 }}>
+              {title}
+            </Typography>
             {caption && (
-              <Typography sx={{ color: theme.ui.mutedText, fontWeight: 600, fontSize: 12, mt: 0.25 }}>
+              <Typography
+                sx={{
+                  color: theme.ui.mutedText,
+                  fontWeight: 600,
+                  fontSize: 12,
+                  mt: 0.25,
+                }}
+              >
                 {caption}
               </Typography>
             )}
           </Box>
           {action ||
             (actionHref && (
-            <Button
-              LinkComponent={Link}
-              href={actionHref}
-              size="small"
-              endIcon={<Icon icon="solar:arrow-right-linear" />}
-              sx={{ minWidth: 0, fontWeight: 600, color: theme.palette.primary.main }}
-            >
-              {actionLabel}
-            </Button>
-          ))}
+              <Button
+                LinkComponent={Link}
+                href={actionHref}
+                size="small"
+                endIcon={<Icon icon="solar:arrow-right-linear" />}
+                sx={{
+                  minWidth: 0,
+                  fontWeight: 600,
+                  color: theme.palette.primary.main,
+                }}
+              >
+                {actionLabel}
+              </Button>
+            ))}
         </Box>
 
         <Divider sx={getDashboardDividerSx(theme)} />
@@ -70,7 +104,9 @@ export default function DashboardPanel({
           >
             <Stack alignItems="center" spacing={1}>
               <Icon icon="solar:check-circle-bold-duotone" fontSize={34} />
-              <Typography sx={{ fontWeight: 800, fontSize: 13 }}>{emptyText}</Typography>
+              <Typography sx={{ fontWeight: 800, fontSize: 13 }}>
+                {emptyText}
+              </Typography>
             </Stack>
           </Box>
         ) : (
