@@ -37,6 +37,8 @@ const QUICK_FILTERS = [
  * - Tombol Cari Data baru menjalankan request agar user bisa mengatur periode dulu.
  */
 export default function ReportFilterPanel({
+  children,
+  showDateRangeFilters = true,
   range,
   selectedPreset,
   onPresetChange,
@@ -65,6 +67,10 @@ export default function ReportFilterPanel({
   const [draftRange, setDraftRange] = useState(range);
   const isCustomActive = selectedPreset === "custom";
   const disableActions = Boolean(isSubmitting || isResetting);
+  const safeRange = range || {
+    startDate: moment().format("YYYY-MM-DD"),
+    endDate: moment().format("YYYY-MM-DD"),
+  };
 
   /**
    * Draft range dipisah dari parent state agar kalender selalu membuka nilai
@@ -90,8 +96,8 @@ export default function ReportFilterPanel({
     [draftRange?.startDate, draftRange?.endDate],
   );
 
-  const rangeLabel = `${moment(range.startDate).format("DD MMM YYYY")} - ${moment(
-    range.endDate,
+  const rangeLabel = `${moment(safeRange.startDate).format("DD MMM YYYY")} - ${moment(
+    safeRange.endDate,
   ).format("DD MMM YYYY")}`;
 
   const handleCustomClick = () => {
@@ -180,70 +186,76 @@ export default function ReportFilterPanel({
         />
 
         <Stack spacing={{ xs: 2.25, sm: 2 }}>
-          <Stack spacing={{ xs: 1.25, sm: 1 }}>
-            <Typography sx={{ fontWeight: 700, fontSize: 13 }}>
-              {rangeLabelTitle}
-            </Typography>
-            <Button
-              fullWidth={isSmall}
-              variant={isCustomActive ? "contained" : "outlined"}
-              onClick={handleCustomClick}
-              startIcon={<Icon icon="solar:calendar-date-bold-duotone" />}
-              sx={{
-                width: { xs: "100%", sm: "fit-content" },
-                maxWidth: "100%",
-                minHeight: 38,
-                borderRadius: 2,
-                px: 1.5,
-                fontWeight: 700,
-                justifyContent: { xs: "center", sm: "flex-start" },
-                color: isCustomActive
-                  ? theme.palette.primary.contrastText
-                  : theme.palette.primary.main,
-              }}
-            >
-              {rangeLabel}
-            </Button>
-          </Stack>
+          {showDateRangeFilters && (
+            <>
+              <Stack spacing={{ xs: 1.25, sm: 1 }}>
+                <Typography sx={{ fontWeight: 700, fontSize: 13 }}>
+                  {rangeLabelTitle}
+                </Typography>
+                <Button
+                  fullWidth={isSmall}
+                  variant={isCustomActive ? "contained" : "outlined"}
+                  onClick={handleCustomClick}
+                  startIcon={<Icon icon="solar:calendar-date-bold-duotone" />}
+                  sx={{
+                    width: { xs: "100%", sm: "fit-content" },
+                    maxWidth: "100%",
+                    minHeight: 38,
+                    borderRadius: 2,
+                    px: 1.5,
+                    fontWeight: 700,
+                    justifyContent: { xs: "center", sm: "flex-start" },
+                    color: isCustomActive
+                      ? theme.palette.primary.contrastText
+                      : theme.palette.primary.main,
+                  }}
+                >
+                  {rangeLabel}
+                </Button>
+              </Stack>
 
-          <Stack spacing={{ xs: 1.5, sm: 1.25 }}>
-            <Typography sx={{ fontWeight: 700, fontSize: 13 }}>
-              {quickFilterLabel}
-            </Typography>
-            <Stack
-              direction="row"
-              spacing={1}
-              sx={{
-                flexWrap: "wrap",
-                rowGap: 1,
-                "& > *": {
-                  flex: { xs: "1 1 calc(50% - 8px)", sm: "0 0 auto" },
-                },
-              }}
-            >
-              {quickFilters.map((preset) => {
-                const isActive = selectedPreset === preset.key;
+              <Stack spacing={{ xs: 1.5, sm: 1.25 }}>
+                <Typography sx={{ fontWeight: 700, fontSize: 13 }}>
+                  {quickFilterLabel}
+                </Typography>
+                <Stack
+                  direction="row"
+                  spacing={1}
+                  sx={{
+                    flexWrap: "wrap",
+                    rowGap: 1,
+                    "& > *": {
+                      flex: { xs: "1 1 calc(50% - 8px)", sm: "0 0 auto" },
+                    },
+                  }}
+                >
+                  {quickFilters.map((preset) => {
+                    const isActive = selectedPreset === preset.key;
 
-                return (
-                  <Button
-                    key={preset.key}
-                    size="small"
-                    variant={isActive ? "contained" : "outlined"}
-                    onClick={() => onPresetChange?.(preset.key)}
-                    sx={{
-                      minHeight: 34,
-                      borderRadius: 2,
-                      px: 1.5,
-                      fontWeight: 700,
-                      gap: preset.count !== undefined ? 0.75 : 0,
-                    }}
-                  >
-                    {preset.label}
-                  </Button>
-                );
-              })}
-            </Stack>
-          </Stack>
+                    return (
+                      <Button
+                        key={preset.key}
+                        size="small"
+                        variant={isActive ? "contained" : "outlined"}
+                        onClick={() => onPresetChange?.(preset.key)}
+                        sx={{
+                          minHeight: 34,
+                          borderRadius: 2,
+                          px: 1.5,
+                          fontWeight: 700,
+                          gap: preset.count !== undefined ? 0.75 : 0,
+                        }}
+                      >
+                        {preset.label}
+                      </Button>
+                    );
+                  })}
+                </Stack>
+              </Stack>
+            </>
+          )}
+
+          {children}
 
           <Stack
             direction={{ xs: "column", sm: "row" }}

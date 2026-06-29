@@ -373,6 +373,23 @@ const MENU_CONFIG = [
         showIcon: true,
       },
       {
+        label: "Ketersediaan Ruangan",
+        value: "room-availability-report",
+        path: "/room-availability-report",
+        icon: <Icon icon="solar:home-angle-bold-duotone" fontSize="20px" />,
+        roles: [
+          ROLES.SUPERADMIN,
+          ROLES.DIVISI_KONTRAK,
+          ROLES.KEPALA_SEKSI,
+          ROLES.KEPALA_SUBDIVISI,
+          ROLES.KEPALA_DIVISI,
+          ROLES.DIREKTUR_BISNIS,
+          ROLES.DIREKTUR_UTAMA,
+          ROLES.DIVISI_KEUANGAN,
+        ],
+        showIcon: true,
+      },
+      {
         label: "Log Sinkron Ruangan",
         value: "room-sync-logs",
         path: "/room-sync-logs",

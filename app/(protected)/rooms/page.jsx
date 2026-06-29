@@ -326,7 +326,7 @@ export default function Rooms() {
         ),
       },
       {
-        title: "Dimensi",
+        title: "Ukuran Ruangan",
         dataIndex: "room_area",
         width: 250,
         render: (_, record) => (

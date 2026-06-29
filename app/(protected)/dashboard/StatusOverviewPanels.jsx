@@ -151,7 +151,7 @@ export function LocationOccupancyPanel({ data = [], loading }) {
       action={
         <Button
           LinkComponent={Link}
-          href="/locations-report"
+          href="/room-availability-report"
           size="small"
           endIcon={<Icon icon="solar:arrow-right-linear" />}
           sx={{
