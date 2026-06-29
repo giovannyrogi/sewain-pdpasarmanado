@@ -21,6 +21,13 @@ import { APPLICATION_TYPE_LABEL, formatDateDisplay } from "./landPermitApplicati
 
 function FieldCard({ icon, label, value, fullWidth = false }) {
   const theme = useTheme();
+  const renderedValue = React.isValidElement(value) ? (
+    value
+  ) : (
+    <Typography sx={{ fontSize: 13, fontWeight: 700, overflowWrap: "anywhere" }}>
+      {value || "-"}
+    </Typography>
+  );
 
   return (
     <Grid size={{ xs: 12, md: fullWidth ? 12 : 4 }}>
@@ -58,9 +65,7 @@ function FieldCard({ icon, label, value, fullWidth = false }) {
             <Typography sx={{ color: theme.ui.mutedText, fontSize: 11, fontWeight: 700 }}>
               {label}
             </Typography>
-            <Typography sx={{ fontSize: 13, fontWeight: 700, overflowWrap: "anywhere" }}>
-              {value || "-"}
-            </Typography>
+            {renderedValue}
           </Box>
         </Stack>
       </Box>
@@ -123,6 +128,15 @@ export default function LandPermitApplicantDetailModal({
   const profilePhotoUrl = getUploadApiUrl(
     selectedData?.profile_photo_file_path,
   );
+  const statementUrl = getUploadApiUrl(selectedData?.statement_file_path);
+  const paymentStatusLabel =
+    selectedData?.is_fully_paid || selectedData?.payment_status === "paid"
+      ? "Sudah Dibayar"
+      : selectedData?.payment_status === "proses"
+        ? "Menunggu Validasi Keuangan"
+        : selectedData?.payment_status === "rejected"
+          ? "Ditolak Keuangan"
+          : "Belum Dibayar";
 
   const openPreview = (url, alt) => {
     if (!url) return;
@@ -272,7 +286,7 @@ export default function LandPermitApplicantDetailModal({
               <FieldCard icon="solar:file-text-bold-duotone" label="Jenis Permohonan" value={APPLICATION_TYPE_LABEL[selectedData?.application_type]} />
               <FieldCard icon="solar:box-bold-duotone" label="Jenis Dagangan" value={selectedData?.commodity_type} />
               <FieldCard icon="solar:hourglass-bold-duotone" label="Durasi" value={`${selectedData?.lease_duration_years || 1} Tahun`} />
-              <FieldCard icon="solar:wallet-money-bold-duotone" label="Status Pembayaran" value="Belum Dibayar" />
+              <FieldCard icon="solar:wallet-money-bold-duotone" label="Status Pembayaran" value={paymentStatusLabel} />
             </Grid>
           </DetailSection>
 
@@ -287,6 +301,56 @@ export default function LandPermitApplicantDetailModal({
               <FieldCard icon="solar:wallet-bold-duotone" label="Total Pembayaran" value={formatRupiah(selectedData?.total_payment)} />
             </Grid>
           </DetailSection>
+
+          {selectedData?.termination_reason && (
+            <DetailSection
+              icon="solar:lock-keyhole-minimalistic-bold-duotone"
+              title="Detail Permintaan Non-Aktif"
+              description="Alasan pengajuan non-aktif dan dokumen pendukung."
+            >
+              <Grid container spacing={1.25}>
+                <FieldCard
+                  icon="solar:document-text-bold-duotone"
+                  label="Alasan Non-Aktif"
+                  value={selectedData?.termination_reason}
+                  fullWidth
+                />
+                <FieldCard
+                  icon="solar:user-rounded-bold-duotone"
+                  label="Diajukan Oleh"
+                  value={selectedData?.termination_processed_by_full_name}
+                />
+                <FieldCard
+                  icon="solar:file-check-bold-duotone"
+                  label="Surat Pernyataan"
+                  value={
+                    statementUrl ? (
+                      <Button
+                        onClick={() => window.open(statementUrl, "_blank", "noopener,noreferrer")}
+                        sx={{
+                          minWidth: 0,
+                          p: 0,
+                          justifyContent: "flex-start",
+                          color: theme.palette.primary.main,
+                          fontSize: 13,
+                          fontWeight: 800,
+                          textTransform: "none",
+                          "&:hover": {
+                            bgcolor: "transparent",
+                            textDecoration: "underline",
+                          },
+                        }}
+                      >
+                        Lihat Surat
+                      </Button>
+                    ) : (
+                      "-"
+                    )
+                  }
+                />
+              </Grid>
+            </DetailSection>
+          )}
 
           <Stack
             direction={{ xs: "column-reverse", sm: "row" }}

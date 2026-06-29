@@ -333,7 +333,7 @@ export default function TenantTerminationsModal({
                   >
                     <Icon icon="solar:document-add-bold-duotone" fontSize={22} />
                   </Box>
-                  <Box sx={{ minWidth: 0 }}>
+                  <Box sx={{ minWidth: 0, flex: 1 }}>
                     <Typography sx={{ fontFamily: "Poppins", fontWeight: 850, fontSize: 13 }}>
                       Surat Pernyataan
                     </Typography>
@@ -343,6 +343,13 @@ export default function TenantTerminationsModal({
                         fontFamily: "Poppins",
                         fontWeight: 650,
                         fontSize: 12,
+                        maxWidth: "100%",
+                        overflow: "hidden",
+                        overflowWrap: "anywhere",
+                        wordBreak: "break-word",
+                        display: "-webkit-box",
+                        WebkitBoxOrient: "vertical",
+                        WebkitLineClamp: { xs: 3, sm: 2 },
                       }}
                     >
                       {statementFile ? `${statementFile.name} (${getFileSizeLabel(statementFile)})` : "PDF/DOC/DOCX, maksimal 5MB."}
@@ -350,25 +357,79 @@ export default function TenantTerminationsModal({
                   </Box>
                 </Stack>
 
-                <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+                <Stack
+                  direction={{ xs: "column", sm: "row" }}
+                  spacing={1}
+                  sx={{
+                    flexShrink: 0,
+                    width: { xs: "100%", sm: "auto" },
+                    "& .MuiButton-root": {
+                      minWidth: { xs: "100%", sm: "auto" },
+                    },
+                  }}
+                >
                   {statementFilePath && (
                     <Button
                       variant="outlined"
-                      startIcon={<Icon icon="solar:eye-bold-duotone" />}
+                      aria-label="Lihat surat pernyataan"
                       onClick={() => window.open(statementFilePath, "_blank")}
-                      sx={{ borderRadius: 2, fontWeight: 850, textTransform: "none" }}
+                      sx={{
+                        borderRadius: 2,
+                        color: theme.palette.primary.main,
+                        borderColor: alpha(theme.palette.primary.main, 0.45),
+                        fontWeight: 850,
+                        textTransform: "none",
+                        minWidth: { xs: "100%", sm: 44 },
+                        width: { xs: "100%", sm: 44 },
+                        height: 40,
+                        px: { xs: 1.5, sm: 0 },
+                        display: "inline-flex",
+                        gap: { xs: 1, sm: 0 },
+                        "&:hover": {
+                          borderColor: theme.palette.primary.main,
+                          bgcolor: alpha(theme.palette.primary.main, 0.08),
+                        },
+                      }}
                     >
-                      Lihat
+                      <Icon icon="solar:eye-bold-duotone" fontSize={18} />
+                      <Box
+                        component="span"
+                        sx={{
+                          display: { xs: "inline", sm: "none" },
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        Lihat
+                      </Box>
                     </Button>
                   )}
                   <Button
                     variant="contained"
                     component="label"
-                    startIcon={<Icon icon="solar:upload-bold-duotone" />}
-                    sx={{ borderRadius: 2, fontWeight: 850, textTransform: "none" }}
+                    aria-label={statementFile ? "Ganti file surat pernyataan" : "Upload surat pernyataan"}
+                    sx={{
+                      borderRadius: 2,
+                      fontWeight: 850,
+                      textTransform: "none",
+                      minWidth: { xs: "100%", sm: 44 },
+                      width: { xs: "100%", sm: 44 },
+                      height: 40,
+                      px: { xs: 1.5, sm: 0 },
+                      display: "inline-flex",
+                      gap: { xs: 1, sm: 0 },
+                    }}
                     disabled={isSubmitting}
                   >
-                    {statementFile ? "Ganti File" : "Upload"}
+                    <Icon icon="solar:upload-bold-duotone" fontSize={18} />
+                    <Box
+                      component="span"
+                      sx={{
+                        display: { xs: "inline", sm: "none" },
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {statementFile ? "Ganti File" : "Upload"}
+                    </Box>
                     <input
                       type="file"
                       accept={ALLOWED_STATEMENT_TYPES}
@@ -381,11 +442,30 @@ export default function TenantTerminationsModal({
                     <Button
                       variant="contained"
                       color="error"
-                      startIcon={<Icon icon="solar:trash-bin-trash-bold-duotone" />}
+                      aria-label="Hapus surat pernyataan"
                       onClick={clearStatementFile}
-                      sx={{ borderRadius: 2, fontWeight: 850, textTransform: "none" }}
+                      sx={{
+                        borderRadius: 2,
+                        fontWeight: 850,
+                        textTransform: "none",
+                        minWidth: { xs: "100%", sm: 44 },
+                        width: { xs: "100%", sm: 44 },
+                        height: 40,
+                        px: { xs: 1.5, sm: 0 },
+                        display: "inline-flex",
+                        gap: { xs: 1, sm: 0 },
+                      }}
                     >
-                      Hapus
+                      <Icon icon="solar:trash-bin-trash-bold-duotone" fontSize={18} />
+                      <Box
+                        component="span"
+                        sx={{
+                          display: { xs: "inline", sm: "none" },
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        Hapus
+                      </Box>
                     </Button>
                   )}
                 </Stack>

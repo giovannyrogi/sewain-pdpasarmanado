@@ -72,7 +72,7 @@ function IncomeFilters({ filters, onChange }) {
           "& .MuiToggleButton-root": {
             height: 36,
             px: 1.5,
-            fontWeight: 900,
+            fontWeight: 600,
             borderColor: theme.ui.dashboardCardBorder,
             color: theme.ui.mutedText,
             "&.Mui-selected": {
@@ -160,7 +160,7 @@ export default function IncomeTrendPanel({ data, filters, onFilterChange, loadin
               textAlign: "center",
             }}
           >
-            <Typography sx={{ fontWeight: 800 }}>Belum ada pendapatan pada periode ini.</Typography>
+            <Typography sx={{ fontWeight: 600 }}>Belum ada pendapatan pada periode ini.</Typography>
           </Box>
         ) : (
           <Box sx={{ width: "100%", overflow: "hidden" }}>
@@ -177,7 +177,7 @@ export default function IncomeTrendPanel({ data, filters, onFilterChange, loadin
                   tickLabelStyle: {
                     fill: theme.palette.text.secondary,
                     fontSize: isMobile ? 10 : 11,
-                    fontWeight: 700,
+                    fontWeight: 600,
                     fontFamily: "Poppins",
                   },
                 },
@@ -194,7 +194,7 @@ export default function IncomeTrendPanel({ data, filters, onFilterChange, loadin
                   tickLabelStyle: {
                     fill: theme.palette.text.secondary,
                     fontSize: isMobile ? 10 : 11,
-                    fontWeight: 700,
+                    fontWeight: 600,
                     fontFamily: "Poppins",
                   },
                 },
@@ -235,7 +235,7 @@ export default function IncomeTrendPanel({ data, filters, onFilterChange, loadin
                   color: theme.palette.text.primary,
                   fontFamily: "Poppins",
                   fontSize: 12,
-                  fontWeight: 800,
+                  fontWeight: 600,
                 },
                 "& .MuiChartsLegend-mark": { width: 16, height: 3, rx: 2 },
                 "& .MuiChartsGrid-line": {

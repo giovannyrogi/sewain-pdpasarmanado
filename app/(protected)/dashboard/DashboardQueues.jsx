@@ -21,7 +21,7 @@ const FilterButton = ({ active, children, count, onClick }) => {
         px: 1.15,
         py: 0.55,
         borderRadius: 1.5,
-        fontWeight: 900,
+        fontWeight: 600,
         fontSize: 11,
         gap: 0.75,
         color: active ? theme.palette.primary.main : theme.ui.mutedText,
@@ -55,7 +55,7 @@ const FilterButton = ({ active, children, count, onClick }) => {
             alignItems: "center",
             justifyContent: "center",
             fontSize: 10,
-            fontWeight: 950,
+            fontWeight: 600,
             lineHeight: "20px",
             color: active ? theme.palette.primary.main : theme.palette.text.primary,
             fontVariantNumeric: "tabular-nums",
@@ -96,7 +96,7 @@ const EmptyQueueState = ({ text }) => {
     >
       <Stack alignItems="center" spacing={1}>
         <Icon icon="solar:check-circle-bold-duotone" fontSize={34} />
-        <Typography sx={{ fontWeight: 800, fontSize: 13 }}>{text}</Typography>
+        <Typography sx={{ fontWeight: 600, fontSize: 13 }}>{text}</Typography>
       </Stack>
     </Box>
   );
@@ -148,14 +148,14 @@ const QueueItem = ({
       </Box>
 
       <Box sx={{ minWidth: 0, flex: 1 }}>
-        <Typography noWrap sx={{ fontWeight: 900, fontSize: 13 }}>
+        <Typography noWrap sx={{ fontWeight: 600, fontSize: 13 }}>
           {title}
         </Typography>
         <Typography noWrap sx={{ color: theme.ui.mutedText, fontWeight: 650, fontSize: 12 }}>
           {subtitle}
         </Typography>
         {status && (
-          <Typography sx={{ color, fontWeight: 900, fontSize: 11, mt: 0.25 }}>
+          <Typography sx={{ color, fontWeight: 600, fontSize: 11, mt: 0.25 }}>
             {status}
           </Typography>
         )}
@@ -163,7 +163,7 @@ const QueueItem = ({
 
       <Stack alignItems="flex-end" spacing={0.75} sx={{ flex: "0 0 auto" }}>
         {meta && (
-          <Typography sx={{ color, fontWeight: 900, fontSize: 11, textAlign: "right" }}>
+          <Typography sx={{ color, fontWeight: 600, fontSize: 11, textAlign: "right" }}>
             {meta}
           </Typography>
         )}
@@ -181,7 +181,7 @@ const QueueItem = ({
               px: 1.15,
               py: 0.45,
               borderRadius: 1.5,
-              fontWeight: 900,
+              fontWeight: 600,
               fontSize: 11,
               lineHeight: 1,
               color: theme.palette.primary.main,

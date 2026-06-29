@@ -37,8 +37,8 @@ function StatusRow({ label, value, total, colorKey }) {
   return (
     <Box>
       <Box sx={{ display: "flex", justifyContent: "space-between", gap: 1, mb: 0.75 }}>
-        <Typography sx={{ fontWeight: 800, fontSize: 12 }}>{label}</Typography>
-        <Typography sx={{ fontWeight: 900, fontSize: 12 }}>{value || 0}</Typography>
+        <Typography sx={{ fontWeight: 600, fontSize: 12 }}>{label}</Typography>
+        <Typography sx={{ fontWeight: 600, fontSize: 12 }}>{value || 0}</Typography>
       </Box>
       <LinearProgress
         variant="determinate"
@@ -158,7 +158,7 @@ export function LocationOccupancyPanel({ data = [], loading }) {
             minWidth: 0,
             px: 1.25,
             borderRadius: 1.5,
-            fontWeight: 900,
+            fontWeight: 600,
             color: theme.palette.primary.main,
             bgcolor:
               theme.palette.mode === "dark"
@@ -195,10 +195,10 @@ export function LocationOccupancyPanel({ data = [], loading }) {
               }}
             >
               <Box sx={{ display: "flex", justifyContent: "space-between", gap: 1, mb: 1 }}>
-                <Typography noWrap sx={{ fontWeight: 900, fontSize: 13 }}>
+                <Typography noWrap sx={{ fontWeight: 600, fontSize: 13 }}>
                   {item.location_name}
                 </Typography>
-                <Typography sx={{ fontWeight: 950, fontSize: 13, color: "success.main" }}>
+                <Typography sx={{ fontWeight: 600, fontSize: 13, color: "success.main" }}>
                   {available} tersedia
                 </Typography>
               </Box>
@@ -233,10 +233,10 @@ export function LocationOccupancyPanel({ data = [], loading }) {
                   ["Tidak layak", unavailable, "error.main"],
                 ].map(([label, value, color]) => (
                   <Box key={label}>
-                    <Typography sx={{ color: theme.ui.mutedText, fontWeight: 750, fontSize: 10 }}>
+                    <Typography sx={{ color: theme.ui.mutedText, fontWeight: 600, fontSize: 10 }}>
                       {label}
                     </Typography>
-                    <Typography sx={{ color, fontWeight: 950, fontSize: 13 }}>
+                    <Typography sx={{ color, fontWeight: 600, fontSize: 13 }}>
                       {value}
                     </Typography>
                   </Box>
@@ -285,14 +285,14 @@ export function RecentActivityPanel({ data = [], loading }) {
               <Icon icon="solar:bell-bing-bold-duotone" fontSize={20} />
             </Box>
             <Box sx={{ minWidth: 0, flex: 1 }}>
-              <Typography noWrap sx={{ fontWeight: 900, fontSize: 13 }}>
+              <Typography noWrap sx={{ fontWeight: 600, fontSize: 13 }}>
                 {item.title}
               </Typography>
-              <Typography noWrap sx={{ color: theme.ui.mutedText, fontWeight: 650, fontSize: 12 }}>
+              <Typography noWrap sx={{ color: theme.ui.mutedText, fontWeight: 600, fontSize: 12 }}>
                 {item.message}
               </Typography>
             </Box>
-            <Typography sx={{ color: theme.ui.mutedText, fontWeight: 800, fontSize: 11 }}>
+            <Typography sx={{ color: theme.ui.mutedText, fontWeight: 600, fontSize: 11 }}>
               {fromNow(item.created_at)}
             </Typography>
           </Box>

@@ -115,11 +115,11 @@ export default function LandPermitDashboardPage() {
           breadcrumbs={[
             {
               label: "Dashboard",
-              icon: "solar:shop-2-bold-duotone",
+              icon: "healthicons:market-stall",
               path: "/land-permit-dashboard",
             },
           ]}
-          icon="solar:shop-2-bold-duotone"
+          icon="healthicons:market-stall"
           title="Dashboard"
           description="Ringkasan kesiapan data master izin lahan sebelum masuk ke proses permohonan, approval, pembayaran, dan dokumen izin."
         />

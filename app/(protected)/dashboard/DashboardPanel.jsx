@@ -29,7 +29,7 @@ export default function DashboardPanel({
       <Stack spacing={1.5} sx={{ height: "100%" }}>
         <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 1 }}>
           <Box>
-            <Typography sx={{ fontWeight: 900, fontSize: 16 }}>{title}</Typography>
+            <Typography sx={{ fontWeight: 600, fontSize: 16 }}>{title}</Typography>
             {caption && (
               <Typography sx={{ color: theme.ui.mutedText, fontWeight: 600, fontSize: 12, mt: 0.25 }}>
                 {caption}
@@ -43,7 +43,7 @@ export default function DashboardPanel({
               href={actionHref}
               size="small"
               endIcon={<Icon icon="solar:arrow-right-linear" />}
-              sx={{ minWidth: 0, fontWeight: 900, color: theme.palette.primary.main }}
+              sx={{ minWidth: 0, fontWeight: 600, color: theme.palette.primary.main }}
             >
               {actionLabel}
             </Button>

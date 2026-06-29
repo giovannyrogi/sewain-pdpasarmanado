@@ -55,6 +55,15 @@ const TRACKING_CONFIG = {
     getEntityId: (data) =>
       data?.land_permit_payment_id || data?.payment_id || data?.id,
   },
+  landPermitTermination: {
+    title: "Progress Non-Aktif Izin Lahan",
+    description: "Riwayat tahapan approval permintaan non-aktif izin lahan.",
+    icon: "solar:lock-keyhole-minimalistic-bold-duotone",
+    loadingMessage: "Memperbarui data non-aktif izin lahan...",
+    waitingLabel: "Menunggu Persetujuan",
+    endpoint: "/api/land-permit-termination-approval/",
+    getEntityId: (data) => data?.land_permit_termination_id || data?.id,
+  },
 };
 
 const getStatusMeta = (status, theme) => {

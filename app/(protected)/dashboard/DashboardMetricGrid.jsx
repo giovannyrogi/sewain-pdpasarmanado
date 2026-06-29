@@ -34,16 +34,6 @@ const buildMetrics = (overview) => {
   const queues = overview?.queues || {};
   const metrics = [];
 
-  if (access.canSeeTenantApprovalQueue) {
-    metrics.push({
-      label: "Approval Permohonan",
-      value: queues.tenantApproval?.total || 0,
-      caption: "Menunggu keputusan role Anda",
-      icon: "solar:clipboard-check-bold-duotone",
-      color: "info",
-    });
-  }
-
   if (access.canSeeFinanceOperations) {
     metrics.push({
       label: "Pendapatan Bulan Ini",
@@ -53,6 +43,16 @@ const buildMetrics = (overview) => {
       icon: "solar:chart-square-bold-duotone",
       color: "primary",
       variant: "income",
+    });
+  }
+
+  if (access.canSeeTenantApprovalQueue) {
+    metrics.push({
+      label: "Approval Permohonan",
+      value: queues.tenantApproval?.total || 0,
+      caption: "Menunggu keputusan role Anda",
+      icon: "solar:clipboard-check-bold-duotone",
+      color: "info",
     });
   }
 
@@ -92,7 +92,9 @@ export default function DashboardMetricGrid({ overview, loading }) {
       }}
     >
       {(loading ? Array.from({ length: 6 }) : metrics).map((metric, index) => {
-        const color = loading ? theme.palette.primary.main : getMetricTone(theme, metric.color);
+        const color = loading
+          ? theme.palette.primary.main
+          : getMetricTone(theme, metric.color);
 
         return (
           <Box
@@ -113,8 +115,21 @@ export default function DashboardMetricGrid({ overview, loading }) {
               </Stack>
             ) : (
               <>
-                <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 1 }}>
-                  <Typography sx={{ color: theme.ui.mutedText, fontWeight: 800, fontSize: 12 }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "flex-start",
+                    justifyContent: "space-between",
+                    gap: 1,
+                  }}
+                >
+                  <Typography
+                    sx={{
+                      color: theme.ui.mutedText,
+                      fontWeight: 800,
+                      fontSize: 12,
+                    }}
+                  >
                     {metric.label}
                   </Typography>
                   <Box
@@ -186,14 +201,22 @@ export default function DashboardMetricGrid({ overview, loading }) {
                           </Button>
                         ))}
                       </Box>
-                      <Typography sx={{ fontWeight: 950, fontSize: 25, lineHeight: 1.1 }}>
+                      <Typography
+                        sx={{ fontWeight: 950, fontSize: 25, lineHeight: 1.1 }}
+                      >
                         {formatRupiah(
                           incomeMode === "withoutTax"
                             ? metric.value
                             : metric.secondaryValue,
                         )}
                       </Typography>
-                      <Typography sx={{ color: theme.ui.mutedText, fontWeight: 700, fontSize: 11 }}>
+                      <Typography
+                        sx={{
+                          color: theme.ui.mutedText,
+                          fontWeight: 700,
+                          fontSize: 11,
+                        }}
+                      >
                         {incomeMode === "withoutTax"
                           ? "Nilai bersih tanpa PPN"
                           : "Nilai termasuk PPN"}
@@ -214,7 +237,14 @@ export default function DashboardMetricGrid({ overview, loading }) {
                       >
                         {metric.value}
                       </Typography>
-                      <Typography sx={{ color: theme.ui.mutedText, fontWeight: 700, fontSize: 12, mt: 0.75 }}>
+                      <Typography
+                        sx={{
+                          color: theme.ui.mutedText,
+                          fontWeight: 700,
+                          fontSize: 12,
+                          mt: 0.75,
+                        }}
+                      >
                         {metric.caption}
                       </Typography>
                     </>

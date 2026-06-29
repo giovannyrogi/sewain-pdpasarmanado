@@ -67,32 +67,38 @@ export default function Dashboard() {
    * Mengambil data dashboard dengan AbortController.
    * Ini mencegah state update setelah component unmount atau user logout cepat.
    */
-  const fetchDashboard = useCallback(async (signal, options = {}) => {
-    try {
-      if (!options.silent) {
-        setLoading(true);
-      }
-      const requestParams = new URLSearchParams(queryString);
-      requestParams.set("_ts", String(Date.now()));
-
-      const response = await axios.get(`/api/dashboard/overview?${requestParams}`, {
-        signal,
-      });
-
-      if (response.data.success) {
-        setOverview(response.data.data);
-        setRefreshCountdown(DASHBOARD_REFRESH_SECONDS);
-      }
-    } catch (error) {
-      logDashboardError("Error fetching dashboard overview:", error);
-    } finally {
-      if (!signal?.aborted) {
+  const fetchDashboard = useCallback(
+    async (signal, options = {}) => {
+      try {
         if (!options.silent) {
-          setLoading(false);
+          setLoading(true);
+        }
+        const requestParams = new URLSearchParams(queryString);
+        requestParams.set("_ts", String(Date.now()));
+
+        const response = await axios.get(
+          `/api/dashboard/overview?${requestParams}`,
+          {
+            signal,
+          },
+        );
+
+        if (response.data.success) {
+          setOverview(response.data.data);
+          setRefreshCountdown(DASHBOARD_REFRESH_SECONDS);
+        }
+      } catch (error) {
+        logDashboardError("Error fetching dashboard overview:", error);
+      } finally {
+        if (!signal?.aborted) {
+          if (!options.silent) {
+            setLoading(false);
+          }
         }
       }
-    }
-  }, [queryString]);
+    },
+    [queryString],
+  );
 
   useEffect(() => {
     const controller = new AbortController();
@@ -137,7 +143,10 @@ export default function Dashboard() {
         transition: "background-color 0.2s ease",
       }}
     >
-      <LoadingBackdrop open={loading && !overview} message="Memuat dashboard..." />
+      <LoadingBackdrop
+        open={loading && !overview}
+        message="Memuat dashboard..."
+      />
 
       <Grid container spacing={{ xs: 1.5, lg: 2 }}>
         <Grid size={12}>
@@ -213,11 +222,10 @@ export default function Dashboard() {
         </Grid>
 
         <Grid size={12}>
-          <DashboardMetricGrid overview={overview} loading={loading && !overview} />
-        </Grid>
-
-        <Grid size={12}>
-          <DashboardQueues overview={overview} loading={loading && !overview} />
+          <DashboardMetricGrid
+            overview={overview}
+            loading={loading && !overview}
+          />
         </Grid>
 
         <Grid size={12}>
@@ -230,7 +238,14 @@ export default function Dashboard() {
         </Grid>
 
         <Grid size={12}>
-          <StatusOverviewPanels overview={overview} loading={loading && !overview} />
+          <DashboardQueues overview={overview} loading={loading && !overview} />
+        </Grid>
+
+        <Grid size={12}>
+          <StatusOverviewPanels
+            overview={overview}
+            loading={loading && !overview}
+          />
         </Grid>
 
         {overview?.access?.canSeeRoomOperations && (
@@ -242,7 +257,9 @@ export default function Dashboard() {
           </Grid>
         )}
 
-        <Grid size={{ xs: 12, lg: overview?.access?.canSeeRoomOperations ? 5 : 12 }}>
+        <Grid
+          size={{ xs: 12, lg: overview?.access?.canSeeRoomOperations ? 5 : 12 }}
+        >
           <RecentActivityPanel
             data={overview?.recentActivity || []}
             loading={loading && !overview}

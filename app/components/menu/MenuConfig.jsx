@@ -5,9 +5,8 @@ import { ROLES } from "./ConstantRoles";
 
 const MENU_CONFIG = [
   {
-    label: "Dashboard Sewa Ruangan",
+    label: "Dashboard",
     value: "dashboard",
-    path: "/dashboard",
     icon: <Icon icon="svg-spinners:blocks-scale" fontSize="20px" />,
     roles: [
       ROLES.SUPERADMIN,
@@ -18,24 +17,46 @@ const MENU_CONFIG = [
       ROLES.DIREKTUR_BISNIS,
       ROLES.DIREKTUR_UTAMA,
       ROLES.DIVISI_KEUANGAN,
-    ],
-  },
-  {
-    label: "Dashboard Izin Lahan",
-    value: "land-permit-dashboard",
-    path: "/land-permit-dashboard",
-    icon: <Icon icon="solar:shop-2-bold-duotone" fontSize="20px" />,
-    roles: [
-      ROLES.SUPERADMIN,
       ROLES.ADMIN_IZIN_LAHAN,
-      ROLES.KEPALA_SEKSI,
-      ROLES.KEPALA_SUBDIVISI,
-      ROLES.KEPALA_DIVISI,
-      ROLES.DIREKTUR_BISNIS,
-      ROLES.DIREKTUR_UTAMA,
-      ROLES.DIVISI_KEUANGAN,
+    ],
+    submenu: [
+      {
+        label: "Sewa Ruangan",
+        value: "dashboard",
+        path: "/dashboard",
+        icon: <Icon icon="solar:shop-2-bold-duotone" fontSize="20px" />,
+        showIcon: true,
+        roles: [
+          ROLES.SUPERADMIN,
+          ROLES.DIVISI_KONTRAK,
+          ROLES.KEPALA_SEKSI,
+          ROLES.KEPALA_SUBDIVISI,
+          ROLES.KEPALA_DIVISI,
+          ROLES.DIREKTUR_BISNIS,
+          ROLES.DIREKTUR_UTAMA,
+          ROLES.DIVISI_KEUANGAN,
+        ],
+      },
+      {
+        label: "Izin Lahan",
+        value: "land-permit-dashboard",
+        path: "/land-permit-dashboard",
+        icon: <Icon icon="healthicons:market-stall" fontSize="20px" />,
+        showIcon: true,
+        roles: [
+          ROLES.SUPERADMIN,
+          ROLES.ADMIN_IZIN_LAHAN,
+          ROLES.KEPALA_SEKSI,
+          ROLES.KEPALA_SUBDIVISI,
+          ROLES.KEPALA_DIVISI,
+          ROLES.DIREKTUR_BISNIS,
+          ROLES.DIREKTUR_UTAMA,
+          ROLES.DIVISI_KEUANGAN,
+        ],
+      },
     ],
   },
+
   {
     label: "Data Master",
     value: "dataMaster",
@@ -181,10 +202,43 @@ const MENU_CONFIG = [
         showIcon: true,
       },
       {
+        label: "Non-Aktif Izin Lahan",
+        value: "land-permit-terminations",
+        path: "/land-permit-terminations",
+        icon: (
+          <Icon
+            icon="solar:lock-keyhole-minimalistic-bold-duotone"
+            fontSize="20px"
+          />
+        ),
+        roles: [ROLES.SUPERADMIN, ROLES.ADMIN_IZIN_LAHAN],
+        showIcon: true,
+      },
+      {
         label: "Persetujuan Non-Aktif Ruangan",
         value: "tenant-terminations-approval",
         path: "/tenant-terminations-approval",
         icon: <Icon icon="pepicons-pop:lock-closed-circle" fontSize="20px" />,
+        roles: [
+          ROLES.SUPERADMIN,
+          ROLES.KEPALA_SEKSI,
+          ROLES.KEPALA_SUBDIVISI,
+          ROLES.KEPALA_DIVISI,
+          ROLES.DIREKTUR_BISNIS,
+          ROLES.DIREKTUR_UTAMA,
+        ],
+        showIcon: true,
+      },
+      {
+        label: "Persetujuan Non-Aktif Izin Lahan",
+        value: "land-permit-termination-approval",
+        path: "/land-permit-termination-approval",
+        icon: (
+          <Icon
+            icon="solar:lock-keyhole-minimalistic-bold-duotone"
+            fontSize="20px"
+          />
+        ),
         roles: [
           ROLES.SUPERADMIN,
           ROLES.KEPALA_SEKSI,
@@ -202,11 +256,7 @@ const MENU_CONFIG = [
         icon: (
           <Icon icon="streamline-freehand:money-atm-withdraw" fontSize="20px" />
         ),
-        roles: [
-          ROLES.SUPERADMIN,
-          ROLES.DIVISI_KONTRAK,
-          ROLES.DIVISI_KEUANGAN,
-        ],
+        roles: [ROLES.SUPERADMIN, ROLES.DIVISI_KONTRAK, ROLES.DIVISI_KEUANGAN],
         showIcon: true,
       },
       {
@@ -226,10 +276,7 @@ const MENU_CONFIG = [
         value: "contracts",
         path: "/contracts",
         icon: <Icon icon="clarity:contract-line" fontSize="20px" />,
-        roles: [
-          ROLES.SUPERADMIN,
-          ROLES.DIVISI_KONTRAK,
-        ],
+        roles: [ROLES.SUPERADMIN, ROLES.DIVISI_KONTRAK],
         showIcon: true,
       },
       {
@@ -237,10 +284,7 @@ const MENU_CONFIG = [
         value: "land-permit-documents",
         path: "/land-permit-documents",
         icon: <Icon icon="solar:document-text-bold-duotone" fontSize="20px" />,
-        roles: [
-          ROLES.SUPERADMIN,
-          ROLES.ADMIN_IZIN_LAHAN,
-        ],
+        roles: [ROLES.SUPERADMIN, ROLES.ADMIN_IZIN_LAHAN],
         showIcon: true,
       },
     ],
