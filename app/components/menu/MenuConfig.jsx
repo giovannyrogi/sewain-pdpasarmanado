@@ -414,6 +414,22 @@ const MENU_CONFIG = [
     ],
     submenu: [
       {
+        label: "Pendapatan Izin Lahan",
+        value: "land-permit-income-report",
+        path: "/land-permit-income-report",
+        icon: <Icon icon="solar:wallet-money-bold-duotone" fontSize="20px" />,
+        roles: [
+          ROLES.SUPERADMIN,
+          ROLES.KEPALA_SEKSI,
+          ROLES.KEPALA_SUBDIVISI,
+          ROLES.KEPALA_DIVISI,
+          ROLES.DIREKTUR_BISNIS,
+          ROLES.DIREKTUR_UTAMA,
+          ROLES.ADMIN_IZIN_LAHAN,
+        ],
+        showIcon: true,
+      },
+      {
         label: "Jatuh Tempo",
         value: "land-permit-payment-due-report",
         path: "/land-permit-payment-due-report",

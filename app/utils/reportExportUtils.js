@@ -19,6 +19,15 @@ const normalizeFilePart = (value) =>
 
 const formatReportDate = (value) => moment(value).format("DD-MM-YYYY");
 
+const normalizeSheetName = (value, fallback = "Laporan") =>
+  String(value || fallback)
+    .replace(/[\\/?*\[\]:]+/g, " ")
+    .trim()
+    .slice(0, 31) || fallback;
+
+const formatFilterInfoText = (filterInfo = []) =>
+  filterInfo.map((item) => `${item.label}: ${item.value}`).join(" | ");
+
 const getCurrencyColumnIndexes = (columns = []) =>
   columns.reduce((acc, column, index) => {
     if (column.type === "currency") acc.add(index);
@@ -94,7 +103,170 @@ export const exportReportToExcel = ({
   rows,
   columns,
   totalsRow,
+  sections = [],
 }) => {
+  if (Array.isArray(sections) && sections.length) {
+    const wb = XLSX.utils.book_new();
+
+    sections.forEach((section, sectionIndex) => {
+      const sectionColumns = section.columns || columns || [];
+      const sectionRows = buildExportRows({
+        rows: section.rows || [],
+        columns: sectionColumns,
+      });
+
+      if (section.totalsRow) {
+        sectionRows.push(
+          sectionColumns.reduce((acc, column, index) => {
+            acc[column.header] =
+              index === 0 ? "TOTAL" : (section.totalsRow[column.key] ?? "");
+            return acc;
+          }, {}),
+        );
+      }
+
+      const tableStartRow = filterInfo.length || subtitle ? 6 : 4;
+      const ws = XLSX.utils.json_to_sheet(sectionRows, {
+        origin: `A${tableStartRow}`,
+      });
+      const sectionTitle = section.title || `${title} ${sectionIndex + 1}`;
+      XLSX.utils.sheet_add_aoa(ws, [[title]], { origin: "A1" });
+
+      if (subtitle) {
+        XLSX.utils.sheet_add_aoa(ws, [[subtitle]], { origin: "A2" });
+      }
+
+      if (filterInfo.length) {
+        XLSX.utils.sheet_add_aoa(ws, [[`Filter Laporan: ${formatFilterInfoText(filterInfo)}`]], {
+          origin: "A3",
+        });
+      }
+
+      XLSX.utils.sheet_add_aoa(ws, [[sectionTitle]], {
+        origin: `A${tableStartRow - 2}`,
+      });
+
+      const columnCount = sectionColumns.length;
+      const lastColumnIndex = Math.max(columnCount - 1, 0);
+      const currencyColumnIndexes = getCurrencyColumnIndexes(sectionColumns);
+      ws["!cols"] = sectionColumns.map((column) => ({ wch: column.width || 18 }));
+      ws["!merges"] = [
+        { s: { r: 0, c: 0 }, e: { r: 0, c: lastColumnIndex } },
+        {
+          s: { r: tableStartRow - 3, c: 0 },
+          e: { r: tableStartRow - 3, c: lastColumnIndex },
+        },
+      ];
+
+      if (subtitle) {
+        ws["!merges"].push({ s: { r: 1, c: 0 }, e: { r: 1, c: lastColumnIndex } });
+      }
+
+      if (filterInfo.length) {
+        ws["!merges"].push({ s: { r: 2, c: 0 }, e: { r: 2, c: lastColumnIndex } });
+      }
+
+      if (ws.A1) {
+        ws.A1.s = {
+          font: { bold: true, sz: 15, color: { rgb: "FFFFFF" } },
+          fill: { fgColor: { rgb: REPORT_NAVY } },
+          alignment: { horizontal: "center", vertical: "center" },
+        };
+      }
+
+      if (subtitle && ws.A2) {
+        ws.A2.s = {
+          font: { bold: false, sz: 11, color: { rgb: "475569" } },
+          fill: { fgColor: { rgb: REPORT_SOFT } },
+          alignment: { horizontal: "left", vertical: "center" },
+        };
+      }
+
+      if (filterInfo.length && ws.A3) {
+        ws.A3.s = {
+          font: { bold: true, sz: 10, color: { rgb: "334155" } },
+          fill: { fgColor: { rgb: "F1F5F9" } },
+          alignment: { horizontal: "left", vertical: "center" },
+          border: {
+            left: { style: "medium", color: { rgb: REPORT_PRIMARY_ORANGE } },
+          },
+        };
+      }
+
+      const sectionTitleCell = XLSX.utils.encode_cell({
+        r: tableStartRow - 3,
+        c: 0,
+      });
+      if (ws[sectionTitleCell]) {
+        ws[sectionTitleCell].s = {
+          font: { bold: true, sz: 12, color: { rgb: REPORT_NAVY } },
+          fill: { fgColor: { rgb: "FEF3C7" } },
+          alignment: { horizontal: "left", vertical: "center" },
+        };
+      }
+
+      const headerRow = tableStartRow - 1;
+      for (let c = 0; c < columnCount; c += 1) {
+        const cellAddress = XLSX.utils.encode_cell({ r: headerRow, c });
+        if (!ws[cellAddress]) continue;
+        ws[cellAddress].s = {
+          font: { bold: true, color: { rgb: "FFFFFF" } },
+          fill: { fgColor: { rgb: REPORT_NAVY } },
+          alignment: { horizontal: "center", vertical: "center" },
+          border: {
+            top: { style: "thin", color: { rgb: REPORT_BORDER } },
+            bottom: { style: "thin", color: { rgb: REPORT_BORDER } },
+          },
+        };
+      }
+
+      const totalRowIndex = sectionRows.length + headerRow;
+      for (let r = tableStartRow; r <= totalRowIndex; r += 1) {
+        for (let c = 0; c < columnCount; c += 1) {
+          const cellAddress = XLSX.utils.encode_cell({ r, c });
+          if (!ws[cellAddress]) continue;
+          const isTotal = r === totalRowIndex && Boolean(section.totalsRow);
+          const isOddRow = (r - tableStartRow) % 2 === 1;
+          ws[cellAddress].s = {
+            font: { bold: isTotal },
+            fill: isTotal
+              ? { fgColor: { rgb: "FEF3C7" } }
+              : isOddRow
+                ? { fgColor: { rgb: REPORT_SOFT } }
+                : undefined,
+            alignment: {
+              horizontal:
+                c === 0
+                  ? "left"
+                  : currencyColumnIndexes.has(c)
+                    ? "right"
+                    : "center",
+              vertical: "center",
+              wrapText: !currencyColumnIndexes.has(c),
+            },
+            border: {
+              top: { style: "thin", color: { rgb: "E5E7EB" } },
+              bottom: { style: "thin", color: { rgb: "E5E7EB" } },
+            },
+          };
+
+          if (currencyColumnIndexes.has(c) && typeof ws[cellAddress].v === "number") {
+            ws[cellAddress].z = '"Rp" #,##0';
+          }
+        }
+      }
+
+      XLSX.utils.book_append_sheet(
+        wb,
+        ws,
+        normalizeSheetName(section.sheetName, `Laporan ${sectionIndex + 1}`),
+      );
+    });
+
+    XLSX.writeFile(wb, fileName);
+    return;
+  }
+
   const exportRows = buildExportRows({ rows, columns });
 
   if (totalsRow) {
@@ -122,9 +294,7 @@ export const exportReportToExcel = ({
       ws,
       [
         [
-          `Filter Laporan: ${filterInfo
-            .map((item) => `${item.label}: ${item.value}`)
-            .join(" | ")}`,
+          `Filter Laporan: ${formatFilterInfoText(filterInfo)}`,
         ],
       ],
       { origin: "A3" },
@@ -247,6 +417,7 @@ export const exportReportToPDF = async ({
   rows,
   columns,
   totalsRow,
+  sections = [],
   printedAtFooter = false,
   showLogoMark = false,
 }) => {
@@ -305,6 +476,124 @@ export const exportReportToPDF = async ({
       12,
       headerTop + headerHeight + 14,
     );
+  }
+
+  const drawReportTable = ({
+    sectionRows = [],
+    sectionColumns = [],
+    sectionTotalsRow,
+    startY,
+  }) => {
+    const currencyColumnIndexes = getCurrencyColumnIndexes(sectionColumns);
+    const columnStyles = sectionColumns.reduce((acc, column, index) => {
+      if (column.type === "currency") {
+        acc[index] = {
+          halign: "right",
+          cellWidth: column.pdfWidth || 28,
+          overflow: "visible",
+        };
+      }
+      return acc;
+    }, {});
+
+    const body = sectionRows.map((row) =>
+      sectionColumns.map((column) => formatPdfCellValue(row, column)),
+    );
+
+    if (sectionTotalsRow) {
+      body.push(
+        sectionColumns.map((column, index) =>
+          index === 0
+            ? "TOTAL"
+            : column.type === "currency"
+              ? formatRupiah(sectionTotalsRow[column.key])
+              : (sectionTotalsRow[column.key] ?? ""),
+        ),
+      );
+    }
+
+    autoTable(doc, {
+      head: [sectionColumns.map((column) => column.header)],
+      body,
+      startY,
+      theme: "grid",
+      styles: {
+        fontSize: 7.8,
+        cellPadding: 2,
+        textColor: [31, 41, 55],
+        lineColor: [203, 213, 225],
+        lineWidth: 0.08,
+        valign: "middle",
+      },
+      headStyles: {
+        fillColor: [31, 41, 55],
+        textColor: [255, 255, 255],
+        halign: "center",
+        valign: "middle",
+      },
+      alternateRowStyles: { fillColor: [248, 250, 252] },
+      bodyStyles: { valign: "middle" },
+      columnStyles,
+      didParseCell: (data) => {
+        if (data.section === "body" && currencyColumnIndexes.has(data.column.index)) {
+          data.cell.styles.halign = "right";
+        }
+
+        if (sectionTotalsRow && data.row.index === body.length - 1) {
+          data.cell.styles.fontStyle = "bold";
+          data.cell.styles.fillColor = [254, 243, 199];
+        }
+      },
+    });
+
+    return doc.lastAutoTable?.finalY || startY;
+  };
+
+  if (Array.isArray(sections) && sections.length) {
+    let currentY = headerTop + headerHeight + (filterInfo.length ? 24 : 12);
+    const pageHeight = doc.internal.pageSize.getHeight();
+
+    sections.forEach((section, index) => {
+      if (index > 0 && currentY > pageHeight - 45) {
+        doc.addPage();
+        currentY = 16;
+      }
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10);
+      doc.setTextColor(15, 23, 42);
+      doc.text(section.title || `Bagian ${index + 1}`, 12, currentY);
+      currentY += 4;
+
+      currentY =
+        drawReportTable({
+          sectionRows: section.rows || [],
+          sectionColumns: section.columns || [],
+          sectionTotalsRow: section.totalsRow,
+          startY: currentY + 2,
+        }) + 10;
+    });
+
+    if (printedAtFooter) {
+      const pageCount = doc.getNumberOfPages();
+      const footerPageWidth = doc.internal.pageSize.getWidth();
+      const footerPageHeight = doc.internal.pageSize.getHeight();
+
+      for (let page = 1; page <= pageCount; page += 1) {
+        doc.setPage(page);
+        doc.setFontSize(7);
+        doc.setTextColor(90, 90, 90);
+        doc.text(
+          `Dicetak: ${printedAt} | Halaman ${page}/${pageCount}`,
+          footerPageWidth - 14,
+          footerPageHeight - 8,
+          { align: "right" },
+        );
+      }
+    }
+
+    doc.save(fileName);
+    return;
   }
 
   const currencyColumnIndexes = getCurrencyColumnIndexes(columns);

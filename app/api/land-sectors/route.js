@@ -8,7 +8,8 @@ import {
 } from "@/app/utils/apiValidation";
 import { validateLandSectorPayload } from "./validation";
 
-const LAND_MASTER_ROLES = [1, 9];
+const LAND_MASTER_WRITE_ROLES = [1, 9];
+const LAND_MASTER_READ_ROLES = [1, 3, 4, 5, 6, 7, 9];
 
 const mapLandSectorRow = (row) => ({
   id: row.id,
@@ -41,7 +42,7 @@ export async function POST(req) {
   const client = await pool.connect();
 
   try {
-    const { response } = await requireRole(LAND_MASTER_ROLES);
+    const { response } = await requireRole(LAND_MASTER_WRITE_ROLES);
     if (response) return response;
 
     const body = await req.json();
@@ -121,7 +122,7 @@ export async function POST(req) {
 
 export async function GET(request) {
   try {
-    const { response } = await requireRole(LAND_MASTER_ROLES);
+    const { response } = await requireRole(LAND_MASTER_READ_ROLES);
     if (response) return response;
 
     const { searchParams } = new URL(request.url);
