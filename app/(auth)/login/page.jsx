@@ -76,19 +76,22 @@ export default function LoginPage() {
   const brandLogoSrc = isDark ? "/logo-darkmode.png" : "/logo-lightmode.png";
   const workflowItems = [
     {
-      icon: "solar:document-add-linear",
-      title: "Permohonan",
-      description: "Data tenant dan ruang tercatat rapi sejak awal.",
+      icon: "solar:buildings-3-linear",
+      title: "Pengajuan Layanan",
+      description:
+        "Sewa ruangan, izin lahan, dan calon penyewa tersusun rapi.",
     },
     {
       icon: "solar:checklist-minimalistic-linear",
-      title: "Approval",
-      description: "Setiap keputusan mengikuti tahapan yang jelas.",
+      title: "Persetujuan & Pembayaran",
+      description:
+        "Proses tercatat jelas dari pengajuan sampai pembayaran.",
     },
     {
-      icon: "solar:file-download-linear",
-      title: "Buku Kontrak",
-      description: "Generate dan unduh dokumen kontrak otomatis.",
+      icon: "solar:document-text-linear",
+      title: "Dokumen & Laporan",
+      description:
+        "Dokumen resmi dan laporan operasional mudah dipantau.",
     },
   ];
 
@@ -231,7 +234,7 @@ export default function LoginPage() {
                   mb: { xs: 1.5, md: 2 },
                 }}
               >
-                Kelola sewa ruang dengan alur yang tertata
+                Satu portal untuk layanan sewa dan izin lahan
               </Typography>
               <Typography
                 sx={{
@@ -242,8 +245,8 @@ export default function LoginPage() {
                   maxWidth: 390,
                 }}
               >
-                Dari permohonan, persetujuan, pembayaran, sampai ruang siap
-                digunakan kembali.
+                Akses layanan pasar lebih praktis, transparan, dan mudah
+                dipantau dalam satu platform.
               </Typography>
 
               <Box
@@ -395,7 +398,7 @@ export default function LoginPage() {
                 letterSpacing: 0,
               }}
             >
-              Masuk ke Dashboard
+              Masuk ke SewaIN
             </Typography>
             <Typography
               sx={{
@@ -406,7 +409,8 @@ export default function LoginPage() {
                 textAlign: "center",
               }}
             >
-              Gunakan akun terdaftar untuk melanjutkan.
+              Masukkan username dan password yang sudah terdaftar untuk
+              melanjutkan.
             </Typography>
           </Box>
 
@@ -536,7 +540,7 @@ export default function LoginPage() {
                 loading && <CircularProgress size={22} color="inherit" />
               }
             >
-              {loading ? "Logging in..." : "Login"}
+              {loading ? "Memproses..." : "Masuk"}
             </Button>
           </Box>
           </Paper>
