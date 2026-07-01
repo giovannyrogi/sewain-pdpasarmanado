@@ -8,8 +8,8 @@ import CompactInfoChip from "@/app/components/chips/CompactInfoChip";
 import formatRupiah from "@/app/components/formatrupiah/page";
 import { formatNumber } from "@/app/utils/formatNumber";
 
-export const ROOM_AVAILABILITY_PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
-export const ROOM_AVAILABILITY_SCROLL_WIDTH = 1460;
+export const LAND_AVAILABILITY_PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
+export const LAND_AVAILABILITY_SCROLL_WIDTH = 1460;
 
 export const STATUS_META = {
   available: {
@@ -19,7 +19,7 @@ export const STATUS_META = {
   },
   occupied: {
     label: "Terisi",
-    icon: "solar:key-minimalistic-square-bold-duotone",
+    icon: "solar:lock-keyhole-bold-duotone",
     palette: "warning",
   },
   maintenance: {
@@ -34,31 +34,26 @@ export const STATUS_META = {
   },
 };
 
-export const PRICE_TYPE_LABELS = {
-  harga_per_meter: "Harga per m²",
-  harga_tetap: "Harga Tetap",
-};
-
-export const ROOM_AVAILABILITY_EXPORT_COLUMNS = [
+export const LAND_AVAILABILITY_EXPORT_COLUMNS = [
   { header: "Lokasi", key: "location_name", width: 26, pdfWidth: 24 },
-  { header: "Ruangan", key: "room_number", width: 18, pdfWidth: 20 },
-  { header: "Lantai", key: "room_floor", width: 16, pdfWidth: 12 },
+  { header: "Sektor", key: "sector_name", width: 22, pdfWidth: 22 },
+  { header: "Lahan", key: "stall_number", width: 18, pdfWidth: 18 },
   { header: "Status", key: "status_label", width: 18, pdfWidth: 17 },
-  { header: "Dipakai Oleh", key: "used_by", width: 28, pdfWidth: 26 },
-  { header: "No. Dokumen/Kontrak", key: "usage_number", width: 26, pdfWidth: 26 },
+  { header: "Dipakai Oleh", key: "used_by", width: 28, pdfWidth: 27 },
+  { header: "Nomor Dokumen", key: "document_number", width: 26, pdfWidth: 27 },
   { header: "Masa Berlaku", key: "usage_period", width: 24, pdfWidth: 24 },
-  { header: "Panjang", key: "room_length", width: 14, pdfWidth: 12 },
-  { header: "Lebar", key: "room_width", width: 14, pdfWidth: 11 },
-  { header: "Luas", key: "room_area", width: 14, pdfWidth: 12 },
+  { header: "Jenis Dagangan", key: "commodity_type", width: 20, pdfWidth: 22 },
+  { header: "Panjang", key: "stall_length", width: 14, pdfWidth: 12 },
+  { header: "Lebar", key: "stall_width", width: 14, pdfWidth: 11 },
+  { header: "Luas", key: "stall_area", width: 14, pdfWidth: 12 },
   {
-    header: "Harga per m2",
+    header: "Harga per m²",
     key: "price_per_m2",
     width: 18,
     type: "currency",
     pdfWidth: 22,
   },
-  { header: "Tipe Harga", key: "price_type_label", width: 18, pdfWidth: 18 },
-  { header: "Catatan", key: "notes", width: 28, pdfWidth: 40 },
+  { header: "Catatan", key: "notes", width: 30, pdfWidth: 41 },
 ].map((column) => ({
   pdfFontSize: 6.4,
   pdfCellPadding: 1.2,
@@ -67,12 +62,11 @@ export const ROOM_AVAILABILITY_EXPORT_COLUMNS = [
 
 const normalizeText = (value) => String(value || "").toLowerCase();
 
+const compareText = (a, b) => String(a || "").localeCompare(String(b || ""));
+
 export const getStatusLabel = (status) => STATUS_META[status]?.label || "-";
 
-export const getPriceTypeLabel = (priceType) =>
-  PRICE_TYPE_LABELS[priceType] || priceType || "-";
-
-export const filterRoomAvailabilityRows = (rows = [], searchText = "") => {
+export const filterLandAvailabilityRows = (rows = [], searchText = "") => {
   const keyword = normalizeText(searchText);
   if (!keyword) return rows;
 
@@ -80,21 +74,20 @@ export const filterRoomAvailabilityRows = (rows = [], searchText = "") => {
     [
       row.location_name,
       row.location_code,
-      row.room_number,
-      row.room_floor,
+      row.sector_name,
+      row.sector_code,
+      row.stall_number,
       row.status,
       getStatusLabel(row.status),
-      row.price_type,
-      getPriceTypeLabel(row.price_type),
       row.notes,
       row.used_by,
       row.used_document_number,
-      row.used_contract_number,
       row.used_start_date,
       row.used_end_date,
-      row.room_length,
-      row.room_width,
-      row.room_area,
+      row.commodity_type,
+      row.stall_length,
+      row.stall_width,
+      row.stall_area,
       row.price_per_m2,
     ].some((value) => normalizeText(value).includes(keyword)),
   );
@@ -107,36 +100,30 @@ const formatUsagePeriod = (startDate, endDate) => {
   return `${moment(startDate).format("DD MMM YYYY")} s/d ${moment(endDate).format("DD MMM YYYY")}`;
 };
 
-export const buildRoomAvailabilityExportRows = (rows = []) =>
-  rows.map((row) => ({
-    location_name: row.location_name || "-",
-    room_number: row.room_number ? `Ruangan ${row.room_number}` : "-",
-    room_floor: row.room_floor || "-",
-    status_label: getStatusLabel(row.status),
-    used_by: row.used_by || "-",
-    usage_number: row.used_by ? getUsageNumberLabel(row) : "-",
-    usage_period: formatUsagePeriod(row.used_start_date, row.used_end_date),
-    room_length: formatNumber(row.room_length),
-    room_width: formatNumber(row.room_width),
-    room_area: `${formatNumber(row.room_area)} m²`,
-    price_per_m2: Number(row.price_per_m2 || 0),
-    price_type_label: getPriceTypeLabel(row.price_type),
-    notes: row.notes || "-",
-  }));
-
-const compareText = (a, b) => String(a || "").localeCompare(String(b || ""));
-
-function getUsageNumberLabel(record) {
-  if (record.used_contract_number) {
-    return `No. Kontrak: ${record.used_contract_number}`;
-  }
-
+const getDocumentNumberLabel = (record) => {
   if (record.used_document_number) {
     return `No. Dokumen: ${record.used_document_number}`;
   }
 
-  return "Kontrak aktif";
-}
+  return "Dokumen belum dibuat";
+};
+
+export const buildLandAvailabilityExportRows = (rows = []) =>
+  rows.map((row) => ({
+    location_name: row.location_name || "-",
+    sector_name: row.sector_name || "-",
+    stall_number: row.stall_number ? `Lahan ${row.stall_number}` : "-",
+    status_label: getStatusLabel(row.status),
+    used_by: row.used_by || "-",
+    document_number: row.used_by ? getDocumentNumberLabel(row) : "-",
+    usage_period: formatUsagePeriod(row.used_start_date, row.used_end_date),
+    commodity_type: row.commodity_type || "-",
+    stall_length: formatNumber(row.stall_length),
+    stall_width: formatNumber(row.stall_width),
+    stall_area: `${formatNumber(row.stall_area)} m²`,
+    price_per_m2: Number(row.price_per_m2 || 0),
+    notes: row.notes || "-",
+  }));
 
 const compactChipSx = {
   width: "fit-content",
@@ -148,20 +135,20 @@ const compactChipSx = {
   },
 };
 
-export const createRoomAvailabilityReportColumns = ({ theme, onOpenNotes }) => [
+export const createLandAvailabilityReportColumns = ({ theme, onOpenNotes }) => [
   {
     title: "No",
     width: 72,
     align: "center",
   },
   {
-    title: "Lokasi & Ruangan",
+    title: "Lokasi, Sektor & Lahan",
     dataIndex: "location_name",
-    width: 300,
+    width: 330,
     sorter: (a, b) =>
       compareText(
-        `${a.location_name || ""} ${a.room_number || ""}`,
-        `${b.location_name || ""} ${b.room_number || ""}`,
+        `${a.location_name || ""} ${a.sector_name || ""} ${a.stall_number || ""}`,
+        `${b.location_name || ""} ${b.sector_name || ""} ${b.stall_number || ""}`,
       ),
     render: (_, record) => (
       <Stack spacing={0.65} sx={{ minWidth: 0 }}>
@@ -170,11 +157,11 @@ export const createRoomAvailabilityReportColumns = ({ theme, onOpenNotes }) => [
         </Typography>
         <Stack direction="row" spacing={0.75} useFlexGap flexWrap="wrap">
           <CompactInfoChip
-            label={`Ruangan ${record.room_number || "-"}`}
+            label={record.sector_name || "-"}
             color={theme.palette.primary.main}
           />
           <CompactInfoChip
-            label={record.room_floor || "Tanpa Lantai"}
+            label={`Lahan ${record.stall_number || "-"}`}
             color={theme.palette.info.main}
           />
         </Stack>
@@ -182,18 +169,17 @@ export const createRoomAvailabilityReportColumns = ({ theme, onOpenNotes }) => [
     ),
   },
   {
-    title: "Ukuran Ruangan",
-    dataIndex: "room_area",
+    title: "Ukuran Lahan",
+    dataIndex: "stall_area",
     width: 210,
-    sorter: (a, b) => Number(a.room_area || 0) - Number(b.room_area || 0),
+    sorter: (a, b) => Number(a.stall_area || 0) - Number(b.stall_area || 0),
     render: (_, record) => (
       <Stack spacing={0.35}>
         <Typography sx={{ fontWeight: 700, fontSize: 12.5 }}>
-          {formatNumber(record.room_length)} m x{" "}
-          {formatNumber(record.room_width)} m
+          {formatNumber(record.stall_length)} m x {formatNumber(record.stall_width)} m
         </Typography>
         <Typography sx={{ color: theme.ui.mutedText, fontWeight: 600, fontSize: 11.5 }}>
-          Luas {formatNumber(record.room_area)} m²
+          Luas {formatNumber(record.stall_area)} m²
         </Typography>
       </Stack>
     ),
@@ -201,7 +187,7 @@ export const createRoomAvailabilityReportColumns = ({ theme, onOpenNotes }) => [
   {
     title: "Harga",
     dataIndex: "price_per_m2",
-    width: 210,
+    width: 190,
     align: "right",
     sorter: (a, b) => Number(a.price_per_m2 || 0) - Number(b.price_per_m2 || 0),
     render: (_, record) => (
@@ -210,7 +196,7 @@ export const createRoomAvailabilityReportColumns = ({ theme, onOpenNotes }) => [
           {formatRupiah(record.price_per_m2)}
         </Typography>
         <Typography sx={{ color: theme.ui.mutedText, fontWeight: 600, fontSize: 11.5 }}>
-          {getPriceTypeLabel(record.price_type)}
+          Harga per m²
         </Typography>
       </Stack>
     ),
@@ -244,7 +230,7 @@ export const createRoomAvailabilityReportColumns = ({ theme, onOpenNotes }) => [
   {
     title: "Dipakai Oleh",
     dataIndex: "used_by",
-    width: 270,
+    width: 285,
     sorter: (a, b) => compareText(a.used_by, b.used_by),
     render: (_, record) => (
       <Stack spacing={0.35}>
@@ -259,10 +245,10 @@ export const createRoomAvailabilityReportColumns = ({ theme, onOpenNotes }) => [
         </Typography>
         {record.used_by && (
           <CompactInfoChip
-            label={getUsageNumberLabel(record)}
+            label={getDocumentNumberLabel(record)}
             color={theme.palette.primary.main}
             sx={compactChipSx}
-            />
+          />
         )}
       </Stack>
     ),
@@ -270,7 +256,7 @@ export const createRoomAvailabilityReportColumns = ({ theme, onOpenNotes }) => [
   {
     title: "Masa Berlaku",
     dataIndex: "used_start_date",
-    width: 190,
+    width: 205,
     sorter: (a, b) =>
       moment(a.used_start_date || 0).valueOf() -
       moment(b.used_start_date || 0).valueOf(),
@@ -286,11 +272,11 @@ export const createRoomAvailabilityReportColumns = ({ theme, onOpenNotes }) => [
           {formatUsagePeriod(record.used_start_date, record.used_end_date)}
         </Typography>
         {record.used_by && (
-          <Typography
-            sx={{ color: theme.ui.mutedText, fontWeight: 600, fontSize: 11 }}
-          >
-            Kontrak aktif
-          </Typography>
+          <CompactInfoChip
+            label="Izin aktif"
+            color={theme.palette.success.main}
+            sx={compactChipSx}
+          />
         )}
       </Stack>
     ),

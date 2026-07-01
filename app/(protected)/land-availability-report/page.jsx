@@ -21,40 +21,39 @@ import LoadingBackdrop from "@/app/components/loading/Backdrop";
 import Notification from "@/app/components/Notification";
 import ReportFilterPanel from "@/app/components/reports/ReportFilterPanel";
 import { useUser } from "@/app/utils/useUser";
-import RoomNotesModal from "../rooms/RoomNotesModal";
+import LandStallNotesModal from "../land-stalls/LandStallNotesModal";
 import {
   buildReportFileName,
   exportReportToExcel,
   exportReportToPDF,
 } from "@/app/utils/reportExportUtils";
 import {
-  ROOM_AVAILABILITY_EXPORT_COLUMNS,
-  ROOM_AVAILABILITY_PAGE_SIZE_OPTIONS,
-  ROOM_AVAILABILITY_SCROLL_WIDTH,
+  LAND_AVAILABILITY_EXPORT_COLUMNS,
+  LAND_AVAILABILITY_PAGE_SIZE_OPTIONS,
+  LAND_AVAILABILITY_SCROLL_WIDTH,
   STATUS_META,
-  buildRoomAvailabilityExportRows,
-  createRoomAvailabilityReportColumns,
-  filterRoomAvailabilityRows,
-  getStatusLabel,
-} from "./RoomAvailabilityReportTableColumns";
+  buildLandAvailabilityExportRows,
+  createLandAvailabilityReportColumns,
+  filterLandAvailabilityRows,
+} from "./LandAvailabilityReportTableColumns";
 
 const DEFAULT_LOADING_MESSAGE = "Loading...";
 const ALL_LOCATION = { id: "all", location_name: "Semua Lokasi" };
-const ALL_FLOOR = { id: "all", room_floor: "Semua Lantai" };
+const ALL_SECTOR = { id: "all", sector_name: "Semua Sektor" };
 const ALL_STATUS = { value: "all", label: "Semua Status" };
 
 const PAGE_BREADCRUMBS = [
   {
-    label: "Laporan Sewa Ruangan",
-    value: "reports",
+    label: "Laporan Izin Lahan",
+    value: "land-permit-reports",
     path: "#",
-    icon: "fluent:chart-multiple-16-filled",
+    icon: "solar:chart-2-bold-duotone",
   },
   {
-    label: "Ketersediaan Ruangan",
-    value: "room-availability-report",
-    path: "/room-availability-report",
-    icon: "solar:home-angle-bold-duotone",
+    label: "Ketersediaan Lahan",
+    value: "land-availability-report",
+    path: "/land-availability-report",
+    icon: "healthicons:market-stall",
   },
 ];
 
@@ -85,22 +84,22 @@ const buildSummary = (rows = []) => ({
   unavailable: rows.filter((row) => row.status === "unavailable").length,
 });
 
-const getFilterInfo = ({ location, status, floor, total }) => [
+const getFilterInfo = ({ location, sector, status, total }) => [
   { label: "Lokasi", value: location?.location_name || "Semua Lokasi" },
+  { label: "Sektor", value: sector?.sector_name || "Semua Sektor" },
   { label: "Status", value: status?.label || "Semua Status" },
-  { label: "Lantai", value: floor?.room_floor || "Semua Lantai" },
-  { label: "Total Data", value: `${total} ruangan` },
+  { label: "Total Data", value: `${total} lahan` },
 ];
 
 const getExportSummaryInfo = (summary) => [
-  { label: "Tersedia", value: `${summary.available} ruangan` },
-  { label: "Terisi", value: `${summary.occupied} ruangan` },
-  { label: "Maintenance", value: `${summary.maintenance} ruangan` },
-  { label: "Tidak Layak", value: `${summary.unavailable} ruangan` },
+  { label: "Tersedia", value: `${summary.available} lahan` },
+  { label: "Terisi", value: `${summary.occupied} lahan` },
+  { label: "Maintenance", value: `${summary.maintenance} lahan` },
+  { label: "Tidak Layak", value: `${summary.unavailable} lahan` },
 ];
 
-const getExportFilterName = ({ location, status, floor }) =>
-  [location?.location_name, status?.label, floor?.room_floor]
+const getExportFilterName = ({ location, sector, status }) =>
+  [location?.location_name, sector?.sector_name, status?.label]
     .filter(Boolean)
     .join("_");
 
@@ -108,19 +107,19 @@ function FilterPanel({
   locationOptions,
   draftLocation,
   onLocationChange,
+  sectorOptions,
+  draftSector,
+  onSectorChange,
   draftStatus,
   onStatusChange,
-  floorOptions,
-  draftFloor,
-  onFloorChange,
   onApply,
   onReset,
   isLoading,
 }) {
   return (
     <ReportFilterPanel
-      title="Filter Ketersediaan Ruangan"
-      description="Pilih lokasi, status, dan lantai untuk melihat kondisi ruangan saat ini."
+      title="Filter Ketersediaan Lahan"
+      description="Pilih lokasi, sektor, dan status untuk melihat kondisi lahan saat ini."
       icon="solar:filter-bold-duotone"
       showDateRangeFilters={false}
       onApply={onApply}
@@ -158,6 +157,21 @@ function FilterPanel({
 
         <Autocomplete
           size="small"
+          options={sectorOptions}
+          value={draftSector}
+          disableClearable
+          getOptionLabel={(option) => option?.sector_name || ""}
+          isOptionEqualToValue={(option, value) =>
+            normalizeOptionId(option?.id) === normalizeOptionId(value?.id)
+          }
+          onChange={(_, value) => onSectorChange(value || ALL_SECTOR)}
+          renderInput={(params) => (
+            <TextField {...params} label="Sektor" placeholder="Semua Sektor" />
+          )}
+        />
+
+        <Autocomplete
+          size="small"
           options={STATUS_OPTIONS}
           value={draftStatus}
           disableClearable
@@ -165,22 +179,7 @@ function FilterPanel({
           isOptionEqualToValue={(option, value) => option?.value === value?.value}
           onChange={(_, value) => onStatusChange(value || ALL_STATUS)}
           renderInput={(params) => (
-            <TextField {...params} label="Status Ruangan" placeholder="Semua Status" />
-          )}
-        />
-
-        <Autocomplete
-          size="small"
-          options={floorOptions}
-          value={draftFloor}
-          disableClearable
-          getOptionLabel={(option) => option?.room_floor || ""}
-          isOptionEqualToValue={(option, value) =>
-            normalizeOptionId(option?.id) === normalizeOptionId(value?.id)
-          }
-          onChange={(_, value) => onFloorChange(value || ALL_FLOOR)}
-          renderInput={(params) => (
-            <TextField {...params} label="Lantai" placeholder="Semua Lantai" />
+            <TextField {...params} label="Status Lahan" placeholder="Semua Status" />
           )}
         />
       </Box>
@@ -188,22 +187,22 @@ function FilterPanel({
   );
 }
 
-export default function RoomAvailabilityReportPage() {
+export default function LandAvailabilityReportPage() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const { user } = useUser();
   const [rows, setRows] = useState([]);
   const [searchText, setSearchText] = useState("");
   const [selectedLocation, setSelectedLocation] = useState(ALL_LOCATION);
+  const [selectedSector, setSelectedSector] = useState(ALL_SECTOR);
   const [selectedStatus, setSelectedStatus] = useState(ALL_STATUS);
-  const [selectedFloor, setSelectedFloor] = useState(ALL_FLOOR);
   const [draftLocation, setDraftLocation] = useState(ALL_LOCATION);
+  const [draftSector, setDraftSector] = useState(ALL_SECTOR);
   const [draftStatus, setDraftStatus] = useState(ALL_STATUS);
-  const [draftFloor, setDraftFloor] = useState(ALL_FLOOR);
   const [pageSize, setPageSize] = useState(10);
   const [loading, setLoading] = useState(false);
   const [filterLoading, setFilterLoading] = useState(false);
-  const [selectedNotesRoom, setSelectedNotesRoom] = useState(null);
+  const [selectedNotesStall, setSelectedNotesStall] = useState(null);
   const [loadingMessage, setLoadingMessage] = useState(DEFAULT_LOADING_MESSAGE);
   const [snackbar, setSnackbar] = useState(getInitialSnackbar);
 
@@ -214,7 +213,7 @@ export default function RoomAvailabilityReportPage() {
   const fetchReport = useCallback(
     async ({
       showLoading = true,
-      message = "Mengambil laporan ketersediaan ruangan...",
+      message = "Mengambil laporan ketersediaan lahan...",
       notifySuccess = false,
     } = {}) => {
       if (!user) return;
@@ -225,22 +224,22 @@ export default function RoomAvailabilityReportPage() {
       }
 
       try {
-        const response = await axios.get("/api/report/room-availability");
+        const response = await axios.get("/api/report/land-availability");
         const nextRows = response.data?.data || [];
         setRows(nextRows);
 
         if (!nextRows.length) {
-          showSnackbar("Belum ada data ruangan yang bisa ditampilkan.", "warning");
+          showSnackbar("Belum ada data lahan yang bisa ditampilkan.", "warning");
         } else if (notifySuccess) {
           showSnackbar(
-            `Laporan ketersediaan ruangan berhasil diperbarui (${nextRows.length} data).`,
+            `Laporan ketersediaan lahan berhasil diperbarui (${nextRows.length} data).`,
           );
         }
       } catch (error) {
-        console.error("Error fetch room availability report:", error);
+        console.error("Error fetch land availability report:", error);
         showSnackbar(
           error?.response?.data?.message ||
-            "Gagal mengambil laporan ketersediaan ruangan.",
+            "Gagal mengambil laporan ketersediaan lahan.",
           "error",
         );
       } finally {
@@ -267,10 +266,15 @@ export default function RoomAvailabilityReportPage() {
       });
     });
 
-    return [ALL_LOCATION, ...Array.from(map.values()).sort((a, b) => sortByLabel(a, b, "location_name"))];
+    return [
+      ALL_LOCATION,
+      ...Array.from(map.values()).sort((a, b) =>
+        sortByLabel(a, b, "location_name"),
+      ),
+    ];
   }, [rows]);
 
-  const floorOptions = useMemo(() => {
+  const sectorOptions = useMemo(() => {
     const map = new Map();
     rows
       .filter(
@@ -279,15 +283,19 @@ export default function RoomAvailabilityReportPage() {
           normalizeOptionId(row.location_id) === normalizeOptionId(draftLocation.id),
       )
       .forEach((row) => {
-        if (!row.room_floor) return;
-        const key = row.room_floor;
-        map.set(key, {
-          id: key,
-          room_floor: row.room_floor || "-",
+        if (!row.sector_id) return;
+        map.set(row.sector_id, {
+          id: row.sector_id,
+          sector_name: row.sector_name || "-",
         });
       });
 
-    return [ALL_FLOOR, ...Array.from(map.values()).sort((a, b) => sortByLabel(a, b, "room_floor"))];
+    return [
+      ALL_SECTOR,
+      ...Array.from(map.values()).sort((a, b) =>
+        sortByLabel(a, b, "sector_name"),
+      ),
+    ];
   }, [rows, draftLocation]);
 
   const filteredRows = useMemo(() => {
@@ -295,46 +303,46 @@ export default function RoomAvailabilityReportPage() {
       const locationMatches =
         selectedLocation.id === "all" ||
         normalizeOptionId(row.location_id) === normalizeOptionId(selectedLocation.id);
+      const sectorMatches =
+        selectedSector.id === "all" ||
+        normalizeOptionId(row.sector_id) === normalizeOptionId(selectedSector.id);
       const statusMatches =
         selectedStatus.value === "all" || row.status === selectedStatus.value;
-      const floorMatches =
-        selectedFloor.id === "all" ||
-        normalizeOptionId(row.room_floor) === normalizeOptionId(selectedFloor.id);
 
-      return locationMatches && statusMatches && floorMatches;
+      return locationMatches && sectorMatches && statusMatches;
     });
 
-    return filterRoomAvailabilityRows(baseRows, searchText);
-  }, [rows, searchText, selectedLocation, selectedStatus, selectedFloor]);
+    return filterLandAvailabilityRows(baseRows, searchText);
+  }, [rows, searchText, selectedLocation, selectedSector, selectedStatus]);
 
   const summary = useMemo(() => buildSummary(filteredRows), [filteredRows]);
 
   const columns = useMemo(
     () =>
-      createRoomAvailabilityReportColumns({
+      createLandAvailabilityReportColumns({
         theme,
         isMobile,
-        onOpenNotes: setSelectedNotesRoom,
+        onOpenNotes: setSelectedNotesStall,
       }),
     [theme, isMobile],
   );
 
   const exportRows = useMemo(
-    () => buildRoomAvailabilityExportRows(filteredRows),
+    () => buildLandAvailabilityExportRows(filteredRows),
     [filteredRows],
   );
 
   const handleDraftLocationChange = (value) => {
     setDraftLocation(value);
-    setDraftFloor(ALL_FLOOR);
+    setDraftSector(ALL_SECTOR);
   };
 
   const handleApplyFilter = async () => {
-    setLoadingMessage("Menerapkan filter laporan ketersediaan ruangan...");
+    setLoadingMessage("Menerapkan filter laporan ketersediaan lahan...");
     setFilterLoading(true);
     setSelectedLocation(draftLocation);
+    setSelectedSector(draftSector);
     setSelectedStatus(draftStatus);
-    setSelectedFloor(draftFloor);
     await new Promise((resolve) => setTimeout(resolve, 220));
     setFilterLoading(false);
     setLoadingMessage(DEFAULT_LOADING_MESSAGE);
@@ -342,29 +350,29 @@ export default function RoomAvailabilityReportPage() {
 
   const handleResetFilter = () => {
     setDraftLocation(ALL_LOCATION);
+    setDraftSector(ALL_SECTOR);
     setDraftStatus(ALL_STATUS);
-    setDraftFloor(ALL_FLOOR);
     setSelectedLocation(ALL_LOCATION);
+    setSelectedSector(ALL_SECTOR);
     setSelectedStatus(ALL_STATUS);
-    setSelectedFloor(ALL_FLOOR);
     setSearchText("");
   };
 
-  const reportTitle = "Laporan Ketersediaan Ruangan";
+  const reportTitle = "Laporan Ketersediaan Lahan";
   const reportSubtitle =
-    "Daftar kondisi ruangan per lokasi, lantai, status, dimensi, harga, dan catatan master data.";
+    "Daftar kondisi lahan per lokasi, sektor, status, ukuran, harga, dan catatan master data.";
   const filterInfo = getFilterInfo({
     location: selectedLocation,
+    sector: selectedSector,
     status: selectedStatus,
-    floor: selectedFloor,
     total: filteredRows.length,
   });
   const summaryInfo = getExportSummaryInfo(summary);
   const today = moment().format("YYYY-MM-DD");
   const exportFilterName = getExportFilterName({
     location: selectedLocation,
+    sector: selectedSector,
     status: selectedStatus,
-    floor: selectedFloor,
   });
 
   const handleExportExcel = () => {
@@ -372,17 +380,17 @@ export default function RoomAvailabilityReportPage() {
       title: reportTitle,
       subtitle: reportSubtitle,
       filterInfo,
-      sheetName: "Ketersediaan Ruangan",
+      summaryInfo,
+      sheetName: "Ketersediaan Lahan",
       fileName: buildReportFileName({
-        prefix: "Laporan_Ketersediaan_Ruangan",
+        prefix: "Laporan_Ketersediaan_Lahan",
         filterName: exportFilterName,
         startDate: today,
         endDate: today,
         extension: "xlsx",
       }),
       rows: exportRows,
-      columns: ROOM_AVAILABILITY_EXPORT_COLUMNS,
-      summaryInfo,
+      columns: LAND_AVAILABILITY_EXPORT_COLUMNS,
     });
   };
 
@@ -391,16 +399,16 @@ export default function RoomAvailabilityReportPage() {
       title: reportTitle,
       subtitle: reportSubtitle,
       filterInfo,
+      summaryInfo,
       fileName: buildReportFileName({
-        prefix: "Laporan_Ketersediaan_Ruangan",
+        prefix: "Laporan_Ketersediaan_Lahan",
         filterName: exportFilterName,
         startDate: today,
         endDate: today,
         extension: "pdf",
       }),
       rows: exportRows,
-      columns: ROOM_AVAILABILITY_EXPORT_COLUMNS,
-      summaryInfo,
+      columns: LAND_AVAILABILITY_EXPORT_COLUMNS,
       printedAtFooter: true,
       showLogoMark: true,
     });
@@ -419,9 +427,9 @@ export default function RoomAvailabilityReportPage() {
     >
       <PageHeader
         breadcrumbs={PAGE_BREADCRUMBS}
-        title="Ketersediaan Ruangan"
-        description="Pantau kondisi ruangan per lokasi, lantai, status, dimensi, harga, dan catatan master data ruangan."
-        icon="solar:home-angle-bold-duotone"
+        title="Ketersediaan Lahan"
+        description="Pantau kondisi lahan izin per lokasi, sektor, status, ukuran, harga, dan catatan master data lahan."
+        icon="healthicons:market-stall"
         action={
           <Button
             variant="contained"
@@ -451,9 +459,9 @@ export default function RoomAvailabilityReportPage() {
         }}
       >
         <SummaryStatCard
-          label="Total Ruangan"
+          label="Total Lahan"
           value={summary.total}
-          icon="solar:home-angle-bold-duotone"
+          icon="healthicons:market-stall"
           color={theme.palette.primary.main}
         />
         <SummaryStatCard
@@ -486,26 +494,26 @@ export default function RoomAvailabilityReportPage() {
         locationOptions={locationOptions}
         draftLocation={draftLocation}
         onLocationChange={handleDraftLocationChange}
+        sectorOptions={sectorOptions}
+        draftSector={draftSector}
+        onSectorChange={setDraftSector}
         draftStatus={draftStatus}
         onStatusChange={setDraftStatus}
-        floorOptions={floorOptions}
-        draftFloor={draftFloor}
-        onFloorChange={setDraftFloor}
         onApply={handleApplyFilter}
         onReset={handleResetFilter}
         isLoading={loading}
       />
 
       <DataTableShell
-        title="Daftar Ketersediaan Ruangan"
-        description={`${filteredRows.length} dari ${rows.length} ruangan ditampilkan`}
+        title="Daftar Ketersediaan Lahan"
+        description={`${filteredRows.length} dari ${rows.length} lahan ditampilkan`}
         searchValue={searchText}
-        searchPlaceholder="Cari lokasi, ruangan, lantai, status, harga, atau catatan"
+        searchPlaceholder="Cari lokasi, sektor, lahan, status, harga, atau catatan"
         onSearchChange={setSearchText}
         headerAction={
           <TableExportButton
             disabled={!filteredRows.length}
-            ariaLabel="Export laporan ketersediaan ruangan"
+            ariaLabel="Export laporan ketersediaan lahan"
             items={[
               {
                 label: "Export Excel",
@@ -526,17 +534,17 @@ export default function RoomAvailabilityReportPage() {
           columns={columns}
           dataSource={filteredRows}
           pageSize={pageSize}
-          pageSizeOptions={ROOM_AVAILABILITY_PAGE_SIZE_OPTIONS}
+          pageSizeOptions={LAND_AVAILABILITY_PAGE_SIZE_OPTIONS}
           onPageSizeChange={setPageSize}
-          scroll={{ x: ROOM_AVAILABILITY_SCROLL_WIDTH, y: 560 }}
+          scroll={{ x: LAND_AVAILABILITY_SCROLL_WIDTH, y: 560 }}
           pagination={{ total: filteredRows.length }}
         />
       </DataTableShell>
 
-      <RoomNotesModal
-        open={Boolean(selectedNotesRoom)}
-        onClose={() => setSelectedNotesRoom(null)}
-        selectedData={selectedNotesRoom}
+      <LandStallNotesModal
+        open={Boolean(selectedNotesStall)}
+        onClose={() => setSelectedNotesStall(null)}
+        selectedData={selectedNotesStall}
       />
 
       <LoadingBackdrop message={loadingMessage} open={loading || filterLoading} />

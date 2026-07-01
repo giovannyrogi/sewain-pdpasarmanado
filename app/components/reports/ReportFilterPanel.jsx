@@ -38,6 +38,7 @@ const QUICK_FILTERS = [
  */
 export default function ReportFilterPanel({
   children,
+  primaryFilters,
   showDateRangeFilters = true,
   range,
   selectedPreset,
@@ -188,31 +189,50 @@ export default function ReportFilterPanel({
         <Stack spacing={{ xs: 2.25, sm: 2 }}>
           {showDateRangeFilters && (
             <>
-              <Stack spacing={{ xs: 1.25, sm: 1 }}>
-                <Typography sx={{ fontWeight: 700, fontSize: 13 }}>
-                  {rangeLabelTitle}
-                </Typography>
-                <Button
-                  fullWidth={isSmall}
-                  variant={isCustomActive ? "contained" : "outlined"}
-                  onClick={handleCustomClick}
-                  startIcon={<Icon icon="solar:calendar-date-bold-duotone" />}
-                  sx={{
-                    width: { xs: "100%", sm: "fit-content" },
-                    maxWidth: "100%",
-                    minHeight: 38,
-                    borderRadius: 2,
-                    px: 1.5,
-                    fontWeight: 700,
-                    justifyContent: { xs: "center", sm: "flex-start" },
-                    color: isCustomActive
-                      ? theme.palette.primary.contrastText
-                      : theme.palette.primary.main,
-                  }}
-                >
-                  {rangeLabel}
-                </Button>
-              </Stack>
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: primaryFilters
+                    ? {
+                        xs: "1fr",
+                        md: "minmax(240px, max-content) minmax(0, 1fr)",
+                      }
+                    : "1fr",
+                  columnGap: { xs: 0, md: 1.5 },
+                  rowGap: { xs: 2.25, sm: 2 },
+                  alignItems: "end",
+                }}
+              >
+                <Stack spacing={{ xs: 1.25, sm: 1 }}>
+                  <Typography sx={{ fontWeight: 700, fontSize: 13 }}>
+                    {rangeLabelTitle}
+                  </Typography>
+                  <Button
+                    fullWidth={isSmall}
+                    variant={isCustomActive ? "contained" : "outlined"}
+                    onClick={handleCustomClick}
+                    startIcon={<Icon icon="solar:calendar-date-bold-duotone" />}
+                    sx={{
+                      width: { xs: "100%", sm: "fit-content" },
+                      maxWidth: "100%",
+                      minHeight: 38,
+                      borderRadius: 2,
+                      px: 1.5,
+                      fontWeight: 700,
+                      justifyContent: { xs: "center", sm: "flex-start" },
+                      color: isCustomActive
+                        ? theme.palette.primary.contrastText
+                        : theme.palette.primary.main,
+                    }}
+                  >
+                    {rangeLabel}
+                  </Button>
+                </Stack>
+
+                {primaryFilters && (
+                  <Box sx={{ width: "100%", minWidth: 0 }}>{primaryFilters}</Box>
+                )}
+              </Box>
 
               <Stack spacing={{ xs: 1.5, sm: 1.25 }}>
                 <Typography sx={{ fontWeight: 700, fontSize: 13 }}>

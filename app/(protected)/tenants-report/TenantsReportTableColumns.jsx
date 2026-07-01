@@ -275,27 +275,33 @@ export const createTenantReportColumns = ({ theme, isMobile }) => [
 ];
 
 export const TENANT_EXPORT_COLUMNS = [
-  { header: "Nama Penyewa", key: "tenant_name", width: 26 },
-  { header: "Tanggal Pembayaran", key: "payment_date", width: 18 },
-  { header: "Ruangan", key: "room_number", width: 14 },
-  { header: "Masa Berlaku", key: "masa_berlaku", width: 24 },
-  { header: "Ukuran", key: "ukuran_m2", width: 16 },
-  { header: "Harga Sewa", key: "harga_m2", type: "currency" },
-  { header: "Kontrak Murni", key: "kontrak", type: "currency" },
-  { header: "JTU", key: "jtu", type: "currency" },
+  { header: "Nama Penyewa", key: "tenant_name", width: 26, pdfWidth: 28 },
+  { header: "Tanggal Pembayaran", key: "payment_date", width: 18, pdfWidth: 19 },
+  { header: "Ruangan", key: "room_number", width: 14, pdfWidth: 15 },
+  { header: "Masa Berlaku", key: "masa_berlaku", width: 24, pdfWidth: 24 },
+  { header: "Ukuran", key: "ukuran_m2", width: 16, pdfWidth: 15 },
+  { header: "Harga Sewa", key: "harga_m2", type: "currency", pdfWidth: 19 },
+  { header: "Kontrak Murni", key: "kontrak", type: "currency", pdfWidth: 20 },
+  { header: "JTU", key: "jtu", type: "currency", pdfWidth: 17 },
   {
     header: "Kontrak + JTU",
     key: "total_kontrak_tanpa_ppn",
     type: "currency",
     width: 20,
+    pdfWidth: 21,
   },
-  { header: "PPN 11%", key: "total_ppn", type: "currency" },
-  { header: "Total + PPN", key: "total_plus_ppn", type: "currency" },
-  { header: "PPH 10%", key: "total_pph", type: "currency" },
+  { header: "PPN 11%", key: "total_ppn", type: "currency", pdfWidth: 18 },
+  { header: "Total + PPN", key: "total_plus_ppn", type: "currency", pdfWidth: 20 },
+  { header: "PPH 10%", key: "total_pph", type: "currency", pdfWidth: 18 },
   {
     header: "Total Bersih",
     key: "total_after_pph_and_no_ppn",
     type: "currency",
+    pdfWidth: 20,
   },
-  { header: "Status", key: "keterangan", width: 18 },
-];
+  { header: "Status", key: "keterangan", width: 18, pdfWidth: 18 },
+].map((column) => ({
+  pdfFontSize: 6.4,
+  pdfCellPadding: 1.2,
+  ...column,
+}));

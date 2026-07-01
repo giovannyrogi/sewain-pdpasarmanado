@@ -66,16 +66,16 @@ export const filterLandPermitExpiryRows = (rows, searchText) => {
 };
 
 export const LAND_PERMIT_EXPIRY_EXPORT_COLUMNS = [
-  { header: "Nama Pedagang", key: "tenant_name", width: 26 },
-  { header: "NIK", key: "tenant_nik", width: 22 },
-  { header: "Nomor Dokumen Izin", key: "permit_document_number", width: 24 },
-  { header: "Lokasi", key: "location_name", width: 24 },
-  { header: "Sektor", key: "sector_name", width: 20 },
-  { header: "Lahan", key: "stall_number", width: 16 },
-  { header: "Jenis Dagangan", key: "commodity_type", width: 20 },
-  { header: "Mulai Izin", key: "start_date", width: 18 },
-  { header: "Akhir Izin", key: "end_date", width: 18 },
-  { header: "Status", key: "status_label", width: 24 },
+  { header: "Nama Pedagang", key: "tenant_name", width: 26, pdfWidth: 34 },
+  { header: "NIK", key: "tenant_nik", width: 22, pdfWidth: 25 },
+  { header: "Nomor Dokumen Izin", key: "permit_document_number", width: 24, pdfWidth: 34 },
+  { header: "Lokasi", key: "location_name", width: 24, pdfWidth: 30 },
+  { header: "Sektor", key: "sector_name", width: 20, pdfWidth: 24 },
+  { header: "Lahan", key: "stall_number", width: 16, pdfWidth: 16 },
+  { header: "Jenis Dagangan", key: "commodity_type", width: 20, pdfWidth: 24 },
+  { header: "Mulai Izin", key: "start_date", width: 18, pdfWidth: 22 },
+  { header: "Akhir Izin", key: "end_date", width: 18, pdfWidth: 22 },
+  { header: "Status", key: "status_label", width: 24, pdfWidth: 28 },
 ];
 
 export const buildLandPermitExpiryExportRows = (rows = []) =>

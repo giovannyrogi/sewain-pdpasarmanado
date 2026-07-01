@@ -15,102 +15,100 @@ import {
   exportReportToPDF,
 } from "@/app/utils/reportExportUtils";
 import {
+  LAND_PERMIT_INCOME_DETAIL_EXPORT_COLUMNS,
+  LAND_PERMIT_INCOME_DETAIL_SCROLL_WIDTH,
+  buildLandPermitIncomeDetailExportRows,
+  buildLandPermitIncomeDetailTotalRow,
+  createLandPermitIncomeDetailColumns,
+  filterLandPermitIncomeDetailRows,
+} from "./LandPermitIncomeDetailColumns";
+import {
   LAND_PERMIT_INCOME_PAGE_SIZE_OPTIONS,
   LAND_PERMIT_INCOME_ROOT_BREADCRUMB,
   LandPermitIncomeFilterFields,
   landPermitIncomePageSx,
   useLandPermitIncomeReport,
 } from "@/app/components/reports/LandPermitIncomeReportShared";
-import {
-  LAND_PERMIT_INCOME_RECAP_EXPORT_COLUMNS,
-  LAND_PERMIT_INCOME_RECAP_SCROLL_WIDTH,
-  buildLandPermitIncomeRecapExportRows,
-  buildLandPermitIncomeRecapTotalRow,
-  createLandPermitIncomeRecapColumns,
-  filterLandPermitIncomeRecapRows,
-} from "./LandPermitIncomeRecapColumns";
 
 const PAGE_BREADCRUMBS = [
   LAND_PERMIT_INCOME_ROOT_BREADCRUMB,
   {
-    label: "Rekap Pendapatan",
-    value: "land-permit-income-report",
-    path: "/land-permit-income-report",
-    icon: "solar:wallet-money-bold-duotone",
+    label: "Detail Pendapatan",
+    value: "land-permit-income-detail-report",
+    path: "/land-permit-income-detail-report",
+    icon: "solar:document-text-bold-duotone",
   },
 ];
 
-export default function LandPermitIncomeReportPage() {
+export default function LandPermitIncomeDetailReportPage() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-  const report = useLandPermitIncomeReport({ enableSectorFilter: false });
-  const [recapSearch, setRecapSearch] = useState("");
-  const [recapPageSize, setRecapPageSize] = useState(10);
+  const report = useLandPermitIncomeReport();
+  const [detailSearch, setDetailSearch] = useState("");
+  const [detailPageSize, setDetailPageSize] = useState(10);
 
-  const filteredRecapRows = useMemo(
-    () => filterLandPermitIncomeRecapRows(report.recapRows, recapSearch),
-    [report.recapRows, recapSearch],
+  const filteredDetailRows = useMemo(
+    () => filterLandPermitIncomeDetailRows(report.detailRows, detailSearch),
+    [report.detailRows, detailSearch],
   );
 
-  const recapSummaryRow = useMemo(
+  const detailSummaryRow = useMemo(
     () =>
-      filteredRecapRows.length
-        ? buildLandPermitIncomeRecapTotalRow(filteredRecapRows)
+      filteredDetailRows.length
+        ? buildLandPermitIncomeDetailTotalRow(filteredDetailRows)
         : null,
-    [filteredRecapRows],
+    [filteredDetailRows],
   );
 
-  const recapColumns = useMemo(
-    () => createLandPermitIncomeRecapColumns({ isMobile }),
+  const detailColumns = useMemo(
+    () => createLandPermitIncomeDetailColumns({ isMobile }),
     [isMobile],
   );
 
   const handleResetFilter = async () => {
-    setRecapSearch("");
+    setDetailSearch("");
     await report.handleResetFilter();
   };
 
   const handleExport = async (type) => {
-    if (!report.hasSearched || !filteredRecapRows.length) {
+    if (!report.hasSearched || !filteredDetailRows.length) {
       report.setSnackbar({
         open: true,
-        message: "Cari data rekap pendapatan terlebih dahulu sebelum export.",
+        message: "Cari data detail pendapatan terlebih dahulu sebelum export.",
         severity: "warning",
       });
       return;
     }
 
-    const recapTotal = buildLandPermitIncomeRecapTotalRow(filteredRecapRows);
+    const detailTotal = buildLandPermitIncomeDetailTotalRow(filteredDetailRows);
     const fileName = (extension) =>
       buildReportFileName({
-        prefix: "laporan-rekap-pendapatan-izin-lahan",
+        prefix: "laporan-detail-pendapatan-izin-lahan",
         startDate: report.range.startDate,
         endDate: report.range.endDate,
-        filterName: report.selectedLocationLabel,
+        filterName: `${report.selectedLocationLabel}-${report.selectedSectorLabel}`,
         extension,
       });
 
     const exportPayload = {
-      title: "Laporan Rekap Pendapatan Izin Lahan",
-      subtitle: "Rekap pendapatan izin lahan berdasarkan lokasi.",
-      filterInfo: report.exportFilterInfo.filter(
-        (item) => item.label !== "Sektor",
-      ),
+      title: "Laporan Detail Pendapatan Izin Lahan",
+      subtitle: "Detail transaksi pembayaran izin lahan yang sudah divalidasi.",
+      filterInfo: report.exportFilterInfo,
       fileName: fileName(type === "excel" ? "xlsx" : "pdf"),
-      rows: buildLandPermitIncomeRecapExportRows(filteredRecapRows),
-      columns: LAND_PERMIT_INCOME_RECAP_EXPORT_COLUMNS,
+      rows: buildLandPermitIncomeDetailExportRows(filteredDetailRows),
+      columns: LAND_PERMIT_INCOME_DETAIL_EXPORT_COLUMNS,
       totalsRow: {
         no: "TOTAL",
-        trader_count: recapTotal.trader_count,
-        total_income: recapTotal.total_income,
+        total_land_price: detailTotal.total_land_price,
+        total_payment: detailTotal.total_payment,
       },
     };
 
-    await report.runWithLoading("Menyiapkan export rekap pendapatan...", async () => {
+    await report.runWithLoading("Menyiapkan export detail pendapatan...", async () => {
       if (type === "excel") {
         await exportReportToExcel({
           ...exportPayload,
-          sheetName: "Rekap Pendapatan",
+          sheetName: "Detail Pendapatan",
         });
         return;
       }
@@ -123,10 +121,10 @@ export default function LandPermitIncomeReportPage() {
     <Box sx={landPermitIncomePageSx(theme)}>
       <Stack spacing={{ xs: 1.5, sm: 2 }}>
         <PageHeader
-          title="Rekap Pendapatan"
-          description="Pantau ringkasan pendapatan izin lahan berdasarkan lokasi."
+          title="Detail Pendapatan"
+          description="Pantau transaksi pendapatan izin lahan yang sudah divalidasi Divisi Keuangan."
           breadcrumbs={PAGE_BREADCRUMBS}
-          icon="solar:wallet-money-bold-duotone"
+          icon="solar:document-text-bold-duotone"
         />
 
         <ReportFilterPanel
@@ -147,24 +145,23 @@ export default function LandPermitIncomeReportPage() {
               selectedSectorId={report.selectedSectorId}
               onLocationChange={report.handleLocationChange}
               onSectorChange={report.setSelectedSectorId}
-              showSector={false}
             />
           }
         />
 
         <DataTableShell
-          title="Rekap Pendapatan"
+          title="Detail Pendapatan"
           description={
             report.hasSearched
-              ? `${filteredRecapRows.length} rekap ditampilkan`
-              : "Klik Cari Data untuk menampilkan rekap pendapatan."
+              ? `${filteredDetailRows.length} transaksi ditampilkan`
+              : "Klik Cari Data untuk menampilkan detail pendapatan."
           }
-          searchValue={recapSearch}
-          searchPlaceholder="Cari lokasi"
-          onSearchChange={setRecapSearch}
+          searchValue={detailSearch}
+          searchPlaceholder="Cari pedagang, NIK, dokumen, lokasi, sektor, atau lahan"
+          onSearchChange={setDetailSearch}
           headerAction={
             <TableExportButton
-              disabled={!report.hasSearched || !filteredRecapRows.length}
+              disabled={!report.hasSearched || !filteredDetailRows.length}
               items={[
                 {
                   label: "Export Excel",
@@ -182,13 +179,13 @@ export default function LandPermitIncomeReportPage() {
         >
           <ReusableAntTable
             rowKey="key"
-            columns={recapColumns}
-            dataSource={filteredRecapRows}
-            pageSize={recapPageSize}
-            onPageSizeChange={setRecapPageSize}
+            columns={detailColumns}
+            dataSource={filteredDetailRows}
+            pageSize={detailPageSize}
+            onPageSizeChange={setDetailPageSize}
             pageSizeOptions={LAND_PERMIT_INCOME_PAGE_SIZE_OPTIONS}
-            scroll={{ x: LAND_PERMIT_INCOME_RECAP_SCROLL_WIDTH }}
-            summaryRow={recapSummaryRow}
+            scroll={{ x: LAND_PERMIT_INCOME_DETAIL_SCROLL_WIDTH }}
+            summaryRow={detailSummaryRow}
           />
         </DataTableShell>
       </Stack>

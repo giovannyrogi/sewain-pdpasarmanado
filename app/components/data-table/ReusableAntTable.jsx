@@ -75,7 +75,9 @@ export default function ReusableAntTable({
       return {
         ...column,
         render: (_value, record, index) =>
-          record?.__isTotal ? "" : startIndex + index + 1,
+          record?.__isTotal
+            ? record?.summary_label || ""
+            : startIndex + index + 1,
       };
     });
   }, [columns, currentPage, effectivePageSize, pagination]);
@@ -101,7 +103,7 @@ export default function ReusableAntTable({
     "--reusable-fixed-hover-bg":
       muiTheme.palette.mode === "dark" ? "#181818" : "#f5f6f8",
     "--reusable-fixed-total-bg":
-      muiTheme.palette.mode === "dark" ? "#21190c" : "#fff3f3",
+      muiTheme.palette.mode === "dark" ? "#111111" : "#ffffff",
     "--reusable-row-bg":
       muiTheme.palette.mode === "dark" ? "#111111" : "#ffffff",
     "--reusable-row-hover-bg":
@@ -159,7 +161,7 @@ export default function ReusableAntTable({
     "& .ant-table-tbody > tr.report-total-row > td": {
       background: "var(--reusable-fixed-total-bg) !important",
       backgroundColor: "var(--reusable-fixed-total-bg) !important",
-      borderTop: `1px solid ${muiTheme.palette.primary.main} !important`,
+      borderTop: `1px solid ${muiTheme.palette.divider} !important`,
       fontWeight: "700 !important",
     },
     "& .ant-table-tbody > tr.report-total-row > td.ant-table-cell-fix-left, & .ant-table-tbody > tr.report-total-row > td.ant-table-cell-fix-right": {
@@ -169,7 +171,7 @@ export default function ReusableAntTable({
     "& .ant-table-summary > tr > td": {
       background: "var(--reusable-fixed-total-bg) !important",
       backgroundColor: "var(--reusable-fixed-total-bg) !important",
-      borderTop: `1px solid ${muiTheme.palette.primary.main} !important`,
+      borderTop: `1px solid ${muiTheme.palette.divider} !important`,
       fontWeight: "700 !important",
     },
     "& .ant-table-summary > tr > td.ant-table-cell-fix-left, & .ant-table-summary > tr > td.ant-table-cell-fix-right": {

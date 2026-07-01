@@ -69,16 +69,16 @@ export const filterContractExpiryRows = (rows, searchText) => {
 };
 
 export const CONTRACT_EXPIRY_EXPORT_COLUMNS = [
-  { header: "Nama Penyewa", key: "tenant_name", width: 26 },
-  { header: "NIK", key: "tenant_nik", width: 22 },
-  { header: "Nomor Dokumen", key: "document_number", width: 18 },
-  { header: "Nomor Kontrak", key: "contract_number", width: 24 },
-  { header: "Lokasi", key: "location_name", width: 24 },
-  { header: "Ruangan", key: "room_number", width: 16 },
-  { header: "Lantai", key: "floor", width: 14 },
-  { header: "Mulai Kontrak", key: "start_date", width: 18 },
-  { header: "Akhir Kontrak", key: "end_date", width: 18 },
-  { header: "Status", key: "status_label", width: 24 },
+  { header: "Nama Penyewa", key: "tenant_name", width: 26, pdfWidth: 34 },
+  { header: "NIK", key: "tenant_nik", width: 22, pdfWidth: 25 },
+  { header: "Nomor Dokumen", key: "document_number", width: 18, pdfWidth: 24 },
+  { header: "Nomor Kontrak", key: "contract_number", width: 24, pdfWidth: 34 },
+  { header: "Lokasi", key: "location_name", width: 24, pdfWidth: 30 },
+  { header: "Ruangan", key: "room_number", width: 16, pdfWidth: 20 },
+  { header: "Lantai", key: "floor", width: 14, pdfWidth: 14 },
+  { header: "Mulai Kontrak", key: "start_date", width: 18, pdfWidth: 22 },
+  { header: "Akhir Kontrak", key: "end_date", width: 18, pdfWidth: 22 },
+  { header: "Status", key: "status_label", width: 24, pdfWidth: 28 },
 ];
 
 export const buildContractExpiryExportRows = (rows = []) =>

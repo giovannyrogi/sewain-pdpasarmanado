@@ -90,17 +90,17 @@ export const filterPaymentDueRows = (rows, searchText) => {
 };
 
 export const PAYMENT_DUE_EXPORT_COLUMNS = [
-  { header: "Nama Penyewa", key: "tenant_name", width: 26 },
-  { header: "NIK", key: "tenant_nik", width: 22 },
-  { header: "No. Telepon", key: "tenant_phone", width: 18 },
-  { header: "Lokasi", key: "location_name", width: 24 },
-  { header: "Ruangan", key: "room_number", width: 16 },
-  { header: "Lantai", key: "floor", width: 14 },
-  { header: "Jenis Pembayaran", key: "payment_type", width: 18 },
-  { header: "Tahap Pembayaran", key: "payment_step_label", width: 20 },
+  { header: "Nama Penyewa", key: "tenant_name", width: 26, pdfWidth: 32 },
+  { header: "NIK", key: "tenant_nik", width: 22, pdfWidth: 25 },
+  { header: "No. Telepon", key: "tenant_phone", width: 18, pdfWidth: 22 },
+  { header: "Lokasi", key: "location_name", width: 24, pdfWidth: 28 },
+  { header: "Ruangan", key: "room_number", width: 16, pdfWidth: 20 },
+  { header: "Lantai", key: "floor", width: 14, pdfWidth: 14 },
+  { header: "Jenis Pembayaran", key: "payment_type", width: 18, pdfWidth: 20 },
+  { header: "Tahap Pembayaran", key: "payment_step_label", width: 20, pdfWidth: 22 },
   { header: "Nominal", key: "due_amount", type: "currency", width: 20, pdfWidth: 28 },
-  { header: "Tanggal Jatuh Tempo", key: "due_date", width: 22 },
-  { header: "Status", key: "due_status_label", width: 22 },
+  { header: "Tanggal Jatuh Tempo", key: "due_date", width: 22, pdfWidth: 25 },
+  { header: "Status", key: "due_status_label", width: 22, pdfWidth: 24 },
 ];
 
 export const buildPaymentDueExportRows = (rows = []) =>

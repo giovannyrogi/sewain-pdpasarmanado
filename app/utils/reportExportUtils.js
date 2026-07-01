@@ -9,6 +9,7 @@ const REPORT_NAVY = "1F2937";
 const REPORT_PRIMARY_ORANGE = "FF9800";
 const REPORT_BORDER = "D1D5DB";
 const REPORT_SOFT = "F8FAFC";
+const PDF_PAGE_MARGIN = 12;
 
 const normalizeFilePart = (value) =>
   String(value || "")
@@ -28,11 +29,121 @@ const normalizeSheetName = (value, fallback = "Laporan") =>
 const formatFilterInfoText = (filterInfo = []) =>
   filterInfo.map((item) => `${item.label}: ${item.value}`).join(" | ");
 
+const formatSummaryInfoText = (summaryInfo = []) =>
+  summaryInfo.map((item) => `${item.label}: ${item.value}`).join(" | ");
+
 const getCurrencyColumnIndexes = (columns = []) =>
   columns.reduce((acc, column, index) => {
     if (column.type === "currency") acc.add(index);
     return acc;
   }, new Set());
+
+const buildPdfColumnStyles = (columns = []) =>
+  columns.reduce((acc, column, index) => {
+    const style = {};
+
+    if (column.pdfWidth) {
+      style.cellWidth = column.pdfWidth;
+    }
+
+    if (column.type === "currency") {
+      style.halign = "right";
+      style.cellWidth = column.pdfWidth || 28;
+      style.overflow = "visible";
+    }
+
+    if (column.pdfHalign) {
+      style.halign = column.pdfHalign;
+    }
+
+    if (column.pdfValign) {
+      style.valign = column.pdfValign;
+    }
+
+    if (column.pdfOverflow) {
+      style.overflow = column.pdfOverflow;
+    }
+
+    if (column.pdfCellPadding !== undefined) {
+      style.cellPadding = column.pdfCellPadding;
+    }
+
+    if (column.pdfFontSize) {
+      style.fontSize = column.pdfFontSize;
+    }
+
+    if (Object.keys(style).length) {
+      acc[index] = style;
+    }
+
+    return acc;
+  }, {});
+
+const getPdfTableSizing = (columns = []) => {
+  if (columns.some((column) => column.pdfFontSize || column.pdfWidth)) {
+    return {
+      fontSize: Math.min(
+        7.8,
+        ...columns
+          .map((column) => column.pdfFontSize)
+          .filter((value) => Number.isFinite(value)),
+      ),
+      cellPadding: columns.length >= 12 ? 1.35 : 2,
+    };
+  }
+
+  if (columns.length >= 12) {
+    return { fontSize: 6.7, cellPadding: 1.45 };
+  }
+
+  if (columns.length >= 9) {
+    return { fontSize: 7.2, cellPadding: 1.65 };
+  }
+
+  return { fontSize: 7.8, cellPadding: 2 };
+};
+
+const getPdfTotalColumn = (columns = [], totalsRow = {}) => {
+  const columnsWithTotals = columns
+    .map((column, index) => ({ column, index }))
+    .filter(({ column }) =>
+      Object.prototype.hasOwnProperty.call(totalsRow, column.key),
+    );
+
+  return (
+    [...columnsWithTotals].reverse().find(({ column }) => column.type === "currency") ||
+    columnsWithTotals[columnsWithTotals.length - 1] ||
+    null
+  );
+};
+
+const buildPdfTotalRow = (columns = [], totalsRow = {}) => {
+  const totalColumn = getPdfTotalColumn(columns, totalsRow);
+  const totalValue = totalColumn
+    ? totalsRow[totalColumn.column.key]
+    : totalsRow.total || totalsRow.total_income || totalsRow.total_payment || "";
+
+  return [
+    {
+      content: "TOTAL",
+      colSpan: Math.max(columns.length - 1, 1),
+      styles: {
+        halign: "right",
+        fontStyle: "bold",
+      },
+    },
+    {
+      content:
+        totalColumn?.column?.type === "currency"
+          ? formatRupiah(totalValue)
+          : (totalValue ?? ""),
+      styles: {
+        halign: totalColumn?.column?.type === "currency" ? "right" : "left",
+        fontStyle: "bold",
+      },
+    },
+  ];
+};
 
 const formatPdfCellValue = (row, column) => {
   if (column.type === "currency") {
@@ -104,6 +215,7 @@ export const exportReportToExcel = ({
   columns,
   totalsRow,
   sections = [],
+  summaryInfo = [],
 }) => {
   if (Array.isArray(sections) && sections.length) {
     const wb = XLSX.utils.book_new();
@@ -230,7 +342,7 @@ export const exportReportToExcel = ({
           ws[cellAddress].s = {
             font: { bold: isTotal },
             fill: isTotal
-              ? { fgColor: { rgb: "FEF3C7" } }
+              ? undefined
               : isOddRow
                 ? { fgColor: { rgb: REPORT_SOFT } }
                 : undefined,
@@ -279,7 +391,7 @@ export const exportReportToExcel = ({
     );
   }
 
-  const tableStartRow = filterInfo.length || subtitle ? 5 : 3;
+  const tableStartRow = (filterInfo.length || subtitle ? 5 : 3) + (summaryInfo.length ? 1 : 0);
   const ws = XLSX.utils.json_to_sheet(exportRows, {
     origin: `A${tableStartRow}`,
   });
@@ -301,6 +413,14 @@ export const exportReportToExcel = ({
     );
   }
 
+  if (summaryInfo.length) {
+    XLSX.utils.sheet_add_aoa(
+      ws,
+      [[`Ringkasan Status: ${formatSummaryInfoText(summaryInfo)}`]],
+      { origin: filterInfo.length || subtitle ? "A4" : "A2" },
+    );
+  }
+
   const columnCount = columns.length;
   const lastColumnIndex = Math.max(columnCount - 1, 0);
   const currencyColumnIndexes = getCurrencyColumnIndexes(columns);
@@ -313,6 +433,14 @@ export const exportReportToExcel = ({
 
   if (filterInfo.length) {
     ws["!merges"].push({ s: { r: 2, c: 0 }, e: { r: 2, c: lastColumnIndex } });
+  }
+
+  if (summaryInfo.length) {
+    const summaryRowIndex = filterInfo.length || subtitle ? 3 : 1;
+    ws["!merges"].push({
+      s: { r: summaryRowIndex, c: 0 },
+      e: { r: summaryRowIndex, c: lastColumnIndex },
+    });
   }
 
   const titleCell = ws.A1;
@@ -343,6 +471,15 @@ export const exportReportToExcel = ({
     };
   }
 
+  const summaryCellAddress = filterInfo.length || subtitle ? "A4" : "A2";
+  if (summaryInfo.length && ws[summaryCellAddress]) {
+    ws[summaryCellAddress].s = {
+      font: { bold: true, sz: 10, color: { rgb: "334155" } },
+      fill: { fgColor: { rgb: "F8FAFC" } },
+      alignment: { horizontal: "left", vertical: "center" },
+    };
+  }
+
   const headerRow = tableStartRow - 1;
   for (let c = 0; c < columnCount; c += 1) {
     const cellAddress = XLSX.utils.encode_cell({ r: headerRow, c });
@@ -368,7 +505,7 @@ export const exportReportToExcel = ({
       ws[cellAddress].s = {
         font: { bold: isTotal },
         fill: isTotal
-          ? { fgColor: { rgb: "FEF3C7" } }
+          ? undefined
           : isOddRow
             ? { fgColor: { rgb: REPORT_SOFT } }
             : undefined,
@@ -420,6 +557,7 @@ export const exportReportToPDF = async ({
   sections = [],
   printedAtFooter = false,
   showLogoMark = false,
+  summaryInfo = [],
 }) => {
   const doc = new jsPDF({ orientation: "landscape" });
   const printedAt = moment().format("DD-MM-YYYY HH:mm:ss");
@@ -485,45 +623,31 @@ export const exportReportToPDF = async ({
     startY,
   }) => {
     const currencyColumnIndexes = getCurrencyColumnIndexes(sectionColumns);
-    const columnStyles = sectionColumns.reduce((acc, column, index) => {
-      if (column.type === "currency") {
-        acc[index] = {
-          halign: "right",
-          cellWidth: column.pdfWidth || 28,
-          overflow: "visible",
-        };
-      }
-      return acc;
-    }, {});
+    const columnStyles = buildPdfColumnStyles(sectionColumns);
+    const tableSizing = getPdfTableSizing(sectionColumns);
 
     const body = sectionRows.map((row) =>
       sectionColumns.map((column) => formatPdfCellValue(row, column)),
     );
 
     if (sectionTotalsRow) {
-      body.push(
-        sectionColumns.map((column, index) =>
-          index === 0
-            ? "TOTAL"
-            : column.type === "currency"
-              ? formatRupiah(sectionTotalsRow[column.key])
-              : (sectionTotalsRow[column.key] ?? ""),
-        ),
-      );
+      body.push(buildPdfTotalRow(sectionColumns, sectionTotalsRow));
     }
 
     autoTable(doc, {
       head: [sectionColumns.map((column) => column.header)],
       body,
       startY,
+      margin: { left: PDF_PAGE_MARGIN, right: PDF_PAGE_MARGIN },
       theme: "grid",
       styles: {
-        fontSize: 7.8,
-        cellPadding: 2,
+        fontSize: tableSizing.fontSize,
+        cellPadding: tableSizing.cellPadding,
         textColor: [31, 41, 55],
         lineColor: [203, 213, 225],
         lineWidth: 0.08,
         valign: "middle",
+        overflow: "linebreak",
       },
       headStyles: {
         fillColor: [31, 41, 55],
@@ -535,13 +659,15 @@ export const exportReportToPDF = async ({
       bodyStyles: { valign: "middle" },
       columnStyles,
       didParseCell: (data) => {
+        const isTotalRow = sectionTotalsRow && data.row.index === body.length - 1;
+
         if (data.section === "body" && currencyColumnIndexes.has(data.column.index)) {
           data.cell.styles.halign = "right";
         }
 
-        if (sectionTotalsRow && data.row.index === body.length - 1) {
+        if (isTotalRow) {
           data.cell.styles.fontStyle = "bold";
-          data.cell.styles.fillColor = [254, 243, 199];
+          data.cell.styles.valign = "middle";
         }
       },
     });
@@ -597,45 +723,48 @@ export const exportReportToPDF = async ({
   }
 
   const currencyColumnIndexes = getCurrencyColumnIndexes(columns);
-  const columnStyles = columns.reduce((acc, column, index) => {
-    if (column.type === "currency") {
-      acc[index] = {
-        halign: "right",
-        cellWidth: column.pdfWidth || 28,
-        overflow: "visible",
-      };
-    }
-    return acc;
-  }, {});
+  const columnStyles = buildPdfColumnStyles(columns);
+  const tableSizing = getPdfTableSizing(columns);
 
   const body = rows.map((row) =>
     columns.map((column) => formatPdfCellValue(row, column)),
   );
 
   if (totalsRow) {
-    body.push(
-      columns.map((column, index) =>
-        index === 0
-          ? "TOTAL"
-          : column.type === "currency"
-            ? formatRupiah(totalsRow[column.key])
-            : (totalsRow[column.key] ?? ""),
-      ),
-    );
+    body.push(buildPdfTotalRow(columns, totalsRow));
+  }
+
+  if (summaryInfo.length) {
+    const summaryY = headerTop + headerHeight + (filterInfo.length ? 21 : 8);
+    doc.setTextColor(15, 23, 42);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8.5);
+    doc.text("Ringkasan Status", 12, summaryY);
+
+    doc.setTextColor(51, 65, 85);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7.8);
+    doc.text(formatSummaryInfoText(summaryInfo), 12, summaryY + 6);
   }
 
   autoTable(doc, {
     head: [columns.map((column) => column.header)],
     body,
-    startY: headerTop + headerHeight + (filterInfo.length ? 20 : 8),
+    startY:
+      headerTop +
+      headerHeight +
+      (filterInfo.length ? 20 : 8) +
+      (summaryInfo.length ? 14 : 0),
+    margin: { left: PDF_PAGE_MARGIN, right: PDF_PAGE_MARGIN },
     theme: "grid",
     styles: {
-      fontSize: 7.8,
-      cellPadding: 2,
+      fontSize: tableSizing.fontSize,
+      cellPadding: tableSizing.cellPadding,
       textColor: [31, 41, 55],
       lineColor: [203, 213, 225],
       lineWidth: 0.08,
       valign: "middle",
+      overflow: "linebreak",
     },
     headStyles: {
       fillColor: [31, 41, 55],
@@ -647,13 +776,15 @@ export const exportReportToPDF = async ({
     bodyStyles: { valign: "middle" },
     columnStyles,
     didParseCell: (data) => {
+      const isTotalRow = totalsRow && data.row.index === body.length - 1;
+
       if (data.section === "body" && currencyColumnIndexes.has(data.column.index)) {
         data.cell.styles.halign = "right";
       }
 
-      if (totalsRow && data.row.index === body.length - 1) {
+      if (isTotalRow) {
         data.cell.styles.fontStyle = "bold";
-        data.cell.styles.fillColor = [254, 243, 199];
+        data.cell.styles.valign = "middle";
       }
     },
   });

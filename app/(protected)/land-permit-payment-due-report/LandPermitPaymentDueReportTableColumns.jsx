@@ -76,16 +76,16 @@ export const filterLandPaymentDueRows = (rows, searchText) => {
 };
 
 export const LAND_PAYMENT_DUE_EXPORT_COLUMNS = [
-  { header: "Nama Pedagang", key: "tenant_name", width: 26 },
-  { header: "NIK", key: "tenant_nik", width: 22 },
-  { header: "No. Telepon", key: "tenant_phone", width: 18 },
-  { header: "Lokasi", key: "location_name", width: 24 },
-  { header: "Sektor", key: "sector_name", width: 20 },
-  { header: "Lahan", key: "stall_number", width: 16 },
-  { header: "Jenis Dagangan", key: "commodity_type", width: 20 },
+  { header: "Nama Pedagang", key: "tenant_name", width: 26, pdfWidth: 34 },
+  { header: "NIK", key: "tenant_nik", width: 22, pdfWidth: 25 },
+  { header: "No. Telepon", key: "tenant_phone", width: 18, pdfWidth: 22 },
+  { header: "Lokasi", key: "location_name", width: 24, pdfWidth: 30 },
+  { header: "Sektor", key: "sector_name", width: 20, pdfWidth: 24 },
+  { header: "Lahan", key: "stall_number", width: 16, pdfWidth: 16 },
+  { header: "Jenis Dagangan", key: "commodity_type", width: 20, pdfWidth: 24 },
   { header: "Total Pembayaran", key: "due_amount", type: "currency", width: 20, pdfWidth: 28 },
-  { header: "Tanggal Mulai Izin", key: "due_date", width: 22 },
-  { header: "Status", key: "due_status_label", width: 22 },
+  { header: "Tanggal Mulai Izin", key: "due_date", width: 22, pdfWidth: 26 },
+  { header: "Status", key: "due_status_label", width: 22, pdfWidth: 26 },
 ];
 
 export const buildLandPaymentDueExportRows = (rows = []) =>

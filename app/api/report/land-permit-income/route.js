@@ -16,34 +16,31 @@ const parseOptionalId = (value, label) => {
   return parsed;
 };
 
-const maskNik = (nik = "") => {
-  const normalized = String(nik || "").trim();
-  if (normalized.length <= 8) return normalized || "-";
-  return `${normalized.slice(0, 4)}********${normalized.slice(-4)}`;
-};
-
 const toNumber = (value) => Number(value || 0);
 
-const buildRecapRows = (detailRows) => {
+const buildRecapRows = (detailRows, groupBy = "location") => {
   const grouped = new Map();
 
   detailRows.forEach((row) => {
-    const key = `${row.location_id || "unknown"}-${row.sector_id || "unknown"}`;
+    const key =
+      groupBy === "sector"
+        ? `${row.location_id || "unknown"}-${row.sector_id || "unknown"}`
+        : `${row.location_id || "unknown"}`;
     const current =
       grouped.get(key) ||
       {
         key,
         location_id: row.location_id,
         location_name: row.location_name || "-",
-        sector_id: row.sector_id,
-        sector_name: row.sector_name || "-",
+        sector_id: groupBy === "sector" ? row.sector_id : null,
+        sector_name: groupBy === "sector" ? row.sector_name || "-" : "",
         transaction_count: 0,
         traderKeys: new Set(),
         total_income: 0,
       };
 
     current.transaction_count += 1;
-    current.traderKeys.add(row.tenant_identity_id || row.trader_nik_masked || row.trader_name);
+    current.traderKeys.add(row.tenant_identity_id || row.trader_nik || row.trader_name);
     current.total_income += toNumber(row.total_payment);
     grouped.set(key, current);
   });
@@ -57,7 +54,7 @@ const buildRecapRows = (detailRows) => {
     .sort((a, b) => {
       const locationCompare = String(a.location_name).localeCompare(String(b.location_name));
       if (locationCompare !== 0) return locationCompare;
-      return String(a.sector_name).localeCompare(String(b.sector_name));
+      return String(a.sector_name || "").localeCompare(String(b.sector_name || ""));
     });
 };
 
@@ -157,6 +154,7 @@ export async function GET(request) {
         FROM land_permit_payments payment
         JOIN land_permit_payment_approval approval
           ON approval.land_permit_payment_id = payment.id
+          AND approval.role_id = 8
           AND approval.status = 'approved'
         JOIN land_permit_applications application
           ON application.id = payment.land_permit_application_id
@@ -178,6 +176,7 @@ export async function GET(request) {
           LIMIT 1
         ) permit_document ON TRUE
         WHERE payment.approval_status = 'approved'
+          AND application.approval_status = 'approved'
           AND COALESCE(payment.accounting_date, payment.payment_date)
             BETWEEN $1::date AND $2::date
           AND ($3::integer IS NULL OR application.location_id = $3::integer)
@@ -203,7 +202,7 @@ export async function GET(request) {
       payment_number: row.payment_number,
       tenant_identity_id: row.tenant_identity_id,
       trader_name: row.trader_name || "-",
-      trader_nik_masked: maskNik(row.trader_nik),
+      trader_nik: row.trader_nik || "-",
       location_id: row.location_id,
       location_name: row.location_name || "-",
       sector_id: row.sector_id,
@@ -227,12 +226,15 @@ export async function GET(request) {
       permit_status: row.permit_status,
     }));
 
-    const recapRows = buildRecapRows(detailRows);
+    const recapByLocationRows = buildRecapRows(detailRows, "location");
+    const recapBySectorRows = buildRecapRows(detailRows, "sector");
     const uniqueTraders = new Set(detailRows.map((row) => row.tenant_identity_id));
 
     return NextResponse.json({
       data: {
-        recap: recapRows,
+        recap: recapByLocationRows,
+        recap_by_location: recapByLocationRows,
+        recap_by_sector: recapBySectorRows,
         detail: detailRows,
         summary: {
           total_transactions: detailRows.length,
