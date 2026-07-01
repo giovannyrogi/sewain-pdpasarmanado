@@ -16,7 +16,7 @@ import {
   useMediaQuery,
   useTheme,
 } from "@mui/material";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import moment from "moment";
 import axios from "axios";
@@ -95,6 +95,7 @@ const TenantApplicationEditForm = ({
     useState(0);
   const [totalPaymentDownPayment, setTotalPaymentDownPayment] = useState(0);
   const [totalInstallment, setTotalInstallment] = useState(0);
+  const previousInstallmentTotalRef = useRef(null);
 
   const [listDataIdentity, setListDataIdentity] = useState([]);
   const [identityID, setIdentityID] = useState(null);
@@ -365,35 +366,58 @@ const TenantApplicationEditForm = ({
       chooseTenor,
       adminFee: biayaAdministrasi,
     });
-
-    // total utama
-    setAnnualRoomRent(result.annualRoomRent);
-    setTotalSewaKontrakRuangan(result.totalSewa);
-    setTotalPPN(result.totalPPN);
-    setTotalPayment(result.totalPayment);
+    let effectiveResult = result;
+    let effectiveDownPayment = Number(downPayment || 0);
 
     if (paymentType === "cicilan") {
-      const dp = Number(downPayment || 0);
+      const total = Number(result.totalPayment || 0);
+      const totalChangedAfterInit =
+        previousInstallmentTotalRef.current !== null &&
+        previousInstallmentTotalRef.current !== total;
+      const shouldSyncDownPayment =
+        !effectiveDownPayment || totalChangedAfterInit;
 
-      // default DP kalau kosong
-      if (!dp) {
-        const defaultDP = Math.round(result.totalPayment * 0.4);
-        setDownPayment(defaultDP);
-        setRemainingPayment(result.totalPayment - defaultDP);
-      } else {
-        setRemainingPayment(result.remaining);
+      if (shouldSyncDownPayment) {
+        const defaultDP = Math.round(total * 0.4);
+        effectiveDownPayment = defaultDP;
+
+        if (Number(downPayment || 0) !== defaultDP) {
+          setDownPayment(defaultDP);
+        }
+
+        effectiveResult = calculateAllPayments({
+          room: selectedDataRooms,
+          leaseDurationYears,
+          paymentType,
+          downPayment: defaultDP,
+          chooseTenor,
+          adminFee: biayaAdministrasi,
+        });
       }
 
-      // cicilan
-      setEstimatedInstallment1(result.installments[0] || "");
-      setEstimatedInstallment2(result.installments[1] || "");
-      setEstimatedInstallment3(result.installments[2] || "");
+      previousInstallmentTotalRef.current = total;
+    } else {
+      previousInstallmentTotalRef.current = null;
+    }
 
-      setTotalInstallment(result.installments.reduce((a, b) => a + b, 0));
+    // total utama
+    setAnnualRoomRent(effectiveResult.annualRoomRent);
+    setTotalSewaKontrakRuangan(effectiveResult.totalSewa);
+    setTotalPPN(effectiveResult.totalPPN);
+    setTotalPayment(effectiveResult.totalPayment);
+
+    if (paymentType === "cicilan") {
+      setRemainingPayment(effectiveResult.remaining);
+
+      // cicilan
+      setEstimatedInstallment1(effectiveResult.installments[0] || "");
+      setEstimatedInstallment2(effectiveResult.installments[1] || "");
+      setEstimatedInstallment3(effectiveResult.installments[2] || "");
+
+      setTotalInstallment(effectiveResult.installments.reduce((a, b) => a + b, 0));
 
       // DP breakdown
-      const dpValue = Number(downPayment || 0);
-      const sewaDP = dpValue / 1.11;
+      const sewaDP = effectiveDownPayment / 1.11;
       const ppnDP = sewaDP * 0.11;
 
       setTotalSewaKontrakDownPayment(sewaDP);

@@ -221,8 +221,10 @@ export default function TenantsReportPage() {
     () => ({
       payment_id: "__total",
       __isTotal: true,
+      no: "TOTAL",
       tenant_name: "TOTAL",
       payment_date: "",
+      keterangan: "",
       room_number: "",
       masa_berlaku: "",
       ukuran_m2: "",
@@ -243,6 +245,11 @@ export default function TenantsReportPage() {
   ).format("DD-MM-YYYY")} s/d ${moment(range.endDate).format("DD-MM-YYYY")})`;
 
   const handleExportExcel = () => {
+    const exportRows = filteredRows.map((row, index) => ({
+      ...row,
+      no: index + 1,
+    }));
+
     exportReportToExcel({
       title: reportTitle,
       sheetName: "Laporan Tenant",
@@ -252,13 +259,18 @@ export default function TenantsReportPage() {
         endDate: range.endDate,
         extension: "xlsx",
       }),
-      rows: filteredRows,
+      rows: exportRows,
       columns: TENANT_EXPORT_COLUMNS,
       totalsRow,
     });
   };
 
   const handleExportPDF = () => {
+    const exportRows = filteredRows.map((row, index) => ({
+      ...row,
+      no: index + 1,
+    }));
+
     exportReportToPDF({
       title: reportTitle,
       fileName: buildReportFileName({
@@ -267,7 +279,7 @@ export default function TenantsReportPage() {
         endDate: range.endDate,
         extension: "pdf",
       }),
-      rows: filteredRows,
+      rows: exportRows,
       columns: TENANT_EXPORT_COLUMNS,
       totalsRow,
       showLogoMark: true,
