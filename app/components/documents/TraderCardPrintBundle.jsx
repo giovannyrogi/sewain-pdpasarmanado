@@ -12,6 +12,9 @@ const CARDS_PER_PAGE = 8;
 const CITY_LOGO = "/logo-pemerintah-kota-manado-v2.png";
 const PM_LOGO = "/logo-pm-new.png";
 const QR_LOGO = "/logo-pm-red-transparent.png";
+const CARD_HEADER_BG = "/background-header-kartu-pedagang.png";
+const CARD_WIDTH = "92mm";
+const CARD_HEIGHT = "66mm";
 
 const cardText = {
   m: 0,
@@ -59,6 +62,12 @@ const buildCardNumber = (documentNumber) => {
   return value.replace("/SIL-", "/KTP-").replace("SIL-", "KTP-");
 };
 
+const buildStallLabel = (stallNumber) => {
+  const value = String(stallNumber || "").trim();
+  if (!value) return "";
+  return /^lahan\b/i.test(value) ? value : `Lahan ${value}`;
+};
+
 const chunkItems = (items, size) => {
   const chunks = [];
   for (let index = 0; index < items.length; index += size) {
@@ -67,40 +76,75 @@ const chunkItems = (items, size) => {
   return chunks;
 };
 
-const FieldRow = ({ label, value }) => (
+const FieldRow = ({ label, value, maxLines = 1 }) => {
+  const shouldClamp = Number.isFinite(maxLines) && maxLines > 0;
+
+  return (
   <Box
     sx={{
       display: "grid",
-      gridTemplateColumns: "18mm 3mm minmax(0, 1fr)",
-      columnGap: "1mm",
+      gridTemplateColumns: "12.5mm 2mm minmax(0, 1fr)",
+      columnGap: "0.75mm",
       alignItems: "start",
       minWidth: 0,
     }}
   >
-    <Typography sx={{ ...cardText, fontSize: "6.1pt", fontWeight: 700 }}>
+    <Typography sx={{ ...cardText, fontSize: "5.7pt", fontWeight: 700 }}>
       {label}
     </Typography>
-    <Typography sx={{ ...cardText, fontSize: "6.1pt", fontWeight: 700 }}>
+    <Typography sx={{ ...cardText, fontSize: "5.7pt", fontWeight: 700 }}>
       :
     </Typography>
     <Typography
       sx={{
         ...cardText,
-        fontSize: "6.25pt",
+        fontSize: "5.7pt",
         fontWeight: 700,
+        lineHeight: 1.08,
         overflowWrap: "anywhere",
+        ...(shouldClamp
+          ? {
+              display: "-webkit-box",
+              WebkitLineClamp: maxLines,
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden",
+            }
+          : {}),
       }}
     >
       {value || "-"}
     </Typography>
+  </Box>
+  );
+};
+
+const HeaderLogoFrame = ({ children, circle = false }) => (
+  <Box
+    sx={{
+      width: circle ? "10.2mm" : "11.8mm",
+      height: circle ? "10.2mm" : "11.8mm",
+      bgcolor: "#fff",
+      border: "0.25mm solid rgba(0,0,0,0.28)",
+      borderRadius: circle ? "50%" : "1.3mm",
+      boxShadow: "0 0.25mm 0.65mm rgba(0,0,0,0.2)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      overflow: "hidden",
+      position: "relative",
+      zIndex: 1,
+      transform: circle ? "translateY(-1mm)" : "translateY(-0.35mm)",
+    }}
+  >
+    {children}
   </Box>
 );
 
 const TraderCardShell = ({ children }) => (
   <Box
     sx={{
-      width: "90mm",
-      height: "58mm",
+      width: CARD_WIDTH,
+      height: CARD_HEIGHT,
       boxSizing: "border-box",
       overflow: "hidden",
       bgcolor: "#fff",
@@ -121,7 +165,11 @@ const TraderCardFront = ({ data }) => {
   const birthInfo = [data.birth_place, formatDate(data.birth_date)]
     .filter(Boolean)
     .join(", ");
-  const locationInfo = [data.location_name, data.sector_name, data.stall_number]
+  const locationInfo = [
+    data.location_name,
+    data.sector_name,
+    buildStallLabel(data.stall_number),
+  ]
     .filter(Boolean)
     .join(" / ");
 
@@ -129,76 +177,160 @@ const TraderCardFront = ({ data }) => {
     <TraderCardShell>
       <Box
         sx={{
-          height: "14mm",
-          bgcolor: "#d71920",
+          height: "15.6mm",
+          bgcolor: "#fff",
           color: "#fff",
           display: "grid",
-          gridTemplateColumns: "14mm minmax(0, 1fr) 14mm",
+          gridTemplateColumns: "13.6mm minmax(0, 1fr) 13.6mm",
           alignItems: "center",
-          px: "2mm",
-          columnGap: "1.5mm",
+          px: "2.8mm",
+          columnGap: "1.2mm",
+          position: "relative",
+          overflow: "hidden",
+          WebkitPrintColorAdjust: "exact",
+          printColorAdjust: "exact",
+          "& .trader-card-header-text": {
+            color: "#fff !important",
+            WebkitTextFillColor: "#fff !important",
+            opacity: "1 !important",
+            textShadow: "none !important",
+            filter: "none !important",
+            mixBlendMode: "normal",
+            WebkitPrintColorAdjust: "exact",
+            printColorAdjust: "exact",
+          },
         }}
       >
         <Box
           component="img"
-          src={CITY_LOGO}
-          alt="Logo Pemerintah Kota Manado"
-          sx={{ width: "11mm", height: "11mm", objectFit: "contain", bgcolor: "#fff" }}
+          src={CARD_HEADER_BG}
+          alt=""
+          aria-hidden="true"
+          sx={{
+            position: "absolute",
+            inset: 0,
+            width: "100%",
+            height: "100%",
+            objectFit: "fill",
+            zIndex: 0,
+          }}
         />
-        <Box sx={{ minWidth: 0, textAlign: "center" }}>
+        <HeaderLogoFrame>
+          <Box
+            component="img"
+            src={CITY_LOGO}
+            alt="Logo Pemerintah Kota Manado"
+            sx={{ width: "10.4mm", height: "10.4mm", objectFit: "contain" }}
+          />
+        </HeaderLogoFrame>
+        <Box sx={{ minWidth: 0, textAlign: "center", position: "relative", zIndex: 1 }}>
           <Typography
+            className="trader-card-header-text"
             sx={{
-              ...cardText,
-              color: "#fff",
+              m: 0,
+              mb: "1mm",
+              color: "#fff !important",
+              WebkitTextFillColor: "#fff !important",
+              opacity: 1,
               fontFamily: '"Arial Black", Impact, Arial, sans-serif',
-              fontSize: "8pt",
+              fontSize: "9.4pt",
               fontWeight: 900,
-              letterSpacing: "0.2mm",
+              lineHeight: 0.94,
+              textShadow: "none",
+              letterSpacing: "0",
             }}
           >
             PERUMDA PASAR MANADO
           </Typography>
-          <Typography sx={{ ...cardText, color: "#fff", fontSize: "5.1pt", fontWeight: 700 }}>
-            BADAN USAHA MILIK DAERAH KOTA MANADO
+          <Typography
+            className="trader-card-header-text"
+            sx={{
+              m: 0,
+              mb: "1mm",
+              color: "#fff !important",
+              WebkitTextFillColor: "#fff !important",
+              opacity: 1,
+              fontFamily: '"Arial", "Calibri", sans-serif',
+              fontSize: "5.8pt",
+              fontWeight: 700,
+              lineHeight: 0.95,
+              textShadow: "none",
+              letterSpacing: "0",
+            }}
+          >
+            (BADAN USAHA MILIK DAERAH KOTA MANADO)
           </Typography>
-          <Typography sx={{ ...cardText, color: "#fff", fontSize: "4.8pt" }}>
+          <Typography
+            className="trader-card-header-text"
+            sx={{
+              m: 0,
+              color: "#fff !important",
+              WebkitTextFillColor: "#fff !important",
+              opacity: 1,
+              fontFamily: '"Arial", "Calibri", sans-serif',
+              fontSize: "5.5pt",
+              lineHeight: 0.95,
+              fontWeight: 600,
+              textShadow: "none",
+              letterSpacing: "0",
+            }}
+          >
             Kompleks Gedung Shopping Center Lt II
           </Typography>
         </Box>
-        <Box
-          component="img"
-          src={PM_LOGO}
-          alt="Logo PM"
-          sx={{
-            width: "11mm",
-            height: "11mm",
-            objectFit: "contain",
-            bgcolor: "#fff",
-            borderRadius: "50%",
-            p: "0.8mm",
-          }}
-        />
+        <HeaderLogoFrame circle>
+          <Box
+            component="img"
+            src={PM_LOGO}
+            alt="Logo PM"
+            sx={{
+              width: "8.9mm",
+              height: "8.9mm",
+              objectFit: "contain",
+            }}
+          />
+        </HeaderLogoFrame>
       </Box>
 
       <Box
         sx={{
           position: "absolute",
-          inset: "14mm 0 0 0",
-          background:
-            "linear-gradient(135deg, rgba(215,25,32,0.06), rgba(255,255,255,0) 42%)",
+          left: 0,
+          right: 0,
+          top: "15.6mm",
+          height: "0",
+          bgcolor: "transparent",
         }}
       />
 
-      <Box sx={{ position: "relative", px: "3mm", pt: "2.2mm" }}>
+      <Box
+        sx={{
+          position: "absolute",
+          inset: "15.95mm 0 0 0",
+          background:
+            "repeating-linear-gradient(0deg, rgba(215,25,32,0.05) 0, rgba(215,25,32,0.05) 0.12mm, transparent 0.12mm, transparent 4.4mm), repeating-linear-gradient(90deg, rgba(215,25,32,0.05) 0, rgba(215,25,32,0.05) 0.12mm, transparent 0.12mm, transparent 17mm)",
+        }}
+      />
+
+      <Box
+        sx={{
+          position: "relative",
+          height: "50.05mm",
+          boxSizing: "border-box",
+          px: "3mm",
+          pt: "2mm",
+        }}
+      >
         <Typography
           sx={{
             ...cardText,
             textAlign: "center",
             fontFamily: '"Arial Black", Impact, Arial, sans-serif',
-            fontSize: "7.3pt",
+            fontSize: "7.1pt",
             fontWeight: 900,
-            letterSpacing: "0.15mm",
-            mb: "1.6mm",
+            lineHeight: 1,
+            mt: "0.7mm",
+            mb: "2mm",
           }}
         >
           KARTU TANDA PEDAGANG
@@ -206,60 +338,68 @@ const TraderCardFront = ({ data }) => {
 
         <Box
           sx={{
-            display: "grid",
-            gridTemplateColumns: "minmax(0, 1fr) 18mm",
-            columnGap: "2mm",
+            position: "absolute",
+            top: "2.3mm",
+            right: "3.2mm",
+            width: "20mm",
+            height: "27mm",
+            border: "0.6mm solid #d71920",
+            bgcolor: "#fff",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            overflow: "hidden",
+            zIndex: 2,
           }}
         >
-          <Box sx={{ minWidth: 0, display: "grid", rowGap: "0.7mm" }}>
+          {photoUrl ? (
+            <Box
+              component="img"
+              src={photoUrl}
+              alt="Pas foto pedagang"
+              sx={{ width: "100%", height: "100%", objectFit: "cover" }}
+            />
+          ) : (
+            <Typography sx={{ ...cardText, fontSize: "4.4pt", textAlign: "center" }}>
+              Pas Foto
+            </Typography>
+          )}
+        </Box>
+
+        <Box
+          sx={{
+            pr: "24.5mm",
+            maxHeight: "31mm",
+            minWidth: 0,
+            overflow: "hidden",
+          }}
+        >
+          <Box sx={{ minWidth: 0, display: "grid", rowGap: "0.42mm" }}>
             <FieldRow label="Nomor" value={buildCardNumber(data.document_number)} />
             <FieldRow label="Nama" value={data.tenant_name} />
             <FieldRow label="TTL" value={birthInfo || "-"} />
-            <FieldRow label="Alamat" value={buildAddress(data) || "-"} />
-            <FieldRow label="Lokasi" value={locationInfo || "-"} />
-          </Box>
-
-          <Box
-            sx={{
-              width: "17mm",
-              height: "22mm",
-              border: "0.6mm solid #d71920",
-              bgcolor: "#fff",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              overflow: "hidden",
-            }}
-          >
-            {photoUrl ? (
-              <Box
-                component="img"
-                src={photoUrl}
-                alt="Pas foto pedagang"
-                sx={{ width: "100%", height: "100%", objectFit: "cover" }}
-              />
-            ) : (
-              <Typography sx={{ ...cardText, fontSize: "4.6pt", textAlign: "center" }}>
-                Pas Foto
-              </Typography>
-            )}
+            <FieldRow label="Alamat" value={buildAddress(data) || "-"} maxLines={0} />
+            <FieldRow label="Lokasi" value={locationInfo || "-"} maxLines={0} />
           </Box>
         </Box>
 
         <Box
           sx={{
+            position: "absolute",
+            left: "3mm",
+            right: "3mm",
+            bottom: "1.2mm",
             display: "grid",
-            gridTemplateColumns: "22mm minmax(0, 1fr)",
-            columnGap: "5mm",
+            gridTemplateColumns: "23mm minmax(0, 1fr) 20mm",
+            columnGap: "4mm",
             alignItems: "end",
-            mt: "1.5mm",
           }}
         >
           <Box
             sx={{
               position: "relative",
-              width: 82,
-              height: 82,
+              width: 75,
+              height: 75,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -267,9 +407,10 @@ const TraderCardFront = ({ data }) => {
           >
             <QRCode
               value={buildVerificationUrl(data.qr_token)}
-              size={82}
+              type="svg"
+              size={75}
               bordered={false}
-              errorLevel="M"
+              errorLevel="H"
               color="#d71920"
             />
             <Box
@@ -280,34 +421,43 @@ const TraderCardFront = ({ data }) => {
                 position: "absolute",
                 left: "50%",
                 top: "50%",
-                width: 24,
-                height: 24,
+                width: 20,
+                height: 20,
                 objectFit: "contain",
                 transform: "translate(-50%, -50%)",
                 bgcolor: "#fff",
                 borderRadius: "50%",
-                p: "2px",
+                p: "1.5px",
               }}
             />
           </Box>
 
-          <Box sx={{ textAlign: "center", pb: "0.8mm" }}>
+          <Box
+            sx={{
+              textAlign: "center",
+              alignSelf: "end",
+              gridColumn: "2 / 3",
+              pb: "0.5mm",
+              pr: "0",
+              minHeight: "13.2mm",
+            }}
+          >
             <Typography
               sx={{
                 ...cardText,
                 fontFamily: '"Arial Black", Impact, Arial, sans-serif',
-                fontSize: "6.4pt",
+                fontSize: "5.9pt",
                 fontWeight: 900,
               }}
             >
               DIREKTUR UTAMA
             </Typography>
-            <Box sx={{ height: "7.5mm" }} />
+            <Box sx={{ height: "8.2mm" }} />
             <Typography
               sx={{
                 ...cardText,
                 fontFamily: '"Arial Black", Impact, Arial, sans-serif',
-                fontSize: "5.8pt",
+                fontSize: "5.35pt",
                 fontWeight: 900,
                 textDecoration: "underline",
               }}
@@ -336,7 +486,6 @@ const TraderCardBack = ({ data }) => (
         opacity: 0.1,
         left: "24mm",
         top: "10mm",
-        filter: "grayscale(1)",
       }}
     />
     <Box
@@ -412,9 +561,9 @@ const TraderCardSheet = ({ items, side, pageIndex, breakAfterPage = true }) => (
       px: "10mm",
       py: "12mm",
       display: "grid",
-      gridTemplateColumns: "repeat(2, 90mm)",
-      gridAutoRows: "58mm",
-      gap: "6mm",
+      gridTemplateColumns: `repeat(2, ${CARD_WIDTH})`,
+      gridAutoRows: CARD_HEIGHT,
+      gap: "5mm",
       justifyContent: "center",
       alignContent: "start",
       pageBreakAfter: breakAfterPage ? "always" : "auto",
