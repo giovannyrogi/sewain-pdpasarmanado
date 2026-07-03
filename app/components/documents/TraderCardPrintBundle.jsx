@@ -587,9 +587,19 @@ const TraderCardSheet = ({ items, side, pageIndex, breakAfterPage = true }) => (
  * dan mencetak sisi belakang dengan grid yang sama.
  */
 const TraderCardPrintBundle = forwardRef(
-  ({ documents = [], includePermit = false, includeCards = true }, ref) => {
+  (
+    {
+      documents = [],
+      includePermit = false,
+      includeCards = true,
+      cardSide = "both",
+    },
+    ref,
+  ) => {
     const frontChunks = chunkItems(documents, CARDS_PER_PAGE);
     const backChunks = chunkItems(documents, CARDS_PER_PAGE);
+    const shouldPrintFrontCards = includeCards && ["front", "both"].includes(cardSide);
+    const shouldPrintBackCards = includeCards && ["back", "both"].includes(cardSide);
 
     return (
       <Box
@@ -610,9 +620,13 @@ const TraderCardPrintBundle = forwardRef(
               key={`permit-${item.document_id}`}
               sx={{
                 pageBreakAfter:
-                  includeCards || index < documents.length - 1 ? "always" : "auto",
+                  shouldPrintFrontCards || shouldPrintBackCards || index < documents.length - 1
+                    ? "always"
+                    : "auto",
                 breakAfter:
-                  includeCards || index < documents.length - 1 ? "page" : "auto",
+                  shouldPrintFrontCards || shouldPrintBackCards || index < documents.length - 1
+                    ? "page"
+                    : "auto",
                 "& .land-permit-document": {
                   minHeight: "100vh",
                 },
@@ -623,18 +637,18 @@ const TraderCardPrintBundle = forwardRef(
             </Box>
           ))}
 
-        {includeCards &&
+        {shouldPrintFrontCards &&
           frontChunks.map((chunk, index) => (
             <TraderCardSheet
               key={`front-sheet-${index}`}
               items={chunk}
               side="front"
               pageIndex={index}
-              breakAfterPage
+              breakAfterPage={shouldPrintBackCards || index < frontChunks.length - 1}
             />
           ))}
 
-        {includeCards &&
+        {shouldPrintBackCards &&
           backChunks.map((chunk, index) => (
             <TraderCardSheet
               key={`back-sheet-${index}`}

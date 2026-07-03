@@ -73,7 +73,7 @@ export const createLandPermitDocumentColumns = ({
   theme,
   isMobile,
   onDetail,
-  onPrint,
+  onPrintGuide,
   canDelete = false,
   onDelete,
 }) => [
@@ -171,26 +171,10 @@ export const createLandPermitDocumentColumns = ({
           onClick={() => onDetail(record)}
         />
         <TableActionButton
-          title="Cetak Surat Izin Lahan"
+          title="Panduan cetak manual"
           color="warning"
           icon="solar:printer-2-bold-duotone"
-          items={[
-            {
-              label: "Cetak Surat Izin",
-              icon: "solar:document-text-bold-duotone",
-              onClick: () => onPrint(record, "permit"),
-            },
-            {
-              label: "Cetak Kartu Pedagang",
-              icon: "solar:card-bold-duotone",
-              onClick: () => onPrint(record, "card"),
-            },
-            {
-              label: "Surat Izin + Kartu",
-              icon: "solar:printer-2-bold-duotone",
-              onClick: () => onPrint(record, "bundle"),
-            },
-          ]}
+          onClick={() => onPrintGuide(record)}
         />
         {canDelete && (
           <TableActionButton
