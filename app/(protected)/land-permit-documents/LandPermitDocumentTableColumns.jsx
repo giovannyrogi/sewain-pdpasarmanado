@@ -8,7 +8,7 @@ import TableActionButton from "@/app/components/data-table/TableActionButton";
 
 export const LAND_DOCUMENT_PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
 export const LAND_DOCUMENT_TABLE_SCROLL_WIDTH = 1220;
-export const LAND_DOCUMENT_ACTION_COLUMN_WIDTH = 152;
+export const LAND_DOCUMENT_ACTION_COLUMN_WIDTH = 170;
 
 const normalize = (value) => String(value || "").toLowerCase();
 
@@ -174,7 +174,23 @@ export const createLandPermitDocumentColumns = ({
           title="Cetak Surat Izin Lahan"
           color="warning"
           icon="solar:printer-2-bold-duotone"
-          onClick={() => onPrint(record)}
+          items={[
+            {
+              label: "Cetak Surat Izin",
+              icon: "solar:document-text-bold-duotone",
+              onClick: () => onPrint(record, "permit"),
+            },
+            {
+              label: "Cetak Kartu Pedagang",
+              icon: "solar:card-bold-duotone",
+              onClick: () => onPrint(record, "card"),
+            },
+            {
+              label: "Surat Izin + Kartu",
+              icon: "solar:printer-2-bold-duotone",
+              onClick: () => onPrint(record, "bundle"),
+            },
+          ]}
         />
         {canDelete && (
           <TableActionButton

@@ -315,15 +315,38 @@ const SuratIzinLahan = forwardRef(({ data }, ref) => {
           ml: "6mm",
         }}
       >
-        <Box sx={{ display: "flex", justifyContent: "flex-start" }}>
+        <Box
+          sx={{
+            position: "relative",
+            display: "flex",
+            justifyContent: "flex-start",
+            width: 138,
+            height: 138,
+          }}
+        >
           <QRCode
             value={verificationUrl}
             size={138}
             bordered={false}
             errorLevel="M"
-            icon="/logo-pm-red-transparent.png"
-            iconSize={40}
             color="#E60909"
+          />
+          <Box
+            component="img"
+            src="/logo-pm-red-transparent.png"
+            alt="Logo PM QR"
+            sx={{
+              position: "absolute",
+              left: "50%",
+              top: "50%",
+              width: 40,
+              height: 40,
+              objectFit: "contain",
+              transform: "translate(-50%, -50%)",
+              bgcolor: "#fff",
+              borderRadius: "50%",
+              p: "3px",
+            }}
           />
         </Box>
 

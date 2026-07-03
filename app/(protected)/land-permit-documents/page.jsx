@@ -9,11 +9,12 @@ import PageHeader from "@/app/components/page-header/PageHeader";
 import SummaryStatCard from "@/app/components/stats/SummaryStatCard";
 import DataTableShell from "@/app/components/data-table/DataTableShell";
 import ReusableAntTable from "@/app/components/data-table/ReusableAntTable";
+import TableActionButton from "@/app/components/data-table/TableActionButton";
 import CrudConfirmModal from "@/app/components/crud/CrudConfirmModal";
 import LoadingBackdrop from "@/app/components/loading/Backdrop";
 import Notification from "@/app/components/Notification";
 import LandPermitApplicantDetailModal from "@/app/(protected)/land-permit-applications/LandPermitApplicantDetailModal";
-import SuratIzinLahan from "@/app/components/documents/SuratIzinLahan";
+import TraderCardPrintBundle from "@/app/components/documents/TraderCardPrintBundle";
 import { useUser } from "@/app/utils/useUser";
 import LandPermitDocumentFormModal from "./LandPermitDocumentFormModal";
 import {
@@ -24,6 +25,37 @@ import {
   createLandPermitDocumentColumns,
   filterLandPermitDocuments,
 } from "./LandPermitDocumentTableColumns";
+
+/**
+ * react-to-print bisa membuka dialog sebelum gambar/QR selesai dirender.
+ * Fungsi ini menunggu semua gambar dan font di area print agar logo, pas foto,
+ * dan QR code tampil stabil di print preview, termasuk saat batch print.
+ */
+const waitForPrintAssets = async (rootElement) => {
+  if (!rootElement || typeof window === "undefined") return;
+
+  const images = Array.from(rootElement.querySelectorAll("img"));
+  await Promise.all(
+    images.map((image) => {
+      if (image.complete && image.naturalWidth > 0) return Promise.resolve();
+      if (typeof image.decode === "function") {
+        return image.decode().catch(() => undefined);
+      }
+
+      return new Promise((resolve) => {
+        image.onload = resolve;
+        image.onerror = resolve;
+      });
+    }),
+  );
+
+  if (typeof document !== "undefined" && document.fonts?.ready) {
+    await document.fonts.ready.catch(() => undefined);
+  }
+
+  await new Promise((resolve) => requestAnimationFrame(resolve));
+  await new Promise((resolve) => requestAnimationFrame(resolve));
+};
 
 export default function LandPermitDocumentsPage() {
   const theme = useTheme();
@@ -40,7 +72,8 @@ export default function LandPermitDocumentsPage() {
   const [detailOpen, setDetailOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [selectedData, setSelectedData] = useState(null);
-  const [printData, setPrintData] = useState(null);
+  const [printPayload, setPrintPayload] = useState(null);
+  const [selectedDocumentKeys, setSelectedDocumentKeys] = useState([]);
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: "",
@@ -134,9 +167,12 @@ export default function LandPermitDocumentsPage() {
 
   const handlePrint = useReactToPrint({
     contentRef: printRef,
-    documentTitle: printData?.document_number || "Surat Izin Lahan",
+    documentTitle:
+      printPayload?.documents?.length === 1
+        ? printPayload.documents[0]?.document_number || "Dokumen Izin Lahan"
+        : "Dokumen Izin Lahan dan Kartu Pedagang",
     pageStyle: `
-      @page { size: auto; margin: 0; }
+      @page { size: A4 portrait; margin: 0; }
       @media print {
         html, body {
           width: 100% !important;
@@ -144,6 +180,15 @@ export default function LandPermitDocumentsPage() {
           margin: 0;
           padding: 0;
           overflow: visible;
+        }
+        .land-permit-print-source {
+          position: static !important;
+          left: auto !important;
+          top: auto !important;
+          width: 100% !important;
+          height: auto !important;
+          overflow: visible !important;
+          pointer-events: auto !important;
         }
         .land-permit-document {
           width: 100% !important;
@@ -153,23 +198,35 @@ export default function LandPermitDocumentsPage() {
       }
     `,
     onAfterPrint: () => {
-      if (printData?.document_id) {
-        axios
-          .put(`/api/land-permit-documents/${printData.document_id}`)
-          .then(() => fetchDocuments("Memperbarui riwayat cetak dokumen..."))
-          .catch(() => {});
+      const shouldMarkPermitPrinted = ["permit", "bundle"].includes(
+        printPayload?.mode,
+      );
+      const documentIds = (printPayload?.documents || [])
+        .map((item) => item.document_id)
+        .filter(Boolean);
+
+      if (shouldMarkPermitPrinted && documentIds.length) {
+        Promise.allSettled(
+          documentIds.map((id) => axios.put(`/api/land-permit-documents/${id}`)),
+        ).then(() => fetchDocuments("Memperbarui riwayat cetak dokumen..."));
       }
-      setTimeout(() => setPrintData(null), 200);
+      setTimeout(() => setPrintPayload(null), 200);
     },
   });
 
   useEffect(() => {
-    if (!printData) return;
-    const timeout = setTimeout(() => {
-      if (printRef.current) handlePrint();
+    if (!printPayload) return;
+
+    let cancelled = false;
+    const timeout = setTimeout(async () => {
+      await waitForPrintAssets(printRef.current);
+      if (!cancelled && printRef.current) handlePrint();
     }, 250);
-    return () => clearTimeout(timeout);
-  }, [handlePrint, printData]);
+    return () => {
+      cancelled = true;
+      clearTimeout(timeout);
+    };
+  }, [handlePrint, printPayload]);
 
   const filteredData = useMemo(
     () => filterLandPermitDocuments(documents, searchText),
@@ -179,6 +236,23 @@ export default function LandPermitDocumentsPage() {
     () => buildLandPermitDocumentStats(documents, theme),
     [documents, theme],
   );
+  const selectedDocuments = useMemo(() => {
+    const selectedKeySet = new Set(selectedDocumentKeys);
+    return documents.filter((item) => selectedKeySet.has(item.document_id));
+  }, [documents, selectedDocumentKeys]);
+
+  const handlePrintDocuments = useCallback((items, mode) => {
+    const documentsToPrint = Array.isArray(items) ? items.filter(Boolean) : [];
+    if (!documentsToPrint.length) {
+      notify("Pilih minimal satu dokumen untuk dicetak.", "warning");
+      return;
+    }
+
+    setPrintPayload({
+      mode,
+      documents: documentsToPrint,
+    });
+  }, []);
   const columns = useMemo(
     () =>
       createLandPermitDocumentColumns({
@@ -188,14 +262,14 @@ export default function LandPermitDocumentsPage() {
           setSelectedData(record);
           setDetailOpen(true);
         },
-        onPrint: setPrintData,
+        onPrint: (record, mode = "permit") => handlePrintDocuments([record], mode),
         canDelete: [1, 9].includes(Number(user?.role_id)),
         onDelete: (record) => {
           setSelectedData(record);
           setDeleteOpen(true);
         },
       }),
-    [isMobile, theme, user],
+    [handlePrintDocuments, isMobile, theme, user],
   );
 
   const canCreate = [1, 9].includes(Number(user?.role_id));
@@ -262,9 +336,42 @@ export default function LandPermitDocumentsPage() {
           searchValue={searchText}
           searchPlaceholder="Cari penyewa, NIK, nomor dokumen, lokasi, sektor, atau lahan"
           onSearchChange={setSearchText}
+          headerAction={
+            <TableActionButton
+              label={`Cetak Terpilih (${selectedDocuments.length})`}
+              title="Cetak dokumen yang dipilih"
+              icon="solar:printer-2-bold-duotone"
+              color="warning"
+              disabled={!selectedDocuments.length}
+              keepLabelOnMobile
+              fullWidthOnMobile
+              items={[
+                {
+                  label: "Cetak Surat Izin Lahan",
+                  icon: "solar:document-text-bold-duotone",
+                  onClick: () => handlePrintDocuments(selectedDocuments, "permit"),
+                },
+                {
+                  label: "Cetak Kartu Pedagang",
+                  icon: "solar:card-bold-duotone",
+                  onClick: () => handlePrintDocuments(selectedDocuments, "card"),
+                },
+                {
+                  label: "Cetak Surat Izin + Kartu",
+                  icon: "solar:printer-2-bold-duotone",
+                  onClick: () => handlePrintDocuments(selectedDocuments, "bundle"),
+                },
+              ]}
+            />
+          }
         >
           <ReusableAntTable
             rowKey={(record) => record.document_id}
+            rowSelection={{
+              selectedRowKeys: selectedDocumentKeys,
+              preserveSelectedRowKeys: true,
+              onChange: setSelectedDocumentKeys,
+            }}
             columns={columns}
             dataSource={filteredData}
             loading={loading}
@@ -318,8 +425,26 @@ export default function LandPermitDocumentsPage() {
         onClose={() => setSnackbar((current) => ({ ...current, open: false }))}
       />
 
-      <div style={{ display: "none" }}>
-        {printData && <SuratIzinLahan ref={printRef} data={printData} />}
+      <div
+        className="land-permit-print-source"
+        style={{
+          position: "fixed",
+          left: "-10000px",
+          top: 0,
+          width: "210mm",
+          height: 0,
+          overflow: "hidden",
+          pointerEvents: "none",
+        }}
+      >
+        {printPayload && (
+          <TraderCardPrintBundle
+            ref={printRef}
+            documents={printPayload.documents}
+            includePermit={["permit", "bundle"].includes(printPayload.mode)}
+            includeCards={["card", "bundle"].includes(printPayload.mode)}
+          />
+        )}
       </div>
     </Box>
   );
