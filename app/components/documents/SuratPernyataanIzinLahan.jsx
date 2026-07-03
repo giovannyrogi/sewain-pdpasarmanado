@@ -192,8 +192,7 @@ const SuratPernyataanIzinLahan = forwardRef(({ data }, ref) => {
       <Box sx={{ display: "grid", rowGap: "2.2mm" }}>
         <StatementItem number="1">
           Bahwa saya tidak akan merubah dan menambah dalam bentuk apapun tempat
-          usaha tersebut di atas,{" "}
-          <Underlined>tanpa persetujuan</Underlined> PERUMDA Pasar Kota Manado.
+          usaha tersebut di atas, tanpa persetujuanPERUMDA Pasar Kota Manado.
         </StatementItem>
 
         <StatementItem number="2">

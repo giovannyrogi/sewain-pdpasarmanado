@@ -74,7 +74,7 @@ export default function LandPermitCostDetailModal({
               <Typography sx={{ fontWeight: 700, fontSize: 15, mb: 1 }}>
                 Detail Biaya
               </Typography>
-              <DetailRow label="Harga per m² / Tahun" value={formatRupiah(stall?.price_per_m2)} />
+              <DetailRow label="Harga per m²" value={formatRupiah(stall?.price_per_m2)} />
               <DetailRow label="Sewa per Tahun" value={formatRupiah(cost.annualRent)} />
               <DetailRow label="Durasi Sewa" value={`${durationYears || 1} Tahun`} />
               <DetailRow label="Tanggal Mulai" value={startDate || "-"} />
