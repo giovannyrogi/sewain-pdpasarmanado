@@ -117,6 +117,33 @@ const getPdfTotalColumn = (columns = [], totalsRow = {}) => {
   );
 };
 
+const buildPdfFullTotalRow = (columns = [], totalsRow = {}) =>
+  columns.map((column, index) => {
+    if (index === 0) {
+      return {
+        content: "TOTAL",
+        styles: {
+          halign: "left",
+          fontStyle: "bold",
+        },
+      };
+    }
+
+    const hasValue = Object.prototype.hasOwnProperty.call(totalsRow, column.key);
+    const value = hasValue ? totalsRow[column.key] : "";
+
+    return {
+      content:
+        hasValue && column.type === "currency"
+          ? formatRupiah(value).replace("Rp. ", "Rp.")
+          : (value ?? ""),
+      styles: {
+        halign: column.type === "currency" ? "right" : "left",
+        fontStyle: "bold",
+      },
+    };
+  });
+
 const buildPdfTotalRow = (columns = [], totalsRow = {}) => {
   const totalColumn = getPdfTotalColumn(columns, totalsRow);
   const totalValue = totalColumn
@@ -558,6 +585,7 @@ export const exportReportToPDF = async ({
   printedAtFooter = false,
   showLogoMark = false,
   summaryInfo = [],
+  totalRowMode = "compact",
 }) => {
   const doc = new jsPDF({ orientation: "landscape" });
   const printedAt = moment().format("DD-MM-YYYY HH:mm:ss");
@@ -631,7 +659,11 @@ export const exportReportToPDF = async ({
     );
 
     if (sectionTotalsRow) {
-      body.push(buildPdfTotalRow(sectionColumns, sectionTotalsRow));
+      body.push(
+        totalRowMode === "full"
+          ? buildPdfFullTotalRow(sectionColumns, sectionTotalsRow)
+          : buildPdfTotalRow(sectionColumns, sectionTotalsRow),
+      );
     }
 
     autoTable(doc, {
@@ -731,7 +763,11 @@ export const exportReportToPDF = async ({
   );
 
   if (totalsRow) {
-    body.push(buildPdfTotalRow(columns, totalsRow));
+    body.push(
+      totalRowMode === "full"
+        ? buildPdfFullTotalRow(columns, totalsRow)
+        : buildPdfTotalRow(columns, totalsRow),
+    );
   }
 
   if (summaryInfo.length) {

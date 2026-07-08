@@ -233,6 +233,7 @@ export default function TenantsReportPage() {
       jtu: totals?.total_JTU || 0,
       total_kontrak_tanpa_ppn: totals?.total_without_ppn || 0,
       total_ppn: totals?.total_ppn || 0,
+      other_amount: totals?.total_other || 0,
       total_plus_ppn: totals?.total_with_ppn || 0,
       total_pph: totals?.total_pph || 0,
       total_after_pph_and_no_ppn: totals?.total_net || 0,
@@ -243,6 +244,16 @@ export default function TenantsReportPage() {
   const reportTitle = `Laporan Pendapatan per Tenant (${moment(
     range.startDate,
   ).format("DD-MM-YYYY")} s/d ${moment(range.endDate).format("DD-MM-YYYY")})`;
+
+  const exportFilterInfo = [
+    {
+      label: "Periode",
+      value: `${moment(range.startDate).format("DD MMMM YYYY")} - ${moment(
+        range.endDate,
+      ).format("DD MMMM YYYY")}`,
+    },
+    { label: "Total Data", value: `${filteredRows.length} transaksi` },
+  ];
 
   const handleExportExcel = () => {
     const exportRows = filteredRows.map((row, index) => ({
@@ -279,10 +290,12 @@ export default function TenantsReportPage() {
         endDate: range.endDate,
         extension: "pdf",
       }),
+      filterInfo: exportFilterInfo,
       rows: exportRows,
       columns: TENANT_EXPORT_COLUMNS,
       totalsRow,
       showLogoMark: true,
+      totalRowMode: "full",
     });
   };
 

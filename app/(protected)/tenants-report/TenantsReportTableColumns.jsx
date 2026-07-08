@@ -7,7 +7,7 @@ import { Icon } from "@iconify/react";
 import formatRupiah from "@/app/components/formatrupiah/page";
 import { formatNumber } from "@/app/utils/formatNumber";
 
-export const TENANT_REPORT_SCROLL_WIDTH = 1960;
+export const TENANT_REPORT_SCROLL_WIDTH = 2120;
 export const TENANT_REPORT_PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
 
 const moneyText = (value) => (
@@ -24,6 +24,27 @@ const moneyText = (value) => (
       : formatRupiah(value)}
   </Typography>
 );
+
+const otherAmountText = (value, record) => {
+  const normalizedValue = Number(value || 0);
+  const displayText =
+    !record?.__isTotal && normalizedValue === 0
+      ? "-"
+      : formatRupiah(normalizedValue);
+
+  return (
+    <Typography
+      sx={{
+        fontSize: 12,
+        fontWeight: 600,
+        textAlign: "right",
+        letterSpacing: "1px",
+      }}
+    >
+      {displayText}
+    </Typography>
+  );
+};
 
 const keepTotalAtBottom = (compare) => (a, b) => {
   if (a?.__isTotal) return 1;
@@ -246,6 +267,14 @@ export const createTenantReportColumns = ({ theme, isMobile }) => [
     render: moneyText,
   },
   {
+    title: "Lainnya",
+    dataIndex: "other_amount",
+    width: 150,
+    align: "right",
+    sorter: keepTotalAtBottom((a, b) => a.other_amount - b.other_amount),
+    render: otherAmountText,
+  },
+  {
     title: "Total + PPN",
     dataIndex: "total_plus_ppn",
     width: 170,
@@ -292,6 +321,7 @@ export const TENANT_EXPORT_COLUMNS = [
     pdfWidth: 18,
   },
   { header: "PPN 11%", key: "total_ppn", type: "currency", pdfWidth: 16 },
+  { header: "Lainnya", key: "other_amount", type: "currency", pdfWidth: 15 },
   { header: "Total + PPN", key: "total_plus_ppn", type: "currency", pdfWidth: 18 },
   { header: "PPH 10%", key: "total_pph", type: "currency", pdfWidth: 16 },
   {

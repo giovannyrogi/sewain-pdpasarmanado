@@ -5,7 +5,7 @@ import { Stack, Typography } from "@mui/material";
 import { Icon } from "@iconify/react";
 import formatRupiah from "@/app/components/formatrupiah/page";
 
-export const LOCATION_REPORT_SCROLL_WIDTH = 1360;
+export const LOCATION_REPORT_SCROLL_WIDTH = 1520;
 export const LOCATION_REPORT_PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
 
 const moneyText = (value) => (
@@ -22,6 +22,27 @@ const moneyText = (value) => (
       : formatRupiah(value)}
   </Typography>
 );
+
+const otherAmountText = (value, record) => {
+  const normalizedValue = Number(value || 0);
+  const displayText =
+    !record?.__isTotal && normalizedValue === 0
+      ? "-"
+      : formatRupiah(normalizedValue);
+
+  return (
+    <Typography
+      sx={{
+        fontSize: 12,
+        fontWeight: 600,
+        textAlign: "right",
+        letterSpacing: "1px",
+      }}
+    >
+      {displayText}
+    </Typography>
+  );
+};
 
 const keepTotalAtBottom = (compare) => (a, b) => {
   if (a?.__isTotal) return 1;
@@ -139,6 +160,14 @@ export const createLocationReportColumns = ({ theme, isMobile }) => [
     render: moneyText,
   },
   {
+    title: "Lainnya",
+    dataIndex: "other_amount",
+    width: 150,
+    align: "right",
+    sorter: keepTotalAtBottom((a, b) => a.other_amount - b.other_amount),
+    render: otherAmountText,
+  },
+  {
     title: "Total + PPN",
     dataIndex: "income_contract_with_ppn",
     width: 180,
@@ -179,6 +208,7 @@ export const LOCATION_EXPORT_COLUMNS = [
     width: 20,
   },
   { header: "PPN 11%", key: "total_ppn", type: "currency" },
+  { header: "Lainnya", key: "other_amount", type: "currency" },
   {
     header: "Total + PPN",
     key: "income_contract_with_ppn",

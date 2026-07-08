@@ -22,6 +22,11 @@ import { buildPaymentDetail } from "@/app/utils/buildPaymentDetail";
 import { formatNumber } from "@/app/utils/formatNumber";
 import { getUploadApiUrl } from "@/app/utils/uploadPath";
 import CompactInfoChip from "@/app/components/chips/CompactInfoChip";
+import {
+  buildReconciledPaymentBreakdown,
+  hasReconciliationOtherAmount,
+  roundCurrency,
+} from "@/app/utils/paymentRoundingReconciliation";
 
 const emptyValue = "-";
 
@@ -240,6 +245,18 @@ export default function TenantLeaseDetailModal({
   const showApproveButton = canApprove && !isFinalStatus;
   const paymentHistory = paymentContext?.previous_payments || [];
   const paymentLabel = paymentContext?.payment_label || "Pembayaran";
+  const reconciledPaymentContext = paymentContext
+    ? buildReconciledPaymentBreakdown({
+        paymentType: selectedData?.payment_type,
+        paymentAmount:
+          paymentContext?.payment_amount || paymentContext?.amount,
+        contractAmount: paymentContext?.contract_amount,
+        ppnAmount: paymentContext?.ppn_amount,
+      })
+    : null;
+  const showPaymentOtherAmount = hasReconciliationOtherAmount(
+    reconciledPaymentContext?.otherAmount,
+  );
   const documentNumber = displayValue(selectedData?.document_number);
   const contractNumber =
     selectedData?.contract_number ||
@@ -617,24 +634,31 @@ export default function TenantLeaseDetailModal({
                 <InfoTile
                   icon="solar:wallet-bold-duotone"
                   label="Nominal Dibayar"
-                  value={paymentContext?.payment_amount ? formatRupiah(paymentContext.payment_amount) : emptyValue}
+                  value={reconciledPaymentContext?.paymentAmount ? formatRupiah(reconciledPaymentContext.paymentAmount) : emptyValue}
                 />
                 <InfoTile
                   icon="solar:document-add-bold-duotone"
                   label="Nilai Kontrak"
-                  value={paymentContext?.contract_amount ? formatRupiah(paymentContext.contract_amount) : emptyValue}
+                  value={reconciledPaymentContext?.contractAmount ? formatRupiah(reconciledPaymentContext.contractAmount) : emptyValue}
                 />
                 <InfoTile
                   icon="solar:bill-list-bold-duotone"
                   label="PPN Pembayaran"
-                  value={paymentContext?.ppn_amount ? formatRupiah(paymentContext.ppn_amount) : emptyValue}
+                  value={reconciledPaymentContext?.ppnAmount ? formatRupiah(reconciledPaymentContext.ppnAmount) : emptyValue}
                 />
+                {showPaymentOtherAmount && (
+                  <InfoTile
+                    icon="solar:calculator-bold-duotone"
+                    label="Lainnya"
+                    value={formatRupiah(reconciledPaymentContext.otherAmount)}
+                  />
+                )}
                 <InfoTile
                   icon="solar:money-bag-bold-duotone"
                   label="Sisa Tagihan"
                   value={
                     paymentContext?.remaining_balance !== undefined && paymentContext?.remaining_balance !== null
-                      ? formatRupiah(paymentContext.remaining_balance)
+                      ? formatRupiah(roundCurrency(paymentContext.remaining_balance))
                       : emptyValue
                   }
                 />

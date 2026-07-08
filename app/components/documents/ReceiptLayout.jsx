@@ -7,6 +7,11 @@ import moment from "moment";
 import formatRupiah from "../formatrupiah/page";
 import { rupiahInWords } from "@/app/utils/numberToWords";
 import { calculatePaymentPphAmount } from "@/app/utils/calculatePphAmount";
+import {
+  buildReconciledPaymentBreakdown,
+  hasReconciliationOtherAmount,
+  roundCurrency,
+} from "@/app/utils/paymentRoundingReconciliation";
 
 const border = "1.2pt solid #000";
 const fontFamily = "Arial, sans-serif";
@@ -83,6 +88,8 @@ const ReceiptLayout = ({
   const room = data?.room || {};
   const location = data?.location || {};
   const paymentLabel = getPaymentLabel(data);
+  const isInstallmentPayment =
+    !isPph && !isLandPermit && tenant.payment_type === "cicilan";
   const ppnAmount = firstPositive(
     receipt?.ppn_amount,
     payment.ppn_amount,
@@ -97,6 +104,15 @@ const ReceiptLayout = ({
       ? payment.payment_amount - ppnAmount
       : 0,
   );
+  const reconciledPayment = buildReconciledPaymentBreakdown({
+    paymentType: tenant.payment_type,
+    paymentAmount: receipt?.amount || payment.payment_amount || payment.amount,
+    contractAmount,
+    ppnAmount,
+  });
+  const showOtherAmount =
+    isInstallmentPayment &&
+    hasReconciliationOtherAmount(reconciledPayment.otherAmount);
   const pphAmount = firstPositive(
     receipt?.pph_amount,
     calculatePaymentPphAmount({
@@ -106,11 +122,15 @@ const ReceiptLayout = ({
       totalPaymentRoom: tenant.total_payment_room,
     }),
   );
-  const totalAmount = firstPositive(
-    isPph ? pphAmount : receipt?.amount,
-    isPph ? 0 : payment.payment_amount,
-    isLandPermit ? tenant.total_payment : 0,
-  );
+  const totalAmount = isInstallmentPayment
+    ? reconciledPayment.totalPlusPpn
+    : roundCurrency(
+        firstPositive(
+          isPph ? pphAmount : receipt?.amount,
+          isPph ? 0 : payment.payment_amount,
+          isLandPermit ? tenant.total_payment : 0,
+        ),
+      );
   const title = isPph ? "KWITANSI PEMBAYARAN" : "KWITANSI PENERIMAAN";
   const receiptDate = receipt?.receipt_date || payment.payment_date;
 
@@ -384,6 +404,7 @@ const ReceiptLayout = ({
                       : ""}
                   </Text>
                   <Text>PPN 11%</Text>
+                  {showOtherAmount && <Text>Lainnya</Text>}
                   <Text>{paymentLabel}</Text>
                 </>
               )}
@@ -419,18 +440,25 @@ const ReceiptLayout = ({
                 </HeaderText>
               ) : isPph ? (
                 <HeaderText sx={{ lineHeight: 2.15 }}>
-                  {pphAmount > 0 ? formatRupiah(pphAmount, "hideRp") : ""}
+                  {totalAmount > 0 ? formatRupiah(totalAmount, "hideRp") : ""}
                 </HeaderText>
               ) : (
                 <>
                   <HeaderText sx={{ lineHeight: 2.15 }}>
-                    {contractAmount > 0
-                      ? formatRupiah(contractAmount, "hideRp")
+                    {reconciledPayment.contractAmount > 0
+                      ? formatRupiah(reconciledPayment.contractAmount, "hideRp")
                       : ""}
                   </HeaderText>
                   <HeaderText sx={{ lineHeight: 2.15 }}>
-                    {ppnAmount > 0 ? formatRupiah(ppnAmount, "hideRp") : ""}
+                    {reconciledPayment.ppnAmount > 0
+                      ? formatRupiah(reconciledPayment.ppnAmount, "hideRp")
+                      : ""}
                   </HeaderText>
+                  {showOtherAmount && (
+                    <HeaderText sx={{ lineHeight: 2.15 }}>
+                      {formatRupiah(reconciledPayment.otherAmount, "hideRp")}
+                    </HeaderText>
+                  )}
                 </>
               )}
             </Grid>

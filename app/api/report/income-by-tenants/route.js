@@ -2,6 +2,7 @@ import pool from "@/lib/dbConfig";
 import moment from "moment";
 import { requireAuthenticatedUser } from "@/app/utils/auth";
 import { formatNumber } from "@/app/utils/formatNumber";
+import { buildReconciledPaymentBreakdown } from "@/app/utils/paymentRoundingReconciliation";
 
 function isValidDate(value) {
   return moment(value, "YYYY-MM-DD", true).isValid();
@@ -89,10 +90,18 @@ export async function GET(request) {
       JOIN rooms r ON r.id = ta.room_id
       WHERE p.payment_date BETWEEN $1 AND $2
         AND p.approval_status = 'approved'
+        AND EXISTS (
+          SELECT 1
+          FROM payment_approval pa
+          WHERE pa.payment_id = p.id
+            AND pa.role_id = 8
+            AND pa.status = 'approved'
+        )
     ),
     per_tenant_final AS (
       SELECT
         ap.payment_id,
+        ap.amount,
         ap.payment_date,
         ap.tenant_application_id,
         ap.tenant_name,
@@ -140,6 +149,7 @@ export async function GET(request) {
     )
     SELECT
       pf.payment_id,
+      pf.amount AS payment_amount_raw,
       pf.payment_date,
       pf.tenant_application_id,
       pf.tenant_name,
@@ -171,8 +181,8 @@ export async function GET(request) {
       -- Total tanpa PPN & PPH
       ROUND(((pf.kontrak_murni + CASE WHEN pf.remaining_balance = 0 THEN pf.jtu_amount ELSE 0 END) - (pf.kontrak_murni * 0.10)), 2) AS total_after_pph_and_no_ppn,
 
-      ROUND(COALESCE(pf.contract_amount,0),2) AS payment_contract_amount,
-      ROUND(COALESCE(pf.ppn_amount,0),2) AS payment_ppn_amount,
+      COALESCE(pf.contract_amount,0) AS payment_contract_amount,
+      COALESCE(pf.ppn_amount,0) AS payment_ppn_amount,
       pf.payment_number,
       pf.remaining_balance,
       pf.payment_type,
@@ -205,7 +215,16 @@ export async function GET(request) {
       endDateFormatted,
     ]);
 
-    const data = rows.map((r) => ({
+    const data = rows.map((r) => {
+      const breakdown = buildReconciledPaymentBreakdown({
+        paymentType: r.payment_type,
+        paymentAmount: r.payment_amount_raw,
+        contractAmount: r.kontrak_murni,
+        ppnAmount: r.total_ppn,
+        jtuAmount: r.jtu_display,
+      });
+
+      return {
       payment_id: r.payment_id,
       payment_date: r.payment_date
         ? moment(r.payment_date).format("DD-MM-YYYY")
@@ -220,20 +239,23 @@ export async function GET(request) {
         r.room_width,
       )} m²`,
       harga_m2: Number(r.harga_m2 || 0),
-      kontrak: Number(r.kontrak_murni || 0),
-      jtu: Number(r.jtu_display || 0),
-      total_kontrak_tanpa_ppn: Number(r.contract_without_ppn || 0),
-      total_ppn: Number(r.total_ppn || 0),
-      total_plus_ppn: Number(r.contract_with_ppn || 0),
-      total_pph: Number(r.total_pph || 0),
-      total_after_pph_and_no_ppn: Number(r.total_after_pph_and_no_ppn || 0),
+      kontrak: breakdown.contractAmount,
+      jtu: breakdown.jtuAmount,
+      total_kontrak_tanpa_ppn:
+        breakdown.contractAmount + breakdown.jtuAmount,
+      total_ppn: breakdown.ppnAmount,
+      other_amount: breakdown.otherAmount,
+      total_plus_ppn: breakdown.totalPlusPpn,
+      total_pph: breakdown.totalPph,
+      total_after_pph_and_no_ppn: breakdown.totalNet,
       payment_contract_amount: Number(r.payment_contract_amount || 0),
       payment_ppn_amount: Number(r.payment_ppn_amount || 0),
       payment_number: r.payment_number,
       remaining_balance: Number(r.remaining_balance || 0),
       payment_type: r.payment_type,
       keterangan: r.keterangan,
-    }));
+      };
+    });
 
     const totals = data.reduce(
       (acc, item) => {
@@ -241,6 +263,7 @@ export async function GET(request) {
         acc.total_contract += item.kontrak || 0;
         acc.total_without_ppn += item.total_kontrak_tanpa_ppn || 0;
         acc.total_ppn += item.total_ppn || 0;
+        acc.total_other += item.other_amount || 0;
         acc.total_with_ppn += item.total_plus_ppn || 0;
         acc.total_pph += item.total_pph || 0;
         acc.total_net += item.total_after_pph_and_no_ppn || 0;
@@ -251,6 +274,7 @@ export async function GET(request) {
         total_contract: 0,
         total_without_ppn: 0,
         total_ppn: 0,
+        total_other: 0,
         total_with_ppn: 0,
         total_pph: 0,
         total_net: 0,

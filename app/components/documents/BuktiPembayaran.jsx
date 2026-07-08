@@ -11,6 +11,11 @@ import formatRupiah from "../formatrupiah/page";
 import Image from "next/image";
 import { getUploadApiUrl } from "@/app/utils/uploadPath";
 import { buildPaymentDetail } from "@/app/utils/buildPaymentDetail";
+import {
+  buildReconciledPaymentBreakdown,
+  hasReconciliationOtherAmount,
+  roundCurrency,
+} from "@/app/utils/paymentRoundingReconciliation";
 
 const readNumber = (value, fallback = 0) => {
   if (value === null || value === undefined || value === "") return fallback;
@@ -78,6 +83,18 @@ const BuktiPembayaran = forwardRef(({ data }, ref) => {
   const grandTotal = readNumber(paymentDetail?.totalPayment);
   const paymentAmount = readNumber(data?.payments?.payment_amount, grandTotal);
   const paymentRows = buildProofPaymentRows(data?.payments);
+  const reconciledPaymentRows = paymentRows.map((payment) => ({
+    ...payment,
+    reconciliation: buildReconciledPaymentBreakdown({
+      paymentType: tenantApplication?.payment_type,
+      paymentAmount: payment?.amount,
+      contractAmount: payment?.contract_amount,
+      ppnAmount: payment?.ppn_amount,
+    }),
+  }));
+  const showOtherColumn = reconciledPaymentRows.some((payment) =>
+    hasReconciliationOtherAmount(payment?.reconciliation?.otherAmount),
+  );
   const roomSize = formatRoomSize(room);
 
   return (
@@ -456,7 +473,7 @@ const BuktiPembayaran = forwardRef(({ data }, ref) => {
           <thead>
             <tr>
               <th
-                colSpan={6}
+                colSpan={showOtherColumn ? 7 : 6}
                 style={{
                   border: "1px solid black",
                   padding: "5px",
@@ -475,6 +492,7 @@ const BuktiPembayaran = forwardRef(({ data }, ref) => {
                 "Tanggal Pembayaran",
                 "Nilai Kontrak",
                 "PPN (11%)",
+                ...(showOtherColumn ? ["Lainnya"] : []),
                 "Total Pembayaran",
                 "Sisa Tagihan",
               ].map((header, i) => (
@@ -495,7 +513,7 @@ const BuktiPembayaran = forwardRef(({ data }, ref) => {
             </tr>
           </thead>
           <tbody>
-            {paymentRows.map((payment, idx) => (
+            {reconciledPaymentRows.map((payment, idx) => (
               <tr key={idx}>
                 <td
                   style={{
@@ -530,7 +548,7 @@ const BuktiPembayaran = forwardRef(({ data }, ref) => {
                     textAlign: "right",
                   }}
                 >
-                  {formatRupiah(payment.contract_amount)},-
+                  {formatRupiah(payment.reconciliation.contractAmount)},-
                 </td>
                 <td
                   style={{
@@ -541,7 +559,36 @@ const BuktiPembayaran = forwardRef(({ data }, ref) => {
                     textAlign: "right",
                   }}
                 >
-                  {formatRupiah(payment.ppn_amount)},-
+                  {formatRupiah(payment.reconciliation.ppnAmount)},-
+                </td>
+                {showOtherColumn && (
+                  <td
+                    style={{
+                      border: "1px solid black",
+                      fontSize: "12px",
+                      fontFamily: "calibri",
+                      padding: "5px",
+                      textAlign: "right",
+                    }}
+                  >
+                    {hasReconciliationOtherAmount(
+                      payment.reconciliation.otherAmount,
+                    )
+                      ? `${formatRupiah(payment.reconciliation.otherAmount)},-`
+                      : ""}
+                  </td>
+                )}
+                <td
+                  style={{
+                    border: "1px solid black",
+                    fontSize: "12px",
+                    fontFamily: "calibri",
+                    padding: "5px",
+                    textAlign: "right",
+                    fontWeight: "bold",
+                  }}
+                >
+                  {formatRupiah(payment.reconciliation.paymentAmount)},-
                 </td>
                 <td
                   style={{
@@ -553,19 +600,7 @@ const BuktiPembayaran = forwardRef(({ data }, ref) => {
                     fontWeight: "bold",
                   }}
                 >
-                  {formatRupiah(payment.amount)},-
-                </td>
-                <td
-                  style={{
-                    border: "1px solid black",
-                    fontSize: "12px",
-                    fontFamily: "calibri",
-                    padding: "5px",
-                    textAlign: "right",
-                    fontWeight: "bold",
-                  }}
-                >
-                  {formatRupiah(payment.remaining_balance)},-
+                  {formatRupiah(roundCurrency(payment.remaining_balance))},-
                 </td>
               </tr>
             ))}

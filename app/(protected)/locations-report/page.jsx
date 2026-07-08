@@ -212,6 +212,7 @@ export default function LocationsReportPage() {
       JTU: totals?.total_JTU || 0,
       income_contract_without_ppn: totals?.total_without_ppn || 0,
       total_ppn: totals?.total_ppn || 0,
+      other_amount: totals?.total_other || 0,
       income_contract_with_ppn: totals?.total_with_ppn || 0,
       total_pph: totals?.total_pph || 0,
       total_without_ppn_pph: totals?.total_net || 0,
@@ -222,6 +223,16 @@ export default function LocationsReportPage() {
   const reportTitle = `Laporan Pendapatan per Lokasi (${moment(range.startDate).format(
     "DD-MM-YYYY",
   )} s/d ${moment(range.endDate).format("DD-MM-YYYY")})`;
+
+  const exportFilterInfo = [
+    {
+      label: "Periode",
+      value: `${moment(range.startDate).format("DD MMMM YYYY")} - ${moment(
+        range.endDate,
+      ).format("DD MMMM YYYY")}`,
+    },
+    { label: "Total Data", value: `${filteredRows.length} lokasi` },
+  ];
 
   const handleExportExcel = () => {
     exportReportToExcel({
@@ -250,9 +261,11 @@ export default function LocationsReportPage() {
         endDate: range.endDate,
         extension: "pdf",
       }),
+      filterInfo: exportFilterInfo,
       rows: filteredRows,
       columns: LOCATION_EXPORT_COLUMNS,
       totalsRow,
+      totalRowMode: "full",
     });
   };
 
