@@ -117,6 +117,16 @@ const getPdfTotalColumn = (columns = [], totalsRow = {}) => {
   );
 };
 
+const formatPdfCurrencyCell = (value, column = {}) => {
+  const numericValue = asNumber(value);
+
+  if (column.pdfZeroAsDash && numericValue === 0) {
+    return "-";
+  }
+
+  return formatRupiah(numericValue).replace("Rp. ", "Rp.");
+};
+
 const buildPdfFullTotalRow = (columns = [], totalsRow = {}) =>
   columns.map((column, index) => {
     if (index === 0) {
@@ -135,7 +145,7 @@ const buildPdfFullTotalRow = (columns = [], totalsRow = {}) =>
     return {
       content:
         hasValue && column.type === "currency"
-          ? formatRupiah(value).replace("Rp. ", "Rp.")
+          ? formatPdfCurrencyCell(value, column)
           : (value ?? ""),
       styles: {
         halign: column.type === "currency" ? "right" : "left",
@@ -143,6 +153,50 @@ const buildPdfFullTotalRow = (columns = [], totalsRow = {}) =>
       },
     };
   });
+
+/**
+ * Baris total PDF laporan rekon tertentu perlu menggabungkan kolom identitas
+ * awal agar label TOTAL mudah terbaca dan nominal tetap sejajar di kolom rekap.
+ */
+const buildPdfMergedLeadingTotalRow = ({
+  columns = [],
+  totalsRow = {},
+  mergeUntilKey,
+}) => {
+  const mergeUntilIndex = Math.max(
+    columns.findIndex((column) => column.key === mergeUntilKey),
+    0,
+  );
+
+  return [
+    {
+      content: "TOTAL",
+      colSpan: mergeUntilIndex + 1,
+      styles: {
+        halign: "left",
+        fontStyle: "bold",
+      },
+    },
+    ...columns.slice(mergeUntilIndex + 1).map((column) => {
+      const hasValue = Object.prototype.hasOwnProperty.call(
+        totalsRow,
+        column.key,
+      );
+      const value = hasValue ? totalsRow[column.key] : "";
+
+      return {
+        content:
+          hasValue && column.type === "currency"
+            ? formatPdfCurrencyCell(value, column)
+            : (value ?? ""),
+        styles: {
+          halign: column.type === "currency" ? "right" : "left",
+          fontStyle: "bold",
+        },
+      };
+    }),
+  ];
+};
 
 const buildPdfTotalRow = (columns = [], totalsRow = {}) => {
   const totalColumn = getPdfTotalColumn(columns, totalsRow);
@@ -162,7 +216,7 @@ const buildPdfTotalRow = (columns = [], totalsRow = {}) => {
     {
       content:
         totalColumn?.column?.type === "currency"
-          ? formatRupiah(totalValue)
+          ? formatPdfCurrencyCell(totalValue, totalColumn.column)
           : (totalValue ?? ""),
       styles: {
         halign: totalColumn?.column?.type === "currency" ? "right" : "left",
@@ -179,7 +233,7 @@ const formatPdfCellValue = (row, column) => {
      * Untuk PDF laporan, nominal dibuat rapat agar tetap satu baris dan mudah
      * dipindai sebagai nilai uang.
      */
-    return formatRupiah(row[column.key]).replace("Rp. ", "Rp.");
+    return formatPdfCurrencyCell(row[column.key], column);
   }
 
   return row[column.key] ?? "-";
@@ -586,6 +640,7 @@ export const exportReportToPDF = async ({
   showLogoMark = false,
   summaryInfo = [],
   totalRowMode = "compact",
+  totalMergeUntilKey,
 }) => {
   const doc = new jsPDF({ orientation: "landscape" });
   const printedAt = moment().format("DD-MM-YYYY HH:mm:ss");
@@ -660,9 +715,15 @@ export const exportReportToPDF = async ({
 
     if (sectionTotalsRow) {
       body.push(
-        totalRowMode === "full"
-          ? buildPdfFullTotalRow(sectionColumns, sectionTotalsRow)
-          : buildPdfTotalRow(sectionColumns, sectionTotalsRow),
+        totalRowMode === "mergedLeading"
+          ? buildPdfMergedLeadingTotalRow({
+              columns: sectionColumns,
+              totalsRow: sectionTotalsRow,
+              mergeUntilKey: totalMergeUntilKey,
+            })
+          : totalRowMode === "full"
+            ? buildPdfFullTotalRow(sectionColumns, sectionTotalsRow)
+            : buildPdfTotalRow(sectionColumns, sectionTotalsRow),
       );
     }
 
@@ -764,9 +825,15 @@ export const exportReportToPDF = async ({
 
   if (totalsRow) {
     body.push(
-      totalRowMode === "full"
-        ? buildPdfFullTotalRow(columns, totalsRow)
-        : buildPdfTotalRow(columns, totalsRow),
+      totalRowMode === "mergedLeading"
+        ? buildPdfMergedLeadingTotalRow({
+            columns,
+            totalsRow,
+            mergeUntilKey: totalMergeUntilKey,
+          })
+        : totalRowMode === "full"
+          ? buildPdfFullTotalRow(columns, totalsRow)
+          : buildPdfTotalRow(columns, totalsRow),
     );
   }
 

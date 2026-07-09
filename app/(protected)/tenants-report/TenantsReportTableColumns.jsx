@@ -321,7 +321,13 @@ export const TENANT_EXPORT_COLUMNS = [
     pdfWidth: 18,
   },
   { header: "PPN 11%", key: "total_ppn", type: "currency", pdfWidth: 16 },
-  { header: "Lainnya", key: "other_amount", type: "currency", pdfWidth: 15 },
+  {
+    header: "Lainnya",
+    key: "other_amount",
+    type: "currency",
+    pdfWidth: 15,
+    pdfZeroAsDash: true,
+  },
   { header: "Total + PPN", key: "total_plus_ppn", type: "currency", pdfWidth: 18 },
   { header: "PPH 10%", key: "total_pph", type: "currency", pdfWidth: 16 },
   {

@@ -241,9 +241,7 @@ export default function TenantsReportPage() {
     [totals],
   );
 
-  const reportTitle = `Laporan Pendapatan per Tenant (${moment(
-    range.startDate,
-  ).format("DD-MM-YYYY")} s/d ${moment(range.endDate).format("DD-MM-YYYY")})`;
+  const reportTitle = `Laporan Pendapatan Per Penyewa`;
 
   const exportFilterInfo = [
     {
@@ -284,6 +282,8 @@ export default function TenantsReportPage() {
 
     exportReportToPDF({
       title: reportTitle,
+      subtitle:
+        "Laporan ini menyajikan rekapitulasi pendapatan sewa ruangan per penyewa berdasarkan transaksi pembayaran pada periode terpilih.",
       fileName: buildReportFileName({
         prefix: "Laporan_Pendapatan_Tenant",
         startDate: range.startDate,
@@ -295,7 +295,9 @@ export default function TenantsReportPage() {
       columns: TENANT_EXPORT_COLUMNS,
       totalsRow,
       showLogoMark: true,
-      totalRowMode: "full",
+      printedAtFooter: true,
+      totalRowMode: "mergedLeading",
+      totalMergeUntilKey: "harga_m2",
     });
   };
 

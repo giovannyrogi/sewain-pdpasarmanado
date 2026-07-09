@@ -57,14 +57,22 @@ const getPresetRange = (preset) => {
 
   if (preset === "two_week") {
     return {
-      startDate: today.clone().subtract(1, "week").startOf("week").format("YYYY-MM-DD"),
+      startDate: today
+        .clone()
+        .subtract(1, "week")
+        .startOf("week")
+        .format("YYYY-MM-DD"),
       endDate: today.format("YYYY-MM-DD"),
     };
   }
 
   if (preset === "two_month") {
     return {
-      startDate: today.clone().subtract(1, "month").startOf("month").format("YYYY-MM-DD"),
+      startDate: today
+        .clone()
+        .subtract(1, "month")
+        .startOf("month")
+        .format("YYYY-MM-DD"),
       endDate: today.format("YYYY-MM-DD"),
     };
   }
@@ -115,7 +123,10 @@ export default function LocationsReportPage() {
     }
 
     if (moment(targetRange.startDate).isAfter(targetRange.endDate)) {
-      showSnackbar("Tanggal mulai tidak boleh melewati tanggal selesai.", "error");
+      showSnackbar(
+        "Tanggal mulai tidak boleh melewati tanggal selesai.",
+        "error",
+      );
       return false;
     }
 
@@ -136,19 +147,25 @@ export default function LocationsReportPage() {
     }
 
     try {
-      const locationResponse = await axios.get("/api/report/income-by-locations", {
-        params: {
-          start_date: overrideRange.startDate,
-          end_date: overrideRange.endDate,
+      const locationResponse = await axios.get(
+        "/api/report/income-by-locations",
+        {
+          params: {
+            start_date: overrideRange.startDate,
+            end_date: overrideRange.endDate,
+          },
         },
-      });
+      );
 
       const nextRows = locationResponse.data?.data || [];
       setRows(nextRows);
       setTotals(locationResponse.data?.totals || {});
 
       if (!nextRows.length) {
-        showSnackbar("Tidak ada pendapatan lokasi pada periode ini.", "warning");
+        showSnackbar(
+          "Tidak ada pendapatan lokasi pada periode ini.",
+          "warning",
+        );
       } else if (notifySuccess) {
         showSnackbar(
           `Laporan pendapatan lokasi berhasil ditampilkan (${nextRows.length} data).`,
@@ -220,10 +237,7 @@ export default function LocationsReportPage() {
     [totals],
   );
 
-  const reportTitle = `Laporan Pendapatan per Lokasi (${moment(range.startDate).format(
-    "DD-MM-YYYY",
-  )} s/d ${moment(range.endDate).format("DD-MM-YYYY")})`;
-
+  const reportTitle = `Laporan Pendapatan per Lokasi `;
   const exportFilterInfo = [
     {
       label: "Periode",
@@ -255,6 +269,8 @@ export default function LocationsReportPage() {
   const handleExportPDF = () => {
     exportReportToPDF({
       title: reportTitle,
+      subtitle:
+        "Laporan ini menyajikan rekapitulasi pendapatan sewa ruangan per lokasi berdasarkan transaksi pembayaran pada periode terpilih.",
       fileName: buildReportFileName({
         prefix: "Laporan_Pendapatan_Lokasi",
         startDate: range.startDate,
@@ -266,6 +282,8 @@ export default function LocationsReportPage() {
       columns: LOCATION_EXPORT_COLUMNS,
       totalsRow,
       totalRowMode: "full",
+      showLogoMark: true,
+      printedAtFooter: true,
     });
   };
 

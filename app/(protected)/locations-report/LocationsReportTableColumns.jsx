@@ -208,7 +208,7 @@ export const LOCATION_EXPORT_COLUMNS = [
     width: 20,
   },
   { header: "PPN 11%", key: "total_ppn", type: "currency" },
-  { header: "Lainnya", key: "other_amount", type: "currency" },
+  { header: "Lainnya", key: "other_amount", type: "currency", pdfZeroAsDash: true },
   {
     header: "Total + PPN",
     key: "income_contract_with_ppn",
