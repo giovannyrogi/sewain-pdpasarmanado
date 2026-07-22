@@ -1,7 +1,20 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Box, Button, Grid, Stack, useMediaQuery, useTheme } from "@mui/material";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import {
+  Box,
+  Button,
+  Grid,
+  Stack,
+  useMediaQuery,
+  useTheme,
+} from "@mui/material";
 import { Icon } from "@iconify/react";
 import axios from "axios";
 import LoadingBackdrop from "@/app/components/loading/Backdrop";
@@ -58,47 +71,50 @@ export default function LandPermitApplicationsPage() {
     setSnackbar({ open: true, message, severity });
   };
 
-  const fetchData = useCallback(async (message = "Memuat data izin lahan...") => {
-    setLoadingMessage(message);
-    setLoading(true);
-    try {
-      const [
-        applicationResponse,
-        identityResponse,
-        locationResponse,
-        sectorResponse,
-        stallResponse,
-      ] = await Promise.all([
-        axios.get("/api/land-permit-applications"),
-        axios.get("/api/identity-list"),
-        axios.get("/api/locations"),
-        axios.get("/api/land-sectors"),
-        axios.get("/api/land-stalls"),
-      ]);
+  const fetchData = useCallback(
+    async (message = "Memuat data izin lahan...") => {
+      setLoadingMessage(message);
+      setLoading(true);
+      try {
+        const [
+          applicationResponse,
+          identityResponse,
+          locationResponse,
+          sectorResponse,
+          stallResponse,
+        ] = await Promise.all([
+          axios.get("/api/land-permit-applications"),
+          axios.get("/api/identity-list"),
+          axios.get("/api/locations"),
+          axios.get("/api/land-sectors"),
+          axios.get("/api/land-stalls"),
+        ]);
 
-      if (!applicationResponse.data?.success) {
-        showSnackbar("Gagal mengambil data permohonan izin lahan.", "error");
+        if (!applicationResponse.data?.success) {
+          showSnackbar("Gagal mengambil data permohonan izin lahan.", "error");
+          return false;
+        }
+
+        setApplications(applicationResponse.data.data || []);
+        setIdentities(identityResponse.data?.data || []);
+        setLocations(locationResponse.data?.data || []);
+        setSectors(sectorResponse.data?.data || []);
+        setStalls(stallResponse.data?.data || []);
+        return true;
+      } catch (error) {
+        showSnackbar(
+          error?.response?.data?.message ||
+            "Terjadi kesalahan saat mengambil data permohonan izin lahan.",
+          "error",
+        );
         return false;
+      } finally {
+        setLoading(false);
+        setLoadingMessage("Loading...");
       }
-
-      setApplications(applicationResponse.data.data || []);
-      setIdentities(identityResponse.data?.data || []);
-      setLocations(locationResponse.data?.data || []);
-      setSectors(sectorResponse.data?.data || []);
-      setStalls(stallResponse.data?.data || []);
-      return true;
-    } catch (error) {
-      showSnackbar(
-        error?.response?.data?.message ||
-          "Terjadi kesalahan saat mengambil data permohonan izin lahan.",
-        "error",
-      );
-      return false;
-    } finally {
-      setLoading(false);
-      setLoadingMessage("Loading...");
-    }
-  }, []);
+    },
+    [],
+  );
 
   useEffect(() => {
     fetchData();
@@ -148,14 +164,19 @@ export default function LandPermitApplicationsPage() {
 
       const response = await request;
       if (response.data?.success) {
-        showSnackbar(response.data.message || "Permohonan izin lahan berhasil disimpan.");
+        showSnackbar(
+          response.data.message || "Permohonan izin lahan berhasil disimpan.",
+        );
         setFormOpen(false);
         setSelectedData(null);
         await fetchData("Memuat ulang data permohonan izin lahan...");
         return;
       }
 
-      showSnackbar(response.data?.message || "Gagal menyimpan permohonan.", "error");
+      showSnackbar(
+        response.data?.message || "Gagal menyimpan permohonan.",
+        "error",
+      );
     } catch (error) {
       showSnackbar(
         error?.response?.data?.message ||
@@ -179,14 +200,19 @@ export default function LandPermitApplicationsPage() {
       );
 
       if (response.data?.success) {
-        showSnackbar(response.data.message || "Permohonan izin lahan berhasil dihapus.");
+        showSnackbar(
+          response.data.message || "Permohonan izin lahan berhasil dihapus.",
+        );
         setDeleteOpen(false);
         setSelectedData(null);
         await fetchData("Memuat ulang data permohonan izin lahan...");
         return;
       }
 
-      showSnackbar(response.data?.message || "Gagal menghapus permohonan.", "error");
+      showSnackbar(
+        response.data?.message || "Gagal menghapus permohonan.",
+        "error",
+      );
     } catch (error) {
       showSnackbar(
         error?.response?.data?.message ||
@@ -286,7 +312,10 @@ export default function LandPermitApplicationsPage() {
           eyebrow="Transaksi"
           breadcrumbs={[
             { label: "Transaksi", icon: "healthicons:money-bag" },
-            { label: "Permohonan Izin Lahan", icon: "solar:document-add-bold-duotone" },
+            {
+              label: "Permohonan Izin Lahan",
+              icon: "solar:document-add-bold-duotone",
+            },
           ]}
           title="Permohonan Izin Lahan"
           description="Kelola permohonan izin lahan, identitas pedagang, lokasi, lahan, masa izin, dan progress persetujuan."

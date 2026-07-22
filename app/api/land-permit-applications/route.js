@@ -79,6 +79,8 @@ const mapApplicationRow = (row) => ({
   payment_status: row.payment_status,
   is_fully_paid: row.is_fully_paid,
   permit_status: row.permit_status,
+  administration_type: row.administration_type,
+  admin_fee: row.admin_fee,
   created_at: row.created_at
     ? moment(row.created_at).format("YYYY-MM-DD HH:mm:ss")
     : null,
@@ -121,6 +123,8 @@ const selectApplicationsSql = `
     lpa.payment_status,
     lpa.is_fully_paid,
     lpa.permit_status,
+    lpa.administration_type,
+    lpa.admin_fee,
     lpa.created_at,
     lpa.updated_at,
     ti.full_name AS tenant_name,
@@ -338,21 +342,25 @@ export async function POST(request) {
       return failResponse(stallError, 400);
     }
 
+
     const annualLandRent = calculateAnnualLandRent(stall);
-    const totalPaymentLand = annualLandRent * values.lease_duration_years;
+    const administrationType = values.administration_type === "kip" ? 100000: 150000; // Set admin fee based on administration type
+    const admin_fee = administrationType * values.lease_duration_years; // dynamic admin fee based on administration type
+    const totalPaymentLand = annualLandRent * values.lease_duration_years; // room rent for the entire lease duration
+    const totalPayment = totalPaymentLand + admin_fee; // total payment including admin fee
 
     const result = await client.query(
       `
       INSERT INTO land_permit_applications (
         renewal_of, application_type, user_id, tenant_identity_id, commodity_type,
         document_number, location_id, sector_id, stall_id, start_date, end_date,
-        lease_duration_years, annual_land_rent, total_payment_land, total_payment,
+        lease_duration_years, annual_land_rent, total_payment_land, total_payment, admin_fee, administration_type,
         approval_status, current_step, payment_status, is_fully_paid, permit_status
       )
       VALUES (
         $1, $2, $3, $4, $5,
         NULL, $6, $7, $8, $9, $10,
-        $11, $12, $13, $14,
+        $11, $12, $13, $14, $15, $16,
         'proses', 1, 'unpaid', false, 'draft'
       )
       RETURNING id
@@ -371,7 +379,9 @@ export async function POST(request) {
         values.lease_duration_years,
         annualLandRent,
         totalPaymentLand,
-        totalPaymentLand,
+        totalPayment,
+        admin_fee,
+        values.administration_type,
       ],
     );
 

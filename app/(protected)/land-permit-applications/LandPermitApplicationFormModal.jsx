@@ -5,8 +5,11 @@ import {
   Autocomplete,
   Box,
   Button,
+  FormControl,
   Grid,
+  InputLabel,
   MenuItem,
+  Select,
   Stack,
   TextField,
   Typography,
@@ -32,6 +35,7 @@ const emptyForm = {
   stall_id: "",
   start_date: moment(),
   lease_duration_years: 1,
+  administration_type: "kip",
 };
 
 export default function LandPermitApplicationFormModal({
@@ -42,7 +46,7 @@ export default function LandPermitApplicationFormModal({
   locations = [],
   sectors = [],
   stalls = [],
-  applications = [],
+  applications,
   loading,
   onClose,
   onSubmit,
@@ -53,10 +57,7 @@ export default function LandPermitApplicationFormModal({
   const [costOpen, setCostOpen] = useState(false);
 
   const activeIdentities = useMemo(
-    () =>
-      identities.filter(
-        (item) => item.land_permit_status === "active",
-      ),
+    () => identities.filter((item) => item.land_permit_status === "active"),
     [identities],
   );
   const activeSectors = useMemo(
@@ -64,14 +65,16 @@ export default function LandPermitApplicationFormModal({
       sectors.filter(
         (item) =>
           item.status === "active" &&
-          (!form.location_id || Number(item.location_id) === Number(form.location_id)),
+          (!form.location_id ||
+            Number(item.location_id) === Number(form.location_id)),
       ),
     [form.location_id, sectors],
   );
   const availableStalls = useMemo(
     () =>
       stalls.filter((item) => {
-        const sameCurrent = mode === "edit" && Number(item.id) === Number(initialData?.stall_id);
+        const sameCurrent =
+          mode === "edit" && Number(item.id) === Number(initialData?.stall_id);
         const selectedFromRenewal = Number(item.id) === Number(form.stall_id);
         return (
           Number(item.location_id) === Number(form.location_id) &&
@@ -87,7 +90,8 @@ export default function LandPermitApplicationFormModal({
         (item) =>
           item.approval_status === "approved" &&
           item.land_permit_status === "active" &&
-          item.land_permit_application_id !== initialData?.land_permit_application_id,
+          item.land_permit_application_id !==
+            initialData?.land_permit_application_id,
       ),
     [applications, initialData?.land_permit_application_id],
   );
@@ -101,7 +105,10 @@ export default function LandPermitApplicationFormModal({
   const selectedSector = sectors.find(
     (item) => Number(item.id) === Number(form.sector_id),
   );
-  const selectedStall = stalls.find((item) => Number(item.id) === Number(form.stall_id));
+  const selectedStall = stalls.find(
+    (item) => Number(item.id) === Number(form.stall_id),
+  );
+
   const endDate = useMemo(() => {
     const value = calculateLeaseEndDate(
       form.start_date?.toDate ? form.start_date.toDate() : form.start_date,
@@ -109,7 +116,11 @@ export default function LandPermitApplicationFormModal({
     );
     return value ? moment(value.toDate ? value.toDate() : value) : null;
   }, [form.lease_duration_years, form.start_date]);
-  const cost = calculateLandPermitCost(selectedStall, form.lease_duration_years);
+  const cost = calculateLandPermitCost(
+    selectedStall,
+    form.lease_duration_years,
+    form.administration_type,
+  );
 
   useEffect(() => {
     if (!open) return;
@@ -123,7 +134,11 @@ export default function LandPermitApplicationFormModal({
         location_id: initialData.location_id || "",
         sector_id: initialData.sector_id || "",
         stall_id: initialData.stall_id || "",
-        start_date: initialData.start_date ? moment(initialData.start_date) : moment(),
+        admin_fee: initialData.admin_fee || 0,
+        administration_type: initialData.administration_type || "kip",
+        start_date: initialData.start_date
+          ? moment(initialData.start_date)
+          : moment(),
         lease_duration_years: Number(initialData.lease_duration_years || 1),
       });
       return;
@@ -174,13 +189,17 @@ export default function LandPermitApplicationFormModal({
     event.preventDefault();
     onSubmit?.({
       application_type: form.application_type,
-      renewal_of: form.application_type === "perpanjangan" ? form.renewal_of : null,
+      renewal_of:
+        form.application_type === "perpanjangan" ? form.renewal_of : null,
       tenant_identity_id: form.tenant_identity_id,
       commodity_type: form.commodity_type,
       location_id: form.location_id,
       sector_id: form.sector_id,
+      administration_type: form.administration_type,
       stall_id: form.stall_id,
-      start_date: form.start_date ? moment(form.start_date).format("YYYY-MM-DD") : "",
+      start_date: form.start_date
+        ? moment(form.start_date).format("YYYY-MM-DD")
+        : "",
       end_date: endDate ? endDate.format("YYYY-MM-DD") : "",
       lease_duration_years: form.lease_duration_years,
     });
@@ -206,7 +225,11 @@ export default function LandPermitApplicationFormModal({
     <>
       <CrudFormModal
         open={open}
-        title={mode === "edit" ? "Ubah Permohonan Izin Lahan" : "Tambah Permohonan Izin Lahan"}
+        title={
+          mode === "edit"
+            ? "Ubah Permohonan Izin Lahan"
+            : "Tambah Permohonan Izin Lahan"
+        }
         description="Lengkapi identitas, lokasi, sektor, lahan, masa izin, dan rincian biaya izin lahan."
         icon="solar:document-add-bold-duotone"
         submitLabel={mode === "edit" ? "Simpan Perubahan" : "Simpan"}
@@ -226,7 +249,9 @@ export default function LandPermitApplicationFormModal({
               fullWidth
               label="Pilih Jenis Permohonan *"
               value={form.application_type}
-              onChange={(event) => handleApplicationTypeChange(event.target.value)}
+              onChange={(event) =>
+                handleApplicationTypeChange(event.target.value)
+              }
               disabled={loading || mode === "edit"}
             >
               <MenuItem value="baru">Permohonan Baru</MenuItem>
@@ -243,13 +268,19 @@ export default function LandPermitApplicationFormModal({
                 }
                 value={
                   renewalOptions.find(
-                    (item) => Number(item.land_permit_application_id) === Number(form.renewal_of),
+                    (item) =>
+                      Number(item.land_permit_application_id) ===
+                      Number(form.renewal_of),
                   ) || null
                 }
                 onChange={(_, value) => applyRenewalData(value)}
                 disabled={loading}
                 renderInput={(params) => (
-                  <TextField {...params} label="Pilih Permohonan Lama *" required />
+                  <TextField
+                    {...params}
+                    label="Pilih Permohonan Lama *"
+                    required
+                  />
                 )}
               />
             </Grid>
@@ -258,10 +289,18 @@ export default function LandPermitApplicationFormModal({
           <Grid size={12}>
             <Autocomplete
               options={activeIdentities}
-              getOptionLabel={(option) => `${option.full_name || "-"} | NIK ${option.nik || "-"}`}
+              getOptionLabel={(option) =>
+                `${option.full_name || "-"} | NIK ${option.nik || "-"}`
+              }
               value={selectedIdentity || null}
-              onChange={(_, value) => updateField("tenant_identity_id", value?.id || "")}
-              disabled={loading || mode === "edit" || form.application_type === "perpanjangan"}
+              onChange={(_, value) =>
+                updateField("tenant_identity_id", value?.id || "")
+              }
+              disabled={
+                loading ||
+                mode === "edit" ||
+                form.application_type === "perpanjangan"
+              }
               renderInput={(params) => (
                 <TextField {...params} label="Pilih Data Penyewa *" required />
               )}
@@ -284,12 +323,40 @@ export default function LandPermitApplicationFormModal({
             <Autocomplete
               options={LAND_PERMIT_COMMODITY_OPTIONS}
               value={form.commodity_type || null}
-              onChange={(_, value) => updateField("commodity_type", value || "")}
+              onChange={(_, value) =>
+                updateField("commodity_type", value || "")
+              }
               disabled={loading}
               renderInput={(params) => (
-                <TextField {...params} label="Jenis Dagangan / Komoditas *" required />
+                <TextField
+                  {...params}
+                  label="Jenis Dagangan / Komoditas *"
+                  required
+                />
               )}
             />
+          </Grid>
+
+          <Grid size={12}>
+            <FormControl fullWidth>
+              <InputLabel id="administration-type-select-label">
+                Jenis Administrasi
+              </InputLabel>
+              <Select
+                labelId="administration-type-select-label"
+                id="administration-type-select"
+                value={form.administration_type}
+                label="Pilih Jenis Administrasi"
+                onChange={(event) =>
+                  updateField("administration_type", event.target.value)
+                }
+              >
+                <MenuItem value={"kip"}>Kartu Identitas Pedagang(KIP)</MenuItem>
+                <MenuItem value={"kkip"}>
+                  Kartu Khusus Identitas Pedagang(KKIP)
+                </MenuItem>
+              </Select>
+            </FormControl>
           </Grid>
 
           <Grid size={{ xs: 12, md: 6 }}>
@@ -306,7 +373,9 @@ export default function LandPermitApplicationFormModal({
                 }))
               }
               disabled={loading}
-              renderInput={(params) => <TextField {...params} label="Pilih Lokasi *" required />}
+              renderInput={(params) => (
+                <TextField {...params} label="Pilih Lokasi *" required />
+              )}
             />
           </Grid>
 
@@ -323,7 +392,9 @@ export default function LandPermitApplicationFormModal({
                 }))
               }
               disabled={loading || !form.location_id}
-              renderInput={(params) => <TextField {...params} label="Pilih Sektor *" required />}
+              renderInput={(params) => (
+                <TextField {...params} label="Pilih Sektor *" required />
+              )}
             />
           </Grid>
 
@@ -336,7 +407,9 @@ export default function LandPermitApplicationFormModal({
               value={selectedStall || null}
               onChange={(_, value) => updateField("stall_id", value?.id || "")}
               disabled={loading || !form.sector_id}
-              renderInput={(params) => <TextField {...params} label="Pilih Lahan *" required />}
+              renderInput={(params) => (
+                <TextField {...params} label="Pilih Lahan *" required />
+              )}
             />
           </Grid>
 
@@ -356,12 +429,22 @@ export default function LandPermitApplicationFormModal({
               label="Durasi Izin (Tahun) *"
               value={form.lease_duration_years}
               onChange={(event) =>
-                updateField("lease_duration_years", Math.max(Number(event.target.value || 1), 1))
+                updateField(
+                  "lease_duration_years",
+                  Math.max(Number(event.target.value || 1), 1),
+                )
               }
               disabled={loading}
               inputProps={{ min: 1 }}
             />
-            <Typography sx={{ mt: 0.5, color: "primary.main", fontSize: 11.5, fontWeight: 700 }}>
+            <Typography
+              sx={{
+                mt: 0.5,
+                color: "primary.main",
+                fontSize: 11.5,
+                fontWeight: 700,
+              }}
+            >
               Durasi izin dalam tahun
             </Typography>
           </Grid>
@@ -394,10 +477,18 @@ export default function LandPermitApplicationFormModal({
                   spacing={1}
                 >
                   <Box>
-                    <Typography sx={{ color: theme.ui.mutedText, fontWeight: 650, fontSize: 12 }}>
+                    <Typography
+                      sx={{
+                        color: theme.ui.mutedText,
+                        fontWeight: 650,
+                        fontSize: 12,
+                      }}
+                    >
                       Total pembayaran izin lahan
                     </Typography>
-                    <Typography sx={{ fontWeight: 700, fontSize: { xs: 18, sm: 20 } }}>
+                    <Typography
+                      sx={{ fontWeight: 700, fontSize: { xs: 18, sm: 20 } }}
+                    >
                       {formatRupiah(cost.totalPayment)}
                     </Typography>
                   </Box>
@@ -436,8 +527,12 @@ export default function LandPermitApplicationFormModal({
         location={selectedLocation}
         sector={selectedSector}
         stall={selectedStall}
+        application={applications}
+        administrationType={form.administration_type}
         durationYears={form.lease_duration_years}
-        startDate={form.start_date ? moment(form.start_date).format("DD/MM/YYYY") : ""}
+        startDate={
+          form.start_date ? moment(form.start_date).format("DD/MM/YYYY") : ""
+        }
         endDate={endDate ? endDate.format("DD/MM/YYYY") : ""}
       />
     </>

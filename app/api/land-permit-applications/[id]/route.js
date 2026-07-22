@@ -57,7 +57,9 @@ const getStallForApplication = async (client, values, applicationId) => {
   );
 
   if (result.rowCount === 0) {
-    return { error: "Lahan tidak ditemukan pada lokasi dan sektor yang dipilih." };
+    return {
+      error: "Lahan tidak ditemukan pada lokasi dan sektor yang dipilih.",
+    };
   }
 
   const stall = result.rows[0];
@@ -115,7 +117,8 @@ export async function PUT(request, { params }) {
     const { response } = await requireRole(LAND_PERMIT_APPLICATION_ROLES);
     if (response) return response;
 
-    const { value: applicationId, error: idError } = await getApplicationId(params);
+    const { value: applicationId, error: idError } =
+      await getApplicationId(params);
     if (idError) return failResponse(idError, 400);
 
     const body = await request.json();
@@ -143,21 +146,30 @@ export async function PUT(request, { params }) {
 
     if (existing.rows[0].approval_status === "approved") {
       await client.query("ROLLBACK");
-      return failResponse("Permohonan yang sudah disetujui tidak dapat diubah.", 409);
+      return failResponse(
+        "Permohonan yang sudah disetujui tidak dapat diubah.",
+        409,
+      );
     }
 
-    if (Number(existing.rows[0].tenant_identity_id) !== Number(values.tenant_identity_id)) {
-      await client.query("ROLLBACK");
-      return failResponse("Identitas pemohon tidak dapat diubah saat edit.", 400);
-    }
-
-    const eligible = await ensureIdentityEligible(client, values.tenant_identity_id);
-    if (!eligible) {
+    if (
+      Number(existing.rows[0].tenant_identity_id) !==
+      Number(values.tenant_identity_id)
+    ) {
       await client.query("ROLLBACK");
       return failResponse(
-        "Identitas tidak aktif untuk izin lahan.",
+        "Identitas pemohon tidak dapat diubah saat edit.",
         400,
       );
+    }
+
+    const eligible = await ensureIdentityEligible(
+      client,
+      values.tenant_identity_id,
+    );
+    if (!eligible) {
+      await client.query("ROLLBACK");
+      return failResponse("Identitas tidak aktif untuk izin lahan.", 400);
     }
 
     const { stall, error: stallError } = await getStallForApplication(
@@ -171,7 +183,11 @@ export async function PUT(request, { params }) {
     }
 
     const annualLandRent = calculateAnnualLandRent(stall);
+    const administrationType =
+      values.administration_type === "kip" ? 100000 : 150000; // Set admin fee based on administration type
+    const admin_fee = administrationType * values.lease_duration_years; // dynamic admin fee based on administration type
     const totalPaymentLand = annualLandRent * values.lease_duration_years;
+    const totalPayment = totalPaymentLand + admin_fee; // total payment including admin fee
     const wasRejected = existing.rows[0].approval_status === "rejected";
 
     let resumeStep = Number(existing.rows[0].current_step) || 1;
@@ -208,8 +224,10 @@ export async function PUT(request, { params }) {
         total_payment = $12,
         approval_status = CASE WHEN $13 THEN 'proses' ELSE approval_status END,
         current_step = CASE WHEN $13 THEN $14 ELSE current_step END,
+        administration_type = $15,
+        admin_fee = $16,
         updated_at = NOW()
-      WHERE id = $15
+      WHERE id = $17
       `,
       [
         values.renewal_of,
@@ -223,9 +241,11 @@ export async function PUT(request, { params }) {
         values.lease_duration_years,
         annualLandRent,
         totalPaymentLand,
-        totalPaymentLand,
+        totalPayment,
         wasRejected,
         resumeStep,
+        values.administration_type,
+        admin_fee,
         applicationId,
       ],
     );
@@ -314,7 +334,10 @@ export async function DELETE(_request, { params }) {
 
     if (existing.rows[0].approval_status === "approved") {
       await client.query("ROLLBACK");
-      return failResponse("Permohonan yang sudah disetujui tidak dapat dihapus.", 409);
+      return failResponse(
+        "Permohonan yang sudah disetujui tidak dapat dihapus.",
+        409,
+      );
     }
 
     await client.query(

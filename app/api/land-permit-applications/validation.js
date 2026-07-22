@@ -14,7 +14,10 @@ const APPLICATION_TYPES = ["baru", "perpanjangan"];
 const getRequiredId = (body, key, label) =>
   parsePositiveInteger(body?.[key], label);
 
-export const validateLandPermitApplicationPayload = (body, { mode = "create" } = {}) => {
+export const validateLandPermitApplicationPayload = (
+  body,
+  { mode = "create" } = {},
+) => {
   const applicationType = String(body?.application_type || "baru").trim();
   if (!APPLICATION_TYPES.includes(applicationType)) {
     return { values: null, error: "Jenis permohonan tidak valid." };
@@ -26,6 +29,7 @@ export const validateLandPermitApplicationPayload = (body, { mode = "create" } =
     ["sector_id", "ID sektor"],
     ["stall_id", "ID lahan"],
   ];
+
   const values = { application_type: applicationType };
 
   for (const [key, label] of ids) {
@@ -57,7 +61,10 @@ export const validateLandPermitApplicationPayload = (body, { mode = "create" } =
   }
 
   const durationYears = normalizeLeaseDurationYears(body?.lease_duration_years);
-  const calculatedEndDate = calculateLeaseEndDate(startDate.toDate(), durationYears);
+  const calculatedEndDate = calculateLeaseEndDate(
+    startDate.toDate(),
+    durationYears,
+  );
   if (!calculatedEndDate?.isValid()) {
     return { values: null, error: "Tanggal akhir izin tidak valid." };
   }
@@ -65,6 +72,7 @@ export const validateLandPermitApplicationPayload = (body, { mode = "create" } =
   values.start_date = startDate.format("YYYY-MM-DD");
   values.end_date = calculatedEndDate.format("YYYY-MM-DD");
   values.lease_duration_years = durationYears;
+  values.administration_type = String(body?.administration_type || "").trim();
 
   if (mode === "edit") {
     values.tenant_identity_id = Number(body?.tenant_identity_id);

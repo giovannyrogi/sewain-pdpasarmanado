@@ -17,14 +17,19 @@ import ImagePreviewModal from "@/app/components/modals/ImagePreviewModal";
 import { getUploadApiUrl } from "@/app/utils/uploadPath";
 import formatRupiah from "@/app/components/formatrupiah/page";
 import { formatNumber } from "@/app/utils/formatNumber";
-import { APPLICATION_TYPE_LABEL, formatDateDisplay } from "./landPermitApplicationUtils";
+import {
+  APPLICATION_TYPE_LABEL,
+  formatDateDisplay,
+} from "./landPermitApplicationUtils";
 
 function FieldCard({ icon, label, value, fullWidth = false }) {
   const theme = useTheme();
   const renderedValue = React.isValidElement(value) ? (
     value
   ) : (
-    <Typography sx={{ fontSize: 13, fontWeight: 700, overflowWrap: "anywhere" }}>
+    <Typography
+      sx={{ fontSize: 13, fontWeight: 700, overflowWrap: "anywhere" }}
+    >
       {value || "-"}
     </Typography>
   );
@@ -62,7 +67,9 @@ function FieldCard({ icon, label, value, fullWidth = false }) {
             <Icon icon={icon} fontSize={18} />
           </Box>
           <Box sx={{ minWidth: 0 }}>
-            <Typography sx={{ color: theme.ui.mutedText, fontSize: 11, fontWeight: 700 }}>
+            <Typography
+              sx={{ color: theme.ui.mutedText, fontSize: 11, fontWeight: 700 }}
+            >
               {label}
             </Typography>
             {renderedValue}
@@ -96,15 +103,21 @@ function DetailSection({ icon, title, description, children }) {
           <Icon icon={icon} fontSize={17} />
         </Box>
         <Box sx={{ minWidth: 0 }}>
-          <Typography sx={{ fontSize: 15, fontWeight: 700 }}>{title}</Typography>
+          <Typography sx={{ fontSize: 15, fontWeight: 700 }}>
+            {title}
+          </Typography>
           {description && (
-            <Typography sx={{ color: theme.ui.mutedText, fontSize: 11, fontWeight: 650 }}>
+            <Typography
+              sx={{ color: theme.ui.mutedText, fontSize: 11, fontWeight: 650 }}
+            >
               {description}
             </Typography>
           )}
         </Box>
       </Stack>
-      <Divider sx={{ borderColor: theme.palette.primary.main, opacity: 0.7, mb: 1.4 }} />
+      <Divider
+        sx={{ borderColor: theme.palette.primary.main, opacity: 0.7, mb: 1.4 }}
+      />
       {children}
     </Box>
   );
@@ -166,13 +179,27 @@ export default function LandPermitApplicantDetailModal({
                   : "linear-gradient(135deg, rgba(230,9,9,0.07), rgba(255,255,255,0.94))",
             }}
           >
-            <Stack direction={{ xs: "column", md: "row" }} spacing={2} justifyContent="space-between">
+            <Stack
+              direction={{ xs: "column", md: "row" }}
+              spacing={2}
+              justifyContent="space-between"
+            >
               <Box>
-                <Typography sx={{ fontSize: { xs: 22, sm: 26 }, fontWeight: 700 }}>
+                <Typography
+                  sx={{ fontSize: { xs: 22, sm: 26 }, fontWeight: 700 }}
+                >
                   {selectedData?.tenant_name || "-"}
                 </Typography>
-                <Typography sx={{ mt: 0.6, color: theme.ui.mutedText, fontSize: 12, fontWeight: 650 }}>
-                  NIK: {selectedData?.tenant_nik || "-"} | Telp: {selectedData?.tenant_phone || "-"}
+                <Typography
+                  sx={{
+                    mt: 0.6,
+                    color: theme.ui.mutedText,
+                    fontSize: 12,
+                    fontWeight: 650,
+                  }}
+                >
+                  NIK: {selectedData?.tenant_nik || "-"} | Telp:{" "}
+                  {selectedData?.tenant_phone || "-"}
                 </Typography>
               </Box>
               <Stack
@@ -189,9 +216,7 @@ export default function LandPermitApplicantDetailModal({
                     overflow: "hidden",
                     cursor: selectedData?.ktp_file_path ? "zoom-in" : "default",
                   }}
-                  onClick={() =>
-                    openPreview(ktpUrl, "Preview KTP penyewa")
-                  }
+                  onClick={() => openPreview(ktpUrl, "Preview KTP penyewa")}
                 >
                   {selectedData?.ktp_file_path ? (
                     <Box
@@ -211,7 +236,10 @@ export default function LandPermitApplicantDetailModal({
                       justifyContent="center"
                       sx={{ height: "100%", color: theme.ui.mutedText }}
                     >
-                      <Icon icon="solar:gallery-remove-bold-duotone" fontSize={28} />
+                      <Icon
+                        icon="solar:gallery-remove-bold-duotone"
+                        fontSize={28}
+                      />
                       <Typography sx={{ fontSize: 11, fontWeight: 700 }}>
                         KTP kosong
                       </Typography>
@@ -249,7 +277,10 @@ export default function LandPermitApplicantDetailModal({
                       justifyContent="center"
                       sx={{ height: "100%", color: theme.ui.mutedText }}
                     >
-                      <Icon icon="solar:user-cross-bold-duotone" fontSize={26} />
+                      <Icon
+                        icon="solar:user-cross-bold-duotone"
+                        fontSize={26}
+                      />
                       <Typography sx={{ fontSize: 10, fontWeight: 700 }}>
                         Pas foto kosong
                       </Typography>
@@ -266,14 +297,47 @@ export default function LandPermitApplicantDetailModal({
             description="Lokasi, sektor, ukuran lahan, harga dasar, dan masa berlaku izin."
           >
             <Grid container spacing={1.25}>
-              <FieldCard icon="solar:map-point-bold-duotone" label="Nama Lokasi" value={selectedData?.location_name} />
-              <FieldCard icon="solar:map-arrow-square-bold-duotone" label="Sektor" value={selectedData?.sector_name} />
-              <FieldCard icon="solar:shop-bold-duotone" label="Lahan" value={`Lahan ${selectedData?.stall_number || "-"}`} />
-              <FieldCard icon="solar:ruler-bold-duotone" label="Panjang" value={`${formatNumber(selectedData?.stall_length)} M`} />
-              <FieldCard icon="solar:ruler-pen-bold-duotone" label="Lebar" value={`${formatNumber(selectedData?.stall_width)} M`} />
-              <FieldCard icon="solar:widget-5-bold-duotone" label="Luas" value={`${formatNumber(selectedData?.stall_area)} m²`} />
-              <FieldCard icon="solar:tag-price-bold-duotone" label="Harga / m²" value={formatRupiah(selectedData?.price_per_m2)} />
-              <FieldCard icon="solar:calendar-bold-duotone" label="Masa Izin" value={`${formatDateDisplay(selectedData?.start_date)} s/d ${formatDateDisplay(selectedData?.end_date)}`} fullWidth />
+              <FieldCard
+                icon="solar:map-point-bold-duotone"
+                label="Nama Lokasi"
+                value={selectedData?.location_name}
+              />
+              <FieldCard
+                icon="solar:map-arrow-square-bold-duotone"
+                label="Sektor"
+                value={selectedData?.sector_name}
+              />
+              <FieldCard
+                icon="solar:shop-bold-duotone"
+                label="Lahan"
+                value={`Lahan ${selectedData?.stall_number || "-"}`}
+              />
+              <FieldCard
+                icon="solar:ruler-bold-duotone"
+                label="Panjang"
+                value={`${formatNumber(selectedData?.stall_length)} M`}
+              />
+              <FieldCard
+                icon="solar:ruler-pen-bold-duotone"
+                label="Lebar"
+                value={`${formatNumber(selectedData?.stall_width)} M`}
+              />
+              <FieldCard
+                icon="solar:widget-5-bold-duotone"
+                label="Luas"
+                value={`${formatNumber(selectedData?.stall_area)} m²`}
+              />
+              <FieldCard
+                icon="solar:tag-price-bold-duotone"
+                label="Harga / m²"
+                value={formatRupiah(selectedData?.price_per_m2)}
+              />
+              <FieldCard
+                icon="solar:calendar-bold-duotone"
+                label="Masa Izin"
+                value={`${formatDateDisplay(selectedData?.start_date)} s/d ${formatDateDisplay(selectedData?.end_date)}`}
+                fullWidth
+              />
             </Grid>
           </DetailSection>
 
@@ -283,10 +347,33 @@ export default function LandPermitApplicantDetailModal({
             description="Jenis permohonan, komoditas, dan status pembayaran awal."
           >
             <Grid container spacing={1.25}>
-              <FieldCard icon="solar:file-text-bold-duotone" label="Jenis Permohonan" value={APPLICATION_TYPE_LABEL[selectedData?.application_type]} />
-              <FieldCard icon="solar:box-bold-duotone" label="Jenis Dagangan" value={selectedData?.commodity_type} />
-              <FieldCard icon="solar:hourglass-bold-duotone" label="Durasi" value={`${selectedData?.lease_duration_years || 1} Tahun`} />
-              <FieldCard icon="solar:wallet-money-bold-duotone" label="Status Pembayaran" value={paymentStatusLabel} />
+              <FieldCard
+                icon="solar:file-text-bold-duotone"
+                label="Jenis Permohonan"
+                value={APPLICATION_TYPE_LABEL[selectedData?.application_type]}
+              />
+              <FieldCard
+                icon="solar:box-bold-duotone"
+                label="Jenis Dagangan"
+                value={selectedData?.commodity_type}
+              />
+              <FieldCard
+                icon="solar:wallet-money-bold-duotone"
+                label="Jenis Administrasi"
+                value={
+                  selectedData?.administration_type === "kip" ? "KIP" : "KKIP"
+                }
+              />
+              <FieldCard
+                icon="solar:hourglass-bold-duotone"
+                label="Durasi"
+                value={`${selectedData?.lease_duration_years || 1} Tahun`}
+              />
+              <FieldCard
+                icon="solar:wallet-money-bold-duotone"
+                label="Status Pembayaran"
+                value={paymentStatusLabel}
+              />
             </Grid>
           </DetailSection>
 
@@ -296,9 +383,30 @@ export default function LandPermitApplicantDetailModal({
             description="Rincian sewa tahunan, durasi izin, dan total pembayaran lahan."
           >
             <Grid container spacing={1.25}>
-              <FieldCard icon="solar:bill-list-bold-duotone" label="Sewa per Tahun" value={formatRupiah(selectedData?.annual_land_rent)} />
-              <FieldCard icon="solar:calendar-bold-duotone" label="Durasi" value={`${selectedData?.lease_duration_years || 1} Tahun`} />
-              <FieldCard icon="solar:wallet-bold-duotone" label="Total Pembayaran" value={formatRupiah(selectedData?.total_payment)} />
+              <FieldCard
+                icon="solar:bill-list-bold-duotone"
+                label="Sewa per Tahun"
+                value={formatRupiah(selectedData?.annual_land_rent)}
+              />
+              <FieldCard
+                icon="solar:tag-price-bold-duotone"
+                label={
+                  selectedData?.administration_type === "kip"
+                    ? "Biaya Administrasi KIP"
+                    : "Biaya Administrasi KKIP"
+                }
+                value={formatRupiah(selectedData?.admin_fee)}
+              />
+              <FieldCard
+                icon="solar:wallet-bold-duotone"
+                label="Total Pembayaran"
+                value={formatRupiah(selectedData?.total_payment)}
+              />
+              <FieldCard
+                icon="solar:calendar-bold-duotone"
+                label="Durasi Sewa"
+                value={`${selectedData?.lease_duration_years || 1} Tahun`}
+              />
             </Grid>
           </DetailSection>
 
@@ -326,7 +434,13 @@ export default function LandPermitApplicantDetailModal({
                   value={
                     statementUrl ? (
                       <Button
-                        onClick={() => window.open(statementUrl, "_blank", "noopener,noreferrer")}
+                        onClick={() =>
+                          window.open(
+                            statementUrl,
+                            "_blank",
+                            "noopener,noreferrer",
+                          )
+                        }
                         sx={{
                           minWidth: 0,
                           p: 0,

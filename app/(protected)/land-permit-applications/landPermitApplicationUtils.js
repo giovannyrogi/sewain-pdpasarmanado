@@ -15,14 +15,15 @@ export const APPROVAL_STATUS_LABEL = {
 export const formatDateDisplay = (value) =>
   value && moment(value).isValid() ? moment(value).format("DD MMMM YYYY") : "-";
 
-export const calculateLandPermitCost = (stall, durationYears = 1) => {
+export const calculateLandPermitCost = (stall, durationYears = 1, administrationType) => {
   const length = Number(stall?.stall_length || 0);
   const width = Number(stall?.stall_width || 0);
   const area = Number(stall?.stall_area || length * width || 0);
   const price = Number(stall?.price_per_m2 || 0);
   const duration = Number(durationYears) > 0 ? Number(durationYears) : 1;
   const annualRent = area * price;
-  const totalPayment = annualRent * duration;
+  const adminFee = administrationType === "kip" ? 100000 * duration : 150000 * duration;
+  const totalPayment = annualRent * duration + adminFee;
 
   return {
     area,
@@ -38,9 +39,15 @@ export const normalizeLandPermitSearch = (value) =>
   String(value || "").toLowerCase();
 
 export const buildLandPermitStats = (data, theme) => {
-  const process = data.filter((item) => item.approval_status === "proses").length;
-  const approved = data.filter((item) => item.approval_status === "approved").length;
-  const rejected = data.filter((item) => item.approval_status === "rejected").length;
+  const process = data.filter(
+    (item) => item.approval_status === "proses",
+  ).length;
+  const approved = data.filter(
+    (item) => item.approval_status === "approved",
+  ).length;
+  const rejected = data.filter(
+    (item) => item.approval_status === "rejected",
+  ).length;
 
   return [
     {
