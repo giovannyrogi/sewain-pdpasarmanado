@@ -86,9 +86,10 @@ export const createLandPermitDocumentColumns = ({
   {
     title: "Nama Penyewa",
     width: 280,
-    sorter: (a, b) => normalize(a.tenant_name).localeCompare(normalize(b.tenant_name)),
+    sorter: (a, b) =>
+      normalize(a.tenant_name).localeCompare(normalize(b.tenant_name)),
     render: (_value, record) => (
-      <Stack spacing={0.65}  sx={{ minWidth: 0 }}>
+      <Stack spacing={0.65} sx={{ minWidth: 0 }}>
         <Typography sx={{ fontSize: 13, fontWeight: 700 }}>
           {record.tenant_name || "-"}
         </Typography>
@@ -100,9 +101,9 @@ export const createLandPermitDocumentColumns = ({
     width: 265,
     render: (_value, record) => (
       <CompactInfoChip
-            label={`${record.document_number || "-"}`}
-            color={theme.palette.primary.main}
-          />
+        label={`${record.document_number || "-"}`}
+        color={theme.palette.primary.main}
+      />
     ),
   },
   {
@@ -124,12 +125,27 @@ export const createLandPermitDocumentColumns = ({
     ),
   },
   {
+    title: "Jenis Administrasi",
+    width: 310,
+    render: (_value, record) => (
+      // Capitalize all character administration type
+      <Typography sx={{ fontSize: 12, fontWeight: 500, letterSpacing:'0.5px ' }}>
+        {record.administration_type === "kip"
+          ? "Kartu Identitas Pedagang(KIP)"
+          : "Kartu Khusus Identitas Pedagang(KKIP)"}
+      </Typography>
+    ),
+  },
+  {
     title: "Masa Berlaku",
     width: 220,
     render: (_value, record) => (
       <Typography sx={{ fontSize: 12.5, fontWeight: 650 }}>
-        {record.start_date ? moment(record.start_date).format("DD MMM YYYY") : "-"}{" "}
-        s/d {record.end_date ? moment(record.end_date).format("DD MMM YYYY") : "-"}
+        {record.start_date
+          ? moment(record.start_date).format("DD MMM YYYY")
+          : "-"}{" "}
+        s/d{" "}
+        {record.end_date ? moment(record.end_date).format("DD MMM YYYY") : "-"}
       </Typography>
     ),
   },

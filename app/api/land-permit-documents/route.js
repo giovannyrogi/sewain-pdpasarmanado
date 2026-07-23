@@ -94,6 +94,8 @@ const mapRow = (row) => ({
   profile_photo_file_path: row.profile_photo_file_path,
   application_type: row.application_type,
   commodity_type: row.commodity_type,
+  admin_fee: row.admin_fee,
+  administration_type: row.administration_type,
   start_date: row.start_date
     ? moment(row.start_date).format("YYYY-MM-DD")
     : null,
@@ -156,6 +158,8 @@ const BASE_SELECT = `
     app.approval_status AS application_approval_status,
     app.payment_status,
     app.permit_status,
+    app.admin_fee,
+    app.administration_type,
     identity.full_name AS tenant_name,
     identity.nik AS tenant_nik,
     identity.phone AS tenant_phone,

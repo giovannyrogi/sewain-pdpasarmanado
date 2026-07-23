@@ -111,9 +111,9 @@ const SuratIzinLahan = forwardRef(({ data }, ref) => {
   const birthInfo = [data.birth_place, formatDate(data.birth_date)]
     .filter(Boolean)
     .join(", ");
-  const dimensions = `${formatNumber(data.stall_length)} x ${formatNumber(
+  const dimensions = `${formatNumber(data.stall_length)} m x ${formatNumber(
     data.stall_width,
-  )} m²`;
+  )} m (${formatNumber(data.stall_area)} m²)`;
   const tradeAndStall = `${data.commodity_type || "-"} / ${
     data.stall_number || "-"
   } (Pasar ${data.location_name || "-"})`;
@@ -214,7 +214,9 @@ const SuratIzinLahan = forwardRef(({ data }, ref) => {
               ["Alamat Rumah", buildAddress(data) || "-"],
               ["Jenis Jualan/No Lapak", tradeAndStall],
               ["Luas Tempat Usaha", dimensions],
-              ["Iuran Jasa Administrasi", formatRupiah(data.total_payment)],
+              ["Biaya Administrasi SIL", formatRupiah(data.total_payment_land)],
+              ["Biaya Administrasi KIP", formatRupiah(data.admin_fee)],
+              ["Total Pembayaran", formatRupiah(data.total_payment)],
             ].map(([label, value]) => (
               <React.Fragment key={label}>
                 <Typography

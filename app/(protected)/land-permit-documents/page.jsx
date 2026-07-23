@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   Box,
   Button,
@@ -122,30 +128,36 @@ export default function LandPermitDocumentsPage() {
   const notify = (message, severity = "success") =>
     setSnackbar({ open: true, message, severity });
 
-  const fetchDocuments = useCallback(async (message = "Memuat dokumen izin lahan...") => {
-    setLoadingMessage(message);
-    setLoading(true);
-    try {
-      const response = await axios.get("/api/land-permit-documents");
-      if (!response.data?.success) {
-        notify(response.data?.message || "Gagal mengambil dokumen izin lahan.", "error");
+  const fetchDocuments = useCallback(
+    async (message = "Memuat dokumen izin lahan...") => {
+      setLoadingMessage(message);
+      setLoading(true);
+      try {
+        const response = await axios.get("/api/land-permit-documents");
+        if (!response.data?.success) {
+          notify(
+            response.data?.message || "Gagal mengambil dokumen izin lahan.",
+            "error",
+          );
+          return false;
+        }
+        setDocuments(response.data.data || []);
+        setEligibleApplications(response.data.eligible_applications || []);
+        return true;
+      } catch (error) {
+        notify(
+          error?.response?.data?.message ||
+            "Terjadi kesalahan saat mengambil dokumen izin lahan.",
+          "error",
+        );
         return false;
+      } finally {
+        setLoading(false);
+        setLoadingMessage("Loading...");
       }
-      setDocuments(response.data.data || []);
-      setEligibleApplications(response.data.eligible_applications || []);
-      return true;
-    } catch (error) {
-      notify(
-        error?.response?.data?.message ||
-          "Terjadi kesalahan saat mengambil dokumen izin lahan.",
-        "error",
-      );
-      return false;
-    } finally {
-      setLoading(false);
-      setLoadingMessage("Loading...");
-    }
-  }, []);
+    },
+    [],
+  );
 
   useEffect(() => {
     if (user) fetchDocuments();
@@ -162,7 +174,10 @@ export default function LandPermitDocumentsPage() {
         await fetchDocuments("Memuat ulang dokumen izin lahan...");
         return;
       }
-      notify(response.data?.message || "Gagal membuat dokumen izin lahan.", "error");
+      notify(
+        response.data?.message || "Gagal membuat dokumen izin lahan.",
+        "error",
+      );
     } catch (error) {
       notify(
         error?.response?.data?.message ||
@@ -191,7 +206,10 @@ export default function LandPermitDocumentsPage() {
         await fetchDocuments("Memuat ulang dokumen izin lahan...");
         return;
       }
-      notify(response.data?.message || "Gagal menghapus dokumen izin lahan.", "error");
+      notify(
+        response.data?.message || "Gagal menghapus dokumen izin lahan.",
+        "error",
+      );
     } catch (error) {
       notify(
         error?.response?.data?.message ||
@@ -246,7 +264,9 @@ export default function LandPermitDocumentsPage() {
 
       if (shouldMarkPermitPrinted && documentIds.length) {
         Promise.allSettled(
-          documentIds.map((id) => axios.put(`/api/land-permit-documents/${id}`)),
+          documentIds.map((id) =>
+            axios.put(`/api/land-permit-documents/${id}`),
+          ),
         ).then(() => fetchDocuments("Memperbarui riwayat cetak dokumen..."));
       }
       setTimeout(() => setPrintPayload(null), 200);
@@ -327,6 +347,69 @@ export default function LandPermitDocumentsPage() {
   );
 
   const canCreate = [1, 9].includes(Number(user?.role_id));
+  const administrationType = manualPrintDocuments?.[0]?.administration_type;
+
+  const printSteps =
+    administrationType === "kip"
+      ? [
+          {
+            step: "1",
+            title: "Cetak Surat Izin Lahan",
+            description: "Mencetak seluruh surat izin lahan terlebih dahulu.",
+            label: "Cetak Surat Izin",
+            mode: "permit",
+          },
+          {
+            step: "2",
+            title: "Cetak Kartu Bagian Depan",
+            description:
+              "Mencetak sisi depan kartu pedagang pada lembar kartu.",
+            label: "Cetak Kartu Depan",
+            mode: "card-front",
+          },
+          {
+            step: "3",
+            title: "Masukkan Ulang Kertas",
+            description:
+              "Ambil kertas kartu depan, balik atau putar sesuai arah printer, lalu masukkan kembali ke tray.",
+            label: null,
+            mode: null,
+          },
+          {
+            step: "4",
+            title: "Cetak Kartu Bagian Belakang",
+            description:
+              "Mencetak sisi belakang kartu dengan posisi grid yang sama seperti sisi depan.",
+            label: "Cetak Kartu Belakang",
+            mode: "card-back",
+          },
+        ]
+      : [
+          {
+            step: "1",
+            title: "Cetak Kartu Bagian Depan",
+            description:
+              "Mencetak sisi depan kartu pedagang pada lembar kartu.",
+            label: "Cetak Kartu Depan",
+            mode: "card-front",
+          },
+          {
+            step: "2",
+            title: "Masukkan Ulang Kertas",
+            description:
+              "Ambil kertas kartu depan, balik atau putar sesuai arah printer, lalu masukkan kembali ke tray.",
+            label: null,
+            mode: null,
+          },
+          {
+            step: "3",
+            title: "Cetak Kartu Bagian Belakang",
+            description:
+              "Mencetak sisi belakang kartu dengan posisi grid yang sama seperti sisi depan.",
+            label: "Cetak Kartu Belakang",
+            mode: "card-back",
+          },
+        ];
 
   return (
     <Box sx={{ width: "100%", minHeight: "100%", p: { xs: 1.25, sm: 2 } }}>
@@ -487,43 +570,12 @@ export default function LandPermitDocumentsPage() {
                 lineHeight: 1.6,
               }}
             >
-              Ikuti urutan ini agar bagian depan dan belakang kartu pedagang bisa
-              tercetak pada kertas yang sama.
+              Ikuti urutan ini agar bagian depan dan belakang kartu pedagang
+              bisa tercetak pada kertas yang sama.
             </Typography>
           </Box>
 
-          {[
-            {
-              step: "1",
-              title: "Cetak Surat Izin Lahan",
-              description: "Mencetak seluruh surat izin lahan terlebih dahulu.",
-              label: "Cetak Surat Izin",
-              mode: "permit",
-            },
-            {
-              step: "2",
-              title: "Cetak Kartu Bagian Depan",
-              description: "Mencetak sisi depan kartu pedagang pada lembar kartu.",
-              label: "Cetak Kartu Depan",
-              mode: "card-front",
-            },
-            {
-              step: "3",
-              title: "Masukkan Ulang Kertas",
-              description:
-                "Ambil kertas kartu depan, balik atau putar sesuai arah printer, lalu masukkan kembali ke tray.",
-              label: null,
-              mode: null,
-            },
-            {
-              step: "4",
-              title: "Cetak Kartu Bagian Belakang",
-              description:
-                "Mencetak sisi belakang kartu dengan posisi grid yang sama seperti sisi depan.",
-              label: "Cetak Kartu Belakang",
-              mode: "card-back",
-            },
-          ].map((item) => (
+          {printSteps.map((item) => (
             <Box
               key={item.step}
               sx={{
@@ -531,7 +583,10 @@ export default function LandPermitDocumentsPage() {
                 borderRadius: 2,
                 border: `1px solid ${theme.ui?.dashboardCardBorder || theme.palette.divider}`,
                 display: "grid",
-                gridTemplateColumns: { xs: "1fr", sm: "42px minmax(0, 1fr) auto" },
+                gridTemplateColumns: {
+                  xs: "1fr",
+                  sm: "42px minmax(0, 1fr) auto",
+                },
                 gap: { xs: 1.25, sm: 1.5 },
                 alignItems: "center",
               }}
@@ -572,7 +627,9 @@ export default function LandPermitDocumentsPage() {
               {item.mode && (
                 <Button
                   variant={item.step === "1" ? "contained" : "outlined"}
-                  onClick={() => handlePrintDocuments(manualPrintDocuments, item.mode)}
+                  onClick={() =>
+                    handlePrintDocuments(manualPrintDocuments, item.mode)
+                  }
                   sx={{
                     minHeight: 40,
                     borderRadius: 2,
@@ -594,19 +651,18 @@ export default function LandPermitDocumentsPage() {
             justifyContent="flex-end"
             sx={{ pt: 0.5 }}
           >
-            <Button
-              variant="outlined"
-              color="warning"
-              onClick={() => handlePrintDocuments(manualPrintDocuments, "bundle-duplex")}
-              sx={{
-                minHeight: 42,
-                borderRadius: 2,
-                fontWeight: 700,
-                textTransform: "none",
-              }}
-            >
-              Cetak Semua Sekaligus
-            </Button>
+            {/* {administrationType === "kip" && (
+              <Button
+                variant="outlined"
+                color="warning"
+                onClick={() =>
+                  handlePrintDocuments(manualPrintDocuments, "bundle-duplex")
+                }
+              >
+                Cetak Semua Sekaligus
+              </Button>
+            )} */}
+
             <Button
               variant="contained"
               color="inherit"
