@@ -88,8 +88,6 @@ export default function LandPermitPaymentsPage() {
           return false;
         }
         
-        console.log("Fetched payments:", response);
-
         setPayments(response.data.data || []);
         setEligibleApplications(response.data.eligible_applications || []);
         setPaymentsLoaded(true);

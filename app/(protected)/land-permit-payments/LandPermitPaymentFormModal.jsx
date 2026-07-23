@@ -226,9 +226,6 @@ export default function LandPermitPaymentFormModal({
   const [detailOpen, setDetailOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
 
-  console.log("selectedPayment:", selectedPayment);
-  console.log("applications:", applications);
-
   const applicationOptions = useMemo(
     () =>
       isEdit && selectedPayment
