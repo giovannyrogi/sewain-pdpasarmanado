@@ -115,7 +115,9 @@ export default function LandPermitPaymentDetailModal({
             }}
           >
             <Box sx={{ minWidth: 0 }}>
-              <Typography sx={{ fontSize: { xs: 21, sm: 25 }, fontWeight: 700 }}>
+              <Typography
+                sx={{ fontSize: { xs: 21, sm: 25 }, fontWeight: 700 }}
+              >
                 {data?.tenant_name || "-"}
               </Typography>
               <Typography
@@ -170,7 +172,10 @@ export default function LandPermitPaymentDetailModal({
                     spacing={0.5}
                     sx={{ color: theme.ui.mutedText }}
                   >
-                    <Icon icon="solar:gallery-remove-bold-duotone" fontSize={27} />
+                    <Icon
+                      icon="solar:gallery-remove-bold-duotone"
+                      fontSize={27}
+                    />
                     <Typography sx={{ fontSize: 10.5, fontWeight: 700 }}>
                       Foto KTP kosong
                     </Typography>
@@ -269,6 +274,20 @@ export default function LandPermitPaymentDetailModal({
               }
             />
             <DetailCard
+              icon="solar:bill-list-bold-duotone"
+              label="Biaya Administrasi SIL"
+              value={formatRupiah(data?.annual_land_rent)}
+            />
+            <DetailCard
+              icon="solar:tag-price-bold-duotone"
+              label={
+                data?.administration_type === "kip"
+                  ? "Biaya Administrasi KIP"
+                  : "Biaya Administrasi KKIP"
+              }
+              value={formatRupiah(data?.admin_fee)}
+            />
+            <DetailCard
               icon="solar:wallet-bold-duotone"
               label="Total Pembayaran"
               value={formatRupiah(data?.payment_amount || data?.total_payment)}
@@ -303,9 +322,15 @@ export default function LandPermitPaymentDetailModal({
                     Bukti Pembayaran
                   </Typography>
                   <Typography
-                    sx={{ color: theme.ui.mutedText, fontSize: 11.5, fontWeight: 600 }}
+                    sx={{
+                      color: theme.ui.mutedText,
+                      fontSize: 11.5,
+                      fontWeight: 600,
+                    }}
                   >
-                    {proofUrl ? "Dokumen bukti pembayaran tersedia." : "Dokumen tidak tersedia."}
+                    {proofUrl
+                      ? "Dokumen bukti pembayaran tersedia."
+                      : "Dokumen tidak tersedia."}
                   </Typography>
                 </Box>
               </Stack>
@@ -365,7 +390,9 @@ export default function LandPermitPaymentDetailModal({
                 onClick={onApprove}
                 disabled={approving}
                 startIcon={
-                  approving ? <CircularProgress size={17} color="inherit" /> : null
+                  approving ? (
+                    <CircularProgress size={17} color="inherit" />
+                  ) : null
                 }
                 sx={{ borderRadius: 2, px: 3, fontWeight: 700, color: "#fff" }}
               >

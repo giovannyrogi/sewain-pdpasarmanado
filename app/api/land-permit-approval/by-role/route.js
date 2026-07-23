@@ -66,6 +66,8 @@ export async function GET(request) {
         app.current_step,
         app.payment_status,
         app.permit_status,
+        app.administration_type,
+        app.admin_fee,
         app.created_at,
         app.updated_at,
         identity.full_name AS tenant_name,

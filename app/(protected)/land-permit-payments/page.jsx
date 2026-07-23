@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   Box,
   Button,
@@ -76,12 +82,13 @@ export default function LandPermitPaymentsPage() {
         const response = await axios.get("/api/land-permit-payments");
         if (!response.data?.success) {
           notify(
-            response.data?.message ||
-              "Gagal mengambil pembayaran izin lahan.",
+            response.data?.message || "Gagal mengambil pembayaran izin lahan.",
             "error",
           );
           return false;
         }
+        
+        console.log("Fetched payments:", response);
 
         setPayments(response.data.data || []);
         setEligibleApplications(response.data.eligible_applications || []);
@@ -134,9 +141,7 @@ export default function LandPermitPaymentsPage() {
       try {
         parsedTarget = JSON.parse(storedTarget);
       } catch {
-        window.sessionStorage.removeItem(
-          "sewain:land-permit-payment-target",
-        );
+        window.sessionStorage.removeItem("sewain:land-permit-payment-target");
       }
     }
 
@@ -186,9 +191,7 @@ export default function LandPermitPaymentsPage() {
   };
 
   const openEdit = async (record) => {
-    const loaded = await fetchPayments(
-      "Memuat data pembayaran izin lahan...",
-    );
+    const loaded = await fetchPayments("Memuat data pembayaran izin lahan...");
     if (!loaded) return;
     setSelectedData(record);
     setFormMode("edit");
@@ -212,7 +215,9 @@ export default function LandPermitPaymentsPage() {
           : await axios.post("/api/land-permit-payments", formData);
 
       if (response.data?.success) {
-        notify(response.data.message || "Pembayaran izin lahan berhasil disimpan.");
+        notify(
+          response.data.message || "Pembayaran izin lahan berhasil disimpan.",
+        );
         setFormOpen(false);
         setSelectedData(null);
         await fetchPayments("Memuat ulang pembayaran izin lahan...");

@@ -76,6 +76,8 @@ function mapPaymentRow(row) {
     profile_photo_file_path: row.profile_photo_file_path,
     application_type: row.application_type,
     commodity_type: row.commodity_type,
+    administration_type: row.administration_type,
+    admin_fee: row.admin_fee,
     start_date: row.start_date
       ? moment(row.start_date).format("YYYY-MM-DD")
       : null,
@@ -118,6 +120,8 @@ const APPLICATION_SELECT = `
     app.payment_status,
     app.is_fully_paid,
     app.permit_status,
+    app.admin_fee,
+    app.administration_type,
     app.user_id AS application_created_by,
     identity.full_name AS tenant_name,
     identity.nik AS tenant_nik,
@@ -235,9 +239,7 @@ export async function POST(request) {
     if (response) return response;
 
     const formData = await request.formData();
-    const applicationId = Number(
-      formData.get("land_permit_application_id"),
-    );
+    const applicationId = Number(formData.get("land_permit_application_id"));
     const paymentDate = formData.get("payment_date");
     const proofFile = formData.get("proof_file");
 
@@ -399,8 +401,10 @@ export async function POST(request) {
       [applicationId],
     );
 
-    const notificationContext =
-      await getLandPermitPaymentNotificationContext(client, paymentId);
+    const notificationContext = await getLandPermitPaymentNotificationContext(
+      client,
+      paymentId,
+    );
     if (notificationContext) {
       await notifyLandPermitPaymentSubmitted(
         client,
@@ -437,8 +441,7 @@ export async function POST(request) {
     return Response.json(
       {
         success: false,
-        message:
-          "Terjadi kesalahan saat membuat bukti pembayaran izin lahan.",
+        message: "Terjadi kesalahan saat membuat bukti pembayaran izin lahan.",
       },
       { status: 500 },
     );

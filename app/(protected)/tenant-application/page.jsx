@@ -108,7 +108,6 @@ const Applications = () => {
     setTenantApplicationsLoaded(false);
     try {
       const response = await axios.get("/api/tenant-application");
-      console.log("tenant application", response);
       setDataTenantApplication(response.data.data);
       setTenantApplicationsLoaded(true);
       setTimeout(() => {

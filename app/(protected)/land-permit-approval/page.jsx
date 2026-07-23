@@ -33,9 +33,7 @@ export default function LandPermitApprovalPage() {
   const [searchText, setSearchText] = useState("");
   const [pageSize, setPageSize] = useState(5);
   const [loading, setLoading] = useState(false);
-  const [loadingMessage, setLoadingMessage] = useState(
-    DEFAULT_LOADING_MESSAGE,
-  );
+  const [loadingMessage, setLoadingMessage] = useState(DEFAULT_LOADING_MESSAGE);
   const [selectedData, setSelectedData] = useState(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [progressOpen, setProgressOpen] = useState(false);
@@ -95,15 +93,12 @@ export default function LandPermitApprovalPage() {
     if (typeof window === "undefined" || approvals.length === 0) return;
 
     const params = new URLSearchParams(window.location.search);
-    const applicationId = Number(
-      params.get("land_permit_application_id"),
-    );
+    const applicationId = Number(params.get("land_permit_application_id"));
     const openMode = params.get("open");
     if (!applicationId || !["approval", "progress"].includes(openMode)) return;
 
     const target = approvals.find(
-      (item) =>
-        Number(item.land_permit_application_id) === applicationId,
+      (item) => Number(item.land_permit_application_id) === applicationId,
     );
     if (!target) return;
 
@@ -151,8 +146,7 @@ export default function LandPermitApprovalPage() {
       const response = await axios.put(
         `/api/land-permit-approval/${selectedData.id}`,
         {
-          land_permit_application_id:
-            selectedData.land_permit_application_id,
+          land_permit_application_id: selectedData.land_permit_application_id,
           status: "approved",
         },
       );
@@ -165,7 +159,10 @@ export default function LandPermitApprovalPage() {
         return;
       }
 
-      showSnackbar(response.data?.message || "Gagal memproses approval.", "error");
+      showSnackbar(
+        response.data?.message || "Gagal memproses approval.",
+        "error",
+      );
     } catch (error) {
       showSnackbar(
         error?.response?.data?.message ||
@@ -188,8 +185,7 @@ export default function LandPermitApprovalPage() {
       const response = await axios.put(
         `/api/land-permit-approval/rejected/${selectedData.id}`,
         {
-          land_permit_application_id:
-            selectedData.land_permit_application_id,
+          land_permit_application_id: selectedData.land_permit_application_id,
           status: "rejected",
           notes,
         },
@@ -203,7 +199,10 @@ export default function LandPermitApprovalPage() {
         return;
       }
 
-      showSnackbar(response.data?.message || "Gagal menolak permohonan.", "error");
+      showSnackbar(
+        response.data?.message || "Gagal menolak permohonan.",
+        "error",
+      );
     } catch (error) {
       showSnackbar(
         error?.response?.data?.message ||

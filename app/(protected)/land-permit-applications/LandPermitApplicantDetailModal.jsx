@@ -385,7 +385,7 @@ export default function LandPermitApplicantDetailModal({
             <Grid container spacing={1.25}>
               <FieldCard
                 icon="solar:bill-list-bold-duotone"
-                label="Sewa per Tahun"
+                label="Biaya Administrasi SIL"
                 value={formatRupiah(selectedData?.annual_land_rent)}
               />
               <FieldCard
