@@ -52,7 +52,7 @@ export default function LandPermitCostDetailModal({
   administrationType,
 }) {
   const theme = useTheme();
-  const cost = calculateLandPermitCost(stall, durationYears);
+  const cost = calculateLandPermitCost(stall, durationYears, administrationType);
 
   return (
     <AppModal
