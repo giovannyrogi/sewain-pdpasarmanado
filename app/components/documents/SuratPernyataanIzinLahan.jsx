@@ -14,9 +14,7 @@ const formatDocumentDate = (value = new Date()) =>
 
 const buildIdentityAddress = (data) => {
   const rtRw =
-    data?.rt || data?.rw
-      ? `RT ${data?.rt || "-"} / RW ${data?.rw || "-"}`
-      : "";
+    data?.rt || data?.rw ? `RT ${data?.rt || "-"} / RW ${data?.rw || "-"}` : "";
 
   return [
     data?.street_address,
@@ -98,10 +96,15 @@ const styles = {
 const SuratPernyataanIzinLahan = forwardRef(({ data }, ref) => {
   if (!data) return null;
 
+  const capitalizeApplicatioType = data?.application_type
+    ? data?.application_type[0].toUpperCase() + data?.application_type.slice(1)
+    : "-";
+
   const tenantName = data.tenant_name || "-";
   const address = buildIdentityAddress(data) || "-";
   const occupation = data.occupation || "-";
   const locationName = data.location_name || "-";
+  const applicationType = capitalizeApplicatioType;
   const landLength = formatNumber(data.stall_length || 0);
   const landWidth = formatNumber(data.stall_width || 0);
   const landArea = formatNumber(
@@ -150,7 +153,7 @@ const SuratPernyataanIzinLahan = forwardRef(({ data }, ref) => {
       <Box
         sx={{
           display: "grid",
-          gridTemplateColumns: "24mm 4mm minmax(0, 1fr)",
+          gridTemplateColumns: "30mm 4mm minmax(0, 1fr)",
           rowGap: "1mm",
           ml: "14mm",
           mb: "4mm",
@@ -160,15 +163,22 @@ const SuratPernyataanIzinLahan = forwardRef(({ data }, ref) => {
           ["Nama", tenantName],
           ["Alamat", address],
           ["Pekerjaan", occupation],
+          ["Jenis Permohonan", applicationType],
         ].map(([label, value]) => (
           <React.Fragment key={label}>
-            <Typography sx={{ ...styles.bodyText, fontWeight: 700, textAlign: "left" }}>
+            <Typography
+              sx={{ ...styles.bodyText, fontWeight: 700, textAlign: "left" }}
+            >
               {label}
             </Typography>
-            <Typography sx={{ ...styles.bodyText, fontWeight: 700, textAlign: "left" }}>
+            <Typography
+              sx={{ ...styles.bodyText, fontWeight: 700, textAlign: "left" }}
+            >
               :
             </Typography>
-            <Typography sx={{ ...styles.bodyText, fontWeight: 400, textAlign: "left" }}>
+            <Typography
+              sx={{ ...styles.bodyText, fontWeight: 400, textAlign: "left" }}
+            >
               {value}
             </Typography>
           </React.Fragment>
@@ -176,9 +186,10 @@ const SuratPernyataanIzinLahan = forwardRef(({ data }, ref) => {
       </Box>
 
       <Typography sx={{ ...styles.bodyText, mb: "3mm" }}>
-        Dengan ini menyatakan bahwa saya sebagai Pedagang yang diberikan kesempatan
-        oleh Pemerintah untuk menempati (*) Pelataran Terbuka / Pelataran Beratap /
-        Meja Kayu / Meja Permanen / Ruangan / Kios / Booth / Tenant di{" "}
+        Dengan ini menyatakan bahwa saya sebagai Pedagang yang diberikan
+        kesempatan oleh Pemerintah untuk menempati (*) Pelataran Terbuka /
+        Pelataran Beratap / Meja Kayu / Meja Permanen / Ruangan / Kios / Booth /
+        Tenant di{" "}
         <Box component="span" sx={{ fontWeight: 700 }}>
           {locationName}
         </Box>{" "}
@@ -196,10 +207,10 @@ const SuratPernyataanIzinLahan = forwardRef(({ data }, ref) => {
         </StatementItem>
 
         <StatementItem number="2">
-          Bahwa saya bersedia membayar Iuran Pemanfaatan Area Pasar (iuran harian
-          Pasar, Iuran Sewa Ruangan dan Iuran Jasa Kebersihan) sesuai ketentuan
-          yang berlaku serta menaati peraturan baik yang ada sekarang maupun yang
-          akan ditetapkan kemudian.
+          Bahwa saya bersedia membayar Iuran Pemanfaatan Area Pasar (iuran
+          harian Pasar, Iuran Sewa Ruangan dan Iuran Jasa Kebersihan) sesuai
+          ketentuan yang berlaku serta menaati peraturan baik yang ada sekarang
+          maupun yang akan ditetapkan kemudian.
         </StatementItem>
 
         <StatementItem number="3">
@@ -247,17 +258,17 @@ const SuratPernyataanIzinLahan = forwardRef(({ data }, ref) => {
               harian pasar dan iuran jasa kebersihan Pasar.
             </SubStatementItem>
             <SubStatementItem marker="b">
-              Jika ada penataan dari Pemerintah Kota (PERUMDA Pasar Kota Manado),
-              maka saya bersedia mengikuti segala ketentuan/peraturan yang
-              ditetapkan oleh Pemerintah Kota (PERUMDA Pasar Kota Manado).
+              Jika ada penataan dari Pemerintah Kota (PERUMDA Pasar Kota
+              Manado), maka saya bersedia mengikuti segala ketentuan/peraturan
+              yang ditetapkan oleh Pemerintah Kota (PERUMDA Pasar Kota Manado).
             </SubStatementItem>
           </Box>
         </Box>
 
         <StatementItem number="5">
-          Saya bersedia menyediakan peralatan kebersihan: Tempat Sampah, Sapu Lidi,
-          Sapu Ijuk dan lain-lain serta memelihara kebersihan lingkungan tempat
-          jualan{" "}
+          Saya bersedia menyediakan peralatan kebersihan: Tempat Sampah, Sapu
+          Lidi, Sapu Ijuk dan lain-lain serta memelihara kebersihan lingkungan
+          tempat jualan{" "}
           <Box component="span" sx={{ fontWeight: 700 }}>
             tanpa alasan atas pembayaran iuran jasa kebersihan Pasar
           </Box>
@@ -329,7 +340,9 @@ const SuratPernyataanIzinLahan = forwardRef(({ data }, ref) => {
             Lembar 2
           </Typography>
           <Typography sx={styles.smallText}>:</Typography>
-          <Typography sx={styles.smallText}>Untuk PERUMDA Pasar Manado</Typography>
+          <Typography sx={styles.smallText}>
+            Untuk PERUMDA Pasar Manado
+          </Typography>
         </Box>
 
         <Box

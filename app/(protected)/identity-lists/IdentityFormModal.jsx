@@ -415,14 +415,14 @@ export default function IdentityFormModal({
       return;
     }
 
-    if (isLandPermitAdmin && !form.profilePhotoFilePath) {
-      onNotify?.({
-        open: true,
-        message: "Pas foto wajib diupload untuk Admin Izin Lahan.",
-        severity: "error",
-      });
-      return;
-    }
+    // if (isLandPermitAdmin && !form.profilePhotoFilePath) {
+    //   onNotify?.({
+    //     open: true,
+    //     message: "Pas foto wajib diupload untuk Admin Izin Lahan.",
+    //     severity: "error",
+    //   });
+    //   return;
+    // }
 
     const formData = new FormData();
     if (mode === "edit" && initialData?.id) {

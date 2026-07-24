@@ -135,13 +135,13 @@ export const validateLandPermitIdentityFormData = (
   }
 
   const profilePhotoFile = formData.get("profilePhotoFile");
-  if (requireProfilePhoto && (!profilePhotoFile || !profilePhotoFile.name)) {
-    return {
-      values: null,
-      profilePhotoFile: null,
-      error: "Pas foto wajib diupload untuk Admin Izin Lahan.",
-    };
-  }
+  // if (requireProfilePhoto && (!profilePhotoFile || !profilePhotoFile.name)) {
+  //   return {
+  //     values: null,
+  //     profilePhotoFile: null,
+  //     error: "Pas foto wajib diupload untuk Admin Izin Lahan.",
+  //   };
+  // }
 
   return {
     values: {

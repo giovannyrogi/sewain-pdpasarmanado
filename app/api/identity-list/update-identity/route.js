@@ -152,12 +152,12 @@ export async function PUT(req) {
 
       profilePhotoFilePath =
         preparedProfilePhoto.profile_photo_file_path || currentProfilePhotoPath;
-      if (isLandPermitAdmin && !profilePhotoFilePath) {
-        return failResponse(
-          "Pas foto wajib diupload untuk Admin Izin Lahan.",
-          400,
-        );
-      }
+      // if (isLandPermitAdmin && !profilePhotoFilePath) {
+      //   return failResponse(
+      //     "Pas foto wajib diupload untuk Admin Izin Lahan.",
+      //     400,
+      //   );
+      // }
       landPermitStatus = landPermitValidation.values.land_permit_status;
       landPermitStatusNotes =
         landPermitValidation.values.land_permit_status_notes;

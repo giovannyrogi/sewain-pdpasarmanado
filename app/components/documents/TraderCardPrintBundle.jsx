@@ -13,8 +13,8 @@ const CITY_LOGO = "/logo-pemerintah-kota-manado-v2.png";
 const PM_LOGO = "/logo-pm-new.png";
 const QR_LOGO = "/logo-pm-red-transparent.png";
 const CARD_HEADER_BG = "/background-header-kartu-pedagang.png";
-const CARD_WIDTH = "92mm";
-const CARD_HEIGHT = "66mm";
+const CARD_WIDTH = "95mm";
+const CARD_HEIGHT = "70mm";
 
 const cardText = {
   m: 0,
@@ -22,6 +22,25 @@ const cardText = {
   fontFamily: '"Arial", "Calibri", sans-serif',
   lineHeight: 1.16,
 };
+
+function mirrorBackLayout(items) {
+  const result = [];
+
+  for (let i = 0; i < items.length; i += 2) {
+    const left = items[i];
+    const right = items[i + 1];
+
+    if (right) {
+      result.push(right);
+      result.push(left);
+    } else {
+      result.push(null);
+      result.push(left);
+    }
+  }
+
+  return result;
+}
 
 const buildVerificationUrl = (token) => {
   if (!token) return "SEWAIN-LAND-PERMIT-NO-TOKEN";
@@ -65,7 +84,7 @@ const buildCardNumber = (documentNumber) => {
 const buildStallLabel = (stallNumber) => {
   const value = String(stallNumber || "").trim();
   if (!value) return "";
-  return /^lahan\b/i.test(value) ? value : `Lahan ${value}`;
+  return /^lahan\b/i.test(value) ? value : `Lahan No. ${value}`;
 };
 
 const chunkItems = (items, size) => {
@@ -80,41 +99,41 @@ const FieldRow = ({ label, value, maxLines = 1 }) => {
   const shouldClamp = Number.isFinite(maxLines) && maxLines > 0;
 
   return (
-  <Box
-    sx={{
-      display: "grid",
-      gridTemplateColumns: "12.5mm 2mm minmax(0, 1fr)",
-      columnGap: "0.75mm",
-      alignItems: "start",
-      minWidth: 0,
-    }}
-  >
-    <Typography sx={{ ...cardText, fontSize: "5.7pt", fontWeight: 700 }}>
-      {label}
-    </Typography>
-    <Typography sx={{ ...cardText, fontSize: "5.7pt", fontWeight: 700 }}>
-      :
-    </Typography>
-    <Typography
+    <Box
       sx={{
-        ...cardText,
-        fontSize: "5.7pt",
-        fontWeight: 700,
-        lineHeight: 1.08,
-        overflowWrap: "anywhere",
-        ...(shouldClamp
-          ? {
-              display: "-webkit-box",
-              WebkitLineClamp: maxLines,
-              WebkitBoxOrient: "vertical",
-              overflow: "hidden",
-            }
-          : {}),
+        display: "grid",
+        gridTemplateColumns: "12.5mm 2mm minmax(0, 1fr)",
+        columnGap: "0.75mm",
+        alignItems: "start",
+        minWidth: 0,
       }}
     >
-      {value || "-"}
-    </Typography>
-  </Box>
+      <Typography sx={{ ...cardText, fontSize: "7pt", fontWeight: 700 }}>
+        {label}
+      </Typography>
+      <Typography sx={{ ...cardText, fontSize: "7pt", fontWeight: 700 }}>
+        :
+      </Typography>
+      <Typography
+        sx={{
+          ...cardText,
+          fontSize: "7pt",
+          fontWeight: 700,
+          lineHeight: 1.08,
+          overflowWrap: "anywhere",
+          ...(shouldClamp
+            ? {
+                display: "-webkit-box",
+                WebkitLineClamp: maxLines,
+                WebkitBoxOrient: "vertical",
+                overflow: "hidden",
+              }
+            : {}),
+        }}
+      >
+        {value || "-"}
+      </Typography>
+    </Box>
   );
 };
 
@@ -223,7 +242,14 @@ const TraderCardFront = ({ data }) => {
             sx={{ width: "10.4mm", height: "10.4mm", objectFit: "contain" }}
           />
         </HeaderLogoFrame>
-        <Box sx={{ minWidth: 0, textAlign: "center", position: "relative", zIndex: 1 }}>
+        <Box
+          sx={{
+            minWidth: 0,
+            textAlign: "center",
+            position: "relative",
+            zIndex: 1,
+          }}
+        >
           <Typography
             className="trader-card-header-text"
             sx={{
@@ -317,8 +343,10 @@ const TraderCardFront = ({ data }) => {
           position: "relative",
           height: "50.05mm",
           boxSizing: "border-box",
+          width: "100%",
           px: "3mm",
           pt: "2mm",
+          backgroundColor: "orange",
         }}
       >
         <Typography
@@ -326,7 +354,7 @@ const TraderCardFront = ({ data }) => {
             ...cardText,
             textAlign: "center",
             fontFamily: '"Arial Black", Impact, Arial, sans-serif',
-            fontSize: "7.1pt",
+            fontSize: "8pt",
             fontWeight: 900,
             lineHeight: 1,
             mt: "0.7mm",
@@ -336,7 +364,7 @@ const TraderCardFront = ({ data }) => {
           KARTU TANDA PEDAGANG
         </Typography>
 
-        <Box
+        {/* <Box
           sx={{
             position: "absolute",
             top: "2.3mm",
@@ -364,21 +392,29 @@ const TraderCardFront = ({ data }) => {
               Pas Foto
             </Typography>
           )}
-        </Box>
+        </Box> */}
 
         <Box
           sx={{
-            pr: "24.5mm",
+            // pr: "24.5mm",
+            width: "100%",
             maxHeight: "31mm",
             minWidth: 0,
             overflow: "hidden",
           }}
         >
           <Box sx={{ minWidth: 0, display: "grid", rowGap: "0.42mm" }}>
-            <FieldRow label="Nomor" value={buildCardNumber(data.document_number)} />
+            <FieldRow
+              label="Nomor"
+              value={buildCardNumber(data.document_number)}
+            />
             <FieldRow label="Nama" value={data.tenant_name} />
             <FieldRow label="TTL" value={birthInfo || "-"} />
-            <FieldRow label="Alamat" value={buildAddress(data) || "-"} maxLines={0} />
+            <FieldRow
+              label="Alamat"
+              value={buildAddress(data) || "-"}
+              maxLines={0}
+            />
             <FieldRow label="Lokasi" value={locationInfo || "-"} maxLines={0} />
           </Box>
         </Box>
@@ -446,7 +482,7 @@ const TraderCardFront = ({ data }) => {
               sx={{
                 ...cardText,
                 fontFamily: '"Arial Black", Impact, Arial, sans-serif',
-                fontSize: "5.9pt",
+                fontSize: "7pt",
                 fontWeight: 900,
               }}
             >
@@ -457,7 +493,7 @@ const TraderCardFront = ({ data }) => {
               sx={{
                 ...cardText,
                 fontFamily: '"Arial Black", Impact, Arial, sans-serif',
-                fontSize: "5.35pt",
+                fontSize: "7pt",
                 fontWeight: 900,
                 textDecoration: "underline",
               }}
@@ -510,7 +546,7 @@ const TraderCardBack = ({ data }) => (
           letterSpacing: "0.1mm",
         }}
       >
-        KETERANGAN MASA BERLAKU
+        KETERANGAN MASA BERLAKU()
       </Typography>
       <Typography
         sx={{
@@ -524,8 +560,10 @@ const TraderCardBack = ({ data }) => (
       >
         {formatDate(data.start_date)} s/d {formatDate(data.end_date)}
       </Typography>
-
-      <Box component="ol" sx={{ m: 0, pl: "5mm", display: "grid", rowGap: "2mm" }}>
+      <Box
+        component="ol"
+        sx={{ m: 0, pl: "5mm", display: "grid", rowGap: "2mm" }}
+      >
         {[
           "Dilarang berjualan di lokasi yang tidak diijinkan.",
           "Dilarang menambah/merubah tempat berjualan tanpa seijin Perumda Pasar Manado.",
@@ -549,36 +587,87 @@ const TraderCardBack = ({ data }) => (
   </TraderCardShell>
 );
 
-const TraderCardSheet = ({ items, side, pageIndex, breakAfterPage = true }) => (
-  <Box
-    className="trader-card-sheet"
-    sx={{
-      width: "210mm",
-      minHeight: "297mm",
-      boxSizing: "border-box",
-      bgcolor: "#fff",
-      color: "#111",
-      px: "10mm",
-      py: "12mm",
-      display: "grid",
-      gridTemplateColumns: `repeat(2, ${CARD_WIDTH})`,
-      gridAutoRows: CARD_HEIGHT,
-      gap: "5mm",
-      justifyContent: "center",
-      alignContent: "start",
-      pageBreakAfter: breakAfterPage ? "always" : "auto",
-      breakAfter: breakAfterPage ? "page" : "auto",
-    }}
-  >
-    {items.map((item) =>
-      side === "front" ? (
-        <TraderCardFront key={`front-${pageIndex}-${item.document_id}`} data={item} />
-      ) : (
-        <TraderCardBack key={`back-${pageIndex}-${item.document_id}`} data={item} />
-      ),
-    )}
-  </Box>
-);
+// const TraderCardSheet = ({ items, side, pageIndex, breakAfterPage = true }) => (
+//   <Box
+//     className="trader-card-sheet"
+//     sx={{
+//       width: "210mm",
+//       minHeight: "297mm",
+//       boxSizing: "border-box",
+//       bgcolor: "#fff",
+//       color: "#111",
+//       px: "10mm",
+//       py: "12mm",
+//       display: "grid",
+//       gridTemplateColumns: `repeat(2, ${CARD_WIDTH})`,
+//       gridAutoRows: CARD_HEIGHT,
+//       gap: "5mm",
+//       justifyContent: "center",
+//       alignContent: "start",
+//       pageBreakAfter: breakAfterPage ? "always" : "auto",
+//       breakAfter: breakAfterPage ? "page" : "auto",
+//     }}
+//   >
+//     {items.map((item) =>
+//       side === "front" ? (
+//         <TraderCardFront
+//           key={`front-${pageIndex}-${item.document_id}`}
+//           data={item}
+//         />
+//       ) : (
+//         <TraderCardBack
+//           key={`back-${pageIndex}-${item.document_id}`}
+//           data={item}
+//         />
+//       ),
+//     )}
+//   </Box>
+// );
+
+const TraderCardSheet = ({ items, side, pageIndex, breakAfterPage = true }) => {
+  const renderItems = side === "back" ? mirrorBackLayout(items) : items;
+
+  return (
+    <Box
+      className="trader-card-sheet"
+      sx={{
+        width: "210mm",
+        minHeight: "297mm",
+        boxSizing: "border-box",
+        bgcolor: "#fff",
+        color: "#111",
+        px: "10mm",
+        py: "12mm",
+        display: "grid",
+        gridTemplateColumns: `repeat(2, ${CARD_WIDTH})`,
+        gridAutoRows: CARD_HEIGHT,
+        gap: "5mm",
+        justifyContent: "center",
+        alignContent: "start",
+        pageBreakAfter: breakAfterPage ? "always" : "auto",
+        breakAfter: breakAfterPage ? "page" : "auto",
+      }}
+    >
+      {renderItems.map((item, index) => {
+        if (!item) {
+          return <Box key={`empty-${pageIndex}-${index}`} />;
+        }
+
+        return side === "front" ? (
+          <TraderCardFront
+            key={`front-${pageIndex}-${item.document_id}`}
+            data={item}
+          />
+        ) : (
+          <TraderCardBack
+            key={`back-${pageIndex}-${item.document_id}`}
+            data={item}
+          />
+        );
+      })}
+    </Box>
+  );
+};
 
 /**
  * Bundle print untuk Surat Izin Lahan dan Kartu Pedagang.
@@ -598,8 +687,10 @@ const TraderCardPrintBundle = forwardRef(
   ) => {
     const frontChunks = chunkItems(documents, CARDS_PER_PAGE);
     const backChunks = chunkItems(documents, CARDS_PER_PAGE);
-    const shouldPrintFrontCards = includeCards && ["front", "both"].includes(cardSide);
-    const shouldPrintBackCards = includeCards && ["back", "both"].includes(cardSide);
+    const shouldPrintFrontCards =
+      includeCards && ["front", "both"].includes(cardSide);
+    const shouldPrintBackCards =
+      includeCards && ["back", "both"].includes(cardSide);
 
     return (
       <Box
@@ -620,11 +711,15 @@ const TraderCardPrintBundle = forwardRef(
               key={`permit-${item.document_id}`}
               sx={{
                 pageBreakAfter:
-                  shouldPrintFrontCards || shouldPrintBackCards || index < documents.length - 1
+                  shouldPrintFrontCards ||
+                  shouldPrintBackCards ||
+                  index < documents.length - 1
                     ? "always"
                     : "auto",
                 breakAfter:
-                  shouldPrintFrontCards || shouldPrintBackCards || index < documents.length - 1
+                  shouldPrintFrontCards ||
+                  shouldPrintBackCards ||
+                  index < documents.length - 1
                     ? "page"
                     : "auto",
                 "& .land-permit-document": {
@@ -644,7 +739,9 @@ const TraderCardPrintBundle = forwardRef(
               items={chunk}
               side="front"
               pageIndex={index}
-              breakAfterPage={shouldPrintBackCards || index < frontChunks.length - 1}
+              breakAfterPage={
+                shouldPrintBackCards || index < frontChunks.length - 1
+              }
             />
           ))}
 
