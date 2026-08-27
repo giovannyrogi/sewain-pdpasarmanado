@@ -101,6 +101,7 @@ function mapPaymentRow(row) {
     stall_width: row.stall_width,
     stall_area: row.stall_area,
     price_per_m2: row.price_per_m2,
+    fixed_annual_fee: row.fixed_annual_fee,
   };
 }
 
@@ -151,6 +152,7 @@ const APPLICATION_SELECT = `
     stall.stall_width,
     stall.stall_area,
     stall.price_per_m2
+    , stall.fixed_annual_fee
   FROM land_permit_applications app
   JOIN tenant_identities identity ON identity.id = app.tenant_identity_id
   JOIN locations location ON location.id = app.location_id

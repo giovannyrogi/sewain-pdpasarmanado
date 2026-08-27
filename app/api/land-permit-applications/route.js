@@ -6,7 +6,7 @@ import {
   handleApiError,
   jsonResponse,
 } from "@/app/utils/apiValidation";
-import { calculateAnnualLandRent } from "@/app/utils/landPermitCalculations";
+import { calculateLandPermitCost } from "@/app/utils/landPermitCalculations";
 import { validateLandPermitApplicationPayload } from "./validation";
 import {
   getLandPermitNotificationContext,
@@ -68,6 +68,10 @@ const mapApplicationRow = (row) => ({
   stall_width: row.stall_width,
   stall_area: row.stall_area,
   price_per_m2: row.price_per_m2,
+  fixed_annual_fee: row.fixed_annual_fee,
+  stall_administration_type: row.stall_administration_type,
+  fixed_annual_fee: row.fixed_annual_fee,
+  stall_administration_type: row.stall_administration_type,
   start_date: formatDate(row.start_date),
   end_date: formatDate(row.end_date),
   lease_duration_years: row.lease_duration_years,
@@ -158,6 +162,8 @@ const selectApplicationsSql = `
     lst.stall_width,
     lst.stall_area,
     lst.price_per_m2,
+    lst.administration_type AS stall_administration_type,
+    lst.fixed_annual_fee,
     old.id AS old_application_id,
     old_ti.full_name AS old_tenant_name,
     old_lst.stall_number AS old_stall_number,
@@ -189,6 +195,8 @@ const getStallForApplication = async (client, values, currentApplicationId = nul
       lst.stall_width,
       lst.stall_area,
       lst.price_per_m2,
+      lst.administration_type,
+      lst.fixed_annual_fee,
       ls.status AS sector_status
     FROM land_stalls lst
     JOIN land_sectors ls ON ls.id = lst.sector_id
@@ -205,6 +213,9 @@ const getStallForApplication = async (client, values, currentApplicationId = nul
   }
 
   const stall = result.rows[0];
+  if (stall.administration_type !== values.administration_type) {
+    return { error: "Jenis administrasi permohonan tidak sesuai dengan objek yang dipilih." };
+  }
   if (stall.sector_status !== "active") {
     return { error: "Sektor yang dipilih tidak aktif." };
   }
@@ -343,11 +354,15 @@ export async function POST(request) {
     }
 
 
-    const annualLandRent = calculateAnnualLandRent(stall);
-    const administrationType = values.administration_type === "kip" ? 100000: 150000; // Set admin fee based on administration type
-    const admin_fee = administrationType * values.lease_duration_years; // dynamic admin fee based on administration type
-    const totalPaymentLand = annualLandRent * values.lease_duration_years; // room rent for the entire lease duration
-    const totalPayment = totalPaymentLand + admin_fee; // total payment including admin fee
+    const cost = calculateLandPermitCost(
+      stall,
+      values.lease_duration_years,
+      values.administration_type,
+    );
+    const annualLandRent = cost.annualLandRent;
+    const admin_fee = cost.adminFee;
+    const totalPaymentLand = cost.totalPaymentLand;
+    const totalPayment = cost.totalPayment;
 
     const result = await client.query(
       `

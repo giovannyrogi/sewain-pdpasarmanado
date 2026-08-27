@@ -10,6 +10,7 @@ import {
 } from "@/app/utils/landPermitCommodityOptions";
 
 const APPLICATION_TYPES = ["baru", "perpanjangan"];
+const ADMINISTRATION_TYPES = ["kip", "kkip"];
 
 const getRequiredId = (body, key, label) =>
   parsePositiveInteger(body?.[key], label);
@@ -73,6 +74,9 @@ export const validateLandPermitApplicationPayload = (
   values.end_date = calculatedEndDate.format("YYYY-MM-DD");
   values.lease_duration_years = durationYears;
   values.administration_type = String(body?.administration_type || "").trim();
+  if (!ADMINISTRATION_TYPES.includes(values.administration_type)) {
+    return { values: null, error: "Jenis administrasi tidak valid." };
+  }
 
   if (mode === "edit") {
     values.tenant_identity_id = Number(body?.tenant_identity_id);

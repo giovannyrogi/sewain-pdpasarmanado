@@ -254,10 +254,10 @@ export default function LandPermitPaymentDetailModal({
             />
             <DetailCard
               icon="solar:shop-bold-duotone"
-              label="Lahan"
-              value={`Lahan ${data?.stall_number || "-"} (${formatNumber(
-                data?.stall_length,
-              )} x ${formatNumber(data?.stall_width)} m²)`}
+              label={data?.administration_type === "kkip" ? "Area KKIP" : "Lahan"}
+              value={data?.administration_type === "kkip"
+                ? data?.stall_number || "-"
+                : `Lahan ${data?.stall_number || "-"} (${formatNumber(data?.stall_length)} x ${formatNumber(data?.stall_width)} m)`}
             />
             <DetailCard
               icon="solar:calendar-bold-duotone"
@@ -273,11 +273,11 @@ export default function LandPermitPaymentDetailModal({
                   : "-"
               }
             />
-            <DetailCard
+            {data?.administration_type === "kip" && <DetailCard
               icon="solar:bill-list-bold-duotone"
               label="Biaya Administrasi SIL"
               value={formatRupiah(data?.annual_land_rent)}
-            />
+            />}
             <DetailCard
               icon="solar:tag-price-bold-duotone"
               label={

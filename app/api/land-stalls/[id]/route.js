@@ -39,7 +39,7 @@ export async function PUT(request, { params }) {
     if (error) return failResponse(error, 400);
 
     const existingStall = await client.query(
-      "SELECT status FROM land_stalls WHERE id = $1 LIMIT 1",
+      "SELECT status, administration_type FROM land_stalls WHERE id = $1 LIMIT 1",
       [stallId],
     );
 
@@ -62,7 +62,8 @@ export async function PUT(request, { params }) {
       SELECT lpa.id
       FROM land_permit_applications lpa
       WHERE lpa.stall_id = $1
-        AND lpa.permit_status = 'active'
+        AND lpa.approval_status IN ('proses', 'approved')
+        AND lpa.permit_status <> 'terminated'
       LIMIT 1
       `,
       [stallId],
@@ -71,6 +72,16 @@ export async function PUT(request, { params }) {
     if (activePermit.rowCount > 0 && values.status !== "occupied") {
       return failResponse(
         "Lahan masih memiliki izin aktif. Status hanya dapat tetap sebagai terisi.",
+        409,
+      );
+    }
+
+    if (
+      activePermit.rowCount > 0 &&
+      existingStall.rows[0].administration_type !== values.administration_type
+    ) {
+      return failResponse(
+        "Jenis administrasi tidak dapat diubah karena objek sedang digunakan izin aktif.",
         409,
       );
     }
@@ -99,10 +110,12 @@ export async function PUT(request, { params }) {
         stall_length = $4,
         stall_width = $5,
         price_per_m2 = $6,
-        status = $7,
-        notes = $8,
+        administration_type = $7,
+        fixed_annual_fee = $8,
+        status = $9,
+        notes = $10,
         updated_at = NOW()
-      WHERE id = $9
+      WHERE id = $11
       RETURNING *
       `,
       [
@@ -112,6 +125,8 @@ export async function PUT(request, { params }) {
         values.stall_length,
         values.stall_width,
         values.price_per_m2,
+        values.administration_type,
+        values.fixed_annual_fee,
         values.status,
         values.notes,
         stallId,

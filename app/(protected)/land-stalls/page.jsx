@@ -20,6 +20,7 @@ import ReusableAntTable from "@/app/components/data-table/ReusableAntTable";
 import TableActionButton from "@/app/components/data-table/TableActionButton";
 import CrudConfirmModal from "@/app/components/crud/CrudConfirmModal";
 import SummaryStatCard from "@/app/components/stats/SummaryStatCard";
+import CompactInfoChip from "@/app/components/chips/CompactInfoChip";
 import formatRupiah from "@/app/components/formatrupiah/page";
 import { formatNumber } from "@/app/utils/formatNumber";
 import LandStallFormModal from "./LandStallFormModal";
@@ -155,6 +156,7 @@ export default function LandStallsPage() {
         item.location_name,
         item.sector_name,
         item.status,
+        item.administration_type,
         item.notes,
       ].some((value) => normalizeText(value).includes(keyword)),
     );
@@ -170,19 +172,19 @@ export default function LandStallsPage() {
     ).length;
     return [
       {
-        label: "Total Lahan",
+        label: "Total Objek",
         value: stalls.length,
         icon: "solar:shop-bold-duotone",
         color: theme.palette.primary.main,
       },
       {
-        label: "Lahan Tersedia",
+        label: "Objek Tersedia",
         value: available,
         icon: "solar:check-circle-bold-duotone",
         color: theme.palette.success.main,
       },
       {
-        label: "Lahan Terisi",
+        label: "Objek Terisi",
         value: occupied,
         icon: "solar:lock-keyhole-bold-duotone",
         color: theme.palette.warning.main,
@@ -292,7 +294,7 @@ export default function LandStallsPage() {
         render: (_, __, index) => index + 1,
       },
       {
-        title: "Lahan",
+        title: "Lahan / Area KKIP",
         dataIndex: "stall_number",
         width: 220,
         fixed: "left",
@@ -300,12 +302,17 @@ export default function LandStallsPage() {
         render: (_, record) => (
           <Stack spacing={0.6}>
             <Typography sx={{ fontWeight: 700, fontSize: 13 }}>
-              Lahan {record.stall_number}
+              {record.administration_type === "kkip" ? record.stall_number : `Lahan ${record.stall_number}`}
             </Typography>
             <Chip
               size="small"
               label={statusLabel[record.status] || record.status || "-"}
               sx={getStatusChipSx(theme, record.status)}
+            />
+            <CompactInfoChip
+              label={(record.administration_type || "kip").toUpperCase()}
+              color={theme.palette.primary.main}
+              sx={{ alignSelf: "flex-start" }}
             />
           </Stack>
         ),
@@ -343,29 +350,35 @@ export default function LandStallsPage() {
         width: 240,
         render: (_, record) => (
           <Stack spacing={0.35}>
-            <Typography sx={{ fontWeight: 700, fontSize: 13 }}>
+            {record.administration_type === "kkip" ? (
+              <Typography sx={{ fontWeight: 700, fontSize: 13 }}>Tanpa ukuran lapak</Typography>
+            ) : <><Typography sx={{ fontWeight: 700, fontSize: 13 }}>
               {formatNumber(record.stall_length, { maxFractionDigits: 4 })} m x{" "}
               {formatNumber(record.stall_width, { maxFractionDigits: 4 })} m
-            </Typography>
-            <Typography
+            </Typography><Typography
               sx={{ color: theme.ui.mutedText, fontWeight: 700, fontSize: 12 }}
             >
               Luas {formatNumber(record.stall_area, { useGrouping: true })} m²
-            </Typography>
+            </Typography></>}
           </Stack>
         ),
       },
       {
-        title: "Harga per m²",
+        title: "Tarif",
         dataIndex: "price_per_m2",
         width: 180,
         align: "right",
         sorter: (a, b) =>
           Number(a.price_per_m2 || 0) - Number(b.price_per_m2 || 0),
-        render: (value) => (
-          <Typography sx={{ fontWeight: 700, fontSize: 13 }}>
-            {formatRupiah(value)}
-          </Typography>
+        render: (value, record) => (
+          <Stack spacing={0.25} alignItems="flex-end">
+            <Typography sx={{ fontWeight: 700, fontSize: 13 }}>
+              {formatRupiah(record.administration_type === "kkip" ? record.fixed_annual_fee : value)}
+            </Typography>
+            <Typography sx={{ color: theme.ui.mutedText, fontSize: 11.5, fontWeight: 650 }}>
+              {record.administration_type === "kkip" ? "per tahun" : "per m²"}
+            </Typography>
+          </Stack>
         ),
       },
       {
@@ -459,10 +472,10 @@ export default function LandStallsPage() {
         <PageHeader
           breadcrumbs={[
             { label: "Data Master", icon: "solar:database-bold-duotone" },
-            { label: "Lahan", icon: "solar:shop-bold-duotone" },
+            { label: "Lahan & Area KKIP", icon: "solar:shop-bold-duotone" },
           ]}
-          title="Lahan"
-          description="Kelola lahan pada setiap sektor, termasuk ukuran, harga per meter, dan status ketersediaan."
+          title="Lahan & Area KKIP"
+          description="Kelola lapak KIP dan area operasional KKIP beserta tarif dan status ketersediaannya."
           action={
             <Button
               fullWidth
@@ -489,7 +502,7 @@ export default function LandStallsPage() {
                 },
               }}
             >
-              Tambah Lahan
+              Tambah Objek
             </Button>
           }
           actionSx={{
@@ -508,8 +521,8 @@ export default function LandStallsPage() {
         </Grid>
 
         <DataTableShell
-          title="Daftar Lahan"
-          description={`${filteredStalls.length} dari ${stalls.length} lahan ditampilkan`}
+          title="Daftar Lahan & Area KKIP"
+          description={`${filteredStalls.length} dari ${stalls.length} objek ditampilkan`}
           searchValue={searchText}
           searchPlaceholder="Cari lahan, lokasi, sektor, status, atau catatan"
           onSearchChange={setSearchText}

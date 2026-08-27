@@ -15,9 +15,9 @@ import {
 export const LAND_PERMIT_INCOME_DETAIL_SCROLL_WIDTH = 1860;
 
 const calculateTotalLandPrice = (row = {}) =>
-  Number(row.stall_length || 0) *
-  Number(row.stall_width || 0) *
-  Number(row.price_per_m2 || 0);
+  row.administration_type === "kkip"
+    ? Number(row.fixed_annual_fee || 0)
+    : Number(row.stall_length || 0) * Number(row.stall_width || 0) * Number(row.price_per_m2 || 0);
 
 export const buildLandPermitIncomeDetailTotalRow = (rows = []) => ({
   key: "land-permit-income-detail-total",
@@ -134,12 +134,12 @@ export const createLandPermitIncomeDetailColumns = ({ isMobile } = {}) => [
     ),
   },
   {
-    title: "Lahan",
+    title: "Lahan / Area KKIP",
     dataIndex: "stall_number",
     width: 120,
     render: (value, record) => (
       <LandPermitIncomeCellText>
-        {record.__isTotal ? "" : value || "-"}
+        {record.__isTotal ? "" : `${record.administration_type === "kkip" ? "Area " : "Lahan "}${value || "-"}`}
       </LandPermitIncomeCellText>
     ),
   },
@@ -149,7 +149,7 @@ export const createLandPermitIncomeDetailColumns = ({ isMobile } = {}) => [
     width: 170,
     render: (_, record) => (
       <LandPermitIncomeCellText>
-        {record.__isTotal ? "" : buildLandPermitIncomeDimensionLabel(record)}
+        {record.__isTotal ? "" : record.administration_type === "kkip" ? "Tanpa ukuran lapak" : buildLandPermitIncomeDimensionLabel(record)}
       </LandPermitIncomeCellText>
     ),
   },
@@ -175,18 +175,18 @@ export const createLandPermitIncomeDetailColumns = ({ isMobile } = {}) => [
     ),
   },
   {
-    title: "Harga per m²",
+    title: "Tarif Dasar",
     dataIndex: "price_per_m2",
     width: 150,
     // align: "right",
     render: (value, record) => (
       <LandPermitIncomeCellText>
-        {record.__isTotal ? "" : formatRupiah(Number(value || 0))}
+        {record.__isTotal ? "" : formatRupiah(Number(record.administration_type === "kkip" ? record.fixed_annual_fee : value || 0))}
       </LandPermitIncomeCellText>
     ),
   },
   {
-    title: "Harga Lahan / Tahun",
+    title: "Biaya / Tahun",
     dataIndex: "total_land_price",
     width: 180,
     render: (_, record) => (
@@ -224,20 +224,20 @@ export const LAND_PERMIT_INCOME_DETAIL_EXPORT_COLUMNS = [
   { key: "location_name", header: "Lokasi", width: 22, pdfWidth: 17 },
   { key: "sector_name", header: "Sektor", width: 18, pdfWidth: 15 },
   { key: "commodity_type", header: "Jenis Dagangan", width: 18, pdfWidth: 16 },
-  { key: "stall_number", header: "Lahan", width: 14, pdfWidth: 11 },
+  { key: "stall_number", header: "Lahan / Area", width: 14, pdfWidth: 11 },
   { key: "dimension_label", header: "Ukuran", width: 22, pdfWidth: 16 },
   { key: "permit_period", header: "Masa Berlaku", width: 26, pdfWidth: 21 },
   { key: "duration_label", header: "Durasi", width: 14, pdfWidth: 11 },
   {
     key: "price_per_m2",
-    header: "Harga/m²",
+    header: "Tarif Dasar",
     type: "currency",
     width: 18,
     pdfWidth: 18,
   },
   {
     key: "total_land_price",
-    header: "Harga Lahan / Tahun",
+    header: "Biaya / Tahun",
     type: "currency",
     width: 22,
     pdfWidth: 23,
@@ -263,12 +263,12 @@ export const buildLandPermitIncomeDetailExportRows = (rows = []) =>
     trader_identity: `${row.trader_name || "-"}\nNIK ${row.trader_nik || "-"}`,
     location_name: row.location_name || "-",
     sector_name: row.sector_name || "-",
-    stall_number: row.stall_number || "-",
+    stall_number: `${row.administration_type === "kkip" ? "Area " : "Lahan "}${row.stall_number || "-"}`,
     commodity_type: row.commodity_type || "-",
-    dimension_label: buildLandPermitIncomeDimensionLabel(row),
+    dimension_label: row.administration_type === "kkip" ? "Tanpa ukuran lapak" : buildLandPermitIncomeDimensionLabel(row),
     permit_period: buildLandPermitIncomePeriodLabel(row),
     duration_label: `${row.lease_duration_years || 1} Tahun`,
-    price_per_m2: Number(row.price_per_m2 || 0),
+    price_per_m2: Number(row.administration_type === "kkip" ? row.fixed_annual_fee : row.price_per_m2 || 0),
     total_land_price: calculateTotalLandPrice(row),
     total_payment: Number(row.total_payment || 0),
   }));

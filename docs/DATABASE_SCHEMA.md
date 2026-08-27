@@ -621,6 +621,8 @@ Stores land permit stalls/plots inside sectors.
 | `stall_width`  | `NUMERIC(8,4)`  | `NOT NULL DEFAULT 0`                   | Stall width                                      |
 | `stall_area`   | `NUMERIC(18,6)` | generated stored                       | Auto-generated as `stall_length * stall_width`   |
 | `price_per_m2` | `NUMERIC(18,2)` | `NOT NULL DEFAULT 0`                   | Land permit price per square meter               |
+| `administration_type` | `VARCHAR(10)` | `NOT NULL DEFAULT 'kip'`              | Object type: `kip` physical stall or `kkip` area |
+| `fixed_annual_fee` | `NUMERIC(18,2)` | `NOT NULL DEFAULT 0`                    | Fixed annual KKIP fee                             |
 | `status`       | `VARCHAR(20)`   | `DEFAULT 'available'`                  | Stall availability status                        |
 | `notes`        | `TEXT`          | nullable                               | Notes                                            |
 | `updated_at`   | `TIMESTAMP`     | `DEFAULT CURRENT_TIMESTAMP`            | Last update timestamp                            |
@@ -636,6 +638,9 @@ Allowed `status` values:
 Constraints:
 
 * Unique `(sector_id, stall_number)`
+* `administration_type` is limited to `kip` or `kkip`.
+* KIP requires positive length, width, and price per m² with zero fixed fee.
+* KKIP requires a positive fixed annual fee with zero dimensions and price per m².
 
 ---
 

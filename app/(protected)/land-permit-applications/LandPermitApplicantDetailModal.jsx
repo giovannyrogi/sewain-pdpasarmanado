@@ -293,8 +293,10 @@ export default function LandPermitApplicantDetailModal({
 
           <DetailSection
             icon="solar:shop-bold-duotone"
-            title="Detail Lokasi & Lahan"
-            description="Lokasi, sektor, ukuran lahan, harga dasar, dan masa berlaku izin."
+            title={selectedData?.administration_type === "kkip" ? "Detail Lokasi & Area KKIP" : "Detail Lokasi & Lahan"}
+            description={selectedData?.administration_type === "kkip"
+              ? "Lokasi, sektor, area operasional, dan masa berlaku kartu."
+              : "Lokasi, sektor, ukuran lahan, harga dasar, dan masa berlaku izin."}
           >
             <Grid container spacing={1.25}>
               <FieldCard
@@ -309,29 +311,29 @@ export default function LandPermitApplicantDetailModal({
               />
               <FieldCard
                 icon="solar:shop-bold-duotone"
-                label="Lahan"
-                value={`Lahan ${selectedData?.stall_number || "-"}`}
+                label={selectedData?.administration_type === "kkip" ? "Area KKIP" : "Lahan"}
+                value={`${selectedData?.administration_type === "kkip" ? "" : "Lahan "}${selectedData?.stall_number || "-"}`}
               />
-              <FieldCard
+              {selectedData?.administration_type === "kip" && <FieldCard
                 icon="solar:ruler-bold-duotone"
                 label="Panjang"
                 value={`${formatNumber(selectedData?.stall_length)} M`}
-              />
-              <FieldCard
+              />}
+              {selectedData?.administration_type === "kip" && <FieldCard
                 icon="solar:ruler-pen-bold-duotone"
                 label="Lebar"
                 value={`${formatNumber(selectedData?.stall_width)} M`}
-              />
-              <FieldCard
+              />}
+              {selectedData?.administration_type === "kip" && <FieldCard
                 icon="solar:widget-5-bold-duotone"
                 label="Luas"
                 value={`${formatNumber(selectedData?.stall_area)} m²`}
-              />
-              <FieldCard
+              />}
+              {selectedData?.administration_type === "kip" && <FieldCard
                 icon="solar:tag-price-bold-duotone"
                 label="Harga / m²"
                 value={formatRupiah(selectedData?.price_per_m2)}
-              />
+              />}
               <FieldCard
                 icon="solar:calendar-bold-duotone"
                 label="Masa Izin"
@@ -383,11 +385,11 @@ export default function LandPermitApplicantDetailModal({
             description="Rincian sewa tahunan, durasi izin, dan total pembayaran lahan."
           >
             <Grid container spacing={1.25}>
-              <FieldCard
+              {selectedData?.administration_type === "kip" && <FieldCard
                 icon="solar:bill-list-bold-duotone"
                 label="Biaya Administrasi SIL"
                 value={formatRupiah(selectedData?.annual_land_rent)}
-              />
+              />}
               <FieldCard
                 icon="solar:tag-price-bold-duotone"
                 label={

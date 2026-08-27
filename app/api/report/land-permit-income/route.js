@@ -129,6 +129,8 @@ export async function GET(request) {
           application.application_type,
           application.document_number AS application_document_number,
           application.commodity_type,
+          application.administration_type,
+          application.admin_fee,
           application.start_date,
           application.end_date,
           application.lease_duration_years,
@@ -150,6 +152,7 @@ export async function GET(request) {
           stall.stall_width,
           stall.stall_area,
           stall.price_per_m2,
+          stall.fixed_annual_fee,
           permit_document.document_number AS permit_document_number
         FROM land_permit_payments payment
         JOIN land_permit_payment_approval approval
@@ -211,10 +214,13 @@ export async function GET(request) {
       stall_id: row.stall_id,
       stall_number: row.stall_number || "-",
       commodity_type: row.commodity_type || "-",
+      administration_type: row.administration_type || "kip",
+      admin_fee: toNumber(row.admin_fee),
       stall_length: toNumber(row.stall_length),
       stall_width: toNumber(row.stall_width),
       stall_area: toNumber(row.stall_area),
       price_per_m2: toNumber(row.price_per_m2),
+      fixed_annual_fee: toNumber(row.fixed_annual_fee),
       annual_land_rent: toNumber(row.annual_land_rent),
       total_payment_land: toNumber(row.total_payment_land),
       total_payment: toNumber(row.total_payment),

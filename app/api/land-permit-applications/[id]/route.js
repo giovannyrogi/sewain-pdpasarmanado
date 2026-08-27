@@ -6,7 +6,7 @@ import {
   jsonResponse,
   parsePositiveInteger,
 } from "@/app/utils/apiValidation";
-import { calculateAnnualLandRent } from "@/app/utils/landPermitCalculations";
+import { calculateLandPermitCost } from "@/app/utils/landPermitCalculations";
 import { validateLandPermitApplicationPayload } from "../validation";
 import {
   getLandPermitNotificationContext,
@@ -45,6 +45,8 @@ const getStallForApplication = async (client, values, applicationId) => {
       lst.stall_width,
       lst.stall_area,
       lst.price_per_m2,
+      lst.administration_type,
+      lst.fixed_annual_fee,
       ls.status AS sector_status
     FROM land_stalls lst
     JOIN land_sectors ls ON ls.id = lst.sector_id
@@ -63,6 +65,9 @@ const getStallForApplication = async (client, values, applicationId) => {
   }
 
   const stall = result.rows[0];
+  if (stall.administration_type !== values.administration_type) {
+    return { error: "Jenis administrasi permohonan tidak sesuai dengan objek yang dipilih." };
+  }
   if (stall.sector_status !== "active") {
     return { error: "Sektor yang dipilih tidak aktif." };
   }
@@ -182,12 +187,15 @@ export async function PUT(request, { params }) {
       return failResponse(stallError, 400);
     }
 
-    const annualLandRent = calculateAnnualLandRent(stall);
-    const administrationType =
-      values.administration_type === "kip" ? 100000 : 150000; // Set admin fee based on administration type
-    const admin_fee = administrationType * values.lease_duration_years; // dynamic admin fee based on administration type
-    const totalPaymentLand = annualLandRent * values.lease_duration_years;
-    const totalPayment = totalPaymentLand + admin_fee; // total payment including admin fee
+    const cost = calculateLandPermitCost(
+      stall,
+      values.lease_duration_years,
+      values.administration_type,
+    );
+    const annualLandRent = cost.annualLandRent;
+    const admin_fee = cost.adminFee;
+    const totalPaymentLand = cost.totalPaymentLand;
+    const totalPayment = cost.totalPayment;
     const wasRejected = existing.rows[0].approval_status === "rejected";
 
     let resumeStep = Number(existing.rows[0].current_step) || 1;

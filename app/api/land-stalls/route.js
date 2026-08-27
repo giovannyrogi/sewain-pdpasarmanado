@@ -21,6 +21,8 @@ const mapLandStallRow = (row) => ({
   stall_width: row.stall_width,
   stall_area: row.stall_area,
   price_per_m2: row.price_per_m2,
+  administration_type: row.administration_type,
+  fixed_annual_fee: row.fixed_annual_fee,
   status: row.status,
   notes: row.notes,
   updated_at: row.updated_at
@@ -84,9 +86,9 @@ export async function POST(req) {
       `
       INSERT INTO land_stalls (
         location_id, sector_id, stall_number, stall_length, stall_width,
-        price_per_m2, status, notes
+        price_per_m2, administration_type, fixed_annual_fee, status, notes
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
       RETURNING *
       `,
       [
@@ -96,6 +98,8 @@ export async function POST(req) {
         values.stall_length,
         values.stall_width,
         values.price_per_m2,
+        values.administration_type,
+        values.fixed_annual_fee,
         values.status,
         values.notes,
       ],
@@ -164,6 +168,8 @@ export async function GET(request) {
         lst.stall_width,
         lst.stall_area,
         lst.price_per_m2,
+        lst.administration_type,
+        lst.fixed_annual_fee,
         lst.status,
         lst.notes,
         lst.created_at,

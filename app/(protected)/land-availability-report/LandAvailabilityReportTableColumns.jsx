@@ -37,7 +37,8 @@ export const STATUS_META = {
 export const LAND_AVAILABILITY_EXPORT_COLUMNS = [
   { header: "Lokasi", key: "location_name", width: 26, pdfWidth: 24 },
   { header: "Sektor", key: "sector_name", width: 22, pdfWidth: 22 },
-  { header: "Lahan", key: "stall_number", width: 18, pdfWidth: 18 },
+  { header: "Jenis", key: "administration_type", width: 12, pdfWidth: 12 },
+  { header: "Lahan / Area", key: "stall_number", width: 18, pdfWidth: 18 },
   { header: "Status", key: "status_label", width: 18, pdfWidth: 17 },
   { header: "Dipakai Oleh", key: "used_by", width: 28, pdfWidth: 27 },
   { header: "Nomor Dokumen", key: "document_number", width: 26, pdfWidth: 27 },
@@ -47,8 +48,8 @@ export const LAND_AVAILABILITY_EXPORT_COLUMNS = [
   { header: "Lebar", key: "stall_width", width: 14, pdfWidth: 11 },
   { header: "Luas", key: "stall_area", width: 14, pdfWidth: 12 },
   {
-    header: "Harga per m²",
-    key: "price_per_m2",
+    header: "Tarif",
+    key: "display_price",
     width: 18,
     type: "currency",
     pdfWidth: 22,
@@ -89,6 +90,8 @@ export const filterLandAvailabilityRows = (rows = [], searchText = "") => {
       row.stall_width,
       row.stall_area,
       row.price_per_m2,
+      row.fixed_annual_fee,
+      row.administration_type,
     ].some((value) => normalizeText(value).includes(keyword)),
   );
 };
@@ -112,7 +115,9 @@ export const buildLandAvailabilityExportRows = (rows = []) =>
   rows.map((row) => ({
     location_name: row.location_name || "-",
     sector_name: row.sector_name || "-",
-    stall_number: row.stall_number ? `Lahan ${row.stall_number}` : "-",
+    administration_type: (row.administration_type || "kip").toUpperCase(),
+    stall_number: row.stall_number
+      ? `${row.administration_type === "kkip" ? "Area" : "Lahan"} ${row.stall_number}` : "-",
     status_label: getStatusLabel(row.status),
     used_by: row.used_by || "-",
     document_number: row.used_by ? getDocumentNumberLabel(row) : "-",
@@ -121,7 +126,7 @@ export const buildLandAvailabilityExportRows = (rows = []) =>
     stall_length: formatNumber(row.stall_length),
     stall_width: formatNumber(row.stall_width),
     stall_area: `${formatNumber(row.stall_area)} m²`,
-    price_per_m2: Number(row.price_per_m2 || 0),
+    display_price: Number(row.administration_type === "kkip" ? row.fixed_annual_fee : row.price_per_m2 || 0),
     notes: row.notes || "-",
   }));
 
@@ -161,7 +166,7 @@ export const createLandAvailabilityReportColumns = ({ theme, onOpenNotes }) => [
             color={theme.palette.primary.main}
           />
           <CompactInfoChip
-            label={`Lahan ${record.stall_number || "-"}`}
+            label={`${record.administration_type === "kkip" ? "Area" : "Lahan"} ${record.stall_number || "-"}`}
             color={theme.palette.info.main}
           />
         </Stack>
@@ -176,10 +181,12 @@ export const createLandAvailabilityReportColumns = ({ theme, onOpenNotes }) => [
     render: (_, record) => (
       <Stack spacing={0.35}>
         <Typography sx={{ fontWeight: 700, fontSize: 12.5 }}>
-          {formatNumber(record.stall_length)} m x {formatNumber(record.stall_width)} m
+          {record.administration_type === "kkip"
+            ? "Tanpa ukuran lapak"
+            : `${formatNumber(record.stall_length)} m x ${formatNumber(record.stall_width)} m`}
         </Typography>
         <Typography sx={{ color: theme.ui.mutedText, fontWeight: 600, fontSize: 11.5 }}>
-          Luas {formatNumber(record.stall_area)} m²
+          {record.administration_type === "kkip" ? "Area KKIP" : `Luas ${formatNumber(record.stall_area)} m²`}
         </Typography>
       </Stack>
     ),
@@ -193,10 +200,10 @@ export const createLandAvailabilityReportColumns = ({ theme, onOpenNotes }) => [
     render: (_, record) => (
       <Stack spacing={0.35} alignItems="flex-end">
         <Typography sx={{ fontWeight: 700, fontSize: 12.5 }}>
-          {formatRupiah(record.price_per_m2)}
+          {formatRupiah(record.administration_type === "kkip" ? record.fixed_annual_fee : record.price_per_m2)}
         </Typography>
         <Typography sx={{ color: theme.ui.mutedText, fontWeight: 600, fontSize: 11.5 }}>
-          Harga per m²
+          {record.administration_type === "kkip" ? "Tarif tetap per tahun" : "Harga per m²"}
         </Typography>
       </Stack>
     ),

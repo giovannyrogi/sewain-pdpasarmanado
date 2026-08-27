@@ -114,7 +114,7 @@ const MENU_CONFIG = [
         showIcon: true,
       },
       {
-        label: "Lahan",
+        label: "Lahan & Area KKIP",
         value: "land-stalls",
         path: "/land-stalls",
         icon: <Icon icon="solar:shop-bold-duotone" fontSize="20px" />,

@@ -119,6 +119,7 @@ const mapRow = (row) => ({
   stall_width: row.stall_width,
   stall_area: row.stall_area,
   price_per_m2: row.price_per_m2,
+  fixed_annual_fee: row.fixed_annual_fee,
   payment_id: row.payment_id,
   payment_date: row.payment_date
     ? moment(row.payment_date).format("YYYY-MM-DD")
@@ -189,6 +190,7 @@ const BASE_SELECT = `
     stall.stall_width,
     stall.stall_area,
     stall.price_per_m2,
+    stall.fixed_annual_fee,
     payment.id AS payment_id,
     payment.payment_date,
     payment_approval.approved_at AS payment_approved_at,

@@ -74,6 +74,25 @@ export const getLandPermitApplicationColumns = ({
     ),
   },
   {
+    title: "Jenis Administrasi",
+    dataIndex: "administration_type",
+    width: 190,
+    filters: [
+      { text: "KIP", value: "kip" },
+      { text: "KKIP", value: "kkip" },
+    ],
+    onFilter: createOnFilter("administration_type"),
+    render: (value) => {
+      const type = value === "kkip" ? "kkip" : "kip";
+      return (
+        <CompactInfoChip
+          label={type.toUpperCase()}
+          color={theme.palette.primary.main}
+        />
+      );
+    },
+  },
+  {
     title: "Lokasi, Sektor & Lahan",
     dataIndex: "location_name",
     width: 350,
@@ -104,7 +123,8 @@ export const getLandPermitApplicationColumns = ({
               lineHeight: "23px",
             }}
           >
-            Lahan {record.stall_number || "-"}
+            {record.administration_type === "kkip" ? "Area KKIP" : "Lahan"}{" "}
+            {record.stall_number || "-"}
           </Typography>
         </Stack>
       </Stack>

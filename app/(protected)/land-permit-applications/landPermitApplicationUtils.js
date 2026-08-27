@@ -1,5 +1,6 @@
 import moment from "moment";
 import formatRupiah from "@/app/components/formatrupiah/page";
+import { calculateLandPermitCost as calculateCost } from "@/app/utils/landPermitCalculations";
 
 export const APPLICATION_TYPE_LABEL = {
   baru: "Permohonan Baru",
@@ -16,22 +17,12 @@ export const formatDateDisplay = (value) =>
   value && moment(value).isValid() ? moment(value).format("DD MMMM YYYY") : "-";
 
 export const calculateLandPermitCost = (stall, durationYears = 1, administrationType) => {
-  const length = Number(stall?.stall_length || 0);
-  const width = Number(stall?.stall_width || 0);
-  const area = Number(stall?.stall_area || length * width || 0);
-  const price = Number(stall?.price_per_m2 || 0);
-  const duration = Number(durationYears) > 0 ? Number(durationYears) : 1;
-  const annualRent = area * price;
-  const adminFee = administrationType === "kip" ? 100000 * duration : 150000 * duration;
-  const totalPayment = annualRent * duration + adminFee;
+  const cost = calculateCost(stall, durationYears, administrationType);
 
   return {
-    area,
-    annualRent,
-    totalPaymentLand: totalPayment,
-    totalPayment,
-    formattedAnnualRent: formatRupiah(annualRent),
-    formattedTotalPayment: formatRupiah(totalPayment),
+    ...cost,
+    formattedAnnualRent: formatRupiah(cost.annualLandRent),
+    formattedTotalPayment: formatRupiah(cost.totalPayment),
   };
 };
 

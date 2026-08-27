@@ -28,9 +28,11 @@ const emptyForm = {
   location_id: "",
   sector_id: "",
   stall_number: "",
+  administration_type: "kip",
   stall_length: "",
   stall_width: "",
   price_per_m2: "",
+  fixed_annual_fee: "",
   status: "available",
   notes: "",
 };
@@ -100,9 +102,11 @@ export default function LandStallFormModal({
             location_id: initialData.location_id || "",
             sector_id: initialData.sector_id || "",
             stall_number: initialData.stall_number || "",
+            administration_type: initialData.administration_type || "kip",
             stall_length: formatDimensionValue(initialData.stall_length ?? ""),
             stall_width: formatDimensionValue(initialData.stall_width ?? ""),
             price_per_m2: initialData.price_per_m2 || "",
+            fixed_annual_fee: initialData.fixed_annual_fee || "",
             status: initialData.status || "available",
             notes: initialData.notes || "",
           }
@@ -176,9 +180,11 @@ export default function LandStallFormModal({
       location_id: form.location_id,
       sector_id: form.sector_id,
       stall_number: form.stall_number,
-      stall_length: normalizeDimensionPayload(form.stall_length),
-      stall_width: normalizeDimensionPayload(form.stall_width),
-      price_per_m2: form.price_per_m2,
+      administration_type: form.administration_type,
+      stall_length: form.administration_type === "kip" ? normalizeDimensionPayload(form.stall_length) : 0,
+      stall_width: form.administration_type === "kip" ? normalizeDimensionPayload(form.stall_width) : 0,
+      price_per_m2: form.administration_type === "kip" ? form.price_per_m2 : 0,
+      fixed_annual_fee: form.administration_type === "kkip" ? form.fixed_annual_fee : 0,
       status: form.status,
       notes: ["maintenance", "unavailable"].includes(form.status)
         ? form.notes || null
@@ -190,7 +196,7 @@ export default function LandStallFormModal({
     <CrudFormModal
       open={open}
       title={mode === "edit" ? "Ubah Lahan" : "Tambah Lahan"}
-      description="Daftarkan lahan berdasarkan lokasi dan sektor, lengkap dengan ukuran serta harga per meter."
+      description="Daftarkan lapak KIP atau area KKIP berdasarkan lokasi dan sektor."
       icon="solar:shop-bold-duotone"
       submitLabel={mode === "edit" ? "Simpan Perubahan" : "Tambah Lahan"}
       loadingLabel={mode === "edit" ? "Menyimpan..." : "Menambahkan..."}
@@ -200,6 +206,21 @@ export default function LandStallFormModal({
       onSubmit={handleSubmit}
     >
       <Grid container spacing={{ xs: 2.8, sm: 2.25 }}>
+        <Grid size={12}>
+          <FormControl fullWidth required>
+            <InputLabel id="land-stall-administration-label">Jenis Administrasi</InputLabel>
+            <Select
+              labelId="land-stall-administration-label"
+              label="Jenis Administrasi"
+              value={form.administration_type}
+              onChange={(event) => updateField("administration_type", event.target.value)}
+              disabled={loading}
+            >
+              <MenuItem value="kip">Kartu Identitas Pedagang (KIP)</MenuItem>
+              <MenuItem value="kkip">Kartu Khusus Identitas Pedagang (KKIP)</MenuItem>
+            </Select>
+          </FormControl>
+        </Grid>
         <Grid size={{ xs: 12, md: 6 }}>
           <Autocomplete
             options={locations}
@@ -237,7 +258,8 @@ export default function LandStallFormModal({
           <TextField
             required
             fullWidth
-            label="Nomor/Nama Lahan"
+            label={form.administration_type === "kkip" ? "Nama Area/Kategori KKIP" : "Nomor/Nama Lahan"}
+            placeholder={form.administration_type === "kkip" ? "Contoh: BM1 Sayur" : undefined}
             value={form.stall_number}
             onChange={(event) => updateField("stall_number", event.target.value)}
             disabled={loading}
@@ -263,7 +285,7 @@ export default function LandStallFormModal({
           </FormControl>
         </Grid>
 
-        <Grid size={{ xs: 12, sm: 6 }}>
+        {form.administration_type === "kip" && <Grid size={{ xs: 12, sm: 6 }}>
           <TextField
             required
             fullWidth
@@ -277,9 +299,9 @@ export default function LandStallFormModal({
               endAdornment: <InputAdornment position="end">m</InputAdornment>,
             }}
           />
-        </Grid>
+        </Grid>}
 
-        <Grid size={{ xs: 12, sm: 6 }}>
+        {form.administration_type === "kip" && <Grid size={{ xs: 12, sm: 6 }}>
           <TextField
             required
             fullWidth
@@ -293,9 +315,9 @@ export default function LandStallFormModal({
               endAdornment: <InputAdornment position="end">m</InputAdornment>,
             }}
           />
-        </Grid>
+        </Grid>}
 
-        <Grid size={{ xs: 12, md: 6 }}>
+        {form.administration_type === "kip" && <Grid size={{ xs: 12, md: 6 }}>
           <TextField
             required
             fullWidth
@@ -303,9 +325,9 @@ export default function LandStallFormModal({
             value={formatDimensionValue(preview.stall_area)}
             disabled
           />
-        </Grid>
+        </Grid>}
 
-        <Grid size={{ xs: 12, md: 6 }}>
+        {form.administration_type === "kip" && <Grid size={{ xs: 12, md: 6 }}>
           <TextField
             required
             fullWidth
@@ -319,7 +341,19 @@ export default function LandStallFormModal({
               startAdornment: <InputAdornment position="start">Rp.</InputAdornment>,
             }}
           />
-        </Grid>
+        </Grid>}
+
+        {form.administration_type === "kkip" && (
+          <Grid size={12}>
+            <TextField
+              required fullWidth label="Tarif Tetap KKIP per Tahun (Rp)"
+              value={form.fixed_annual_fee ? formatRupiah(form.fixed_annual_fee, "hideRp") : ""}
+              onChange={(event) => updateField("fixed_annual_fee", toMoneyDigits(event.target.value))}
+              disabled={loading}
+              InputProps={{ startAdornment: <InputAdornment position="start">Rp.</InputAdornment> }}
+            />
+          </Grid>
+        )}
 
         {["maintenance", "unavailable"].includes(form.status) && (
           <Grid size={12}>
@@ -374,7 +408,7 @@ export default function LandStallFormModal({
               </Box>
               <Box sx={{ minWidth: 0 }}>
                 <Typography sx={{ fontWeight: 850, fontSize: 12.5 }}>
-                  Perhitungan Sewa Lahan
+                  {form.administration_type === "kip" ? "Perhitungan Sewa Lahan" : "Tarif Area KKIP"}
                 </Typography>
                 <Typography
                   sx={{
@@ -383,9 +417,9 @@ export default function LandStallFormModal({
                     fontSize: 12,
                   }}
                 >
-                  {`${formatNumber(preview.stall_area)} m² x ${formatRupiah(
-                    form.price_per_m2,
-                  )} = ${formatRupiah(preview.annualRent)}`}
+                  {form.administration_type === "kip"
+                    ? `${formatNumber(preview.stall_area)} m² x ${formatRupiah(form.price_per_m2)} = ${formatRupiah(preview.annualRent)}`
+                    : `${formatRupiah(form.fixed_annual_fee)} per tahun`}
                 </Typography>
               </Box>
             </Stack>

@@ -79,10 +79,11 @@ export default function LandPermitApplicationFormModal({
         return (
           Number(item.location_id) === Number(form.location_id) &&
           Number(item.sector_id) === Number(form.sector_id) &&
+          (item.administration_type || "kip") === form.administration_type &&
           (item.status === "available" || sameCurrent || selectedFromRenewal)
         );
       }),
-    [form.location_id, form.sector_id, initialData?.stall_id, mode, stalls],
+    [form.administration_type, form.location_id, form.sector_id, initialData?.stall_id, mode, stalls],
   );
   const renewalOptions = useMemo(
     () =>
@@ -148,7 +149,16 @@ export default function LandPermitApplicationFormModal({
   }, [initialData, mode, open]);
 
   const updateField = (key, value) => {
-    setForm((current) => ({ ...current, [key]: value }));
+    setForm((current) => {
+      if (key === "administration_type") {
+        return { ...current, administration_type: value, location_id: "", sector_id: "", stall_id: "" };
+      }
+      if (key === "location_id") {
+        return { ...current, location_id: value, sector_id: "", stall_id: "" };
+      }
+      if (key === "sector_id") return { ...current, sector_id: value, stall_id: "" };
+      return { ...current, [key]: value };
+    });
   };
 
   const applyRenewalData = (application) => {
@@ -162,6 +172,7 @@ export default function LandPermitApplicationFormModal({
       renewal_of: application.land_permit_application_id,
       tenant_identity_id: application.tenant_identity_id,
       commodity_type: application.commodity_type || "",
+      administration_type: application.administration_type || "kip",
       location_id: application.location_id,
       sector_id: application.sector_id,
       stall_id: application.stall_id,
@@ -401,14 +412,18 @@ export default function LandPermitApplicationFormModal({
           <Grid size={12}>
             <Autocomplete
               options={availableStalls}
-              getOptionLabel={(option) =>
-                `Lahan ${option.stall_number || "-"} | ${formatRupiah(option.price_per_m2)}/m²`
-              }
+              getOptionLabel={(option) => option.administration_type === "kkip"
+                ? `${option.stall_number || "-"} | ${formatRupiah(option.fixed_annual_fee)}/tahun`
+                : `Lahan ${option.stall_number || "-"} | ${formatRupiah(option.price_per_m2)}/m²`}
               value={selectedStall || null}
               onChange={(_, value) => updateField("stall_id", value?.id || "")}
               disabled={loading || !form.sector_id}
               renderInput={(params) => (
-                <TextField {...params} label="Pilih Lahan *" required />
+                <TextField
+                  {...params}
+                  label={form.administration_type === "kkip" ? "Pilih Area KKIP *" : "Pilih Lahan *"}
+                  required
+                />
               )}
             />
           </Grid>

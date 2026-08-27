@@ -53,6 +53,7 @@ export default function LandPermitCostDetailModal({
 }) {
   const theme = useTheme();
   const cost = calculateLandPermitCost(stall, durationYears, administrationType);
+  const isKkip = administrationType === "kkip";
 
   return (
     <AppModal
@@ -74,7 +75,7 @@ export default function LandPermitCostDetailModal({
               }}
             >
               <Typography sx={{ fontWeight: 700, fontSize: 15, mb: 1 }}>
-                Detail Lokasi & Lahan
+                {isKkip ? "Detail Lokasi & Area KKIP" : "Detail Lokasi & Lahan"}
               </Typography>
               <DetailRow
                 label="Lokasi"
@@ -85,19 +86,19 @@ export default function LandPermitCostDetailModal({
                 value={sector?.sector_name || stall?.sector_name}
               />
               <DetailRow
-                label="Lahan"
+                label={isKkip ? "Area KKIP" : "Lahan"}
                 value={
-                  stall?.stall_number ? `Lahan ${stall.stall_number}` : "-"
+                  stall?.stall_number ? `${isKkip ? "" : "Lahan "}${stall.stall_number}` : "-"
                 }
               />
-              <DetailRow
+              {!isKkip && <DetailRow
                 label="Ukuran"
                 value={`${formatNumber(stall?.stall_length)} m x ${formatNumber(stall?.stall_width)} m`}
-              />
-              <DetailRow
+              />}
+              {!isKkip && <DetailRow
                 label="Luas"
                 value={`${formatNumber(cost.area, { useGrouping: true })} m²`}
-              />
+              />}
             </Box>
           </Grid>
           <Grid size={{ xs: 12, md: 6 }}>
@@ -111,25 +112,21 @@ export default function LandPermitCostDetailModal({
               <Typography sx={{ fontWeight: 700, fontSize: 15, mb: 1 }}>
                 Detail Biaya
               </Typography>
-              <DetailRow
+              {!isKkip && <DetailRow
                 label="Harga per m²"
                 value={formatRupiah(stall?.price_per_m2)}
-              />
-              <DetailRow
+              />}
+              {!isKkip && <DetailRow
                 label="Biaya Administrasi SIL"
-                value={formatRupiah(cost.annualRent)}
-              />
+                value={formatRupiah(cost.annualLandRent)}
+              />}
               <DetailRow
                 label={
                   administrationType === "kip"
                     ? "Biaya Administrasi KIP"
                     : "Biaya Administrasi KKIP"
                 }
-                value={
-                  administrationType === "kip"
-                    ? formatRupiah(100000 * durationYears)
-                    : formatRupiah(150000 * durationYears)
-                }
+                value={formatRupiah(cost.adminFee)}
               />
               <DetailRow
                 label="Durasi Sewa"

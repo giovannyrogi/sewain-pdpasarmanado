@@ -24,3 +24,31 @@ export const calculateAnnualLandRent = ({
 } = {}) =>
   calculateLandStallArea(stall_length, stall_width) *
   parseLandPermitNumber(price_per_m2);
+
+export const KIP_ANNUAL_ADMIN_FEE = 100000;
+
+export const calculateLandPermitCost = (
+  stall = {},
+  durationYears = 1,
+  administrationType = stall?.administration_type || "kip",
+) => {
+  const duration = Math.max(1, parseLandPermitNumber(durationYears));
+  const type = administrationType === "kkip" ? "kkip" : "kip";
+  const area = type === "kip"
+    ? calculateLandStallArea(stall.stall_length, stall.stall_width)
+    : 0;
+  const annualLandRent = type === "kip" ? calculateAnnualLandRent(stall) : 0;
+  const adminFee = type === "kip"
+    ? KIP_ANNUAL_ADMIN_FEE * duration
+    : parseLandPermitNumber(stall.fixed_annual_fee) * duration;
+  const totalPaymentLand = annualLandRent * duration;
+
+  return {
+    administrationType: type,
+    area,
+    annualLandRent,
+    adminFee,
+    totalPaymentLand,
+    totalPayment: totalPaymentLand + adminFee,
+  };
+};

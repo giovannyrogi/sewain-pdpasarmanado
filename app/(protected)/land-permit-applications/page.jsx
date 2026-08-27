@@ -37,7 +37,7 @@ import SuratPernyataanIzinLahan from "@/app/components/documents/SuratPernyataan
 
 const PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
 const ACTION_COLUMN_WIDTH = 190;
-const TABLE_SCROLL_WIDTH = 1540;
+const TABLE_SCROLL_WIDTH = 1730;
 
 const getInitialSnackbar = () => ({
   open: false,
