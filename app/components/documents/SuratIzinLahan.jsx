@@ -328,6 +328,7 @@ const SuratIzinLahan = forwardRef(({ data }, ref) => {
         >
           <QRCode
             value={verificationUrl}
+            type="svg"
             size={138}
             bordered={false}
             errorLevel="M"
@@ -368,6 +369,7 @@ const SuratIzinLahan = forwardRef(({ data }, ref) => {
             <Box
               component="img"
               src={photoUrl}
+              data-print-optional="Pas foto tidak tersedia"
               alt="Pas foto pedagang"
               sx={{ width: "100%", height: "100%", objectFit: "cover" }}
             />

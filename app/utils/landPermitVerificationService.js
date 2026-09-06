@@ -3,6 +3,7 @@ import fs from "fs";
 import path from "path";
 import moment from "moment";
 import pool from "@/lib/dbConfig";
+import { administrationLabel, formatTraderAddress, formatLandDocumentNumber } from "@/app/utils/traderCardPrinting";
 
 const TOKEN_PATTERN = /^[A-Za-z0-9_-]{32,120}$/;
 const UPLOAD_DIR = path.join(process.cwd(), "uploads");
@@ -155,6 +156,7 @@ export const getLandPermitVerificationByToken = async (token) => {
       document.created_at AS document_created_at,
       document.printed_at,
       app.commodity_type,
+      app.administration_type,
       app.start_date,
       app.end_date,
       app.approval_status AS application_approval_status,
@@ -163,6 +165,8 @@ export const getLandPermitVerificationByToken = async (token) => {
       app.permit_status,
       identity.full_name AS tenant_name,
       identity.nik AS tenant_nik,
+      identity.street_address, identity.rt, identity.rw, identity.kelurahan,
+      identity.district, identity.city, identity.province,
       identity.profile_photo_file_path,
       identity.land_permit_status,
       identity.land_permit_status_notes,
@@ -182,9 +186,9 @@ export const getLandPermitVerificationByToken = async (token) => {
       ON identity.id = app.tenant_identity_id
     JOIN locations location
       ON location.id = app.location_id
-    JOIN land_sectors sector
+    LEFT JOIN land_sectors sector
       ON sector.id = app.sector_id
-    JOIN land_stalls stall
+    LEFT JOIN land_stalls stall
       ON stall.id = app.stall_id
     LEFT JOIN LATERAL (
       SELECT
@@ -214,20 +218,25 @@ export const getLandPermitVerificationByToken = async (token) => {
 
   return {
     status,
-    document_number: row.document_number || "-",
+    document_number: formatLandDocumentNumber(row.document_number, row.administration_type),
     document_status: row.document_status || "-",
     document_created_at: toIsoDate(row.document_created_at),
     printed_at: toIsoDate(row.printed_at),
     tenant_name: row.tenant_name || "-",
+    administration_type: row.administration_type || "",
+    // Address is explicitly part of the public verification details requested by the owner.
+    tenant_address: formatTraderAddress(row) || "-",
     tenant_nik_masked: maskNik(row.tenant_nik),
     profile_photo_data_url: profilePhotoDataUrl,
     location_name: row.location_name || "-",
     sector_name: row.sector_name || "-",
     sector_code: row.sector_code || "",
-    stall_number: row.stall_number || "-",
-    stall_length: row.stall_length,
-    stall_width: row.stall_width,
-    stall_area: row.stall_area,
+    ...(administrationLabel(row.administration_type) === "KIP" ? {
+      stall_number: row.stall_number || "-",
+      stall_length: row.stall_length,
+      stall_width: row.stall_width,
+      stall_area: row.stall_area,
+    } : {}),
     commodity_type: row.commodity_type || "-",
     start_date: toIsoDate(row.start_date),
     end_date: toIsoDate(row.end_date),

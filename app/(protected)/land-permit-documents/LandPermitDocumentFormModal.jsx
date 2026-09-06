@@ -18,6 +18,7 @@ import { alpha } from "@mui/material/styles";
 import { Icon } from "@iconify/react";
 import AppModal from "@/app/components/modals/AppModal";
 import CompactInfoChip from "@/app/components/chips/CompactInfoChip";
+import { landDocumentPrefix } from "@/app/utils/traderCardPrinting";
 import LandPermitApplicantDetailModal from "@/app/(protected)/land-permit-applications/LandPermitApplicantDetailModal";
 
 const getDocumentNumberOnly = (value) =>
@@ -44,8 +45,8 @@ export default function LandPermitDocumentFormModal({
   );
 
   const documentSuffix = useMemo(() => {
-    if (!selectedApplication) return "/PM/SIL-.../.../....";
-    return `/PM/SIL-${selectedApplication.location_code || "-"}/${
+    if (!selectedApplication) return "/PM/...-.../.../....";
+    return `/PM/${landDocumentPrefix(selectedApplication.administration_type)}-${selectedApplication.location_code || "-"}/${
       selectedApplication.fully_paid_month_roman || "-"
     }/${selectedApplication.fully_paid_year || "-"}`;
   }, [selectedApplication]);
@@ -72,7 +73,7 @@ export default function LandPermitDocumentFormModal({
         open={open}
         onClose={() => !loading && onClose?.()}
         title="Buat Dokumen Izin Lahan"
-        titleDescription="Pilih pemohon yang pembayarannya sudah disetujui, lalu isi nomor Surat Izin Lahan."
+        titleDescription="Pilih pemohon yang pembayarannya sudah disetujui, lalu isi nomor dokumen."
         icon="solar:document-add-bold-duotone"
         width={760}
         contentSx={{ p: 0 }}

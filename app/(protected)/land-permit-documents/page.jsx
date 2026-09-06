@@ -27,7 +27,8 @@ import TableActionButton from "@/app/components/data-table/TableActionButton";
 import CrudConfirmModal from "@/app/components/crud/CrudConfirmModal";
 import LoadingBackdrop from "@/app/components/loading/Backdrop";
 import Notification from "@/app/components/Notification";
-import AppModal from "@/app/components/modals/AppModal";
+import TraderCardPrintGuide from "./TraderCardPrintGuide";
+import { administrationLabel, validatePrinterProfile, waitForTraderPrintAssets } from "@/app/utils/traderCardPrinting";
 import LandPermitApplicantDetailModal from "@/app/(protected)/land-permit-applications/LandPermitApplicantDetailModal";
 import TraderCardPrintBundle from "@/app/components/documents/TraderCardPrintBundle";
 import { useUser } from "@/app/utils/useUser";
@@ -41,36 +42,7 @@ import {
   filterLandPermitDocuments,
 } from "./LandPermitDocumentTableColumns";
 
-/**
- * react-to-print bisa membuka dialog sebelum gambar/QR selesai dirender.
- * Fungsi ini menunggu semua gambar dan font di area print agar logo, pas foto,
- * dan QR code tampil stabil di print preview, termasuk saat batch print.
- */
-const waitForPrintAssets = async (rootElement) => {
-  if (!rootElement || typeof window === "undefined") return;
 
-  const images = Array.from(rootElement.querySelectorAll("img"));
-  await Promise.all(
-    images.map((image) => {
-      if (image.complete && image.naturalWidth > 0) return Promise.resolve();
-      if (typeof image.decode === "function") {
-        return image.decode().catch(() => undefined);
-      }
-
-      return new Promise((resolve) => {
-        image.onload = resolve;
-        image.onerror = resolve;
-      });
-    }),
-  );
-
-  if (typeof document !== "undefined" && document.fonts?.ready) {
-    await document.fonts.ready.catch(() => undefined);
-  }
-
-  await new Promise((resolve) => requestAnimationFrame(resolve));
-  await new Promise((resolve) => requestAnimationFrame(resolve));
-};
 
 const PRINT_MODE_CONFIG = {
   permit: {
@@ -224,6 +196,10 @@ export default function LandPermitDocumentsPage() {
 
   const handlePrint = useReactToPrint({
     contentRef: printRef,
+    onPrintError: () => {
+      notify("Dialog cetak gagal dibuka. Silakan coba lagi.", "error");
+      setPrintPayload(null);
+    },
     documentTitle:
       printPayload?.documents?.length === 1
         ? `${printPayload.title || "Dokumen Izin Lahan"} - ${
@@ -231,7 +207,7 @@ export default function LandPermitDocumentsPage() {
           }`
         : printPayload?.title || "Dokumen Izin Lahan dan Kartu Pedagang",
     pageStyle: `
-      @page { size: A4 portrait; margin: 0; }
+@page { size: ${printPayload?.media === "pvc" ? `${printPayload.printerProfile.pageWidth}mm ${printPayload.printerProfile.pageHeight}mm` : "A4 portrait"}; margin: 0; }
       @media print {
         html, body {
           width: 100% !important;
@@ -259,6 +235,7 @@ export default function LandPermitDocumentsPage() {
     onAfterPrint: () => {
       const shouldMarkPermitPrinted = Boolean(printPayload?.includePermit);
       const documentIds = (printPayload?.documents || [])
+        .filter((item) => administrationLabel(item.administration_type) === "KIP")
         .map((item) => item.document_id)
         .filter(Boolean);
 
@@ -278,8 +255,15 @@ export default function LandPermitDocumentsPage() {
 
     let cancelled = false;
     const timeout = setTimeout(async () => {
-      await waitForPrintAssets(printRef.current);
-      if (!cancelled && printRef.current) handlePrint();
+      try {
+        await waitForTraderPrintAssets(printRef.current);
+        if (!cancelled && printRef.current) handlePrint();
+      } catch (error) {
+        if (!cancelled) {
+          notify(error.message || "Gagal menyiapkan cetakan.", "error");
+          setPrintPayload(null);
+        }
+      }
     }, 250);
     return () => {
       cancelled = true;
@@ -300,20 +284,33 @@ export default function LandPermitDocumentsPage() {
     return documents.filter((item) => selectedKeySet.has(item.document_id));
   }, [documents, selectedDocumentKeys]);
 
-  const handlePrintDocuments = useCallback((items, mode) => {
+  const handlePrintDocuments = useCallback((items, mode, options = {}) => {
+    const config = PRINT_MODE_CONFIG[mode];
+    if (!config) return;
     const documentsToPrint = Array.isArray(items) ? items.filter(Boolean) : [];
-    if (!documentsToPrint.length) {
+    if (!documentsToPrint.length && !options.calibration) {
       notify("Pilih minimal satu dokumen untuk dicetak.", "warning");
       return;
     }
-
-    const config = PRINT_MODE_CONFIG[mode] || PRINT_MODE_CONFIG.permit;
+    if (options.media === "pvc") {
+      const error = validatePrinterProfile(options.printerProfile, !options.calibration);
+      if (error || !["card-front", "card-back"].includes(mode) || documentsToPrint.length > 2) {
+        notify(error || "PVC hanya mencetak satu sisi untuk maksimal dua kartu.", "warning");
+        return;
+      }
+    }
+    if (config.cardSide && !options.calibration) {
+      const invalid = documentsToPrint.find(item => !/^[A-Za-z0-9_-]{32,120}$/.test(item.qr_token || ""));
+      if (invalid) {
+        notify(`QR tidak valid untuk ${invalid.tenant_name || invalid.document_number}. Periksa dokumen sebelum mencetak.`, "error");
+        return;
+      }
+    }
     setPrintPayload({
-      mode,
-      documents: documentsToPrint,
-      includePermit: config.includePermit,
-      cardSide: config.cardSide,
-      title: config.title,
+      ...options, mode, documents: documentsToPrint,
+      includePermit: config.includePermit, cardSide: config.cardSide,
+      title: options.calibration ? "Kalibrasi PVC Epson L8050" : config.title,
+      media: options.media || "a4",
     });
   }, []);
 
@@ -324,7 +321,7 @@ export default function LandPermitDocumentsPage() {
       return;
     }
 
-    setManualPrintDocuments(documentsToPrint);
+    setManualPrintDocuments(documentsToPrint.map(item => ({ ...item })));
     setManualPrintOpen(true);
   }, []);
   const columns = useMemo(
@@ -347,69 +344,7 @@ export default function LandPermitDocumentsPage() {
   );
 
   const canCreate = [1, 9].includes(Number(user?.role_id));
-  const administrationType = manualPrintDocuments?.[0]?.administration_type;
 
-  const printSteps =
-    administrationType === "kip"
-      ? [
-          {
-            step: "1",
-            title: "Cetak Surat Izin Lahan",
-            description: "Mencetak seluruh surat izin lahan terlebih dahulu.",
-            label: "Cetak Surat Izin",
-            mode: "permit",
-          },
-          {
-            step: "2",
-            title: "Cetak Kartu Bagian Depan",
-            description:
-              "Mencetak sisi depan kartu pedagang pada lembar kartu.",
-            label: "Cetak Kartu Depan",
-            mode: "card-front",
-          },
-          {
-            step: "3",
-            title: "Masukkan Ulang Kertas",
-            description:
-              "Ambil kertas kartu depan, balik atau putar sesuai arah printer, lalu masukkan kembali ke tray.",
-            label: null,
-            mode: null,
-          },
-          {
-            step: "4",
-            title: "Cetak Kartu Bagian Belakang",
-            description:
-              "Mencetak sisi belakang kartu dengan posisi grid yang sama seperti sisi depan.",
-            label: "Cetak Kartu Belakang",
-            mode: "card-back",
-          },
-        ]
-      : [
-          {
-            step: "1",
-            title: "Cetak Kartu Bagian Depan",
-            description:
-              "Mencetak sisi depan kartu pedagang pada lembar kartu.",
-            label: "Cetak Kartu Depan",
-            mode: "card-front",
-          },
-          {
-            step: "2",
-            title: "Masukkan Ulang Kertas",
-            description:
-              "Ambil kertas kartu depan, balik atau putar sesuai arah printer, lalu masukkan kembali ke tray.",
-            label: null,
-            mode: null,
-          },
-          {
-            step: "3",
-            title: "Cetak Kartu Bagian Belakang",
-            description:
-              "Mencetak sisi belakang kartu dengan posisi grid yang sama seperti sisi depan.",
-            label: "Cetak Kartu Belakang",
-            mode: "card-back",
-          },
-        ];
 
   return (
     <Box sx={{ width: "100%", minHeight: "100%", p: { xs: 1.25, sm: 2 } }}>
@@ -538,147 +473,13 @@ export default function LandPermitDocumentsPage() {
         onClose={() => !loading && setDeleteOpen(false)}
         onConfirm={handleDelete}
       />
-      <AppModal
+      <TraderCardPrintGuide
         open={manualPrintOpen}
-        title="Panduan Cetak Manual"
-        titleDescription="Cetak surat izin dan kartu pedagang secara bertahap untuk printer tanpa duplex otomatis."
-        icon="solar:printer-2-bold-duotone"
-        width={680}
+        documents={manualPrintDocuments}
+        busy={Boolean(printPayload)}
         onClose={() => setManualPrintOpen(false)}
-      >
-        <Stack spacing={1.5}>
-          <Box
-            sx={{
-              p: { xs: 1.5, sm: 2 },
-              borderRadius: 2,
-              border: `1px solid ${theme.ui?.dashboardCardBorder || theme.palette.divider}`,
-              bgcolor:
-                theme.palette.mode === "dark"
-                  ? "rgba(255,152,0,0.08)"
-                  : "rgba(255,152,0,0.06)",
-            }}
-          >
-            <Typography sx={{ fontWeight: 700, fontSize: 14 }}>
-              {manualPrintDocuments.length} dokumen dipilih
-            </Typography>
-            <Typography
-              sx={{
-                mt: 0.5,
-                color: theme.ui?.mutedText || "text.secondary",
-                fontSize: 12.5,
-                fontWeight: 600,
-                lineHeight: 1.6,
-              }}
-            >
-              Ikuti urutan ini agar bagian depan dan belakang kartu pedagang
-              bisa tercetak pada kertas yang sama.
-            </Typography>
-          </Box>
-
-          {printSteps.map((item) => (
-            <Box
-              key={item.step}
-              sx={{
-                p: { xs: 1.5, sm: 1.75 },
-                borderRadius: 2,
-                border: `1px solid ${theme.ui?.dashboardCardBorder || theme.palette.divider}`,
-                display: "grid",
-                gridTemplateColumns: {
-                  xs: "1fr",
-                  sm: "42px minmax(0, 1fr) auto",
-                },
-                gap: { xs: 1.25, sm: 1.5 },
-                alignItems: "center",
-              }}
-            >
-              <Box
-                sx={{
-                  width: 42,
-                  height: 42,
-                  borderRadius: 2,
-                  display: "grid",
-                  placeItems: "center",
-                  color: theme.palette.primary.main,
-                  bgcolor:
-                    theme.palette.mode === "dark"
-                      ? "rgba(255,152,0,0.14)"
-                      : "rgba(255,152,0,0.12)",
-                  fontWeight: 700,
-                }}
-              >
-                {item.step}
-              </Box>
-              <Box sx={{ minWidth: 0 }}>
-                <Typography sx={{ fontWeight: 700, fontSize: 14 }}>
-                  {item.title}
-                </Typography>
-                <Typography
-                  sx={{
-                    mt: 0.4,
-                    color: theme.ui?.mutedText || "text.secondary",
-                    fontSize: 12.25,
-                    fontWeight: 600,
-                    lineHeight: 1.55,
-                  }}
-                >
-                  {item.description}
-                </Typography>
-              </Box>
-              {item.mode && (
-                <Button
-                  variant={item.step === "1" ? "contained" : "outlined"}
-                  onClick={() =>
-                    handlePrintDocuments(manualPrintDocuments, item.mode)
-                  }
-                  sx={{
-                    minHeight: 40,
-                    borderRadius: 2,
-                    fontWeight: 700,
-                    textTransform: "none",
-                    width: { xs: "100%", sm: "auto" },
-                    justifySelf: { xs: "stretch", sm: "end" },
-                  }}
-                >
-                  {item.label}
-                </Button>
-              )}
-            </Box>
-          ))}
-
-          <Stack
-            direction={{ xs: "column", sm: "row" }}
-            spacing={1}
-            justifyContent="flex-end"
-            sx={{ pt: 0.5 }}
-          >
-            {/* {administrationType === "kip" && (
-              <Button
-                variant="outlined"
-                color="warning"
-                onClick={() =>
-                  handlePrintDocuments(manualPrintDocuments, "bundle-duplex")
-                }
-              >
-                Cetak Semua Sekaligus
-              </Button>
-            )} */}
-
-            <Button
-              variant="contained"
-              color="inherit"
-              onClick={() => setManualPrintOpen(false)}
-              sx={{
-                minHeight: 42,
-                borderRadius: 2,
-                fontWeight: 700,
-                textTransform: "none",
-              }}
-            >
-              Kembali
-            </Button>
-          </Stack>
-        </Stack>
-      </AppModal>
+        onPrint={handlePrintDocuments}
+      />
       <LoadingBackdrop open={loading} message={loadingMessage} />
       <Notification
         open={snackbar.open}
@@ -706,6 +507,9 @@ export default function LandPermitDocumentsPage() {
             includePermit={printPayload.includePermit}
             includeCards={Boolean(printPayload.cardSide)}
             cardSide={printPayload.cardSide || "both"}
+            media={printPayload.media}
+            printerProfile={printPayload.printerProfile}
+            calibration={printPayload.calibration}
           />
         )}
       </div>

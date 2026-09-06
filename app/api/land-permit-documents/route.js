@@ -2,6 +2,7 @@ import moment from "moment";
 import { randomBytes } from "crypto";
 import pool from "@/lib/dbConfig";
 import { requireRole } from "@/app/utils/auth";
+import { landDocumentPrefix, formatLandDocumentNumber } from "@/app/utils/traderCardPrinting";
 
 const ACCESS_ROLES = [1, 3, 4, 5, 6, 7, 9];
 const WRITE_ROLES = [1, 9];
@@ -66,7 +67,7 @@ const backfillMissingQrTokens = async () => {
 
 const mapRow = (row) => ({
   document_id: row.document_id,
-  document_number: row.document_number,
+  document_number: row.document_number ? formatLandDocumentNumber(row.document_number, row.administration_type) : row.document_number,
   document_status: row.document_status,
   document_created_at: row.document_created_at,
   qr_token: row.qr_token,
@@ -306,6 +307,7 @@ export async function POST(request) {
       `
       SELECT
         app.id,
+        app.administration_type,
         location.location_code,
         COALESCE(
           approval.approved_at::date,
@@ -401,7 +403,7 @@ export async function POST(request) {
     }
 
     const fullDocumentNumber =
-      `${documentNumberOnly}/PM/SIL-${locationCode}/${monthRoman}/${year}`;
+      `${documentNumberOnly}/PM/${landDocumentPrefix(application.administration_type)}-${locationCode}/${monthRoman}/${year}`;
     const qrToken = generateQrToken();
 
     const result = await client.query(

@@ -16,6 +16,7 @@ import { Icon } from "@iconify/react";
 import CompactInfoChip from "@/app/components/chips/CompactInfoChip";
 import ImagePreviewModal from "@/app/components/modals/ImagePreviewModal";
 import { formatNumber } from "@/app/utils/formatNumber";
+import { administrationLabel, administrationFullLabel } from "@/app/utils/traderCardPrinting";
 
 const formatDate = (value) =>
   value && moment(value).isValid()
@@ -412,7 +413,9 @@ export default function LandPermitVerificationClient({
                     : data.sector_name
                 }
               />
-              <InfoCard
+              <InfoCard icon="solar:home-bold" label="Alamat" value={data.tenant_address || "-"} />
+              <InfoCard icon="solar:card-2-bold" label="Jenis Administrasi" value={administrationFullLabel(data.administration_type)} />
+              {administrationLabel(data.administration_type) === "KIP" && <><InfoCard
                 icon="solar:widget-5-bold"
                 label="Lahan"
                 value={`Lahan ${data.stall_number}`}
@@ -422,6 +425,7 @@ export default function LandPermitVerificationClient({
                 label="Ukuran"
                 value={dimensions}
               />
+              </>}
               <InfoCard
                 icon="solar:box-bold"
                 label="Jenis Dagangan"
