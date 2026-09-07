@@ -91,6 +91,8 @@ export function TraderCard({ data, side }) {
         borderRadius: "2mm",
         "& *": {
           boxSizing: "border-box",
+          // Keep global typography from changing the physical print layout.
+          fontFamily: "inherit",
         },
       }}
     >
@@ -152,7 +154,7 @@ export function TraderCard({ data, side }) {
               left: "35.5mm",
               top: "12.5mm",
               width: "47.6mm",
-              height: "18.5mm",
+              height: "19mm",
               fontSize: "5.6pt",
               overflowWrap: "anywhere",
             }}

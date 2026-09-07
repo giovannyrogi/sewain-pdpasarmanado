@@ -5,7 +5,7 @@ import { Accordion, AccordionDetails, AccordionSummary, Alert, Box, Button, Chec
 import { Icon } from "@iconify/react";
 import PrinterCalibrationPanel from "./PrinterCalibrationPanel";
 import AppModal from "@/app/components/modals/AppModal";
-import { administrationLabel, formatLandDocumentNumber, chunkCards, emptyPrinterProfile, PRINTER_PROFILE_KEY, validatePrinterProfile } from "@/app/utils/traderCardPrinting";
+import { administrationLabel, formatLandDocumentNumber, chunkCards, defaultPrinterProfile, PRINTER_PROFILE_KEY, validatePrinterProfile } from "@/app/utils/traderCardPrinting";
 export default function TraderCardPrintGuide({
   open,
   documents,
@@ -15,7 +15,7 @@ export default function TraderCardPrintGuide({
 }) {
   const [media, setMedia] = useState("a4");
   const [group, setGroup] = useState(0);
-  const [profile, setProfile] = useState(emptyPrinterProfile);
+  const [profile, setProfile] = useState(defaultPrinterProfile);
   const [calibrating, setCalibrating] = useState(false);
   const [results, setResults] = useState({});
   const [tested, setTested] = useState({});
@@ -29,16 +29,16 @@ export default function TraderCardPrintGuide({
     setCalibrating(false);
     try {
       const saved = JSON.parse(localStorage.getItem(PRINTER_PROFILE_KEY) || "null");
-      setProfile(saved && !validatePrinterProfile(saved) ? saved : emptyPrinterProfile());
+      setProfile(saved && !validatePrinterProfile(saved) ? saved : defaultPrinterProfile());
     } catch {
-      setProfile(emptyPrinterProfile());
+      setProfile(defaultPrinterProfile());
     }
   }, [open]);
   const groups = chunkCards(documents, 2);
   const active = groups[group] || [];
   const permits = documents.filter(item => administrationLabel(item.administration_type) === "KIP");
   const profileError = validatePrinterProfile(profile);
-  const productionError = validatePrinterProfile(profile, true);
+  const productionError = validatePrinterProfile(profile);
   const updateProfile = next => {
     const updated = {
       ...next,
@@ -115,11 +115,11 @@ export default function TraderCardPrintGuide({
         </Accordion>
       </> : <>
         <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" alignItems={{ xs: "stretch", sm: "center" }} gap={1.5}>
-          <Chip size="small" variant="outlined" color={productionError ? "warning" : "success"} label={productionError ? "Kalibrasi belum lengkap" : "Kalibrasi terkonfirmasi"} sx={{ alignSelf: "flex-start", fontWeight: 600 }} />
+          <Chip size="small" variant="outlined" color={productionError ? "warning" : profile.confirmedFront && profile.confirmedBack ? "success" : "info"} label={productionError ? "Profil cetak perlu diperiksa" : profile.confirmedFront && profile.confirmedBack ? "Kalibrasi terkonfirmasi" : "Profil awal siap dicetak"} sx={{ alignSelf: "flex-start", fontWeight: 600 }} />
           <Button variant="outlined" disabled={busy} startIcon={<Icon icon={calibrating ? "solar:arrow-left-linear" : "solar:settings-linear"} />} onClick={() => setCalibrating(value => !value)}>{calibrating ? "Tutup Kalibrasi" : "Kalibrasi Cetak"}</Button>
         </Stack>
         {calibrating ? <PrinterCalibrationPanel profile={profile} busy={busy} error={profileError} tested={tested} storageError={storageError} onChange={updateProfile} onPrint={printSide} onConfirm={confirmCalibration} /> : <>
-          {productionError && <Alert severity="warning">Sebelum cetak PVC pertama kali, buka Kalibrasi Cetak dan konfirmasi hasil uji kedua sisi. A4 tetap bisa digunakan tanpa kalibrasi.</Alert>}
+          {productionError ? <Alert severity="warning">Profil cetak tidak valid. Buka Kalibrasi Cetak untuk memperbaiki ukuran halaman atau posisi slot.</Alert> : <Alert severity={profile.confirmedFront && profile.confirmedBack ? "success" : "info"}>{profile.confirmedFront && profile.confirmedBack ? "Kalibrasi kedua sisi sudah dikonfirmasi." : "Profil awal dua kartu sudah aktif. Anda dapat langsung mencetak; gunakan Kalibrasi Cetak hanya bila posisi atau arah hasil fisik belum tepat."}</Alert>}
           <Typography fontWeight={700}>Kelompok {group + 1} dari {groups.length}</Typography>
           <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2 }}>
             {[0, 1].map(slot => <Box key={slot} sx={{ p: 1.5, bgcolor: "action.hover", borderLeft: 3, borderColor: active[slot] ? "primary.main" : "divider", minWidth: 0 }}>

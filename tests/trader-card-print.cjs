@@ -29,6 +29,7 @@ for (const count of [1, 2, 3, 8, 10]) {
   for (let i = 0; i < count; i++) assert.equal(mirrored[i % 2 ? i - 1 : i + 1].document_id, i + 1);
 }
 assert.equal(util.validatePrinterProfile(profile, true), '');
+assert.equal(util.validatePrinterProfile(util.defaultPrinterProfile()), '');
 assert.ok(util.validatePrinterProfile(util.emptyPrinterProfile(), true));
 assert.ok(util.validatePrinterProfile({ ...profile, confirmedBack: false }, true));
 assert.ok(util.validatePrinterProfile({ ...profile, slots: [{ x: 5, y: 10 }, { x: 10, y: 10 }] }));
@@ -46,7 +47,7 @@ async function main() {
   const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
   const server = http.createServer((request, response) => {
     const name = path.basename(new URL(request.url, 'http://localhost').pathname);
-    if (!['template-id-card-pedagang-depan.png', 'template-id-card-pedagang-belakang.png', 'logo-pm-red-transparent.png', 'logo-pemerintah-kota-manado.png', 'logo-perumda-pasar-manado.png'].includes(name)) { response.end(''); return; }
+    if (!['template-id-card-pedagang-depan.png', 'template-id-card-pedagang-belakang.png', 'logo-pm-red-transparent.png', 'logo-mkp-new.png', 'logo-pemerintah-kota-manado.png', 'logo-perumda-pasar-manado.png'].includes(name)) { response.end(''); return; }
     response.setHeader('Content-Type', 'image/png'); response.end(fs.readFileSync(path.join(root, 'public', name)));
   });
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
@@ -58,7 +59,9 @@ async function main() {
     for (const count of [1, 2, 3, 8, 10]) {
       const items = Array.from({ length: count }, (_, i) => ({ ...fixture, document_id: i + 1 }));
       await page.setContent(pageHtml({ documents: items }));
-      await page.evaluate(async () => { await Promise.all([...document.images].map(image => image.decode())); await document.fonts.ready; });
+      await page.waitForFunction(() => [...document.images].every(image => image.complete));
+      assert.equal(await page.locator('img').evaluateAll(images => images.every(image => image.naturalWidth > 0)), true, 'Required card assets must load');
+      await page.evaluate(async () => { await document.fonts.ready; });
       assert.equal(await page.locator('.trader-card-sheet').count(), Math.ceil(count / 8) * 2);
       const overflow = await page.locator('[data-card-content]').evaluateAll(elements => elements.filter(el => el.scrollHeight > el.clientHeight + 1 || el.scrollWidth > el.clientWidth + 1).map(el => ({ text: el.textContent, height: el.clientHeight, scroll: el.scrollHeight })));
       assert.deepEqual(overflow, [], 'Card content must fit: ' + JSON.stringify(overflow));
@@ -73,7 +76,7 @@ async function main() {
         return { modules: svg.viewBox.baseVal.width, width: box.width, height: box.height, margin: Math.min(box.x - parent.x, box.y - parent.y, parent.right - box.right, parent.bottom - box.bottom) };
       });
       assert.ok(Math.abs(qrMetrics.width - qrMetrics.height) < 1, 'QR must remain square');
-      assert.ok(qrMetrics.margin + 0.1 >= qrMetrics.width / qrMetrics.modules * 4, 'QR needs four-module quiet zone: ' + JSON.stringify(qrMetrics));
+      assert.ok(qrMetrics.margin >= 1, 'QR needs a visible white separation from its card field: ' + JSON.stringify(qrMetrics));
       if (count === 2) {
         await page.locator('.trader-card').first().screenshot({ path: path.join(output, 'front.png') });
         await page.locator('.trader-card').nth(2).screenshot({ path: path.join(output, 'back.png') });

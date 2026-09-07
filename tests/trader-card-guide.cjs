@@ -30,7 +30,8 @@ async function main() {
       await page.setViewportSize({ width, height: 950 });
       await page.goto(`http://127.0.0.1:${server.address().port}/?theme=${theme}`);
       await page.getByRole('button', { name: 'PVC Epson L8050', exact: true }).click();
-      assert.ok(await page.getByRole('button', { name: 'Cetak Depan', exact: true }).isDisabled());
+      assert.equal(await page.getByRole('button', { name: 'Cetak Depan', exact: true }).isDisabled(), false);
+      assert.ok(await page.getByText('Profil awal dua kartu sudah aktif.', { exact: false }).isVisible());
       await page.getByRole('button', { name: 'Kalibrasi Cetak', exact: true }).click();
       await page.getByRole('button', { name: 'Bantuan kalibrasi', exact: true }).click();
       assert.ok(await page.getByText('Apa itu kalibrasi? Apakah wajib?', { exact: true }).isVisible());
@@ -74,7 +75,7 @@ async function main() {
       await page.getByRole('spinbutton', { name: 'Offset depan X (mm)', exact: true }).fill('1');
       await page.screenshot({ path: path.join(output, `calibration-${theme}-${width}.png`) });
       await page.getByRole('button', { name: 'Tutup Kalibrasi', exact: true }).click();
-      assert.ok(await page.getByRole('button', { name: 'Cetak Depan', exact: true }).isDisabled());
+      assert.equal(await page.getByRole('button', { name: 'Cetak Depan', exact: true }).isDisabled(), false);
       await page.evaluate(() => localStorage.clear());
     }
     const broken = await page.evaluate(async () => {

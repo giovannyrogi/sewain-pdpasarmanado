@@ -1,6 +1,22 @@
 export const CARD_WIDTH_MM = 85.6;
 export const CARD_HEIGHT_MM = 54;
 export const PRINTER_PROFILE_KEY = "sewain.trader-card.l8050.v1";
+// A logical two-card canvas based on the standard 85.6 x 54 mm PVC card.
+// It allows a first print without entering calibration values; physical tray
+// corrections remain optional and are saved separately in the same profile.
+export const defaultPrinterProfile = () => ({
+  version: 1,
+  pageWidth: 181.2,
+  pageHeight: CARD_HEIGHT_MM,
+  slots: [{ x: 0, y: 0 }, { x: 95.6, y: 0 }],
+  frontX: 0,
+  frontY: 0,
+  backX: 0,
+  backY: 0,
+  backRotation: 0,
+  confirmedFront: false,
+  confirmedBack: false
+});
 export const emptyPrinterProfile = () => ({
   version: 1,
   pageWidth: "",
@@ -130,7 +146,7 @@ export async function waitForTraderPrintAssets(root) {
   // Bound the adjustment to preserve legibility; never truncate identity data.
   for (const element of root.querySelectorAll("[data-card-fit]")) {
     element.style.fontSize = "5.6pt";
-    for (let size = 55; size >= 50 && overflows(element); size--) {
+    for (let size = 55; size >= 48 && overflows(element); size--) {
       element.style.fontSize = `${size / 10}pt`;
     }
   }
