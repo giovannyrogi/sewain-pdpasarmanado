@@ -1,46 +1,72 @@
-export const CARD_WIDTH_MM = 85.6;
+// Ukuran fisik tray PVC Epson: 86 x 54 mm (landscape).
+export const CARD_WIDTH_MM = 86;
 export const CARD_HEIGHT_MM = 54;
-export const PRINTER_PROFILE_KEY = "sewain.trader-card.l8050.v1";
-// A logical two-card canvas based on the standard 85.6 x 54 mm PVC card.
-// It allows a first print without entering calibration values; physical tray
-// corrections remain optional and are saved separately in the same profile.
-export const defaultPrinterProfile = () => ({
-  version: 1,
-  pageWidth: 181.2,
-  pageHeight: CARD_HEIGHT_MM,
-  slots: [{ x: 0, y: 0 }, { x: 95.6, y: 0 }],
-  frontX: 0,
-  frontY: 0,
-  backX: 0,
-  backY: 0,
-  backRotation: 0,
-  confirmedFront: false,
-  confirmedBack: false
-});
-export const emptyPrinterProfile = () => ({
-  version: 1,
-  pageWidth: "",
-  pageHeight: "",
-  slots: [{
-    x: "",
-    y: ""
-  }, {
-    x: "",
-    y: ""
-  }],
-  frontX: 0,
-  frontY: 0,
-  backX: 0,
-  backY: 0,
-  backRotation: 0,
-  confirmedFront: false,
-  confirmedBack: false
-});
-export const chunkCards = (items, size) => Array.from({
-  length: Math.ceil(items.length / size)
-}, (_, i) => items.slice(i * size, (i + 1) * size));
-export function mirrorCardSlots(items) {
-  return items.flatMap((item, index) => index % 2 === 0 ? [items[index + 1] || null, item] : []);
+export const TRADER_CARD_EXPORT_DPI = 600;
+
+const PNG_SIGNATURE = [137, 80, 78, 71, 13, 10, 26, 10];
+const pngTextDecoder = new TextDecoder();
+const pngTextEncoder = new TextEncoder();
+
+const crc32 = (bytes) => {
+  let crc = 0xffffffff;
+  for (const byte of bytes) {
+    crc ^= byte;
+    for (let bit = 0; bit < 8; bit += 1) {
+      crc = (crc >>> 1) ^ (0xedb88320 & -(crc & 1));
+    }
+  }
+  return (crc ^ 0xffffffff) >>> 0;
+};
+
+const createPngChunk = (type, data) => {
+  const typeBytes = pngTextEncoder.encode(type);
+  // PNG: 4 length bytes + 4 type bytes + data + 4 CRC bytes.
+  const chunk = new Uint8Array(12 + data.length);
+  const view = new DataView(chunk.buffer);
+  view.setUint32(0, data.length);
+  chunk.set(typeBytes, 4);
+  chunk.set(data, 8);
+  const crcOffset = 8 + data.length;
+  view.setUint32(crcOffset, crc32(chunk.subarray(4, crcOffset)));
+  return chunk;
+};
+
+/** Adds PNG pHYs metadata so photo software reads the exported card as 600 DPI. */
+export async function applyPngDensity(blob, dpi = TRADER_CARD_EXPORT_DPI) {
+  const source = new Uint8Array(await blob.arrayBuffer());
+  if (!PNG_SIGNATURE.every((value, index) => source[index] === value)) return blob;
+
+  const pixelsPerMeter = Math.round(dpi / 0.0254);
+  const physData = new Uint8Array(9);
+  const physView = new DataView(physData.buffer);
+  physView.setUint32(0, pixelsPerMeter);
+  physView.setUint32(4, pixelsPerMeter);
+  physData[8] = 1;
+  const physChunk = createPngChunk("pHYs", physData);
+
+  const parts = [source.slice(0, 8)];
+  let offset = 8;
+  let inserted = false;
+  while (offset + 12 <= source.length) {
+    const length = new DataView(source.buffer, source.byteOffset + offset, 4).getUint32(0);
+    const end = offset + 12 + length;
+    if (end > source.length) return blob;
+    const type = pngTextDecoder.decode(source.slice(offset + 4, offset + 8));
+    if (type === "pHYs") {
+      if (!inserted) {
+        parts.push(physChunk);
+        inserted = true;
+      }
+    } else {
+      parts.push(source.slice(offset, end));
+      if (type === "IHDR" && !inserted) {
+        parts.push(physChunk);
+        inserted = true;
+      }
+    }
+    offset = end;
+  }
+  return new Blob(parts, { type: "image/png" });
 }
 export const administrationLabel = value => {
   const normalized = String(value || "").toLowerCase().replace(/\s/g, "");
@@ -81,31 +107,6 @@ async function loadPrintImage(image) {
     return;
   }
   throw new Error(`Gambar gagal dimuat: ${image.alt || "template kartu"}.`);
-}
-export function validatePrinterProfile(profile, requireConfirmation = false) {
-  if (!profile || profile.version !== 1 || !Array.isArray(profile.slots) || profile.slots.length !== 2) return "Profil printer belum tersedia.";
-  const keys = ["pageWidth", "pageHeight", "frontX", "frontY", "backX", "backY"];
-  if (keys.some(key => profile[key] === "" || !Number.isFinite(Number(profile[key]))) || ![0, 180].includes(Number(profile.backRotation))) return "Lengkapi ukuran halaman dan offset printer.";
-  const width = Number(profile.pageWidth),
-    height = Number(profile.pageHeight);
-  if (width <= 0 || height <= 0 || width > 1000 || height > 1000) return "Ukuran halaman driver tidak valid.";
-  for (const side of ["front", "back"]) {
-    const rectangles = [];
-    for (const slot of profile.slots) {
-      if ([slot.x, slot.y].some(value => value === "" || !Number.isFinite(Number(value)))) return "Lengkapi koordinat kedua slot sesuai tray.";
-      const x = Number(slot.x) + Number(profile[`${side}X`]);
-      const y = Number(slot.y) + Number(profile[`${side}Y`]);
-      if (x < 0 || y < 0 || x + CARD_WIDTH_MM > width || y + CARD_HEIGHT_MM > height) return "Posisi kartu melewati ukuran halaman driver.";
-      rectangles.push({
-        x,
-        y
-      });
-    }
-    const [a, b] = rectangles;
-    if (Math.abs(a.x - b.x) < CARD_WIDTH_MM && Math.abs(a.y - b.y) < CARD_HEIGHT_MM) return "Posisi kedua slot saling bertumpuk.";
-  }
-  if (requireConfirmation && !(profile.confirmedFront === true && profile.confirmedBack === true)) return "Konfirmasi hasil kalibrasi depan dan belakang terlebih dahulu.";
-  return "";
 }
 export async function waitForTraderPrintAssets(root) {
   if (!root) throw new Error("Area cetak belum siap.");

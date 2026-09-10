@@ -187,9 +187,9 @@ export const createLandPermitDocumentColumns = ({
           onClick={() => onDetail(record)}
         />
         <TableActionButton
-          title="Panduan cetak manual"
+          title="Unduh kartu pedagang"
           color="warning"
-          icon="solar:printer-2-bold-duotone"
+          icon="solar:download-minimalistic-bold-duotone"
           onClick={() => onPrintGuide(record)}
         />
         {canDelete && (

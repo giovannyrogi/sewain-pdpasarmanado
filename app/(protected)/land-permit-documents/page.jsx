@@ -18,6 +18,10 @@ import {
 } from "@mui/material";
 import { Icon } from "@iconify/react";
 import axios from "axios";
+import JSZip from "jszip";
+import { saveAs } from "file-saver";
+import { toBlob } from "html-to-image";
+import moment from "moment";
 import { useReactToPrint } from "react-to-print";
 import PageHeader from "@/app/components/page-header/PageHeader";
 import SummaryStatCard from "@/app/components/stats/SummaryStatCard";
@@ -28,9 +32,15 @@ import CrudConfirmModal from "@/app/components/crud/CrudConfirmModal";
 import LoadingBackdrop from "@/app/components/loading/Backdrop";
 import Notification from "@/app/components/Notification";
 import TraderCardPrintGuide from "./TraderCardPrintGuide";
-import { administrationLabel, validatePrinterProfile, waitForTraderPrintAssets } from "@/app/utils/traderCardPrinting";
+import {
+  administrationLabel,
+  applyPngDensity,
+  TRADER_CARD_EXPORT_DPI,
+  waitForTraderPrintAssets,
+} from "@/app/utils/traderCardPrinting";
 import LandPermitApplicantDetailModal from "@/app/(protected)/land-permit-applications/LandPermitApplicantDetailModal";
 import TraderCardPrintBundle from "@/app/components/documents/TraderCardPrintBundle";
+import TraderCardDownloadAssets from "@/app/components/documents/TraderCardDownloadAssets";
 import { useUser } from "@/app/utils/useUser";
 import LandPermitDocumentFormModal from "./LandPermitDocumentFormModal";
 import {
@@ -42,41 +52,24 @@ import {
   filterLandPermitDocuments,
 } from "./LandPermitDocumentTableColumns";
 
+const sanitizeFilename = (value) =>
+  String(value || "kartu-pedagang")
+    .replace(/[^A-Za-z0-9._-]+/g, "-")
+    .replace(/^-+|-+$/g, "") || "kartu-pedagang";
 
-
-const PRINT_MODE_CONFIG = {
-  permit: {
-    includePermit: true,
-    cardSide: null,
-    title: "Surat Izin Lahan",
-  },
-  "card-front": {
-    includePermit: false,
-    cardSide: "front",
-    title: "Kartu Pedagang Bagian Depan",
-  },
-  "card-back": {
-    includePermit: false,
-    cardSide: "back",
-    title: "Kartu Pedagang Bagian Belakang",
-  },
-  "card-both": {
-    includePermit: false,
-    cardSide: "both",
-    title: "Kartu Pedagang Lengkap",
-  },
-  "bundle-duplex": {
-    includePermit: true,
-    cardSide: "both",
-    title: "Surat Izin Lahan dan Kartu Pedagang",
-  },
-};
+const getCardFilename = (document, side) =>
+  `${sanitizeFilename(document.document_number || document.tenant_name)}-${
+    sanitizeFilename(document.document_id || "kartu")
+  }-${
+    side === "front" ? "depan" : "belakang"
+  }.png`;
 
 export default function LandPermitDocumentsPage() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const { user } = useUser();
   const printRef = useRef(null);
+  const cardAssetsRef = useRef(null);
   const [documents, setDocuments] = useState([]);
   const [eligibleApplications, setEligibleApplications] = useState([]);
   const [searchText, setSearchText] = useState("");
@@ -90,6 +83,7 @@ export default function LandPermitDocumentsPage() {
   const [printPayload, setPrintPayload] = useState(null);
   const [manualPrintOpen, setManualPrintOpen] = useState(false);
   const [manualPrintDocuments, setManualPrintDocuments] = useState([]);
+  const [downloadBusy, setDownloadBusy] = useState(false);
   const [selectedDocumentKeys, setSelectedDocumentKeys] = useState([]);
   const [snackbar, setSnackbar] = useState({
     open: false,
@@ -207,7 +201,7 @@ export default function LandPermitDocumentsPage() {
           }`
         : printPayload?.title || "Dokumen Izin Lahan dan Kartu Pedagang",
     pageStyle: `
-@page { size: ${printPayload?.media === "pvc" ? `${printPayload.printerProfile.pageWidth}mm ${printPayload.printerProfile.pageHeight}mm` : "A4 portrait"}; margin: 0; }
+@page { size: A4 portrait; margin: 0; }
       @media print {
         html, body {
           width: 100% !important;
@@ -233,13 +227,12 @@ export default function LandPermitDocumentsPage() {
       }
     `,
     onAfterPrint: () => {
-      const shouldMarkPermitPrinted = Boolean(printPayload?.includePermit);
       const documentIds = (printPayload?.documents || [])
         .filter((item) => administrationLabel(item.administration_type) === "KIP")
         .map((item) => item.document_id)
         .filter(Boolean);
 
-      if (shouldMarkPermitPrinted && documentIds.length) {
+      if (documentIds.length) {
         Promise.allSettled(
           documentIds.map((id) =>
             axios.put(`/api/land-permit-documents/${id}`),
@@ -284,34 +277,86 @@ export default function LandPermitDocumentsPage() {
     return documents.filter((item) => selectedKeySet.has(item.document_id));
   }, [documents, selectedDocumentKeys]);
 
-  const handlePrintDocuments = useCallback((items, mode, options = {}) => {
-    const config = PRINT_MODE_CONFIG[mode];
-    if (!config) return;
-    const documentsToPrint = Array.isArray(items) ? items.filter(Boolean) : [];
-    if (!documentsToPrint.length && !options.calibration) {
-      notify("Pilih minimal satu dokumen untuk dicetak.", "warning");
+  const handlePrintPermits = useCallback((items) => {
+    const permits = (Array.isArray(items) ? items : []).filter(
+      (item) => administrationLabel(item.administration_type) === "KIP",
+    );
+    if (!permits.length) {
+      notify("Tidak ada surat izin KIP untuk dicetak.", "warning");
       return;
     }
-    if (options.media === "pvc") {
-      const error = validatePrinterProfile(options.printerProfile, !options.calibration);
-      if (error || !["card-front", "card-back"].includes(mode) || documentsToPrint.length > 2) {
-        notify(error || "PVC hanya mencetak satu sisi untuk maksimal dua kartu.", "warning");
-        return;
-      }
-    }
-    if (config.cardSide && !options.calibration) {
-      const invalid = documentsToPrint.find(item => !/^[A-Za-z0-9_-]{32,120}$/.test(item.qr_token || ""));
-      if (invalid) {
-        notify(`QR tidak valid untuk ${invalid.tenant_name || invalid.document_number}. Periksa dokumen sebelum mencetak.`, "error");
-        return;
-      }
-    }
     setPrintPayload({
-      ...options, mode, documents: documentsToPrint,
-      includePermit: config.includePermit, cardSide: config.cardSide,
-      title: options.calibration ? "Kalibrasi PVC Epson L8050" : config.title,
-      media: options.media || "a4",
+      documents: permits,
+      includePermit: true,
+      cardSide: null,
+      title: "Surat Izin Lahan",
     });
+  }, []);
+
+  const handleDownloadCards = useCallback(async (items, requestedSide) => {
+    const selected = (Array.isArray(items) ? items : []).filter(Boolean);
+    if (!selected.length) {
+      notify("Pilih minimal satu kartu untuk diunduh.", "warning");
+      return;
+    }
+
+    const invalid = selected.find(
+      (item) => !/^[A-Za-z0-9_-]{32,120}$/.test(item.qr_token || ""),
+    );
+    if (invalid) {
+      notify(
+        `QR tidak valid untuk ${invalid.tenant_name || invalid.document_number}. Periksa dokumen sebelum mengunduh.`,
+        "error",
+      );
+      return;
+    }
+
+    const root = cardAssetsRef.current;
+    if (!root) {
+      notify("Aset kartu belum siap. Silakan coba kembali.", "error");
+      return;
+    }
+
+    const sides = requestedSide === "both" ? ["front", "back"] : [requestedSide];
+    const useZip = selected.length > 1 || sides.length > 1;
+    setDownloadBusy(true);
+    setLoadingMessage("Menyiapkan gambar kartu pedagang...");
+    try {
+      await waitForTraderPrintAssets(root);
+      const zip = useZip ? new JSZip() : null;
+
+      for (const item of selected) {
+        for (const side of sides) {
+          const node = root.querySelector(
+            `[data-card-download-id="${item.document_id}"][data-card-download-side="${side}"]`,
+          );
+          if (!node) throw new Error("Desain kartu tidak ditemukan.");
+          const imageBlob = await toBlob(node, {
+            backgroundColor: "#ffffff",
+            cacheBust: true,
+            pixelRatio: TRADER_CARD_EXPORT_DPI / 96,
+          });
+          const blob = imageBlob && await applyPngDensity(imageBlob);
+          if (!blob) throw new Error("Gagal membuat gambar kartu.");
+          const filename = getCardFilename(item, side);
+          if (zip) zip.file(`${side === "front" ? "depan" : "belakang"}/${filename}`, blob);
+          else saveAs(blob, filename);
+        }
+      }
+
+      if (zip) {
+        const archive = await zip.generateAsync({ type: "blob" });
+        saveAs(archive, `kartu-pedagang-${moment().format("YYYYMMDD-HHmmss")}.zip`);
+      }
+      notify(
+        useZip ? "Paket kartu berhasil diunduh." : "Gambar kartu berhasil diunduh.",
+      );
+    } catch (error) {
+      notify(error.message || "Gagal membuat gambar kartu.", "error");
+    } finally {
+      setDownloadBusy(false);
+      setLoadingMessage("Loading...");
+    }
   }, []);
 
   const openManualPrintGuide = useCallback((items) => {
@@ -410,9 +455,9 @@ export default function LandPermitDocumentsPage() {
           onSearchChange={setSearchText}
           headerAction={
             <TableActionButton
-              label={`Cetak Terpilih (${selectedDocuments.length})`}
-              title="Buka panduan cetak manual"
-              icon="solar:printer-2-bold-duotone"
+              label={`Unduh Terpilih (${selectedDocuments.length})`}
+              title="Buka panduan unduh kartu"
+              icon="solar:download-minimalistic-bold-duotone"
               color="warning"
               disabled={!selectedDocuments.length}
               keepLabelOnMobile
@@ -476,9 +521,10 @@ export default function LandPermitDocumentsPage() {
       <TraderCardPrintGuide
         open={manualPrintOpen}
         documents={manualPrintDocuments}
-        busy={Boolean(printPayload)}
+        busy={Boolean(printPayload) || downloadBusy}
         onClose={() => setManualPrintOpen(false)}
-        onPrint={handlePrintDocuments}
+        onDownload={handleDownloadCards}
+        onPrintPermits={handlePrintPermits}
       />
       <LoadingBackdrop open={loading} message={loadingMessage} />
       <Notification
@@ -505,14 +551,13 @@ export default function LandPermitDocumentsPage() {
             ref={printRef}
             documents={printPayload.documents}
             includePermit={printPayload.includePermit}
-            includeCards={Boolean(printPayload.cardSide)}
-            cardSide={printPayload.cardSide || "both"}
-            media={printPayload.media}
-            printerProfile={printPayload.printerProfile}
-            calibration={printPayload.calibration}
           />
         )}
       </div>
+      <TraderCardDownloadAssets
+        ref={cardAssetsRef}
+        documents={manualPrintDocuments}
+      />
     </Box>
   );
 }

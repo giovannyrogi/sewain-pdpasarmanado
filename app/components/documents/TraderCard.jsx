@@ -14,21 +14,12 @@ import {
 export const buildCardNumber = formatLandDocumentNumber;
 // Semua ukuran dalam mm. Ubah di sini untuk menyesuaikan QR dengan bingkai template.
 export const TRADER_CARD_QR_LAYOUT_FRONT_CARD = {
-  left: 32.9,
-  top: 35.5,
-  size: 11.2,
-  quietZone: 0.4,
-  logoSize: 2.8,
-  borderRadius: 8,
-};
-export const TRADER_CARD_QR_LAYOUT_BACK_CARD = {
-  left: 45,
-  top: 41,
-  size: 11.2,
-  quietZone: 0.4,
-  logoSizeWidth: 4.5,
-  logoSizeHeight: 1.4,
-  borderRadius: 8,
+  // Keep the logo small and a white quiet zone around the high-correction QR.
+  left: 33.5,
+  top: 33.4,
+  size: 17.5,
+  quietZone: 1.3,
+  logoSize: 2.6,
 };
 const date = (value) =>
   value && moment(value).isValid()
@@ -41,10 +32,15 @@ const text = {
   lineHeight: 1.16,
   letterSpacing: 0,
 };
-const rules = [
+const kipRules = [
   "Dilarang berjualan di lokasi yang tidak diijinkan.",
   "Dilarang menambah/merubah tempat berjualan tanpa seijin Perumda Pasar Manado.",
   "Kartu Pedagang ini hanya untuk tanda pengenal pedagang dan tidak berlaku sebagai penggunaan lahan tempat usaha.",
+];
+const kkipRules = [
+  "Dilarang berjualan di lokasi yang tidak diijinkan",
+  "Dilarang melakukan transaksi jual beli ecer",
+  "Kartu Khusus Identitas Pedagang ini hanya untuk Pedagang Bongkar Muat",
 ];
 const verificationUrl = (token) => {
   const base =
@@ -56,6 +52,7 @@ export function TraderCard({ data, side }) {
   const identity = data.tenant_name || data.document_number || "Tanpa nama";
   const stall = String(data.stall_number || "").trim();
   const isKip = administrationLabel(data.administration_type) === "KIP";
+  const rules = isKip ? kipRules : kkipRules;
   const location = [
     data.location_name,
     data.sector_name,
@@ -98,14 +95,14 @@ export function TraderCard({ data, side }) {
     >
       <Box
         component="img"
-        src={`/template-id-card-pedagang-${side === "front" ? "depan" : "belakang"}.png`}
+        src={`/template-id-card-pedagang-${side === "front" ? "depan-v2" : "belakang"}.png`}
         alt=""
         sx={{
           position: "absolute",
           inset: 0,
           width: "100%",
           height: "100%",
-          objectFit: "cover",
+          objectFit: side === "front" ? "fill" : "cover",
         }}
         loading="eager"
       />
@@ -116,12 +113,15 @@ export function TraderCard({ data, side }) {
             data-card-area="header"
             sx={{
               position: "absolute",
-              left: "12mm",
-              top: "1.2mm",
-              width: "61.6mm",
-              height: "7.9mm",
+              left: "13mm",
+              top: "1mm",
+              width: "60mm",
+              height: "8.4mm",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
               textAlign: "center",
-              fontSize: "5.4pt",
+              fontSize: "5pt",
               lineHeight: 1.05,
               "&, & *": {
                 color: "#fff !important",
@@ -133,14 +133,14 @@ export function TraderCard({ data, side }) {
           >
             <Box
               sx={{
-                fontSize: "8pt",
-                mb: "0.3mm",
+                fontSize: "7.6pt",
+                mb: "0.2mm",
               }}
             >
               PERUMDA PASAR MANADO
             </Box>
             <Box>
-              {administrationFullLabel(data.administration_type) === "KIP"
+              {isKip
                 ? "Kartu Identitas Pedagang(KIP)"
                 : "Kartu Khusus Identitas Pedagang(KKIP)"}
             </Box>
@@ -183,7 +183,11 @@ export function TraderCard({ data, side }) {
               top: `${TRADER_CARD_QR_LAYOUT_FRONT_CARD.top}mm`,
               width: `${TRADER_CARD_QR_LAYOUT_FRONT_CARD.size}mm`,
               height: `${TRADER_CARD_QR_LAYOUT_FRONT_CARD.size}mm`,
-              // bgcolor: "#fff",
+              bgcolor: "#fff",
+              p: "0.2mm",
+              border: "0.3mm solid #123452",
+              borderRadius: "0.9mm",
+              overflow: "hidden",
               "& svg": {
                 display: "block",
                 width: "100% !important",
@@ -201,8 +205,11 @@ export function TraderCard({ data, side }) {
               bgColor="#fff"
               style={{
                 display: "block",
-                width: `${TRADER_CARD_QR_LAYOUT_FRONT_CARD.size}mm`,
-                height: `${TRADER_CARD_QR_LAYOUT_FRONT_CARD.size}mm`,
+                width: "100%",
+                height: "100%",
+                boxSizing: "border-box",
+                // Inner radius follows the frame minus its border and padding.
+                borderRadius: "0.4mm",
                 padding: `${TRADER_CARD_QR_LAYOUT_FRONT_CARD.quietZone}mm`,
               }}
             />
@@ -218,11 +225,10 @@ export function TraderCard({ data, side }) {
                 transform: "translate(-50%, -50%)",
                 width: `${TRADER_CARD_QR_LAYOUT_FRONT_CARD.logoSize}mm`,
                 height: `${TRADER_CARD_QR_LAYOUT_FRONT_CARD.logoSize}mm`,
-                p: "0.15mm",
                 objectFit: "contain",
                 bgcolor: "#fff",
                 borderRadius: "50%",
-                alignSelf: "center",
+                p: "0.3mm",
               }}
             />
           </Box>
@@ -231,9 +237,9 @@ export function TraderCard({ data, side }) {
             data-card-area="tanda tangan"
             sx={{
               position: "absolute",
-              left: "47mm",
-              top: "34.5mm",
-              width: "35mm",
+              left: "52mm",
+              top: "32.5mm",
+              width: "31mm",
               height: "14mm",
               textAlign: "center",
               fontSize: "5.8pt",
@@ -319,105 +325,8 @@ export function TraderCard({ data, side }) {
               </Box>
             ))}
           </Box>
-
-          <Box
-            data-card-qr
-            sx={{
-              position: "absolute",
-              left: `${TRADER_CARD_QR_LAYOUT_BACK_CARD.left}mm`,
-              top: `${TRADER_CARD_QR_LAYOUT_BACK_CARD.top}mm`,
-              width: `${TRADER_CARD_QR_LAYOUT_BACK_CARD.size}mm`,
-              height: `${TRADER_CARD_QR_LAYOUT_BACK_CARD.size}mm`,
-              // bgcolor: "#fff",
-              "& svg": {
-                display: "block",
-                width: "100% !important",
-                height: "100% !important",
-              },
-            }}
-          >
-            <QRCode
-              type="svg"
-              value={verificationUrl(data.qr_token)}
-              errorLevel="H"
-              size={200}
-              bordered={false}
-              // color="#E60909"
-              bgColor="#fff"
-              style={{
-                display: "block",
-                width: `${TRADER_CARD_QR_LAYOUT_BACK_CARD.size}mm`,
-                height: `${TRADER_CARD_QR_LAYOUT_BACK_CARD.size}mm`,
-                padding: `${TRADER_CARD_QR_LAYOUT_BACK_CARD.quietZone}mm`,
-              }}
-            />
-            <Box
-              component="img"
-              src="/logo-mkp-new.png"
-              alt="Logo MKP QR"
-              loading="eager"
-              sx={{
-                position: "absolute",
-                left: "50%",
-                top: "50%",
-                transform: "translate(-50%, -50%)",
-                width: `${TRADER_CARD_QR_LAYOUT_BACK_CARD.logoSizeWidth}mm`,
-                height: `${TRADER_CARD_QR_LAYOUT_BACK_CARD.logoSizeHeight}mm`,
-                p: "0.18mm",
-                objectFit: "contain",
-                bgcolor: "#fff",
-                alignSelf: "center",
-                // borderRadius: "50%",
-              }}
-            />
-          </Box>
         </>
       )}
-    </Box>
-  );
-}
-export function CalibrationCard({ slot, side }) {
-  return (
-    <Box
-      sx={{
-        ...text,
-        width: `${W}mm`,
-        height: `${H}mm`,
-        border: "0.2mm solid #000",
-        boxSizing: "border-box",
-        p: "3mm",
-        fontSize: "10pt",
-        position: "relative",
-      }}
-    >
-      <Box>
-        ATAS - Slot {slot + 1} - {side === "front" ? "DEPAN" : "BELAKANG"}
-      </Box>
-      <Box
-        sx={{
-          mt: "4mm",
-        }}
-      >
-        85,6 x 54 mm
-      </Box>
-      <Box
-        sx={{
-          width: "50mm",
-          borderBottom: "0.3mm solid #000",
-          mt: "8mm",
-        }}
-      >
-        Garis ukur 50 mm
-      </Box>
-      <Box
-        sx={{
-          position: "absolute",
-          bottom: "3mm",
-          left: "3mm",
-        }}
-      >
-        KIRI BAWAH
-      </Box>
     </Box>
   );
 }
