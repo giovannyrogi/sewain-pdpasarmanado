@@ -79,9 +79,9 @@ export const administrationFullLabel = value => ({
   KKIP: "Kartu Khusus Identitas Pedagang",
 })[administrationLabel(value)] || "-";
 
-export const landDocumentPrefix = type => administrationLabel(type) === "KKIP" ? "KTP" : "SIL";
+export const landDocumentPrefix = type => administrationLabel(type) === "KKIP" ? "KKIP" : "SIL";
 export const formatLandDocumentNumber = (number, type) =>
-  String(number || "-").trim().replace(/\/(?:SIL|KTP)-/i, `/${landDocumentPrefix(type)}-`);
+  String(number || "-").trim().replace(/\/(?:SIL|KTP|KIP|KKIP)-/i, `/${landDocumentPrefix(type)}-`);
 
 // Card numbering is a presentation of the same record; keep stored/SIL numbers intact.
 export const formatTraderCardNumber = (number, type) => {

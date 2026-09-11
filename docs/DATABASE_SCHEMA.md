@@ -804,6 +804,14 @@ Stores approval steps for land permit termination.
 
 Stores land permit documents, trader cards, and QR validation tokens.
 
+Numbering used by the document creation form and API:
+
+* KIP applications store `number/PM/SIL-location/month/year` for the land permit;
+  their downloaded trader card displays the same number with the `KIP` prefix.
+* KKIP applications store `number/PM/KKIP-location/month/year`; their card uses `KKIP` too.
+* New records never use the legacy `KTP` prefix. Legacy numbers are normalized when
+  displayed; existing database records and QR tokens are not rewritten automatically.
+
 | Column                       | Type           | Constraint / Default                               | Description                     |
 | ---------------------------- | -------------- | -------------------------------------------------- | ------------------------------- |
 | `id`                         | `SERIAL`       | `PRIMARY KEY`                                      | Document ID                     |
