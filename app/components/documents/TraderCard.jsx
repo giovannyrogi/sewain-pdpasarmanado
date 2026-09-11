@@ -7,11 +7,11 @@ import "moment/locale/id";
 import {
   administrationLabel,
   administrationFullLabel,
-  formatLandDocumentNumber,
+  formatTraderCardNumber,
   CARD_WIDTH_MM as W,
   CARD_HEIGHT_MM as H,
 } from "@/app/utils/traderCardPrinting";
-export const buildCardNumber = formatLandDocumentNumber;
+export const buildCardNumber = formatTraderCardNumber;
 // Semua ukuran dalam mm. Ubah di sini untuk menyesuaikan QR dengan bingkai template.
 export const TRADER_CARD_QR_LAYOUT_FRONT_CARD = {
   // Keep the logo small and a white quiet zone around the high-correction QR.

@@ -1,6 +1,6 @@
 export const LAND_PERMIT_COMMODITY_OPTIONS = [
   "Booth",
-  "Borito",
+  "Barito",
   "Buah",
   "Cabo",
   "Daging",

@@ -83,6 +83,15 @@ export const landDocumentPrefix = type => administrationLabel(type) === "KKIP" ?
 export const formatLandDocumentNumber = (number, type) =>
   String(number || "-").trim().replace(/\/(?:SIL|KTP)-/i, `/${landDocumentPrefix(type)}-`);
 
+// Card numbering is a presentation of the same record; keep stored/SIL numbers intact.
+export const formatTraderCardNumber = (number, type) => {
+  const value = String(number || "-").trim();
+  const prefix = administrationLabel(type);
+  return prefix === "-"
+    ? value
+    : value.replace(/\/(?:SIL|KTP|KIP|KKIP)-/i, `/${prefix}-`);
+};
+
 export const formatTraderAddress = data => [
   data.street_address,
   data.rt || data.rw ? `RT ${data.rt || "-"} / RW ${data.rw || "-"}` : "",

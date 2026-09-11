@@ -35,6 +35,7 @@ import TraderCardPrintGuide from "./TraderCardPrintGuide";
 import {
   administrationLabel,
   applyPngDensity,
+  formatTraderCardNumber,
   TRADER_CARD_EXPORT_DPI,
   waitForTraderPrintAssets,
 } from "@/app/utils/traderCardPrinting";
@@ -58,7 +59,9 @@ const sanitizeFilename = (value) =>
     .replace(/^-+|-+$/g, "") || "kartu-pedagang";
 
 const getCardFilename = (document, side) =>
-  `${sanitizeFilename(document.document_number || document.tenant_name)}-${
+  `${sanitizeFilename(document.document_number
+    ? formatTraderCardNumber(document.document_number, document.administration_type)
+    : document.tenant_name)}-${
     sanitizeFilename(document.document_id || "kartu")
   }-${
     side === "front" ? "depan" : "belakang"
