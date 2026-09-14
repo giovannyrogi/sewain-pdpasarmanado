@@ -29,8 +29,8 @@ function validateChunks(png) {
   const density = chunks.filter(({ type }) => type === "pHYs");
   assert.equal(density.length, 1, "Exactly one density chunk");
   assert.equal(density[0].data.length, 9);
-  assert.equal(density[0].data.readUInt32BE(0), 23622);
-  assert.equal(density[0].data.readUInt32BE(4), 23622);
+  assert.equal(density[0].data.readUInt32BE(0), 11811);
+  assert.equal(density[0].data.readUInt32BE(4), 11811);
   assert.equal(density[0].data[8], 1);
   assert.ok(chunks.findIndex(({ type }) => type === "pHYs") < chunks.findIndex(({ type }) => type === "IDAT"));
 }
@@ -39,15 +39,15 @@ for (const side of ["depan", "belakang"]) {
   test(`${side}: export and repeated DPI update preserve valid, decodable PNG pixels`, async () => {
     const template = side === "depan" ? "depan-v2" : "belakang";
     const original = await sharp(fileURLToPath(new URL(`../public/template-id-card-pedagang-${template}.png`, import.meta.url)))
-      .resize(2031, 1276).png().toBuffer();
+      .resize(1016, 638).png().toBuffer();
     let output = original;
     for (let pass = 0; pass < 2; pass += 1) {
       output = Buffer.from(await (await applyPngDensity(new Blob([output]))).arrayBuffer());
       validateChunks(output);
       const metadata = await sharp(output).metadata();
-      assert.equal(metadata.width, 2031);
-      assert.equal(metadata.height, 1276);
-      assert.equal(metadata.density, 600);
+      assert.equal(metadata.width, 1016);
+      assert.equal(metadata.height, 638);
+      assert.equal(metadata.density, 300);
       assert.deepEqual(await sharp(output).raw().toBuffer(), await sharp(original).raw().toBuffer());
     }
     const zip = new JSZip();

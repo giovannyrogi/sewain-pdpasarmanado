@@ -22,6 +22,8 @@ import JSZip from "jszip";
 import { saveAs } from "file-saver";
 import { toBlob } from "html-to-image";
 import moment from "moment";
+import { flushSync } from "react-dom";
+import { CARD_EXPORT_OPTIONS, cardExportKey, createCardExportCache, yieldCardExport } from "@/app/utils/traderCardExport";
 import { useReactToPrint } from "react-to-print";
 import PageHeader from "@/app/components/page-header/PageHeader";
 import SummaryStatCard from "@/app/components/stats/SummaryStatCard";
@@ -36,7 +38,6 @@ import {
   administrationLabel,
   applyPngDensity,
   formatTraderCardNumber,
-  TRADER_CARD_EXPORT_DPI,
   waitForTraderPrintAssets,
 } from "@/app/utils/traderCardPrinting";
 import LandPermitApplicantDetailModal from "@/app/(protected)/land-permit-applications/LandPermitApplicantDetailModal";
@@ -73,6 +74,11 @@ export default function LandPermitDocumentsPage() {
   const { user } = useUser();
   const printRef = useRef(null);
   const cardAssetsRef = useRef(null);
+  const downloadLock = useRef(false);
+  const cardCache = useRef(null);
+  if (!cardCache.current) cardCache.current = createCardExportCache();
+  const [exportCard, setExportCard] = useState(null);
+  const [downloadMessage, setDownloadMessage] = useState("");
   const [documents, setDocuments] = useState([]);
   const [eligibleApplications, setEligibleApplications] = useState([]);
   const [searchText, setSearchText] = useState("");
@@ -297,6 +303,7 @@ export default function LandPermitDocumentsPage() {
   }, []);
 
   const handleDownloadCards = useCallback(async (items, requestedSide) => {
+    if (downloadLock.current) return;
     const selected = (Array.isArray(items) ? items : []).filter(Boolean);
     if (!selected.length) {
       notify("Pilih minimal satu kartu untuk diunduh.", "warning");
@@ -314,33 +321,36 @@ export default function LandPermitDocumentsPage() {
       return;
     }
 
-    const root = cardAssetsRef.current;
-    if (!root) {
-      notify("Aset kartu belum siap. Silakan coba kembali.", "error");
-      return;
-    }
-
     const sides = requestedSide === "both" ? ["front", "back"] : [requestedSide];
+    if (sides.some(side => !["front", "back"].includes(side))) return;
     const useZip = selected.length > 1 || sides.length > 1;
+    downloadLock.current = true;
     setDownloadBusy(true);
-    setLoadingMessage("Menyiapkan gambar kartu pedagang...");
+    setDownloadMessage("Menyiapkan aset kartu...");
     try {
-      await waitForTraderPrintAssets(root);
+      await yieldCardExport();
       const zip = useZip ? new JSZip() : null;
+      const baseUrl = process.env.NEXT_PUBLIC_APP_BASE_URL?.trim() || window.location.origin;
 
-      for (const item of selected) {
+      for (const [index, item] of selected.entries()) {
         for (const side of sides) {
-          const node = root.querySelector(
-            `[data-card-download-id="${item.document_id}"][data-card-download-side="${side}"]`,
-          );
-          if (!node) throw new Error("Desain kartu tidak ditemukan.");
-          const imageBlob = await toBlob(node, {
-            backgroundColor: "#ffffff",
-            cacheBust: true,
-            pixelRatio: TRADER_CARD_EXPORT_DPI / 96,
-          });
-          const blob = imageBlob && await applyPngDensity(imageBlob);
-          if (!blob) throw new Error("Gagal membuat gambar kartu.");
+          setDownloadMessage(`Membuat kartu ${index + 1} dari ${selected.length} - bagian ${side === "front" ? "depan" : "belakang"}...`);
+          await yieldCardExport();
+          const key = cardExportKey(item, side, baseUrl);
+          let blob = cardCache.current.get(key);
+          if (!blob) {
+            flushSync(() => setExportCard({ item, side }));
+            const root = cardAssetsRef.current;
+            await waitForTraderPrintAssets(root);
+            const node = root.querySelector(
+              `[data-card-download-id="${item.document_id}"][data-card-download-side="${side}"]`,
+            );
+            if (!node) throw new Error("Desain kartu tidak ditemukan.");
+            const imageBlob = await toBlob(node, CARD_EXPORT_OPTIONS);
+            blob = imageBlob && await applyPngDensity(imageBlob);
+            if (!blob) throw new Error("Gagal membuat gambar kartu.");
+            cardCache.current.set(key, blob);
+          }
           const filename = getCardFilename(item, side);
           if (zip) zip.file(`${side === "front" ? "depan" : "belakang"}/${filename}`, blob);
           else saveAs(blob, filename);
@@ -348,7 +358,9 @@ export default function LandPermitDocumentsPage() {
       }
 
       if (zip) {
-        const archive = await zip.generateAsync({ type: "blob" });
+        setDownloadMessage("Menyusun ZIP...");
+        await yieldCardExport();
+        const archive = await zip.generateAsync({ type: "blob", compression: "STORE" });
         saveAs(archive, `kartu-pedagang-${moment().format("YYYYMMDD-HHmmss")}.zip`);
       }
       notify(
@@ -357,8 +369,10 @@ export default function LandPermitDocumentsPage() {
     } catch (error) {
       notify(error.message || "Gagal membuat gambar kartu.", "error");
     } finally {
+      setExportCard(null);
+      downloadLock.current = false;
       setDownloadBusy(false);
-      setLoadingMessage("Loading...");
+      setDownloadMessage("");
     }
   }, []);
 
@@ -525,11 +539,16 @@ export default function LandPermitDocumentsPage() {
         open={manualPrintOpen}
         documents={manualPrintDocuments}
         busy={Boolean(printPayload) || downloadBusy}
-        onClose={() => setManualPrintOpen(false)}
+        onClose={() => {
+          if (downloadLock.current) return;
+          cardCache.current.clear();
+          setExportCard(null);
+          setManualPrintOpen(false);
+        }}
         onDownload={handleDownloadCards}
         onPrintPermits={handlePrintPermits}
       />
-      <LoadingBackdrop open={loading} message={loadingMessage} />
+      <LoadingBackdrop open={loading || downloadBusy} message={downloadBusy ? downloadMessage : loadingMessage} />
       <Notification
         open={snackbar.open}
         message={snackbar.message}
@@ -559,7 +578,8 @@ export default function LandPermitDocumentsPage() {
       </div>
       <TraderCardDownloadAssets
         ref={cardAssetsRef}
-        documents={manualPrintDocuments}
+        documents={exportCard ? [exportCard.item] : []}
+        side={exportCard?.side || "front"}
       />
     </Box>
   );

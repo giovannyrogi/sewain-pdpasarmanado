@@ -28,7 +28,7 @@ export default function TraderCardPrintGuide({
     >
       <Stack spacing={2.25}>
         <Alert severity="info">
-          Sistem menghasilkan PNG landscape 86 × 54 mm pada 600 DPI. Unduh
+          Sistem menghasilkan PNG landscape 86 × 54 mm pada 300 DPI. Unduh
           file lalu cetak melalui Epson Photo+ dengan profil PVC/ID Card,
           orientasi landscape, ukuran asli/100%; sistem tidak lagi mengirim
           kartu ke dialog print browser.

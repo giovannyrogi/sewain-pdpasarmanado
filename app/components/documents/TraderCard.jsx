@@ -8,6 +8,7 @@ import {
   administrationLabel,
   administrationFullLabel,
   formatTraderCardNumber,
+  getTraderCardBirthPlace,
   CARD_WIDTH_MM as W,
   CARD_HEIGHT_MM as H,
 } from "@/app/utils/traderCardPrinting";
@@ -48,7 +49,7 @@ const verificationUrl = (token) => {
     (typeof window !== "undefined" ? window.location.origin : "");
   return `${base.replace(/\/$/, "")}/verify/izin-lahan/${token}`;
 };
-export function TraderCard({ data, side }) {
+export function TraderCard({ data, side, templateSrc }) {
   const identity = data.tenant_name || data.document_number || "Tanpa nama";
   const stall = String(data.stall_number || "").trim();
   const isKip = administrationLabel(data.administration_type) === "KIP";
@@ -69,7 +70,7 @@ export function TraderCard({ data, side }) {
     ["Nama", data.tenant_name],
     [
       "TTL",
-      [data.birth_place, date(data.birth_date)].filter(Boolean).join(", "),
+      [getTraderCardBirthPlace(data.birth_place, data.birth_date), date(data.birth_date)].filter(Boolean).join(", "),
     ],
     ["Lokasi", location],
     ["Jenis Administrasi", administrationFullLabel(data.administration_type)],
@@ -95,7 +96,7 @@ export function TraderCard({ data, side }) {
     >
       <Box
         component="img"
-        src={`/template-id-card-pedagang-${side === "front" ? "depan-v2" : "belakang"}.png`}
+        src={templateSrc || `/template-id-card-pedagang-${side === "front" ? "depan-v2" : "belakang"}.png`}
         alt=""
         sx={{
           position: "absolute",

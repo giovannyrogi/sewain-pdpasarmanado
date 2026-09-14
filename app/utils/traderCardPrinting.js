@@ -1,7 +1,18 @@
 // Ukuran fisik tray PVC Epson: 86 x 54 mm (landscape).
 export const CARD_WIDTH_MM = 86;
 export const CARD_HEIGHT_MM = 54;
-export const TRADER_CARD_EXPORT_DPI = 600;
+export const TRADER_CARD_EXPORT_DPI = 300;
+
+export function getTraderCardBirthPlace(place, birthDate) {
+  const value = String(place || "").trim();
+  const canonical = /^(\d{4})-(\d{2})-(\d{2})(?:T|$)/.exec(String(birthDate || ""));
+  // Some legacy identities store a full TTL in birth_place. Remove only a
+  // trailing date that matches birth_date, preserving conflicting source data.
+  const suffix = /(?:,\s*|\s+)(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})$/.exec(value);
+  if (!canonical || !suffix || Number(suffix[1]) !== Number(canonical[3]) ||
+      Number(suffix[2]) !== Number(canonical[2]) || Number(suffix[3]) !== Number(canonical[1])) return value;
+  return value.slice(0, suffix.index).trim();
+}
 
 const PNG_SIGNATURE = [137, 80, 78, 71, 13, 10, 26, 10];
 const pngTextDecoder = new TextDecoder();
@@ -31,7 +42,7 @@ const createPngChunk = (type, data) => {
   return chunk;
 };
 
-/** Adds PNG pHYs metadata so photo software reads the exported card as 600 DPI. */
+/** Adds PNG pHYs metadata so photo software reads the physical export dimensions. */
 export async function applyPngDensity(blob, dpi = TRADER_CARD_EXPORT_DPI) {
   const source = new Uint8Array(await blob.arrayBuffer());
   if (!PNG_SIGNATURE.every((value, index) => source[index] === value)) return blob;
