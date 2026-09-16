@@ -9,6 +9,7 @@ export const LAND_PERMIT_COMMODITY_OPTIONS = [
   "Mie Basah",
   "Pakaian Jadi",
   "Sayur",
+  "Sembako",
   "Tahu Tempe",
   "Tenant",
 ];
