@@ -233,33 +233,6 @@ export function TraderCard({ data, side, templateSrc }) {
               }}
             />
           </Box>
-          <Box
-            data-card-content={identity}
-            data-card-area="tanda tangan"
-            sx={{
-              position: "absolute",
-              left: "52mm",
-              top: "32.5mm",
-              width: "31mm",
-              height: "14mm",
-              textAlign: "center",
-              fontSize: "5.8pt",
-            }}
-          >
-            <Box
-              sx={{
-                height: "8mm",
-              }}
-            />
-            <Box
-              sx={{
-                textDecoration: "underline",
-              }}
-            >
-              LUCKY A. SENDUK, S.Ked
-            </Box>
-            <Box>DIREKTUR UTAMA</Box>
-          </Box>
         </>
       ) : (
         <>
@@ -325,6 +298,26 @@ export function TraderCard({ data, side, templateSrc }) {
                 {rule}
               </Box>
             ))}
+          </Box>
+          <Box
+            data-card-content={identity}
+            data-card-area="tanda tangan"
+            sx={{
+              position: "absolute",
+              left: "50%",
+              transform: "translateX(-50%)",
+              // Leave 2 mm below the rules and 2.5 mm above the card edge.
+              top: "46mm",
+              width: "40mm",
+              height: "5.5mm",
+              textAlign: "center",
+              fontSize: "5.8pt",
+            }}
+          >
+            <Box sx={{ textDecoration: "underline" }}>
+              LUCKY A. SENDUK, S.Ked
+            </Box>
+            <Box>DIREKTUR UTAMA</Box>
           </Box>
         </>
       )}
