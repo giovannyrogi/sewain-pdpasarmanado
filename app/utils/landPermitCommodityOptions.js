@@ -3,6 +3,7 @@ export const LAND_PERMIT_COMMODITY_OPTIONS = [
   "Barito",
   "Buah",
   "Cabo",
+  "Campuran",
   "Daging",
   "Ikan Basah",
   "Ikan Kering",
