@@ -330,7 +330,7 @@ const LembarPersetujuan = forwardRef(({ data }, ref) => {
                 fontSize: "11pt",
               }}
             >
-              Kepala Sub Divisi Pendapatan
+              Kepala Sub Divisi Ijin Lahan/Sewa Kontrak
             </td>
             <td style={{ border: "1px solid black" }}></td>
             <td style={{ border: "1px solid black" }}></td>
